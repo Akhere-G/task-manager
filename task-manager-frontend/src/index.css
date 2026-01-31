@@ -1,1 +1,65 @@
 @import "tailwindcss";
+
+@theme {
+  /* --- Canvas & Surface (Layout) --- */
+  --color-canvas: var(--color-slate-50);
+  --color-surface: var(--color-white);
+  --color-surface-muted: var(--color-slate-100);
+  
+  /* --- Content (Typography) --- */
+  --color-text-main: var(--color-slate-900);
+  --color-text-sub: var(--color-slate-500);
+  --color-text-inverse: var(--color-white);
+
+  /* --- Brand & Action --- */
+  --color-brand: var(--color-indigo-600);
+  --color-brand-hover: var(--color-indigo-700);
+  --color-accent: var(--color-violet-500);
+  --color-link: var(--color-blue-600);
+  --color-link-hover: var(--color-blue-700);
+
+  /* --- Semantic Status --- */
+  --color-success: var(--color-emerald-500);
+  --color-warning: var(--color-amber-500);
+  --color-failure: var(--color-rose-500);
+  --color-info: var(--color-sky-500);
+  
+  /* --- Interactive States --- */
+  --color-disabled-bg: var(--color-slate-200);
+  --color-disabled-text: var(--color-slate-400);
+}
+
+/* --- Dark Mode Overrides --- */
+/* This block triggers when the 'dark' class is added to the <html> tag */
+@layer base {
+  .dark {
+    --color-canvas: var(--color-slate-950);
+    --color-surface: var(--color-slate-900);
+    --color-surface-muted: var(--color-slate-800);
+    
+    --color-text-main: var(--color-slate-100);
+    --color-text-sub: var(--color-slate-400);
+    
+    --color-brand: var(--color-indigo-500);
+    --color-brand-hover: var(--color-indigo-400);
+    --color-accent: var(--color-violet-400);
+    --color-link: var(--color-blue-400);
+    --color-link-hover: var(--color-blue-300);
+    
+    --color-success: var(--color-emerald-400);
+    --color-warning: var(--color-amber-400);
+    --color-failure: var(--color-rose-400);
+    --color-info: var(--color-sky-400);
+
+    --color-disabled-bg: var(--color-slate-800);
+    --color-disabled-text: var(--color-slate-600);
+  }
+
+  body {
+    @apply bg-canvas text-text-main antialiased transition-colors duration-200;
+  }
+
+  * {
+    @apply border-slate-200 dark:border-slate-800;
+  }
+}
