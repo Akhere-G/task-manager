@@ -1,49 +1,57 @@
+import { useEffect, useState } from "react";
+import TaskCard from "../features/tasks/components/TaskCard";
 import type { Task } from "../features/tasks/types";
-
-const tasks: Task[] = [
-  {
-    id: 1,
-    title: "Finish Flask API integration",
-    description: "Connect the task service to the actual Python backend and test the CORS headers.",
-    category: "Development",
-    isCompleted: false,
-    dueDate: "2026-02-05",
-    estimatedTime: 120,
-    createdAt: "2026-01-30T10:00:00Z"
-  },
-  {
-    id: 2,
-    title: "Review project structure",
-    description: "Ensure the feature-based folder organisation is consistent across the whole app.",
-    category: "Planning",
-    isCompleted: true,
-    dueDate: "2026-01-31",
-    estimatedTime: 45,
-    createdAt: "2026-01-28T14:30:00Z"
-  },
-  {
-    id: 3,
-    title: "Design TaskCard UI",
-    description: null, // Testing nullable description
-    category: "Design",
-    isCompleted: false,
-    dueDate: "2026-02-01",
-    estimatedTime: 60,
-    createdAt: "2026-01-31T09:15:00Z"
-  },
-  {
-    id: 4,
-    title: "Fix Dark Mode contrast issues",
-    description: "Check the 'surface-muted' colours in dark mode to ensure high accessibility.",
-    category: "Bug Fix",
-    isCompleted: false,
-    dueDate: "2026-02-02",
-    estimatedTime: 30,
-    createdAt: "2026-01-31T12:00:00Z"
-  }
-];
+import { taskService } from "../services/api";
 
 export default function Home() {
+  const [tasks, setTasks] = useState<null | Task[]>(null)
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+  async function fetchTasks() {
+    setIsLoading(true)
+    try {
+      const newTasks = await taskService.getAll();
+      setTasks(newTasks);
+    } catch (err) {
+      setError("Couldn't load tasks.");
+      console.log(err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  fetchTasks();
+}, []);
+
+  if (error) {
+  return (
+    <div className="p-6 text-center rounded-xl border animate-in fade-in duration-500
+      bg-failure/10 border-failure/20 text-failure"
+    >
+      <div className="text-4xl mb-3">⚠️</div>
+      <h2 className="text-lg font-bold">Something went wrong</h2>
+      <p className="text-sm opacity-90 mb-4">{error}</p>
+      
+      <button 
+        onClick={() => window.location.reload()} 
+        className="px-6 py-2 rounded-lg bg-failure text-white font-bold hover:brightness-110 transition-all shadow-sm"
+      >
+        Try Again
+      </button>
+    </div>
+  );
+}
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
+        <p className="ml-3 text-text-sub">Getting tasks...</p>
+      </div>
+    );
+  }
+
   return (
     /* bg-canvas handles the main background transition */
     <section className="flex flex-col gap-6 min-h-full">
@@ -52,61 +60,25 @@ export default function Home() {
         <p className="text-text-sub">Manage your daily goals.</p>
       </header>
 
-      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {tasks.map(task => (
-          <li key={task.id}>
-            <TaskCard {...task}/>
-          </li>
-        ))}
-      </ul>
+      {tasks!.length > 0 ? (
+        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {tasks!.map(task => (
+            <li key={task.id}>
+              <TaskCard {...task}/>
+            </li>
+          ))}
+        </ul> 
+      ) : (
+        <EmptyState />
+      )}
     </section>
   )
 }
 
-function TaskCard({title, category, description, isCompleted, dueDate, estimatedTime }: Task){
+function EmptyState() {
   return (
-    <article className={`
-      relative flex flex-col h-full shadow-sm rounded-xl border transition-all duration-300 bg-surface
-      ${isCompleted 
-        ? "border-slate-200 dark:border-slate-800 opacity-60" 
-        : "border-slate-200 dark:border-slate-800 hover:border-brand/50 hover:shadow-md"}
-    `}>
-      
-      {/* Header with dynamic brand background */}
-      <header className={`
-        p-4 flex justify-between items-center rounded-t-xl
-        ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}
-      `}>
-        <p className={`font-semibold truncate ${isCompleted ? "line-through text-text-sub" : ""}`}>
-          {title}
-        </p>
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono">{estimatedTime}m</span>
-          <input 
-            type="checkbox" 
-            readOnly 
-            checked={isCompleted}
-            className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand accent-brand cursor-not-allowed"
-          />
-        </div>
-      </header>
-
-      {/* Body Section */}
-      <div className="p-4 grow space-y-2">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
-          {category}
-        </span>
-        <p className="text-sm text-text-main leading-relaxed">
-          {description || <span className="italic text-text-sub text-xs">No description provided.</span>}
-        </p>
-      </div>
-
-      {/* Footer Section */}
-      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 rounded-b-xl">
-        <p className="text-xs font-medium text-text-sub">
-          Due: {new Date(dueDate).toLocaleDateString('en-GB')}
-        </p>
-      </footer>
-    </article>
-  )
+    <div className="text-center py-20 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+      <p className="text-text-sub">No tasks found. Time to relax!</p>
+    </div>
+  );
 }

@@ -9,12 +9,12 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/tasks', methods=['GET'])
+@app.route('/api/tasks', methods=['GET'])
 def list_tasks():
   tasks = get_all_tasks()
   return jsonify(tasks)
 
-@app.route('/tasks', methods=['POST'])
+@app.route('/api/tasks', methods=['POST'])
 def add_task():
   data = request.json
   title = data.get('title')

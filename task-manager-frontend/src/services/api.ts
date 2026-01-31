@@ -2,7 +2,7 @@ import axios from 'axios'
 import type { CreateTaskInput, Task } from '../features/tasks/types';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080/api',
   timeout: 5000,
   headers: {
     'Content-Type' : 'application/json'
@@ -10,7 +10,7 @@ const api = axios.create({
 })
 
 export const taskService = { 
-  getAll: async () => {
+  getAll: async (): Promise<Task[]> => {
     const response = await api.get('/tasks')
     return response.data;
   }, 
