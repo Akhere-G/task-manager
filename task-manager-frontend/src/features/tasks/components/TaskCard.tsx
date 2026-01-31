@@ -1,6 +1,27 @@
 import type { Task } from "../types";
+import { Trash2, CheckCircle, Clock, AlertCircle } from "lucide-react";
 
-export default function TaskCard({title, category, description, isCompleted, dueDate, estimatedTime }: Task){
+// Add function props so the Home page can handle the logic
+interface TaskCardProps extends Task {
+  onToggle: (id: number) => void;
+  onDelete: (id: number) => void;
+}
+
+export default function TaskCard({
+  id,
+  title,
+  category,
+  description,
+  isCompleted,
+  dueDate,
+  estimatedTime,
+  onToggle,
+  onDelete
+}: TaskCardProps) {
+  
+  // Check if task is overdue
+  const isOverdue = !isCompleted && new Date(dueDate) < new Date();
+
   return (
     <article className={`
       relative flex flex-col h-full shadow-sm rounded-xl border transition-all duration-300 bg-surface
@@ -9,41 +30,64 @@ export default function TaskCard({title, category, description, isCompleted, due
         : "border-slate-200 dark:border-slate-800 hover:border-brand/50 hover:shadow-md"}
     `}>
       
-      {/* Header with dynamic brand background */}
       <header className={`
         p-4 flex justify-between items-center rounded-t-xl
         ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}
       `}>
-        <p className={`font-semibold truncate ${isCompleted ? "line-through text-text-sub" : ""}`}>
+        <h3 className={`font-semibold truncate ${isCompleted ? "line-through opacity-70" : ""}`}>
           {title}
-        </p>
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono">{estimatedTime}m</span>
-          <input 
-            type="checkbox" 
-            readOnly 
-            checked={isCompleted}
-            className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand accent-brand cursor-not-allowed"
-          />
-        </div>
+        </h3>
+        <span className="text-xs font-mono shrink-0 bg-white/20 px-2 py-0.5 rounded">
+          {estimatedTime}m
+        </span>
       </header>
 
-      {/* Body Section */}
       <div className="p-4 grow space-y-2">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
-          {category}
-        </span>
+        <div className="flex justify-between items-start">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
+            {category}
+          </span>
+          {isOverdue && <AlertCircle className="w-4 h-4 text-failure animate-pulse" />}
+        </div>
         <p className="text-sm text-text-main leading-relaxed">
-          {description || <span className="italic text-text-sub text-xs">No description provided.</span>}
+          {description }
         </p>
       </div>
 
-      {/* Footer Section */}
-      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 rounded-b-xl">
-        <p className="text-xs font-medium text-text-sub">
-          Due: {new Date(dueDate).toLocaleDateString('en-GB')}
-        </p>
+      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 rounded-b-xl flex justify-between items-center">
+        <div className="flex items-center gap-2 text-text-sub">
+          <Clock className="w-4 h-4" />
+          <time className={`text-xs font-medium ${isOverdue ? "text-failure font-bold" : ""}`}>
+            {new Date(dueDate).toLocaleDateString('en-GB')}
+          </time>
+        </div>
+
+        <div className="flex gap-3">
+          <button 
+            onClick={() => onDelete(id)}
+            title="Delete Task"
+            aria-label={`Delete task: ${title}`}
+            className="p-1.5 rounded-lg hover:bg-failure/10 transition-colors group"
+          >
+            <Trash2
+              aria-hidden="true" 
+              className="w-5 h-5 text-failure/70 group-hover:text-failure group-hover:scale-110 transition-all" />
+          </button>
+          
+          <button 
+            onClick={() => onToggle(id)}
+            title={isCompleted ? "Mark as pending" : "Mark as complete"}
+            aria-label={isCompleted ? "Mark task as pending" : "Mark task as complete"}
+            className="p-1.5 rounded-lg hover:bg-success/10 transition-colors group"
+          >
+            <CheckCircle 
+              aria-hidden="true"
+              className={`w-5 h-5 transition-all group-hover:scale-110 
+                ${isCompleted ? "text-success fill-success/20" : "text-text-sub group-hover:text-success"}`} 
+            />
+          </button>
+        </div>
       </footer>
     </article>
-  )
+  );
 }
