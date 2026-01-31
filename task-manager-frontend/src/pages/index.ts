@@ -1,0 +1,6 @@
+export { default as About } from "./About"
+export { default as AddTask } from "./AddTask"
+export { default as Contact } from "./Contact"
+export { default as Home } from "./Home"
+export { default as Stats } from "./Stats"
+export { default as TaskDetails} from "./TaskDetails"
