@@ -9,39 +9,48 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-  async function fetchTasks() {
-    setIsLoading(true)
+    async function fetchTasks() {
+      setIsLoading(true)
+      try {
+        const newTasks = await taskService.getAll();
+        setTasks(newTasks);
+      } catch (err) {
+        setError("Couldn't load tasks.");
+        console.log(err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchTasks();
+  }, []);
+
+  async function handleDelete(id: number){
     try {
-      const newTasks = await taskService.getAll();
-      setTasks(newTasks);
+      const response = await taskService.delete(id);
+      setTasks(prev => prev!.filter(task => task.id !== Number(response.id)))
     } catch (err) {
-      setError("Couldn't load tasks.");
       console.log(err)
-    } finally {
-      setIsLoading(false)
     }
   }
-  fetchTasks();
-}, []);
 
   if (error) {
-  return (
-    <div className="p-6 text-center rounded-xl border animate-in fade-in duration-500
-      bg-failure/10 border-failure/20 text-failure"
-    >
-      <div className="text-4xl mb-3">⚠️</div>
-      <h2 className="text-lg font-bold">Something went wrong</h2>
-      <p className="text-sm opacity-90 mb-4">{error}</p>
-      
-      <button 
-        onClick={() => window.location.reload()} 
-        className="px-6 py-2 rounded-lg bg-failure text-white font-bold hover:brightness-110 transition-all shadow-sm"
+    return (
+      <div className="p-6 text-center rounded-xl border animate-in fade-in duration-500
+        bg-failure/10 border-failure/20 text-failure"
       >
-        Try Again
-      </button>
-    </div>
-  );
-}
+        <div className="text-4xl mb-3">⚠️</div>
+        <h2 className="text-lg font-bold">Something went wrong</h2>
+        <p className="text-sm opacity-90 mb-4">{error}</p>
+        
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-6 py-2 rounded-lg bg-failure text-white font-bold hover:brightness-110 transition-all shadow-sm"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -64,7 +73,7 @@ export default function Home() {
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {tasks!.map(task => (
             <li key={task.id}>
-              <TaskCard {...task}/>
+              <TaskCard {...task} onDelete={handleDelete}/>
             </li>
           ))}
         </ul> 

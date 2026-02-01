@@ -9,12 +9,17 @@ const api = axios.create({
   }
 })
 
+interface DeleteTaskResult {
+  id: string;
+  message: string;
+}
+
 export const taskService = { 
   getAll: async (): Promise<Task[]> => {
     const response = await api.get('/tasks')
     return response.data;
   }, 
-  getById: async (id: string) => {
+  getById: async (id: number) => {
     const response = await api.get(`tasks/${id}`)
     return response.data;
   }, 
@@ -22,11 +27,11 @@ export const taskService = {
     const response = await api.post('/tasks', taskData)
     return response.data
   }, 
-  update: async (id: string, taskData: Partial<Task>) => {
+  update: async (id: number, taskData: Partial<Task>) => {
     const response = await api.patch(`/tasks/${id}`, taskData);
     return response.data;
   }, 
-  delete: async (id: string) => {
+  delete: async (id: number): Promise<DeleteTaskResult> => {
     const response = await api.delete(`/tasks/${id}`);
     return response.data;
   } 
