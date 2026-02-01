@@ -40,7 +40,7 @@ export default function AddTask() {
     setFormState(prev => ({...prev, [name]: value}))
   }
 
-  async function handleSubmit(e: React.MouseEvent<HTMLButtonElement, MouseEvent>){
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>){
     e.preventDefault()
     try {
       setIsloading(true)
@@ -75,7 +75,10 @@ export default function AddTask() {
       <header>
         <h1 className="text-3xl font-bold text-text-main transition-colors">Add Task</h1>
         <p className="text-text-sub">Set new goals.</p>
-        <form className="flex flex-col gap-4 bg-surface p-4 mt-4 rounded-xl">
+        <form 
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4 bg-surface p-4 mt-4 rounded-xl"
+        >
           <FormInput 
             label="Title" 
             name="title" 
@@ -116,7 +119,6 @@ export default function AddTask() {
           />
           <button 
             className={`text-text-inverse p-3 rounded-md ${isLoading ? "bg-surface-muted": "bg-brand"}`}
-            onClick={handleSubmit}
             disabled={isLoading}
           >
               {isLoading ? "Adding Task..." : "Add Task"}
@@ -141,7 +143,7 @@ interface FormInputprops {
 function FormInput({ label, name, type="text", value, handleChange, errorMessage, options}: FormInputprops){
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col text-text-main">
       <label htmlFor={name}>{label}</label>
       {!options && ( 
         <input

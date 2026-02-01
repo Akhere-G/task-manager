@@ -34,7 +34,7 @@ export default function TaskCard({
         p-4 flex justify-between items-center rounded-t-xl
         ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}
       `}>
-        <h3 className={`font-semibold truncate ${isCompleted ? "line-through opacity-70" : ""}`}>
+        <h3 className={`font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}>
           {title}
         </h3>
         <span className="text-xs font-mono shrink-0 bg-white/20 px-2 py-0.5 rounded">
@@ -54,7 +54,7 @@ export default function TaskCard({
         </p>
       </div>
 
-      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 rounded-b-xl flex justify-between items-center">
+      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate  rounded-b-xl flex justify-between items-center">
         <div className="flex items-center gap-2 text-text-sub">
           <Clock className="w-4 h-4" />
           <time className={`text-xs font-medium ${isOverdue ? "text-failure font-bold" : ""}`}>
