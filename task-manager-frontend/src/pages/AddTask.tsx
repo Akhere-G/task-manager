@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CreateTaskInput } from "../features/tasks/types";
 import { taskService } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string }
 
@@ -47,8 +48,12 @@ export default function AddTask() {
       navigate("/")
     } catch (err) {
       console.log(err)
+      if (!axios.isAxiosError(err)){
+          return
+      }
+
       if (err.status === 400){
-        const errors: Partial<ErrorMesageType> = err.response.data.errors;
+        const errors: Partial<ErrorMesageType> = err.response?.data?.errors;
         setErrorMessages(({ ...defaultErrorMessages, ...errors}))
       }
     } finally {
