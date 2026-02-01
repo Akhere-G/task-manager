@@ -3,7 +3,7 @@ import { Trash2, CheckCircle, Clock, AlertCircle } from "lucide-react";
 
 // Add function props so the Home page can handle the logic
 interface TaskCardProps extends Task {
-  onToggle: (id: number) => void;
+  setIsCompleted: (id: number, isComplete: boolean) => void;
   onDelete: (id: number) => void;
 }
 
@@ -15,7 +15,7 @@ export default function TaskCard({
   isCompleted,
   dueDate,
   estimatedTime,
-  onToggle,
+  setIsCompleted,
   onDelete
 }: TaskCardProps) {
   
@@ -67,7 +67,7 @@ export default function TaskCard({
             onClick={() => onDelete(id)}
             title="Delete Task"
             aria-label={`Delete task: ${title}`}
-            className="p-1.5 rounded-lg hover:bg-failure/10 transition-colors group"
+            className="p-1.5 rounded-lg hover:bg-failure/10 transition-colors group cursor-pointer"
           >
             <Trash2
               aria-hidden="true" 
@@ -75,10 +75,10 @@ export default function TaskCard({
           </button>
           
           <button 
-            onClick={() => onToggle(id)}
+            onClick={() => setIsCompleted(id, !isCompleted)}
             title={isCompleted ? "Mark as pending" : "Mark as complete"}
             aria-label={isCompleted ? "Mark task as pending" : "Mark task as complete"}
-            className="p-1.5 rounded-lg hover:bg-success/10 transition-colors group"
+            className="p-1.5 rounded-lg hover:bg-success/10 transition-colors group cursor-pointer"
           >
             <CheckCircle 
               aria-hidden="true"

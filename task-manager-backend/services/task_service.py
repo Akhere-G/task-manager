@@ -58,7 +58,8 @@ def update_task(id, title=None, description=None, category=None, due_date=None, 
         "category": updated_cat,
         "due_date": updated_due,
         "estimated_time": updated_time,
-        "is_completed": updated_status
+        "is_completed": updated_status,
+        "created_at": task.get("created_at")
   }
   
 def delete_task(id):

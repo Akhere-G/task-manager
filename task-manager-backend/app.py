@@ -70,7 +70,7 @@ def edit_task(task_id):
   category = task.get('category')
   description  = task.get('description')  
   estimated_time = task.get('estimatedTime')   
-  is_complete = task.get('isComplete')  
+  is_completed = task.get('isCompleted')  
   due_date = task.get('dueDate')
   
   errors = {}
@@ -93,7 +93,7 @@ def edit_task(task_id):
         category=category, 
         description=description, 
         estimated_time=estimated_time, 
-        is_completed=is_complete, 
+        is_completed=is_completed, 
         due_date=due_date
     )
   if updated_result is None:

@@ -14,6 +14,7 @@ export default function Home() {
       try {
         const newTasks = await taskService.getAll();
         setTasks(newTasks);
+        setError(null)
       } catch (err) {
         setError("Couldn't load tasks.");
         console.log(err)
@@ -28,6 +29,15 @@ export default function Home() {
     try {
       const response = await taskService.delete(id);
       setTasks(prev => prev!.filter(task => task.id !== Number(response.id)))
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  async function setIsCompleted(id: number, isCompleted: boolean){
+    try {
+      const response = await taskService.update(id, { isCompleted })
+      setTasks(prev => prev!.map(task => task.id === id ? response : task))
     } catch (err) {
       console.log(err)
     }
@@ -73,7 +83,7 @@ export default function Home() {
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {tasks!.map(task => (
             <li key={task.id}>
-              <TaskCard {...task} onDelete={handleDelete}/>
+              <TaskCard {...task} onDelete={handleDelete} setIsCompleted={setIsCompleted}/>
             </li>
           ))}
         </ul> 

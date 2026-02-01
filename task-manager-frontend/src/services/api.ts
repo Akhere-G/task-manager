@@ -19,7 +19,7 @@ export const taskService = {
     const response = await api.get('/tasks')
     return response.data;
   }, 
-  getById: async (id: number) => {
+  getById: async (id: number): Promise<Task> => {
     const response = await api.get(`tasks/${id}`)
     return response.data;
   }, 
@@ -27,7 +27,7 @@ export const taskService = {
     const response = await api.post('/tasks', taskData)
     return response.data
   }, 
-  update: async (id: number, taskData: Partial<Task>) => {
+  update: async (id: number, taskData: Partial<Task>): Promise<Task> => {
     const response = await api.patch(`/tasks/${id}`, taskData);
     return response.data;
   }, 
