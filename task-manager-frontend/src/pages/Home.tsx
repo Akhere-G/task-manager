@@ -79,10 +79,10 @@ export default function Home() {
         <p className="text-text-sub">Manage your daily goals.</p>
       </header>
 
-      {tasks!.length > 0 ? (
+      {tasks && tasks.length > 0 ? (
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {tasks!.map(task => (
-            <li key={task.id}>
+          {tasks.map(task => (
+            <li key={task.id} className="transition-all duration-500 animate-in fade-in slide-in-from-bottom-2">
               <TaskCard {...task} onDelete={handleDelete} setIsCompleted={setIsCompleted}/>
             </li>
           ))}

@@ -37,11 +37,16 @@ def add_task():
   if not due_date:
     errors['dueDate'] = "Due date is required"
   
-  if not estimated_time:
+  if estimated_time is None:
     errors['estimatedTime'] = "Estimated time is required"
-  elif estimated_time < 0:
-    errors['estimatedTime'] = "Estimated time must be more than 0"
-
+  else: 
+    try:
+      estimated_time = int(estimated_time)
+      if estimated_time < 1:
+        errors['estimatedTime'] = "Estimated time must be more than 0"
+    except (ValueError, TypeError):
+      errors['estimatedTime'] = "Estimated time must be a number"
+    
   if not category:
     errors['category'] = "Category is required"
   elif len(category) > 50:
@@ -81,8 +86,13 @@ def edit_task(task_id):
   if category and len(category) > 50:
     errors['category'] = "Category must be less than 255 Characters"
 
-  if estimated_time is not None and estimated_time < 0:
-    errors['estimatedTime'] = "Estimated time must be 0 or more"
+  if estimated_time is not None:
+    try:
+      estimated_time = int(estimated_time)
+      if estimated_time < 1:
+        errors['estimatedTime'] = "Estimated time must be more than 0"
+    except (ValueError, TypeError):
+      errors['estimatedTime'] = "Estimated time must be a number"
 
   if errors:
     return jsonify({ 'errors': errors }), 400

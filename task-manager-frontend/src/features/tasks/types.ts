@@ -9,4 +9,4 @@ export interface Task {
   createdAt: string;       
 }
 
-export type CreateTaskInput = Omit<Task, 'id' | 'createdAt'>;
+export type CreateTaskInput = Omit<Task, 'id' | 'createdAt' | 'isCompleted'>;
