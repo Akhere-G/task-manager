@@ -2,15 +2,17 @@ import { useEffect, useState } from "react";
 import TaskCard from "../features/tasks/components/TaskCard";
 import type { Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
+import Popup from "../components/ui/Popup";
 
 export default function Home() {
   const [tasks, setTasks] = useState<null | Task[]>(null)
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   useEffect(() => {
     async function fetchTasks() {
-      setIsLoading(true)
+      setIsLoading(true)      
       try {
         const newTasks = await taskService.getAll();
         setTasks(newTasks);
@@ -25,21 +27,28 @@ export default function Home() {
     fetchTasks();
   }, []);
 
+  const handleConfirmDelete = (id: number) => setSelectedTask(tasks?.find(t => t.id === id) || null)
+  
   async function handleDelete(id: number){
+    const prevTasks = tasks;
+    setTasks(prev => prev!.filter(task => task.id !== id))
+
     try {
-      const response = await taskService.delete(id);
-      setTasks(prev => prev!.filter(task => task.id !== Number(response.id)))
+      await taskService.delete(id);
     } catch (err) {
       console.log(err)
+      setTasks(prevTasks)
     }
   }
 
   async function setIsCompleted(id: number, isCompleted: boolean){
+    const prevTasks = tasks;
     try {
-      const response = await taskService.update(id, { isCompleted })
-      setTasks(prev => prev!.map(task => task.id === id ? response : task))
+      setTasks(prev => prev!.map(task => task.id === id ? ({...task, isCompleted }) : task))
+      await taskService.update(id, { isCompleted })
     } catch (err) {
       console.log(err)
+      setTasks(prevTasks)
     }
   }
 
@@ -79,11 +88,21 @@ export default function Home() {
         <p className="text-text-sub">Manage your daily goals.</p>
       </header>
 
+      {selectedTask && <Popup 
+        title="Delete Task"  
+        close={() => setSelectedTask(null)}
+        body={`Delete task '${selectedTask.title}'?`}
+        handleConfirm={() => {
+          handleDelete(selectedTask.id); 
+          setSelectedTask(null);
+        }}
+        actionText="Delete Task"
+      />}
       {tasks && tasks.length > 0 ? (
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {tasks.map(task => (
             <li key={task.id} className="transition-all duration-500 animate-in fade-in slide-in-from-bottom-2">
-              <TaskCard {...task} onDelete={handleDelete} setIsCompleted={setIsCompleted}/>
+              <TaskCard {...task} onDelete={handleConfirmDelete} setIsCompleted={setIsCompleted}/>
             </li>
           ))}
         </ul> 
