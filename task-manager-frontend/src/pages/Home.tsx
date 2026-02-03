@@ -33,19 +33,30 @@ export default function Home() {
   
   const handleConfirmEdit = (id: number) => setSelectedEditTask(tasks?.find(t => t.id === id) || null)
   
-  async function handleEdit(t: CreateTaskInput) {
+  async function handleEdit(newTask: CreateTaskInput) {
     if (!selectedEditTask){
       return;
     }
     const prevTasks = tasks;
     try {
-      const updatedTask: Task  = ({...selectedEditTask,  ...t}) // need to spread both to get id and updated fields
+      const updatedTask: Task = {
+        ...selectedEditTask,
+        id: selectedEditTask.id,
+        title: newTask.title.trim() || selectedEditTask.title,
+        category: newTask.category || selectedEditTask.category, 
+        description: newTask.description.trim() || selectedEditTask.description,
+        dueDate: newTask.dueDate || selectedEditTask.dueDate,
+        estimatedTime: newTask.estimatedTime || selectedEditTask.estimatedTime,
+      }      
+      // need to use the new fields only if they are not empty
+
       setTasks(prev => prev!.map(task => task.id === selectedEditTask.id ? updatedTask : task ))
       await taskService.update(selectedEditTask.id, updatedTask);
       setSelectedEditTask(null);
     } catch (err) {
       console.log(err)
       setTasks(prevTasks)
+      throw err // so that taskForm can dispaly error messages
     }
   }
 

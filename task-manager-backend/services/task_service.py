@@ -34,12 +34,12 @@ def update_task(id, title=None, description=None, category=None, due_date=None, 
     conn.close()
     return None
   
-  updated_title = title if title is not None else task['title']
-  updated_desc = description if description is not None else task['description']
-  updated_cat = category if category is not None else task['category']
-  updated_due = due_date if due_date is not None else task['due_date']
-  updated_time = estimated_time if estimated_time is not None else task['estimated_time']
-  updated_status = is_completed if is_completed is not None else task['is_completed']
+  updated_title = title if title else task['title']
+  updated_desc = description if description  else task['description']
+  updated_cat = category if category else task['category']
+  updated_due = due_date if due_date else task['due_date']
+  updated_time = estimated_time if estimated_time else task['estimated_time']
+  updated_status = is_completed if is_completed else task['is_completed']
   
   cursor.execute("""
         UPDATE tasks 
