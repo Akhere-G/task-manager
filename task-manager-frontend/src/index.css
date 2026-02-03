@@ -62,4 +62,12 @@
   * {
     @apply border-slate-200 dark:border-slate-800;
   }
+
+  .btn-primary {
+    @apply bg-accent py-1 px-4 text-text-inverse rounded-md shadow-2xl hover:brightness-120 transition ease-in duration-300 cursor-pointer 
+  }
+
+  .btn-secondary {
+    @apply bg-surface-muted py-1 px-4 text-text-main rounded-md shadow-2xl hover:brightness-90 transition ease-in duration-300 cursor-pointer 
+  }
 }
