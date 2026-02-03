@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import TaskCard from "../features/tasks/components/TaskCard";
-import type { Task } from "../features/tasks/types";
+import type { CreateTaskInput, Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
 import Popup from "../components/ui/Popup";
+import TaskForm from "../features/tasks/components/TaskForm";
 
 export default function Home() {
   const [tasks, setTasks] = useState<null | Task[]>(null)
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null)
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(null)
+  const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null)
 
   useEffect(() => {
     async function fetchTasks() {
@@ -27,8 +29,26 @@ export default function Home() {
     fetchTasks();
   }, []);
 
-  const handleConfirmDelete = (id: number) => setSelectedTask(tasks?.find(t => t.id === id) || null)
+  const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
   
+  const handleConfirmEdit = (id: number) => setSelectedEditTask(tasks?.find(t => t.id === id) || null)
+  
+  async function handleEdit(t: CreateTaskInput) {
+    if (!selectedEditTask){
+      return;
+    }
+    const prevTasks = tasks;
+    try {
+      const updatedTask: Task  = ({...selectedEditTask,  ...t}) // need to spread both to get id and updated fields
+      setTasks(prev => prev!.map(task => task.id === selectedEditTask.id ? updatedTask : task ))
+      await taskService.update(selectedEditTask.id, updatedTask);
+      setSelectedEditTask(null);
+    } catch (err) {
+      console.log(err)
+      setTasks(prevTasks)
+    }
+  }
+
   async function handleDelete(id: number){
     const prevTasks = tasks;
     setTasks(prev => prev!.filter(task => task.id !== id))
@@ -88,21 +108,44 @@ export default function Home() {
         <p className="text-text-sub">Manage your daily goals.</p>
       </header>
 
-      {selectedTask && <Popup 
-        title="Delete Task"  
-        close={() => setSelectedTask(null)}
-        body={`Delete task '${selectedTask.title}'?`}
-        handleConfirm={() => {
-          handleDelete(selectedTask.id); 
-          setSelectedTask(null);
-        }}
-        actionText="Delete Task"
-      />}
+      {selectedDeleteTask && (
+        <Popup 
+          title="Delete Task"  
+          close={() => setSelectedDeleteTask(null)}
+          handleConfirm={() => {
+            handleDelete(selectedDeleteTask.id); 
+            setSelectedDeleteTask(null);
+          }}
+          actionText="Delete Task"
+        >
+          {`Delete task '${selectedDeleteTask.title}'?`}
+        </Popup>
+      )}
+      {selectedEditTask && (
+        <Popup 
+          title={`Edit task '${selectedEditTask.title}'?`}
+          close={() => setSelectedEditTask(null)}
+          showCloseButton={false}
+        >
+          <TaskForm
+            confirmButtonText="Edit Task"
+            initialData={selectedEditTask}
+            submitAction={handleEdit}
+            close={(() => setSelectedEditTask(null))}
+          />
+        </Popup>
+      )}
       {tasks && tasks.length > 0 ? (
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {tasks.map(task => (
             <li key={task.id} className="transition-all duration-500 animate-in fade-in slide-in-from-bottom-2">
-              <TaskCard {...task} onDelete={handleConfirmDelete} setIsCompleted={setIsCompleted}/>
+              <TaskCard 
+                {...task} 
+                onDelete={handleConfirmDelete}
+                onEdit={handleConfirmEdit} 
+                setIsCompleted={setIsCompleted}
+
+              />
             </li>
           ))}
         </ul> 

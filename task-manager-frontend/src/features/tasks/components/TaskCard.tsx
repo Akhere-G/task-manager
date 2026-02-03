@@ -1,10 +1,11 @@
 import type { Task } from "../types";
-import { Trash2, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Trash2, CheckCircle, Clock, AlertCircle, Pencil } from "lucide-react";
 
 // Add function props so the Home page can handle the logic
 interface TaskCardProps extends Task {
   setIsCompleted: (id: number, isComplete: boolean) => void;
   onDelete: (id: number) => void;
+  onEdit: (id: number) => void;
 }
 
 export default function TaskCard({
@@ -16,7 +17,8 @@ export default function TaskCard({
   dueDate,
   estimatedTime,
   setIsCompleted,
-  onDelete
+  onDelete,
+  onEdit
 }: TaskCardProps) {
   
   // Check if task is overdue
@@ -73,7 +75,16 @@ export default function TaskCard({
               aria-hidden="true" 
               className="w-5 h-5 text-failure/70 group-hover:text-failure group-hover:scale-110 transition-all" />
           </button>
-          
+          <button 
+            onClick={() => onEdit(id)}
+            title="Edit Task"
+            aria-label={`Edit task: ${title}`}
+            className="p-1.5 rounded-lg hover:bg-info/10 transition-colors group cursor-pointer"
+          >
+            <Pencil
+              aria-hidden="true" 
+              className="w-5 h-5 text-info/70 group-hover:text-info group-hover:scale-110 transition-all" />
+          </button>
           <button 
             onClick={() => setIsCompleted(id, !isCompleted)}
             title={isCompleted ? "Mark as pending" : "Mark as complete"}
