@@ -1,5 +1,6 @@
+import { useState } from "react";
 import type { Task } from "../types";
-import { Trash2, CheckCircle, Clock, AlertCircle, Pencil } from "lucide-react";
+import { Trash2, CheckCircle, Clock, AlertCircle, Pencil, ChevronDown, ChevronUp } from "lucide-react";
 
 // Add function props so the Home page can handle the logic
 interface TaskCardProps extends Task {
@@ -20,9 +21,13 @@ export default function TaskCard({
   onDelete,
   onEdit
 }: TaskCardProps) {
-  
-  // Check if task is overdue
+  const [showMore, setShowMore] = useState(false);
   const isOverdue = !isCompleted && new Date(dueDate) < new Date();
+
+  const maxDescriptionLength = 100
+  const isLongDesc = description.length > maxDescriptionLength
+  const formattedDescription = isLongDesc && !showMore ? description.substring(0, 100) + "..." : description
+  const ShowMoreIcon = showMore ? ChevronUp : ChevronDown
 
   return (
     <article className={`
@@ -44,7 +49,7 @@ export default function TaskCard({
         </span>
       </header>
 
-      <div className="p-4 grow space-y-2">
+      <div className="p-4 grow space-y-2 flex flex-col">
         <div className="flex justify-between items-start">
           <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
             {category}
@@ -52,8 +57,20 @@ export default function TaskCard({
           {isOverdue && <AlertCircle className="w-4 h-4 text-failure animate-pulse" />}
         </div>
         <p className="text-sm text-text-main leading-relaxed">
-          {description }
+          {formattedDescription}
         </p>
+        {isLongDesc && (
+          <button 
+            aria-label={showMore ? "Show More" : "Show Less"}
+            className="p-1.5 rounded-lg hover:bg-surface-muted transition-colors group cursor-pointer self-end"
+            onClick={() => setShowMore(prev => !prev)}
+          >
+          <ShowMoreIcon 
+            aria-hidden="true"
+            className="w-5 h-5 group-hover:scale-110 transition-all"
+          />
+        </button>
+        )}
       </div>
 
       <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate  rounded-b-xl flex justify-between items-center">
