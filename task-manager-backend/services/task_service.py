@@ -1,7 +1,7 @@
 from db import get_db_connection
 from utils.formatters import format_json_response
 
-def get_all_tasks(category=None):
+def get_all_tasks(category=None, search=None):
   conn = get_db_connection()
   cursor = conn.cursor(dictionary=True)
   params = []
@@ -13,6 +13,11 @@ def get_all_tasks(category=None):
   if (category is not None and category != "all"):
     sql_query += "AND category = %s"
     params.append(category)
+
+  if (search is not None):
+    search_param = f"{search}*"
+    sql_query += " AND MATCH(title, description) AGAINST(%s IN BOOLEAN MODE)"
+    params.append(search_param)
 
   sql_query += "ORDER BY created_at DESC;"
 

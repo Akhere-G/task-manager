@@ -13,8 +13,9 @@ CORS(app)
 @app.route('/api/tasks', methods=['GET'])
 def list_tasks():
   category = request.args.get("category")
+  search = request.args.get("q")
 
-  raw_tasks = get_all_tasks(category)
+  raw_tasks = get_all_tasks(category, search)
   return jsonify(format_json_response(raw_tasks))
 
 @app.route('/api/tasks', methods=['POST'])

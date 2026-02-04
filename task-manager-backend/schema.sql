@@ -10,3 +10,4 @@ CREATE TABLE IF NOT EXISTS tasks (
   estimated_time INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE tasks ADD FULLTEXT(title, description);
