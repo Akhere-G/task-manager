@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { CreateTaskInput } from "../../../features/tasks/types";
+import { categories, type CreateTaskInput } from "../../../features/tasks/types";
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
 
@@ -75,11 +75,7 @@ export default function TaskForm({
 
   const options = [
     { name: "None", value: "" }, 
-    { name: "General", value: "General" }, 
-    { name: "House", value: "House" }, 
-    { name: "Work", value: "Work" }, 
-    { name: "Personal", value: "Personal" }, 
-    { name: "Chores", value: "Chores" }, 
+    ...categories
   ]
 
   return (

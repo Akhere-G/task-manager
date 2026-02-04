@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import TaskCard from "../features/tasks/components/TaskCard";
-import type { CreateTaskInput, Task } from "../features/tasks/types";
+import { categories, type CreateTaskInput, type Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
 import Popup from "../components/ui/Popup";
 import TaskForm from "../features/tasks/components/TaskForm";
@@ -11,12 +11,21 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(null)
   const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null)
+  const [category, setCategory] = useState("")
 
   useEffect(() => {
     async function fetchTasks() {
       setIsLoading(true)      
       try {
-        const newTasks = await taskService.getAll();
+        const params = new URLSearchParams()
+        if (category){
+          params.set("category", category)
+        }
+        else {
+          params.delete("category")
+        }
+
+        const newTasks = await taskService.getAll(params);
         setTasks(newTasks);
         setError(null)
       } catch (err) {
@@ -27,7 +36,7 @@ export default function Home() {
       }
     }
     fetchTasks();
-  }, []);
+  }, [category]);
 
   const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
   
@@ -111,13 +120,30 @@ export default function Home() {
     );
   }
 
+  const options = [
+    { name: "All", value: "" }, 
+    ...categories
+  ]
+
   return (
     /* bg-canvas handles the main background transition */
     <section className="flex flex-col gap-6 min-h-full">
-      <header>
-        <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks</h1>
-        <p className="text-text-sub">Manage your daily goals.</p>
-      </header>
+      <div className="flex justify-between">
+        <header>
+          <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks</h1>
+          <p className="text-text-sub">Manage your daily goals.</p>
+        </header>
+        <div className="bg-surface p-4 rounded-xl">
+
+          <select 
+            className="rounded-md px-3 py-2 my-2 outline-accent bg-surface-muted"
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+          >
+            {options.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
+          </select>
+          </div>
+      </div>
 
       {selectedDeleteTask && (
         <Popup 
