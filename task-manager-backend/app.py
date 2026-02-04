@@ -12,7 +12,9 @@ CORS(app)
 
 @app.route('/api/tasks', methods=['GET'])
 def list_tasks():
-  raw_tasks = get_all_tasks()
+  category = request.args.get("category")
+
+  raw_tasks = get_all_tasks(category)
   return jsonify(format_json_response(raw_tasks))
 
 @app.route('/api/tasks', methods=['POST'])

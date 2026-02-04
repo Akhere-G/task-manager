@@ -1,10 +1,22 @@
 from db import get_db_connection
 from utils.formatters import format_json_response
 
-def get_all_tasks():
+def get_all_tasks(category=None):
   conn = get_db_connection()
   cursor = conn.cursor(dictionary=True)
-  cursor.execute("SELECT * FROM tasks ORDER BY created_at DESC")
+  params = []
+  sql_query = """
+                SELECT * FROM tasks
+                WHERE 1=1 
+              """
+  
+  if (category is not None and category != "all"):
+    sql_query += "AND category = %s"
+    params.append(category)
+
+  sql_query += "ORDER BY created_at DESC;"
+
+  cursor.execute(sql_query, params)
   tasks = cursor.fetchall()
 
   cursor.close()
