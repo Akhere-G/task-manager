@@ -14,6 +14,7 @@ export default function Home() {
   const [category, setCategory] = useState("")
   const [taskDuration, setTaskDuration] = useState("")
   const [search, setSearch] = useState("")
+  const [completedTasks, setCompletedTasks] = useState("")
   const deferredSearch = useDeferredValue(search)
 
   useEffect(() => {
@@ -40,6 +41,12 @@ export default function Home() {
           params.delete("task_duration")
         }
 
+        if (completedTasks){
+          params.set("is_completed", completedTasks)
+        } else {
+          params.delete("is_completed")
+        }
+
         const newTasks = await taskService.getAll(params);
         setTasks(newTasks);
         setError(null)
@@ -54,7 +61,7 @@ export default function Home() {
     const delayDebounceFn = setTimeout(fetchTasks, search ? 400 : 0)
     return () => clearTimeout(delayDebounceFn)
 
-  }, [category, search, taskDuration]);
+  }, [category, search, taskDuration, completedTasks]);
 
   const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
   
@@ -125,6 +132,12 @@ export default function Home() {
     { name: "Short Tasks", value: "short_tasks" },
   ]
 
+  const completedTasksOptions = [
+    { name: "All", value: "" },
+    { name: "Completed", value: "true" },
+    { name: "Pending", value: "false" },
+  ]
+
   let MainContent: JSX.Element = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
 
   if (error) {
@@ -143,12 +156,12 @@ export default function Home() {
 
   return (
     <section className="flex flex-col gap-6 min-h-full">
-      <div className="flex justify-between bg-surface p-4 rounded-xl items-start sm:items-center flex-col sm:flex-row">
+      <div className="flex justify-between bg-surface p-4 rounded-xl items-start sm:items-center flex-col sm:flex-row gap-5">
         <header>
           <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks</h1>
           <p className="text-text-sub">Manage your daily goals.</p>
         </header>
-        <div className="flex gap-4 items-baseline flex-col sm:flex-row">
+        <div className="flex gap-4 items-baseline flex-col sm:flex-row flex-wrap">
           <input 
             name="search"
             className="rounded-md px-3 py-2 my-2 outline-accent bg-surface-muted"
@@ -168,6 +181,13 @@ export default function Home() {
             onChange={e => setTaskDuration(e.target.value)}
           >
             {taskDurationOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
+          </select>
+          <select 
+            className="rounded-md px-3 py-2 outline-accent bg-surface-muted text-sm"
+            value={completedTasks}
+            onChange={e => setCompletedTasks(e.target.value)}
+          >
+            {completedTasksOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
           </select>
           </div>
       </div>

@@ -15,8 +15,9 @@ def list_tasks():
   category = request.args.get("category")
   search = request.args.get("q")
   task_duration = request.args.get("task_duration")
+  is_completed = request.args.get("is_completed")
 
-  raw_tasks = get_all_tasks(category, search, task_duration)
+  raw_tasks = get_all_tasks(category, search, task_duration, is_completed)
   return jsonify(format_json_response(raw_tasks))
 
 @app.route('/api/tasks', methods=['POST'])

@@ -2,7 +2,7 @@ from db import get_db_connection
 from utils.formatters import format_json_response
 
 
-def get_all_tasks(category=None, search=None, task_duration=None):
+def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None):
   SHORT_TASK_THRESHOLD = 30
 
   conn = get_db_connection()
@@ -13,16 +13,21 @@ def get_all_tasks(category=None, search=None, task_duration=None):
                 WHERE 1=1 
               """
   
-  if category is not None and category != "all":
+  if category and category != "all":
     sql_query += " AND category = %s"
     params.append(category)
 
-  if search is not None:
+  if search:
     search_param = f"{search}*"
     sql_query += " AND MATCH(title, description) AGAINST(%s IN BOOLEAN MODE)"
     params.append(search_param)
 
-  if task_duration is not None:
+  if is_completed is not None and is_completed != "all":
+    is_completed = 1 if str(is_completed).lower() == "true" else 0 
+    sql_query += " AND is_completed = %s"
+    params.append(is_completed)
+
+  if task_duration:
     if task_duration == "short_tasks":
       sql_query += " AND estimated_time <= %s"
       params.append(SHORT_TASK_THRESHOLD)
