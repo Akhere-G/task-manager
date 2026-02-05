@@ -1,9 +1,12 @@
 import { useDeferredValue, useEffect, useState, type JSX } from "react";
-import TaskCard from "../features/tasks/components/TaskCard";
 import { categories, type CreateTaskInput, type Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
 import Popup from "../components/ui/Popup";
 import TaskForm from "../features/tasks/components/TaskForm";
+import EmptyState from "../components/ui/EmptyState";
+import LoadingState from "../components/ui/LoadState";
+import TaskList from "../features/tasks/components/TaskList";
+import ErrorState from "../components/ui/ErrorState";
 
 export default function Home() {
   const [tasks, setTasks] = useState<null | Task[]>(null)
@@ -112,7 +115,7 @@ export default function Home() {
     ...categories
   ]
 
-  let MainContent: JSX.Element = <EmptyState isSearching={isSearching} />
+  let MainContent: JSX.Element = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
 
   if (error) {
     MainContent = <ErrorState error={error}/>
@@ -131,12 +134,12 @@ export default function Home() {
   return (
     /* bg-canvas handles the main background transition */
     <section className="flex flex-col gap-6 min-h-full">
-      <div className="flex justify-between bg-surface p-4 rounded-xl items-baseline">
+      <div className="flex justify-between bg-surface p-4 rounded-xl items-start md:items-center flex-col md:flex-row ">
         <header>
           <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks</h1>
           <p className="text-text-sub">Manage your daily goals.</p>
         </header>
-        <div className="flex gap-4 items-baseline">
+        <div className="flex gap-4 items-baseline flex-col md:flex-row">
           <input 
             name="search"
             className="rounded-md px-3 py-2 my-2 outline-accent bg-surface-muted"
@@ -184,68 +187,5 @@ export default function Home() {
       {MainContent}
     </div>
     </section>
-  )
-}
-interface ErrorStateProps {
-  error: string;
-}
-
-function ErrorState({ error }: ErrorStateProps){
-  return (
-    <div className="p-6 text-center rounded-xl border animate-in fade-in duration-500
-        bg-failure/10 border-failure/20 text-failure"
-      >
-        <div className="text-4xl mb-3">⚠️</div>
-        <h2 className="text-lg font-bold">Something went wrong</h2>
-        <p className="text-sm opacity-90 mb-4">{error}</p>
-        
-        <button 
-          onClick={() => window.location.reload()} 
-          className="px-6 py-2 rounded-lg bg-failure text-white font-bold hover:brightness-110 transition-all shadow-sm"
-        >
-          Try Again
-        </button>
-      </div>
-  )
-}
-
-function LoadingState({ loadMessage = 'Loading' }: { loadMessage?: string }){
-  return (
-    <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
-        <p className="ml-3 text-text-sub">{loadMessage}</p>
-      </div>
-  )
-}
-
-function EmptyState({ isSearching }:{ isSearching: boolean }) {
-  return (
-    <div className="text-center py-20 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-      <p className="text-text-sub">{isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"}</p>
-    </div>
-  );
-}
-
-interface TaskListProps {
-  tasks: Task[]
-  handleConfirmDelete: (id: number) => void;
-  handleConfirmEdit: (id: number) => void;
-  setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>
-}
-
-function TaskList({tasks, handleConfirmDelete, handleConfirmEdit, setIsCompleted}: TaskListProps){
-  return (
-    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {tasks.map(task => (
-            <li key={task.id} className="transition-all duration-500 animate-in fade-in slide-in-from-bottom-2">
-              <TaskCard 
-                {...task} 
-                onDelete={handleConfirmDelete}
-                onEdit={handleConfirmEdit} 
-                setIsCompleted={setIsCompleted}
-              />
-            </li>
-          ))}
-        </ul> 
   )
 }
