@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState, type JSX } from "react";
 import TaskCard from "../features/tasks/components/TaskCard";
 import { categories, type CreateTaskInput, type Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
@@ -12,6 +12,8 @@ export default function Home() {
   const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(null)
   const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null)
   const [category, setCategory] = useState("")
+  const [search, setSearch] = useState("")
+  const deferredSearch = useDeferredValue(search)
 
   useEffect(() => {
     async function fetchTasks() {
@@ -25,6 +27,12 @@ export default function Home() {
           params.delete("category")
         }
 
+        if (search){
+          params.set("q", search)
+        } else {
+          params.delete("q")
+        }
+
         const newTasks = await taskService.getAll(params);
         setTasks(newTasks);
         setError(null)
@@ -35,10 +43,25 @@ export default function Home() {
         setIsLoading(false)
       }
     }
-    fetchTasks();
-  }, [category]);
+    
+    const delayDebounceFn = setTimeout(fetchTasks, search ? 400 : 0)
+    return () => clearTimeout(delayDebounceFn)
+
+  }, [category, search]);
 
   const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
+  
+  async function handleDelete(id: number){
+    const prevTasks = tasks;
+    setTasks(prev => prev!.filter(task => task.id !== id))
+
+    try {
+      await taskService.delete(id);
+    } catch (err) {
+      console.log(err)
+      setTasks(prevTasks)
+    }
+  }
   
   const handleConfirmEdit = (id: number) => setSelectedEditTask(tasks?.find(t => t.id === id) || null)
   
@@ -69,18 +92,6 @@ export default function Home() {
     }
   }
 
-  async function handleDelete(id: number){
-    const prevTasks = tasks;
-    setTasks(prev => prev!.filter(task => task.id !== id))
-
-    try {
-      await taskService.delete(id);
-    } catch (err) {
-      console.log(err)
-      setTasks(prevTasks)
-    }
-  }
-
   async function setIsCompleted(id: number, isCompleted: boolean){
     const prevTasks = tasks;
     try {
@@ -92,51 +103,48 @@ export default function Home() {
     }
   }
 
-  if (error) {
-    return (
-      <div className="p-6 text-center rounded-xl border animate-in fade-in duration-500
-        bg-failure/10 border-failure/20 text-failure"
-      >
-        <div className="text-4xl mb-3">⚠️</div>
-        <h2 className="text-lg font-bold">Something went wrong</h2>
-        <p className="text-sm opacity-90 mb-4">{error}</p>
-        
-        <button 
-          onClick={() => window.location.reload()} 
-          className="px-6 py-2 rounded-lg bg-failure text-white font-bold hover:brightness-110 transition-all shadow-sm"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
+  const isStale = isLoading || search !== deferredSearch
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
-        <p className="ml-3 text-text-sub">Getting tasks...</p>
-      </div>
-    );
-  }
+  const isSearching = !!search || category !== ""
 
   const options = [
     { name: "All", value: "" }, 
     ...categories
   ]
 
+  let MainContent: JSX.Element = <EmptyState isSearching={isSearching} />
+
+  if (error) {
+    MainContent = <ErrorState error={error}/>
+  } else if (isLoading && (!tasks || tasks.length === 0)) {
+    MainContent = <LoadingState loadMessage="Getting tasks..."/>
+  } else if (tasks && tasks.length > 0) {
+    MainContent = (
+    <TaskList 
+      tasks={tasks} 
+      handleConfirmDelete={handleConfirmDelete} 
+      handleConfirmEdit={handleConfirmEdit}
+      setIsCompleted={setIsCompleted}
+    />)
+  } 
+
   return (
     /* bg-canvas handles the main background transition */
     <section className="flex flex-col gap-6 min-h-full">
-      <div className="flex justify-between">
+      <div className="flex justify-between bg-surface p-4 rounded-xl items-baseline">
         <header>
           <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks</h1>
           <p className="text-text-sub">Manage your daily goals.</p>
         </header>
-        <div className="bg-surface p-4 rounded-xl">
-
-          <select 
+        <div className="flex gap-4 items-baseline">
+          <input 
+            name="search"
             className="rounded-md px-3 py-2 my-2 outline-accent bg-surface-muted"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <select 
+            className="rounded-md px-3 py-2 outline-accent bg-surface-muted text-sm"
             value={category}
             onChange={e => setCategory(e.target.value)}
           >
@@ -172,8 +180,62 @@ export default function Home() {
           />
         </Popup>
       )}
-      {tasks && tasks.length > 0 ? (
-        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div className={`transition-opacity duration-200 ${isStale ? 'opacity-75' : 'opacity-100'}`}>
+      {MainContent}
+    </div>
+    </section>
+  )
+}
+interface ErrorStateProps {
+  error: string;
+}
+
+function ErrorState({ error }: ErrorStateProps){
+  return (
+    <div className="p-6 text-center rounded-xl border animate-in fade-in duration-500
+        bg-failure/10 border-failure/20 text-failure"
+      >
+        <div className="text-4xl mb-3">⚠️</div>
+        <h2 className="text-lg font-bold">Something went wrong</h2>
+        <p className="text-sm opacity-90 mb-4">{error}</p>
+        
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-6 py-2 rounded-lg bg-failure text-white font-bold hover:brightness-110 transition-all shadow-sm"
+        >
+          Try Again
+        </button>
+      </div>
+  )
+}
+
+function LoadingState({ loadMessage = 'Loading' }: { loadMessage?: string }){
+  return (
+    <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
+        <p className="ml-3 text-text-sub">{loadMessage}</p>
+      </div>
+  )
+}
+
+function EmptyState({ isSearching }:{ isSearching: boolean }) {
+  return (
+    <div className="text-center py-20 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+      <p className="text-text-sub">{isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"}</p>
+    </div>
+  );
+}
+
+interface TaskListProps {
+  tasks: Task[]
+  handleConfirmDelete: (id: number) => void;
+  handleConfirmEdit: (id: number) => void;
+  setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>
+}
+
+function TaskList({tasks, handleConfirmDelete, handleConfirmEdit, setIsCompleted}: TaskListProps){
+  return (
+    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {tasks.map(task => (
             <li key={task.id} className="transition-all duration-500 animate-in fade-in slide-in-from-bottom-2">
               <TaskCard 
@@ -181,22 +243,9 @@ export default function Home() {
                 onDelete={handleConfirmDelete}
                 onEdit={handleConfirmEdit} 
                 setIsCompleted={setIsCompleted}
-
               />
             </li>
           ))}
         </ul> 
-      ) : (
-        <EmptyState />
-      )}
-    </section>
   )
-}
-
-function EmptyState() {
-  return (
-    <div className="text-center py-20 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-      <p className="text-text-sub">No tasks found. Time to relax!</p>
-    </div>
-  );
 }
