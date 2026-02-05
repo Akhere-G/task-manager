@@ -1,12 +1,9 @@
 import { useDeferredValue, useEffect, useState, type JSX } from "react";
 import { categories, type CreateTaskInput, type Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
-import Popup from "../components/ui/Popup";
 import TaskForm from "../features/tasks/components/TaskForm";
-import EmptyState from "../components/ui/EmptyState";
-import LoadingState from "../components/ui/LoadState";
+import { EmptyState, LoadingState, ErrorState, Popup } from "../components/ui";
 import TaskList from "../features/tasks/components/TaskList";
-import ErrorState from "../components/ui/ErrorState";
 
 export default function Home() {
   const [tasks, setTasks] = useState<null | Task[]>(null)
@@ -134,12 +131,12 @@ export default function Home() {
   return (
     /* bg-canvas handles the main background transition */
     <section className="flex flex-col gap-6 min-h-full">
-      <div className="flex justify-between bg-surface p-4 rounded-xl items-start md:items-center flex-col md:flex-row ">
+      <div className="flex justify-between bg-surface p-4 rounded-xl items-start sm:items-center flex-col sm:flex-row">
         <header>
           <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks</h1>
           <p className="text-text-sub">Manage your daily goals.</p>
         </header>
-        <div className="flex gap-4 items-baseline flex-col md:flex-row">
+        <div className="flex gap-4 items-baseline flex-col sm:flex-row">
           <input 
             name="search"
             className="rounded-md px-3 py-2 my-2 outline-accent bg-surface-muted"
