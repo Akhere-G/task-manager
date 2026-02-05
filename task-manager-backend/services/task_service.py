@@ -1,9 +1,12 @@
 from db import get_db_connection
 from utils.formatters import format_json_response
+from datetime import date
 
-
-def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None):
+def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None):
   SHORT_TASK_THRESHOLD = 30
+
+  if today == None:
+    today = date.today()
 
   conn = get_db_connection()
   cursor = conn.cursor(dictionary=True)
@@ -26,6 +29,20 @@ def get_all_tasks(category=None, search=None, task_duration=None, is_completed=N
     is_completed = 1 if str(is_completed).lower() == "true" else 0 
     sql_query += " AND is_completed = %s"
     params.append(is_completed)
+
+  if due_date:
+    if due_date == "today":
+      sql_query += " AND due_date = %s"
+      params.append(today)
+    if due_date == "this_week":
+      sql_query += " AND due_date BETWEEN %s AND DATE_ADD(%s, INTERVAL 7 DAY)"
+      params.extend([today, today])
+    if due_date == "this_month":
+      sql_query += " AND due_date BETWEEN %s AND DATE_ADD(%s, INTERVAL 30 DAY)"
+      params.extend([today, today])
+    if due_date == "overdue":
+      sql_query += " AND due_date < %s AND is_completed = 0"
+      params.append(today)
 
   if task_duration:
     if task_duration == "short_tasks":
@@ -72,7 +89,7 @@ def update_task(id, title=None, description=None, category=None, due_date=None, 
   updated_cat = category if category else task['category']
   updated_due = due_date if due_date else task['due_date']
   updated_time = estimated_time if estimated_time else task['estimated_time']
-  updated_status = is_completed if is_completed else task['is_completed']
+  updated_status = is_completed if is_completed is not None else task['is_completed']
   
   cursor.execute("""
         UPDATE tasks 

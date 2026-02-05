@@ -15,6 +15,7 @@ export default function Home() {
   const [taskDuration, setTaskDuration] = useState("")
   const [search, setSearch] = useState("")
   const [completedTasks, setCompletedTasks] = useState("")
+  const [dueDate, setDueDate] = useState("")
   const deferredSearch = useDeferredValue(search)
 
   useEffect(() => {
@@ -47,6 +48,14 @@ export default function Home() {
           params.delete("is_completed")
         }
 
+        if (dueDate){
+          params.set("due_date", dueDate)
+          params.set("today", new Date().toISOString().substring(0, 10))
+        } else {
+          params.delete("due_date")
+          params.delete("today")
+        }
+
         const newTasks = await taskService.getAll(params);
         setTasks(newTasks);
         setError(null)
@@ -61,7 +70,7 @@ export default function Home() {
     const delayDebounceFn = setTimeout(fetchTasks, search ? 400 : 0)
     return () => clearTimeout(delayDebounceFn)
 
-  }, [category, search, taskDuration, completedTasks]);
+  }, [category, search, taskDuration, completedTasks, dueDate]);
 
   const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
   
@@ -138,6 +147,14 @@ export default function Home() {
     { name: "Pending", value: "false" },
   ]
 
+  const dueDateOptions = [
+    { name: "All", value: "" },
+    { name: "Today", value: "today" },
+    { name: "This Week", value: "this_week" },
+    { name: "This Month", value: "this_month" },
+    { name: "Overdue", value: "overdue" },
+  ]
+
   let MainContent: JSX.Element = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
 
   if (error) {
@@ -188,6 +205,13 @@ export default function Home() {
             onChange={e => setCompletedTasks(e.target.value)}
           >
             {completedTasksOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
+          </select>
+          <select 
+            className="rounded-md px-3 py-2 outline-accent bg-surface-muted text-sm"
+            value={dueDate}
+            onChange={e => setDueDate(e.target.value)}
+          >
+            {dueDateOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
           </select>
           </div>
       </div>
