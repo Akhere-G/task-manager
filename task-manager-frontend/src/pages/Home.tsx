@@ -89,31 +89,41 @@ export default function Home() {
   const handleConfirmEdit = (id: number) => setSelectedEditTask(tasks?.find(t => t.id === id) || null)
   
   async function handleEdit(newTask: CreateTaskInput) {
-    if (!selectedEditTask){
-      return;
-    }
-    const prevTasks = tasks;
-    try {
-      const updatedTask: Task = {
-        ...selectedEditTask,
-        id: selectedEditTask.id,
-        title: newTask.title.trim() || selectedEditTask.title,
-        category: newTask.category || selectedEditTask.category, 
-        description: newTask.description.trim() || selectedEditTask.description,
-        dueDate: newTask.dueDate || selectedEditTask.dueDate,
-        estimatedTime: newTask.estimatedTime || selectedEditTask.estimatedTime,
-      }      
-      // need to use the new fields only if they are not empty
+  if (!selectedEditTask || !tasks) return;
 
-      setTasks(prev => prev!.map(task => task.id === selectedEditTask.id ? updatedTask : task ))
-      await taskService.update(selectedEditTask.id, updatedTask);
-      setSelectedEditTask(null);
-    } catch (err) {
-      console.log(err)
-      setTasks(prevTasks)
-      throw err // so that taskForm can dispaly error messages
-    }
+  const prevTasks = tasks;
+
+  const rawData = {
+    title: newTask.title.trim(),
+    description: newTask.description.trim(),
+    category: newTask.category,
+    dueDate: newTask.dueDate,
+    estimatedTime: newTask.estimatedTime,
+  };
+
+  const patchData: Partial<Task> = Object.fromEntries(
+    Object.entries(rawData).filter(([, value]) => value !== "")
+  );
+
+  try {
+    // 3. Optimistic Update (UI needs the merged data to stay consistent)
+    const updatedTask: Task = {
+      ...selectedEditTask,
+      ...patchData,
+    };
+
+    setTasks(tasks.map(t => (t.id === selectedEditTask.id ? updatedTask : t)));
+
+    // 4. Send ONLY the non-empty fields to the backend
+    await taskService.update(selectedEditTask.id, patchData);
+    
+    setSelectedEditTask(null);
+  } catch (err) {
+    setTasks(prevTasks);
+    console.error("Update failed:", err);
+    throw err;
   }
+}
 
   async function setIsCompleted(id: number, isCompleted: boolean){
     const prevTasks = tasks;
