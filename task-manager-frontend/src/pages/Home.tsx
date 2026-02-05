@@ -12,6 +12,7 @@ export default function Home() {
   const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(null)
   const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null)
   const [category, setCategory] = useState("")
+  const [taskDuration, setTaskDuration] = useState("")
   const [search, setSearch] = useState("")
   const deferredSearch = useDeferredValue(search)
 
@@ -33,6 +34,12 @@ export default function Home() {
           params.delete("q")
         }
 
+        if (taskDuration){
+          params.set("task_duration", taskDuration)
+        } else {
+          params.delete("task_duration")
+        }
+
         const newTasks = await taskService.getAll(params);
         setTasks(newTasks);
         setError(null)
@@ -47,7 +54,7 @@ export default function Home() {
     const delayDebounceFn = setTimeout(fetchTasks, search ? 400 : 0)
     return () => clearTimeout(delayDebounceFn)
 
-  }, [category, search]);
+  }, [category, search, taskDuration]);
 
   const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
   
@@ -107,9 +114,15 @@ export default function Home() {
 
   const isSearching = !!search || category !== ""
 
-  const options = [
+  const categoryOptions = [
     { name: "All", value: "" }, 
     ...categories
+  ]
+
+  const taskDurationOptions = [
+    { name: "All", value: "" },
+    { name: "Long Tasks", value: "long_tasks" },
+    { name: "Short Tasks", value: "short_tasks" },
   ]
 
   let MainContent: JSX.Element = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
@@ -129,7 +142,6 @@ export default function Home() {
   } 
 
   return (
-    /* bg-canvas handles the main background transition */
     <section className="flex flex-col gap-6 min-h-full">
       <div className="flex justify-between bg-surface p-4 rounded-xl items-start sm:items-center flex-col sm:flex-row">
         <header>
@@ -148,7 +160,14 @@ export default function Home() {
             value={category}
             onChange={e => setCategory(e.target.value)}
           >
-            {options.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
+            {categoryOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
+          </select>
+          <select 
+            className="rounded-md px-3 py-2 outline-accent bg-surface-muted text-sm"
+            value={taskDuration}
+            onChange={e => setTaskDuration(e.target.value)}
+          >
+            {taskDurationOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
           </select>
           </div>
       </div>

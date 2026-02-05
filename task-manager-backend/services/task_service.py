@@ -1,7 +1,10 @@
 from db import get_db_connection
 from utils.formatters import format_json_response
 
-def get_all_tasks(category=None, search=None):
+
+def get_all_tasks(category=None, search=None, task_duration=None):
+  SHORT_TASK_THRESHOLD = 30
+
   conn = get_db_connection()
   cursor = conn.cursor(dictionary=True)
   params = []
@@ -10,16 +13,24 @@ def get_all_tasks(category=None, search=None):
                 WHERE 1=1 
               """
   
-  if (category is not None and category != "all"):
-    sql_query += "AND category = %s"
+  if category is not None and category != "all":
+    sql_query += " AND category = %s"
     params.append(category)
 
-  if (search is not None):
+  if search is not None:
     search_param = f"{search}*"
     sql_query += " AND MATCH(title, description) AGAINST(%s IN BOOLEAN MODE)"
     params.append(search_param)
 
-  sql_query += "ORDER BY created_at DESC;"
+  if task_duration is not None:
+    if task_duration == "short_tasks":
+      sql_query += " AND estimated_time <= %s"
+      params.append(SHORT_TASK_THRESHOLD)
+    elif task_duration == "long_tasks":
+      sql_query += " AND estimated_time > %s" 
+      params.append(SHORT_TASK_THRESHOLD)
+  
+  sql_query += " ORDER BY created_at DESC;"
 
   cursor.execute(sql_query, params)
   tasks = cursor.fetchall()
