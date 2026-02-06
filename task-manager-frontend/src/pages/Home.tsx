@@ -131,13 +131,25 @@ export default function Home() {
     }
   }
 
-  const isStale = isLoading || filters.search !== deferredSearch
-
-  const isSearching = Object.values(filters).filter(f => f !== "").length > 1 // only has sortBy
-
   const updateFilters = (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name] : e.target.value }))
   }
+
+  function restFilters(){
+    setFilters({
+      search: "",
+      category: "",
+      duration: "",
+      isCompleted: "",
+      dueDate: "",
+      sortBy: "due_date",
+      order: "asc"
+    })
+  }
+
+  const isStale = isLoading || filters.search !== deferredSearch
+
+  const isSearching = Object.values(filters).filter(f => f !== "").length > 1 // only has sortBy
 
   const categoryOptions = [
     { name: "All", value: "" }, 
@@ -243,12 +255,19 @@ export default function Home() {
             options={sortByOptions}
           />
           <FormInput 
-            name="isAsc"
+            name="order"
             value={filters.order}
             handleChange={updateFilters}
             label="Order"
             options={isAscOptions}
           />
+            <button 
+              type="button"
+              className="self-end mb-1 btn-primary text-text-inverse py-1.5 px-3 rounded-md bg-brand"
+              onClick={restFilters}
+            >
+              Reset Filters
+            </button>
           </form>
       </div>
 
