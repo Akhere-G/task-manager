@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useState, type JSX } from "react";
 import { categories, type CreateTaskInput, type Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
 import TaskForm from "../features/tasks/components/TaskForm";
-import { EmptyState, LoadingState, ErrorState, Popup } from "../components/ui";
+import { EmptyState, LoadingState, ErrorState, Popup, FormInput } from "../components/ui";
 import TaskList from "../features/tasks/components/TaskList";
 
 export default function Home() {
@@ -11,50 +11,42 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(null)
   const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null)
-  const [category, setCategory] = useState("")
-  const [taskDuration, setTaskDuration] = useState("")
-  const [search, setSearch] = useState("")
-  const [completedTasks, setCompletedTasks] = useState("")
-  const [dueDate, setDueDate] = useState("")
-  const deferredSearch = useDeferredValue(search)
+  const [filters, setFilters] = useState({
+    search: "",
+    category: "",
+    duration: "",
+    isCompleted: "",
+    dueDate: ""
+  })
+
+  const deferredSearch = useDeferredValue(filters.search)
 
   useEffect(() => {
     async function fetchTasks() {
       setIsLoading(true)      
       try {
         const params = new URLSearchParams()
-        if (category){
-          params.set("category", category)
-        }
-        else {
-          params.delete("category")
-        }
+        const apiParamMap: Record<string, string> = {
+        search: "q",
+        category: "category",
+        duration: "task_duration",
+        isCompleted: "is_completed",
+        dueDate: "due_date"
+      };
 
-        if (search){
-          params.set("q", search)
+      Object.entries(filters).forEach(([key, value]) => {
+        console.log(key, String(value), apiParamMap[key])
+        if (value) {
+          key === "isCompleted" && console.log("value is true", true )
+          params.set(apiParamMap[key], value);
         } else {
-          params.delete("q")
+          params.delete(apiParamMap[key])
         }
+      });
 
-        if (taskDuration){
-          params.set("task_duration", taskDuration)
-        } else {
-          params.delete("task_duration")
-        }
-
-        if (completedTasks){
-          params.set("is_completed", completedTasks)
-        } else {
-          params.delete("is_completed")
-        }
-
-        if (dueDate){
-          params.set("due_date", dueDate)
-          params.set("today", new Date().toISOString().substring(0, 10))
-        } else {
-          params.delete("due_date")
-          params.delete("today")
-        }
+      if (filters.dueDate) {
+        params.set("today", new Date().toISOString().substring(0, 10));
+      }
 
         const newTasks = await taskService.getAll(params);
         setTasks(newTasks);
@@ -67,10 +59,10 @@ export default function Home() {
       }
     }
     
-    const delayDebounceFn = setTimeout(fetchTasks, search ? 400 : 0)
+    const delayDebounceFn = setTimeout(fetchTasks, filters.search ? 400 : 0)
     return () => clearTimeout(delayDebounceFn)
 
-  }, [category, search, taskDuration, completedTasks, dueDate]);
+  }, [filters]);
 
   const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
   
@@ -136,9 +128,13 @@ export default function Home() {
     }
   }
 
-  const isStale = isLoading || search !== deferredSearch
+  const isStale = isLoading || filters.search !== deferredSearch
 
-  const isSearching = !!search || category !== ""
+  const isSearching = !!filters.search || filters.category !== ""
+
+  const updateFilters = (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFilters(prev => ({ ...prev, [e.target.name] : e.target.value }))
+  }
 
   const categoryOptions = [
     { name: "All", value: "" }, 
@@ -188,42 +184,42 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks</h1>
           <p className="text-text-sub">Manage your daily goals.</p>
         </header>
-        <div className="flex gap-4 items-baseline flex-col sm:flex-row flex-wrap">
-          <input 
+        <form className="flex gap-4 items-baseline flex-col sm:flex-row flex-wrap">
+          <FormInput 
             name="search"
-            className="rounded-md px-3 py-2 my-2 outline-accent bg-surface-muted"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            value={filters.search}
+            handleChange={updateFilters}
+            label="Search"
           />
-          <select 
-            className="rounded-md px-3 py-2 outline-accent bg-surface-muted text-sm"
-            value={category}
-            onChange={e => setCategory(e.target.value)}
-          >
-            {categoryOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
-          </select>
-          <select 
-            className="rounded-md px-3 py-2 outline-accent bg-surface-muted text-sm"
-            value={taskDuration}
-            onChange={e => setTaskDuration(e.target.value)}
-          >
-            {taskDurationOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
-          </select>
-          <select 
-            className="rounded-md px-3 py-2 outline-accent bg-surface-muted text-sm"
-            value={completedTasks}
-            onChange={e => setCompletedTasks(e.target.value)}
-          >
-            {completedTasksOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
-          </select>
-          <select 
-            className="rounded-md px-3 py-2 outline-accent bg-surface-muted text-sm"
-            value={dueDate}
-            onChange={e => setDueDate(e.target.value)}
-          >
-            {dueDateOptions.map(({ name, value }) => <option key={value} value={value}>{name}</option>)}
-          </select>
-          </div>
+          <FormInput 
+            name="category"
+            value={filters.category}
+            handleChange={updateFilters}
+            label="Category"
+            options={categoryOptions}
+          />
+          <FormInput 
+            name="duration"
+            value={filters.duration}
+            handleChange={updateFilters}
+            label="Duration"
+            options={taskDurationOptions}
+          />
+          <FormInput 
+            name="isCompleted"
+            value={filters.isCompleted}
+            handleChange={updateFilters}
+            label="Is Complete"
+            options={completedTasksOptions}
+          />
+          <FormInput 
+            name="dueDate"
+            value={filters.dueDate}
+            handleChange={updateFilters}
+            label="Due Date"
+            options={dueDateOptions}
+          />
+          </form>
       </div>
 
       {selectedDeleteTask && (

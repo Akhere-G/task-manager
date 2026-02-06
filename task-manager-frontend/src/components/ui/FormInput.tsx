@@ -4,19 +4,28 @@ export interface FormInputprops {
   type?: string;
   value: string | number;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  errorMessage: string;
+  errorMessage?: string;
   options?: {name: string; value: string}[]
 }
 
 
-export default function FormInput({ label, name, type="text", value, handleChange, errorMessage, options}: FormInputprops){
+export default function FormInput({ 
+  label, 
+  name, 
+  type="text", 
+  value, 
+  handleChange, 
+  errorMessage, 
+  options,
+  }: FormInputprops){
 
   return (
-    <div className="flex flex-col text-text-main">
-      <label htmlFor={name}>{label}</label>
+    <div className="group flex flex-col text-text-main">
+      <label htmlFor={name} className="group-focus-within:text-accent text-xs text-text-sub">{label}</label>
       {!options && ( 
         <input
-          className="rounded-md px-3 py-2 my-2 outline-accent bg-surface-muted"
+          id={name}
+          className=" rounded-md px-3 py-2 my-1 outline-accent bg-surface-muted "
           name={name}
           type={type}
           value={value} 
@@ -25,7 +34,8 @@ export default function FormInput({ label, name, type="text", value, handleChang
       )}
       {options && (
         <select 
-          className="rounded-md px-3 py-2 my-2 outline-accent bg-surface-muted"
+          className="rounded-md px-3 py-2 my-1 outline-accent bg-surface-muted"
+          id={name}
           name={name}
           value={value}
           onChange={(e) => handleChange(e)}
