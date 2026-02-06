@@ -20,8 +20,10 @@ def list_tasks():
   is_completed = request.args.get("is_completed")
   due_date = request.args.get('due_date')
   today = request.args.get('today')
+  sort_by = request.args.get('sort_by')
+  order = request.args.get('order')
 
-  raw_tasks = get_all_tasks(category, search, task_duration, is_completed, due_date, today)
+  raw_tasks = get_all_tasks(category, search, task_duration, is_completed, due_date, today, sort_by, order)
   return jsonify(format_json_response(raw_tasks))
 
 @app.route('/api/tasks', methods=['POST'])

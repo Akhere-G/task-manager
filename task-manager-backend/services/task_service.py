@@ -2,7 +2,7 @@ from db import get_db_connection
 from utils.formatters import format_json_response
 from datetime import date
 
-def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None):
+def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None, sort_by=None, order=None):
   SHORT_TASK_THRESHOLD = 30
 
   if today == None:
@@ -52,7 +52,11 @@ def get_all_tasks(category=None, search=None, task_duration=None, is_completed=N
       sql_query += " AND estimated_time > %s" 
       params.append(SHORT_TASK_THRESHOLD)
   
-  sql_query += " ORDER BY created_at DESC;"
+  SORTABLE_FIELDS = ["created_at", "title", "due_date", "estimated_time"]
+  sort_by_field = sort_by if sort_by in SORTABLE_FIELDS else "created_at"
+  order_value = "ASC" if order == "asc" else "desc"
+  
+  sql_query += f" ORDER BY {sort_by_field} {order_value};"
 
   cursor.execute(sql_query, params)
   tasks = cursor.fetchall()

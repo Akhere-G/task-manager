@@ -16,7 +16,9 @@ export default function Home() {
     category: "",
     duration: "",
     isCompleted: "",
-    dueDate: ""
+    dueDate: "",
+    sortBy: "due_date",
+    order: "asc"
   })
 
   const deferredSearch = useDeferredValue(filters.search)
@@ -31,13 +33,14 @@ export default function Home() {
         category: "category",
         duration: "task_duration",
         isCompleted: "is_completed",
-        dueDate: "due_date"
+        dueDate: "due_date",
+        sortBy: "sort_by",
+        order: "order",
       };
 
       Object.entries(filters).forEach(([key, value]) => {
         console.log(key, String(value), apiParamMap[key])
         if (value) {
-          key === "isCompleted" && console.log("value is true", true )
           params.set(apiParamMap[key], value);
         } else {
           params.delete(apiParamMap[key])
@@ -130,7 +133,7 @@ export default function Home() {
 
   const isStale = isLoading || filters.search !== deferredSearch
 
-  const isSearching = !!filters.search || filters.category !== ""
+  const isSearching = Object.values(filters).filter(f => f !== "").length > 1 // only has sortBy
 
   const updateFilters = (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name] : e.target.value }))
@@ -161,6 +164,19 @@ export default function Home() {
     { name: "Overdue", value: "overdue" },
   ]
 
+  const sortByOptions = [
+    { name: "Due Date", value: "due_date"},
+    { name: "Created At", value: "created_at"},
+    { name: "Title", value: "title"},
+    { name: "Estimated Time", value: "estimated_time"},
+    { name: "", value: ""},
+  ]
+
+  const isAscOptions = [
+    { name: "Ascending", value: "asc" },
+    { name: "Descending", value: "desc" },
+  ]
+  
   let MainContent: JSX.Element = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
 
   if (error) {
@@ -218,6 +234,20 @@ export default function Home() {
             handleChange={updateFilters}
             label="Due Date"
             options={dueDateOptions}
+          />
+          <FormInput 
+            name="sortBy"
+            value={filters.sortBy}
+            handleChange={updateFilters}
+            label="Sort By"
+            options={sortByOptions}
+          />
+          <FormInput 
+            name="isAsc"
+            value={filters.order}
+            handleChange={updateFilters}
+            label="Order"
+            options={isAscOptions}
           />
           </form>
       </div>
