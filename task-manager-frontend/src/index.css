@@ -64,10 +64,18 @@
   }
 
   .btn-primary {
-    @apply bg-accent py-1 px-4 text-text-inverse rounded-md shadow-2xl hover:brightness-120 transition ease-in duration-300 cursor-pointer 
+    @apply text-text-inverse py-1.5 px-3 rounded-md bg-brand cursor-pointer hover:brightness-110
+  }
+
+  .btn-primary-disabled {
+    @apply text-text-inverse py-1.5 px-3 rounded-md bg-brand/50 
   }
 
   .btn-secondary {
-    @apply bg-surface-muted py-1 px-4 text-text-main rounded-md shadow-2xl hover:brightness-90 transition ease-in duration-300 cursor-pointer 
+    @apply text-text-main py-1.5 px-3 rounded-md bg-surface-muted cursor-pointer hover:brightness-90
+  }
+
+  .btn-secondary-disabled {
+    @apply text-text-main py-1.5 px-3 rounded-md bg-surface-muted brightness-90 cursor-not-allowed 
   }
 }
