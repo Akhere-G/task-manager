@@ -1,4 +1,3 @@
-import type { JSX } from "react";
 import { EmptyState, ErrorState, LoadingState } from "../components/ui";
 import { TaskCalendar, TasksHeader } from "../features/tasks/components";
 import useGetTasks from "../features/tasks/hooks/useGetTasks";

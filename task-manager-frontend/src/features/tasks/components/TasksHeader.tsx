@@ -15,9 +15,16 @@ interface TasksHeaderProps {
   updateFilters: (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   resetFilters: () => void; 
   totalTasks: number;
+  sortable?: boolean
 }
 
-export default function TasksHeader({ filters, updateFilters, resetFilters, totalTasks }: TasksHeaderProps){
+export default function TasksHeader({ 
+  filters, 
+  updateFilters, 
+  resetFilters, 
+  totalTasks,
+  sortable = true 
+}: TasksHeaderProps){
   return (
     <div className="card flex justify-between items-center sm:items-start flex-col lg:flex-row gap-5">
         <header className="grow-[0.9] shrink-0 w-full max-w-52 flex flex-col items-center sm:items-start">
@@ -64,22 +71,26 @@ export default function TasksHeader({ filters, updateFilters, resetFilters, tota
             options={dueDateOptions}
             formClassNames="grow-[0.9] max-w-52"
           />
-          <FormInput 
-            name="sortBy"
-            value={filters.sortBy}
-            handleChange={updateFilters}
-            label="Sort By"
-            options={sortByOptions}
-            formClassNames="grow-[0.9] max-w-52"
-          />
-          <FormInput 
-            name="order"
-            value={filters.order}
-            handleChange={updateFilters}
-            label="Order"
-            options={isAscOptions}
-            formClassNames="grow-[0.9] max-w-52"
-          />
+          {( sortable &&
+            <>
+              <FormInput 
+                name="sortBy"
+                value={filters.sortBy}
+                handleChange={updateFilters}
+                label="Sort By"
+                options={sortByOptions}
+                formClassNames="grow-[0.9] max-w-52"
+              />
+              <FormInput 
+                  name="order"
+                  value={filters.order}
+                  handleChange={updateFilters}
+                  label="Order"
+                  options={isAscOptions}
+                  formClassNames="grow-[0.9] max-w-52"
+                />
+              </>
+          )}
             <button 
               type="button"
               className="self-end mb-1 btn-primary"
