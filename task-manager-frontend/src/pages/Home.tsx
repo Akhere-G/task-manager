@@ -223,9 +223,9 @@ export default function Home() {
 
     {tasks && tasks.length > 0 && <Pagination {...pageDetails} setPage={setPage} />}
 
-    <div className={`transition-opacity duration-200 ${isStale ? 'opacity-75' : 'opacity-100'}`}>
+    <section className={`transition-opacity duration-200 ${isStale ? 'opacity-75' : 'opacity-100'}`}>
       {MainContent}
-    </div>
+    </section>
 
     {tasks && tasks.length > 0 && <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate/>}
 
