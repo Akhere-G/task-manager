@@ -14,6 +14,10 @@ interface CalendarProps {
   updateTask: (id: number, task: Partial<Task>) => Promise<void>;
   setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>,
 }
+interface Info {
+    event: { id: string; startStr: string };
+    revert: () => void;
+}
 
 export default function TaskCalendar({ 
   handleConfirmDelete, 
@@ -35,20 +39,20 @@ export default function TaskCalendar({
 
   const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
 
-  async function handleEventDrop(info: any) {
-  const { event } = info;
+  async function handleEventDrop(info: Info) {
+    const { event } = info;
 
-  const newDueDate = event.startStr; // This gives you the new YYYY-MM-DD
-  const taskId = Number(event.id);
+    const newDueDate = event.startStr; // This gives you the new YYYY-MM-DD
+    const taskId = Number(event.id);
 
-  try {
-    await updateTask(taskId, { dueDate: newDueDate })
-  } catch (err) {
-    // 3. Revert on Error
-    console.log(err)
-    info.revert(); // FullCalendar provides this handy function to snap the task back
-    alert("Failed to move the task. Please try again.");
-  }
+    try {
+      await updateTask(taskId, { dueDate: newDueDate })
+    } catch (err) {
+      // 3. Revert on Error
+      console.log(err)
+      info.revert(); // FullCalendar provides this handy function to snap the task back
+      alert("Failed to move the task. Please try again.");
+    }
 }
 
   return (
