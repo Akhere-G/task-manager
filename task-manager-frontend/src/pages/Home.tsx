@@ -48,7 +48,6 @@ export default function Home() {
       };
 
       Object.entries(filters).forEach(([key, value]) => {
-        console.log(key, String(value), apiParamMap[key])
         if (value) {
           params.set(apiParamMap[key], value);
         } else {
@@ -84,15 +83,22 @@ export default function Home() {
   
   async function handleDelete(id: number){
     const prevTasks = tasks;
+    const prevPageDetails = pageDetails;
+
     setTasks(prev => prev!.filter(task => task.id !== id))
-    setPageDetails(prev => ({ ...prev, totalItems: prev.totalItems - 1 }))
+    const totalItems = pageDetails.totalItems - 1
+    const totalPages = Math.ceil(totalItems / pageDetails.perPage)
+    const currentPage = Math.min(pageDetails.currentPage, totalPages)
 
     try {
       await taskService.delete(id);
+      setPageDetails(prev => ({ ...prev, totalItems, totalPages, currentPage }))
+      // cannot do optimistic update as changing current page before delete refetches all tasks before delete occurs
+      // causing totalPages to be wrong
     } catch (err) {
       console.log(err)
       setTasks(prevTasks)
-      setPageDetails(prev => ({ ...prev, totalItems: prev.totalItems + 1 }))
+      setPageDetails(prevPageDetails)
     }
   }
   
