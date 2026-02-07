@@ -35,18 +35,17 @@ export default function Pagination({
   const hasNext = currentPage < totalPages;
 
   return (
-    <div className="flex gap-2 items-center justify-center py-4">
-      <button 
-        onClick={() => goToPage(currentPage - 1)}
-        className={`w-10 h-10 p-2.5 ${hasPrev ? "btn-secondary" : "btn-secondary-disabled"}`}
-        disabled={!hasPrev}
-        aria-label="Previous page"
-      >
-        <ChevronLeft aria-hidden="true" size={20} />
-      </button>
-
-      {/* Numbered Buttons */}
+    <div className="flex gap-2 items-center justify-center py-4 flex-col md:flex-row">
       <div className="flex gap-1">
+        <button 
+          onClick={() => goToPage(currentPage - 1)}
+          className={`w-10 h-10 p-2.5 ${hasPrev ? "btn-secondary" : "btn-secondary-disabled"}`}
+          disabled={!hasPrev}
+          aria-label="Previous page"
+        >
+          <ChevronLeft aria-hidden="true" size={20} />
+        </button>
+
         {pageNumbers.map(page => (
           <button
             key={page}
@@ -62,19 +61,19 @@ export default function Pagination({
             {page}
           </button>
         ))}
+
+        <button 
+          onClick={() => goToPage(currentPage + 1)}
+          className={`w-10 h-10 p-2.5 ${hasNext ? "btn-secondary" : "btn-secondary-disabled"}`}
+          disabled={!hasNext}
+          aria-label="Next page"
+          >
+          <ChevronRight aria-hidden="true" size={20} />
+        </button>
       </div>
 
-      <button 
-        onClick={() => goToPage(currentPage + 1)}
-        className={`w-10 h-10 p-2.5 ${hasNext ? "btn-secondary" : "btn-secondary-disabled"}`}
-        disabled={!hasNext}
-        aria-label="Next page"
-      >
-        <ChevronRight aria-hidden="true" size={20} />
-      </button>
-
       <span className="text-sm text-text-sub ml-4">
-        Total pages: {totalPages}
+        Pages: {totalPages}
       </span>
     </div>
   )

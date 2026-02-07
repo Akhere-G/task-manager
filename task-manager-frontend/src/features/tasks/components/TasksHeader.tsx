@@ -25,19 +25,20 @@ export default function TasksHeader({
   totalTasks,
   sortable = true 
 }: TasksHeaderProps){
+  const formClassNames="grow lg:grow-[0.9] max-w-80";
   return (
-    <div className="card flex justify-between items-center sm:items-start flex-col lg:flex-row gap-5">
+    <div className="card flex justify-between items-center sm:items-start flex-col lg:flex-row gap-5 ">
         <header className="grow-[0.9] shrink-0 w-full max-w-52 flex flex-col items-center sm:items-start">
           <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks ({totalTasks})</h1>
           <p className="text-text-sub">Manage your daily goals.</p>
         </header>
-        <form className="flex gap-4 items-baseline flex-row flex-wrap grow-[0.5]">
+        <form className="flex gap-4 items-baseline flex-row flex-wrap">
           <FormInput 
             name="search"
             value={filters.search}
             handleChange={updateFilters}
             label="Search"
-            formClassNames="grow-[0.9] max-w-52"
+            formClassNames={formClassNames}
           />
           <FormInput 
             name="category"
@@ -45,7 +46,7 @@ export default function TasksHeader({
             handleChange={updateFilters}
             label="Category"
             options={categoryOptions}
-            formClassNames="grow-[0.9] max-w-52"
+            formClassNames={formClassNames}
           />
           <FormInput 
             name="duration"
@@ -53,7 +54,7 @@ export default function TasksHeader({
             handleChange={updateFilters}
             label="Duration"
             options={taskDurationOptions}
-            formClassNames="grow-[0.9] max-w-52"
+            formClassNames={formClassNames}
           />
           <FormInput 
             name="isCompleted"
@@ -61,7 +62,7 @@ export default function TasksHeader({
             handleChange={updateFilters}
             label="Is Complete"
             options={completedTasksOptions}
-            formClassNames="grow-[0.9] max-w-52"
+            formClassNames={formClassNames}
           />
           <FormInput 
             name="dueDate"
@@ -69,7 +70,7 @@ export default function TasksHeader({
             handleChange={updateFilters}
             label="Due Date"
             options={dueDateOptions}
-            formClassNames="grow-[0.9] max-w-52"
+            formClassNames={formClassNames}
           />
           {( sortable &&
             <>
@@ -79,7 +80,7 @@ export default function TasksHeader({
                 handleChange={updateFilters}
                 label="Sort By"
                 options={sortByOptions}
-                formClassNames="grow-[0.9] max-w-52"
+                formClassNames={formClassNames}
               />
               <FormInput 
                   name="order"
@@ -87,7 +88,7 @@ export default function TasksHeader({
                   handleChange={updateFilters}
                   label="Order"
                   options={isAscOptions}
-                  formClassNames="grow-[0.9] max-w-52"
+                  formClassNames={formClassNames}
                 />
               </>
           )}

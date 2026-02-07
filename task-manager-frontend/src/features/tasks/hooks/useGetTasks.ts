@@ -131,41 +131,55 @@ export default function useGetTasks(props?: UseGetTasksProps){
   const closeEditPopup = () => setSelectedEditTask(null)
 
   async function handleEdit(newTask: CreateTaskInput) {
-  if (!selectedEditTask || !tasks) return;
+    if (!selectedEditTask || !tasks) return;
 
-  const prevTasks = tasks;
-
-  const rawData = {
-    title: newTask.title.trim(),
-    description: newTask.description.trim(),
-    category: newTask.category,
-    dueDate: newTask.dueDate,
-    estimatedTime: newTask.estimatedTime,
-  };
-
-  const patchData: Partial<Task> = Object.fromEntries(
-    Object.entries(rawData).filter(([, value]) => value !== "")
-  );
-
-  try {
-    // 3. Optimistic Update (UI needs the merged data to stay consistent)
-    const updatedTask: Task = {
-      ...selectedEditTask,
-      ...patchData,
+    const rawData = {
+      title: newTask.title.trim(),
+      description: newTask.description.trim(),
+      category: newTask.category,
+      dueDate: newTask.dueDate,
+      estimatedTime: newTask.estimatedTime,
     };
 
-    setTasks(tasks.map(t => (t.id === selectedEditTask.id ? updatedTask : t)));
+    const patchData: Partial<Task> = Object.fromEntries(
+      Object.entries(rawData).filter(([, value]) => value !== "")
+    );
 
-    // 4. Send ONLY the non-empty fields to the backend
-    await taskService.update(selectedEditTask.id, patchData);
-    
-    setSelectedEditTask(null);
-  } catch (err) {
-    setTasks(prevTasks);
-    console.error("Update failed:", err);
-    throw err;
+    try {
+      await updateTask(selectedEditTask.id, patchData)
+      setSelectedEditTask(null);
+    } catch (err) {
+      console.error("Update failed:", err);
+      throw err;
+    }
   }
-}
+
+  async function updateTask(id: number, newTaskData: Partial<Task>) {
+    if (!tasks) return;
+    const prevTasks = tasks;
+
+    try {
+      // 3. Optimistic Update (UI needs the merged data to stay consistent)
+      const oldTask = tasks.find(t => t.id === id);
+
+      if (!oldTask) {
+        throw Error("Task doesn't exist")
+      }
+      const updatedTask: Task = {
+        ...oldTask,
+        ...newTaskData,
+      };
+
+      setTasks(tasks.map(t => (t.id === updatedTask.id ? updatedTask : t)));
+
+      // 4. Send ONLY the non-empty fields to the backend
+      await taskService.update(id, newTaskData);
+    } catch (err) {
+      setTasks(prevTasks);
+      console.error("Update failed:", err);
+      throw err;  
+    }
+  }
 
   async function setIsCompleted(id: number, isCompleted: boolean){
     const prevTasks = tasks;
@@ -216,6 +230,7 @@ export default function useGetTasks(props?: UseGetTasksProps){
     handleEdit,
     closeEditPopup,
     setIsCompleted,
+    updateTask,
     filters,
     pageDetails,
     updateFilters,

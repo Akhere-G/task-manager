@@ -23,6 +23,7 @@ export default function CalendarView() {
       resetFilters,
       isStale,
       isSearching,
+      updateTask
     } = useGetTasks()
 
   let MainContent = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
@@ -38,6 +39,7 @@ export default function CalendarView() {
         handleConfirmEdit={handleConfirmEdit}
         setIsCompleted={setIsCompleted}
         tasks={tasks}
+        updateTask={updateTask}
       />)
     } 
 
