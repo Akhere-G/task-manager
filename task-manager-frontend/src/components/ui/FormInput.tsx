@@ -5,7 +5,8 @@ export interface FormInputprops {
   value: string | number;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   errorMessage?: string;
-  options?: {name: string; value: string}[]
+  options?: {name: string; value: string}[];
+  formClassNames?: string
 }
 
 
@@ -17,10 +18,11 @@ export default function FormInput({
   handleChange, 
   errorMessage, 
   options,
+  formClassNames = ""
   }: FormInputprops){
 
   return (
-    <div className="group flex flex-col text-text-main">
+    <div className={"group flex flex-col text-text-main " + formClassNames}>
       <label htmlFor={name} className="group-focus-within:text-accent text-xs text-text-sub">{label}</label>
       {!options && ( 
         <input

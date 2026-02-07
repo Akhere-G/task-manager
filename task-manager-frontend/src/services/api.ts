@@ -9,13 +9,19 @@ const api = axios.create({
   }
 })
 
+export interface GetTaskResult {
+    tasks: Task[];
+    totalTasks: number;
+    totalPages: number;
+    currentPage: number;
+}
 interface DeleteTaskResult {
   id: string;
   message: string;
 }
 
 export const taskService = { 
-  getAll: async (params: URLSearchParams): Promise<Task[]> => {
+  getAll: async (params: URLSearchParams): Promise<GetTaskResult> => {
     const response = await api.get(`/tasks?${params.toString()}`)
     return response.data;
   }, 

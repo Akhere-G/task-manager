@@ -4,6 +4,9 @@ import { taskService } from "../services/api";
 import TaskForm from "../features/tasks/components/TaskForm";
 import { EmptyState, LoadingState, ErrorState, Popup, FormInput } from "../components/ui";
 import TaskList from "../features/tasks/components/TaskList";
+import Pagination from "../components/ui/Pagination";
+
+const PER_PAGE = 10;
 
 export default function Home() {
   const [tasks, setTasks] = useState<null | Task[]>(null)
@@ -11,6 +14,12 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(null)
   const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null)
+  const [pageDetails, setPageDetails] = useState({ 
+    currentPage: 1, 
+    totalItems: 0, 
+    totalPages: 0,
+    perPage: PER_PAGE
+  })
   const [filters, setFilters] = useState({
     search: "",
     category: "",
@@ -51,21 +60,25 @@ export default function Home() {
         params.set("today", new Date().toISOString().substring(0, 10));
       }
 
-        const newTasks = await taskService.getAll(params);
-        setTasks(newTasks);
-        setError(null)
-      } catch (err) {
-        setError("Couldn't load tasks.");
-        console.log(err)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    
-    const delayDebounceFn = setTimeout(fetchTasks, filters.search ? 400 : 0)
-    return () => clearTimeout(delayDebounceFn)
+      params.set("page", String(pageDetails.currentPage))
+      params.set("limit", String(pageDetails.perPage))
 
-  }, [filters]);
+      const { tasks, totalPages, totalTasks } = await taskService.getAll(params);
+      setTasks(tasks);
+      setPageDetails(prev => ({ ...prev, totalPages, totalItems: totalTasks, }))
+      setError(null)
+    } catch (err) {
+      setError("Couldn't load tasks.");
+      console.log(err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+    
+  const delayDebounceFn = setTimeout(fetchTasks, filters.search ? 400 : 0)
+  return () => clearTimeout(delayDebounceFn)
+
+  }, [filters, pageDetails.currentPage, pageDetails.perPage]);
 
   const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
   
@@ -132,6 +145,7 @@ export default function Home() {
   }
 
   const updateFilters = (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setPageDetails({...pageDetails, currentPage: 1 });
     setFilters(prev => ({ ...prev, [e.target.name] : e.target.value }))
   }
 
@@ -145,6 +159,10 @@ export default function Home() {
       sortBy: "due_date",
       order: "asc"
     })
+  }
+
+  function setPage(page: number){
+    setPageDetails(prev => ({ ...prev, currentPage: page }))
   }
 
   const isStale = isLoading || filters.search !== deferredSearch
@@ -207,17 +225,18 @@ export default function Home() {
 
   return (
     <section className="flex flex-col gap-6 min-h-full">
-      <div className="flex justify-between bg-surface p-4 rounded-xl items-start sm:items-center flex-col sm:flex-row gap-5">
-        <header>
-          <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks</h1>
+      <div className="flex justify-between bg-surface p-4 rounded-xl items-center sm:items-start flex-col lg:flex-row gap-5">
+        <header className="grow-[0.9] shrink-0 w-full max-w-52 flex flex-col items-center sm:items-start">
+          <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks ({pageDetails.totalItems})</h1>
           <p className="text-text-sub">Manage your daily goals.</p>
         </header>
-        <form className="flex gap-4 items-baseline flex-col sm:flex-row flex-wrap">
+        <form className="flex gap-4 items-baseline flex-row flex-wrap grow-[0.5]">
           <FormInput 
             name="search"
             value={filters.search}
             handleChange={updateFilters}
             label="Search"
+            formClassNames="grow-[0.9] max-w-52"
           />
           <FormInput 
             name="category"
@@ -225,6 +244,7 @@ export default function Home() {
             handleChange={updateFilters}
             label="Category"
             options={categoryOptions}
+            formClassNames="grow-[0.9] max-w-52"
           />
           <FormInput 
             name="duration"
@@ -232,6 +252,7 @@ export default function Home() {
             handleChange={updateFilters}
             label="Duration"
             options={taskDurationOptions}
+            formClassNames="grow-[0.9] max-w-52"
           />
           <FormInput 
             name="isCompleted"
@@ -239,6 +260,7 @@ export default function Home() {
             handleChange={updateFilters}
             label="Is Complete"
             options={completedTasksOptions}
+            formClassNames="grow-[0.9] max-w-52"
           />
           <FormInput 
             name="dueDate"
@@ -246,6 +268,7 @@ export default function Home() {
             handleChange={updateFilters}
             label="Due Date"
             options={dueDateOptions}
+            formClassNames="grow-[0.9] max-w-52"
           />
           <FormInput 
             name="sortBy"
@@ -253,6 +276,7 @@ export default function Home() {
             handleChange={updateFilters}
             label="Sort By"
             options={sortByOptions}
+            formClassNames="grow-[0.9] max-w-52"
           />
           <FormInput 
             name="order"
@@ -260,6 +284,7 @@ export default function Home() {
             handleChange={updateFilters}
             label="Order"
             options={isAscOptions}
+            formClassNames="grow-[0.9] max-w-52"
           />
             <button 
               type="button"
@@ -271,36 +296,41 @@ export default function Home() {
           </form>
       </div>
 
-      {selectedDeleteTask && (
-        <Popup 
-          title="Delete Task"  
-          close={() => setSelectedDeleteTask(null)}
-          handleConfirm={() => {
-            handleDelete(selectedDeleteTask.id); 
-            setSelectedDeleteTask(null);
-          }}
-          actionText="Delete Task"
-        >
-          {`Delete task '${selectedDeleteTask.title}'?`}
-        </Popup>
-      )}
-      {selectedEditTask && (
-        <Popup 
-          title={`Edit task '${selectedEditTask.title}'?`}
-          close={() => setSelectedEditTask(null)}
-          showCloseButton={false}
-        >
-          <TaskForm
-            confirmButtonText="Edit Task"
-            initialData={selectedEditTask}
-            submitAction={handleEdit}
-            close={(() => setSelectedEditTask(null))}
-          />
-        </Popup>
-      )}
+    {tasks && tasks.length > 0 && <Pagination {...pageDetails} setPage={setPage} />}
+
     <div className={`transition-opacity duration-200 ${isStale ? 'opacity-75' : 'opacity-100'}`}>
       {MainContent}
     </div>
+
+    {tasks && tasks.length > 0 && <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate/>}
+
+    {selectedDeleteTask && (
+      <Popup 
+        title="Delete Task"  
+        close={() => setSelectedDeleteTask(null)}
+        handleConfirm={() => {
+          handleDelete(selectedDeleteTask.id); 
+          setSelectedDeleteTask(null);
+        }}
+        actionText="Delete Task"
+      >
+        {`Delete task '${selectedDeleteTask.title}'?`}
+      </Popup>
+    )}
+    {selectedEditTask && (
+      <Popup 
+        title={`Edit task '${selectedEditTask.title}'?`}
+        close={() => setSelectedEditTask(null)}
+        showCloseButton={false}
+      >
+        <TaskForm
+          confirmButtonText="Edit Task"
+          initialData={selectedEditTask}
+          submitAction={handleEdit}
+          close={(() => setSelectedEditTask(null))}
+        />
+      </Popup>
+    )}
     </section>
   )
 }
