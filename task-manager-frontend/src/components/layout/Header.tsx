@@ -39,7 +39,7 @@ export default function Header({ links, currentPath }: Props) {
                 <Link 
                   to={path} 
                   onClick={closeSidebar}
-                  className={`block p-3 rounded-lg font-medium transition-colors ${
+                  className={`block p-3 rounded-md font-medium transition-colors ${
                     currentPath === path 
                       ? "bg-brand/10 text-brand" 
                       : "text-text-main hover:bg-surface-muted"
@@ -60,7 +60,7 @@ export default function Header({ links, currentPath }: Props) {
             {/* Hamburger Button (Mobile Only) */}
             <button 
               onClick={toggleSidebar}
-              className="md:hidden p-2 -ml-2 text-text-main hover:bg-surface-muted rounded-lg transition-colors"
+              className="md:hidden p-2 -ml-2 text-text-main hover:bg-surface-muted rounded-md transition-colors"
               aria-label="Open menu"
             >
               <Menu aria-hidden="true" className="w-4 h-4" />

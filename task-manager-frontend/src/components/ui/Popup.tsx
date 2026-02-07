@@ -33,7 +33,7 @@ export default function Popup({
 
   return (
     <div className='fixed w-screen h-screen z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center'>
-      <div className='bg-surface shadow-sm rounded-2xl overflow-hidden w-4/5 md:max-w-2xl'>
+      <div className='bg-surface shadow-sm rounded-md overflow-hidden w-4/5 md:max-w-2xl'>
         <header className='bg-accent p-4 text-text-inverse flex justify-between items-center'>
           <h1>{title}</h1>
           <button className="text-xl" aria-label='close' onClick={close}>&times;</button>
@@ -44,7 +44,7 @@ export default function Popup({
         <footer className={`gap-4 flex justify-end ${(showCloseButton || handleConfirm) && "p-4"}`}>
         {showCloseButton && (
           <button 
-            className="px-4 py-2 rounded-lg font-medium hover:bg-surface-muted transition-colors " 
+            className="px-4 py-2 rounded-md font-medium hover:bg-surface-muted transition-colors " 
             onClick={close}
           >
               Cancel

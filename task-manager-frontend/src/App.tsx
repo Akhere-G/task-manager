@@ -1,11 +1,12 @@
 import { Route, Routes, useLocation } from "react-router-dom";
-import { About, AddTask, Contact, Home, Stats, TaskDetails } from "./pages";
+import { About, AddTask, Contact, Home, Stats, TaskDetails, CalendarView } from "./pages";
 import { Footer, Header } from "./components/layout";
 
 function App() {
   const navLinks = [
     { title: "Tasks", path: "/" },
     { title: "Add Task", path: "/addtasks" },
+    { title: "Calendar", path: "/calendar" },
     { title: "Stats", path: "/stats" },
     { title: "About", path: "/about" },
     { title: "Contact", path: "/contact" },
@@ -20,6 +21,7 @@ function App() {
         <Routes>    
           <Route path="/" element={<Home />} />
           <Route path="/addtasks" element={<AddTask />} />
+          <Route path="/calendar" element={<CalendarView />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />

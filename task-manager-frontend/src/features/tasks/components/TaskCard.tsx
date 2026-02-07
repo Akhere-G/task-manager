@@ -31,14 +31,14 @@ export default function TaskCard({
 
   return (
     <article className={`
-      relative flex flex-col h-full shadow-sm rounded-xl border transition-all duration-300 bg-surface
+      relative flex flex-col h-full shadow-sm rounded-md border transition-all duration-300 bg-surface
       ${isCompleted 
         ? "border-slate-200 dark:border-slate-800 opacity-60" 
         : "border-slate-200 dark:border-slate-800 hover:border-brand/50 hover:shadow-md"}
     `}>
       
       <header className={`
-        p-4 flex justify-between items-center rounded-t-xl
+        p-4 flex justify-between items-center rounded-t-md
         ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}
       `}>
         <h3 className={`font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}>
@@ -62,7 +62,7 @@ export default function TaskCard({
         {isLongDesc && (
           <button 
             aria-label={showMore ? "Show More" : "Show Less"}
-            className="p-1.5 rounded-lg hover:bg-surface-muted transition-colors group cursor-pointer self-end"
+            className="p-1.5 rounded-md hover:bg-surface-muted transition-colors group cursor-pointer self-end"
             onClick={() => setShowMore(prev => !prev)}
           >
           <ShowMoreIcon 
@@ -73,7 +73,7 @@ export default function TaskCard({
         )}
       </div>
 
-      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate  rounded-b-xl flex justify-between items-center">
+      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate  rounded-b-md flex justify-between items-center">
         <div className="flex items-center gap-2 text-text-sub">
           <Clock className="w-4 h-4" />
           <time className={`text-xs font-medium ${isOverdue ? "text-failure font-bold" : ""}`}>
@@ -86,7 +86,7 @@ export default function TaskCard({
             onClick={() => onDelete(id)}
             title="Delete Task"
             aria-label={`Delete task: ${title}`}
-            className="p-1.5 rounded-lg hover:bg-failure/10 transition-colors group cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-failure/10 transition-colors group cursor-pointer"
           >
             <Trash2
               aria-hidden="true" 
@@ -96,7 +96,7 @@ export default function TaskCard({
             onClick={() => onEdit(id)}
             title="Edit Task"
             aria-label={`Edit task: ${title}`}
-            className="p-1.5 rounded-lg hover:bg-info/10 transition-colors group cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-info/10 transition-colors group cursor-pointer"
           >
             <Pencil
               aria-hidden="true" 
@@ -106,7 +106,7 @@ export default function TaskCard({
             onClick={() => setIsCompleted(id, !isCompleted)}
             title={isCompleted ? "Mark as pending" : "Mark as complete"}
             aria-label={isCompleted ? "Mark task as pending" : "Mark task as complete"}
-            className="p-1.5 rounded-lg hover:bg-success/10 transition-colors group cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-success/10 transition-colors group cursor-pointer"
           >
             <CheckCircle 
               aria-hidden="true"

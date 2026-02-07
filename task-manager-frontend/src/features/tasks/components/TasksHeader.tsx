@@ -19,7 +19,7 @@ interface TasksHeaderProps {
 
 export default function TasksHeader({ filters, updateFilters, resetFilters, totalTasks }: TasksHeaderProps){
   return (
-    <div className="flex justify-between bg-surface shadow-sm p-4 rounded-xl items-center sm:items-start flex-col lg:flex-row gap-5">
+    <div className="flex justify-between bg-surface shadow-sm p-4 rounded-md items-center sm:items-start flex-col lg:flex-row gap-5">
         <header className="grow-[0.9] shrink-0 w-full max-w-52 flex flex-col items-center sm:items-start">
           <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks ({totalTasks})</h1>
           <p className="text-text-sub">Manage your daily goals.</p>

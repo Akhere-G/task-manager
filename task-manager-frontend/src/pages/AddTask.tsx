@@ -13,7 +13,7 @@ export default function AddTask() {
   }
 
   return (
-    <section className="shadow-sm flex flex-col gap-6 min-h-full bg-surface p-4 rounded-2xl">
+    <section className="shadow-sm flex flex-col gap-6 min-h-full bg-surface p-4 rounded-md">
       <header>
         <h1 className="text-3xl font-bold text-text-main transition-colors">Add Task</h1>
         <p className="text-text-sub">Set new goals.</p>
