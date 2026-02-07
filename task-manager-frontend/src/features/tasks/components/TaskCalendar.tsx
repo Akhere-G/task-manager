@@ -7,29 +7,20 @@ import { EmptyState, ErrorState, LoadingState, Popup } from '../../../components
 import { formatDate } from '../utils';
 import TaskCard from './TaskCard';
 
-export default function Calendar() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState("")
-  const [tasks, setTasks] = useState<Task[] | null>(null);
+interface CalendarProps {
+  tasks: Task[]
+  handleConfirmDelete: (id: number) => void;
+  handleConfirmEdit: (id: number) => void;
+  setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>,
+}
+
+export default function Calendar({ 
+  handleConfirmDelete, 
+  handleConfirmEdit,
+  setIsCompleted,
+  tasks
+}: CalendarProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-
-  useEffect(() => {
-    async function fetchTasks(){
-      setIsLoading(true)
-      try {
-        const { tasks } = await taskService.getAll()
-        setTasks(tasks)
-        setError("")
-      } catch (err) {
-        console.log(err)
-        setError("Could not fetch")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchTasks()
-  }, [])
-
   function selectTask(id: string){
     if (!tasks) return
     
@@ -38,24 +29,11 @@ export default function Calendar() {
       setSelectedTask(selectedTask)
   }
 
-
-  if (isLoading){
-    return <LoadingState />
-  }
-
-  if (error){
-    return <ErrorState error={error} />
-  }
-
-  if (!tasks || tasks.length === 0){
-    return <EmptyState searchMessage='No Tasks' />
-  }
-
   const events = tasks.map(task => ({ title: task.title, date: formatDate(task.dueDate), id: String(task.id) }))
 
   console.log(events)
   return (
-    <>
+    <div className='card'>
     <FullCalendar
       plugins={[ dayGridPlugin ]}
       initialView="dayGridMonth"
@@ -80,10 +58,15 @@ export default function Calendar() {
           showCloseButton={false}
           sleek
         >
-          <TaskCard {...selectedTask} />
+          <TaskCard 
+            {...selectedTask} 
+            onDelete={handleConfirmDelete} 
+            onEdit={handleConfirmEdit}
+            setIsCompleted={setIsCompleted}
+          />
         </Popup>
       )}
-    </>
+    </div>
   )
 }
 

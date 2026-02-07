@@ -1,13 +1,56 @@
-import { TaskCalendar } from "../features/tasks/components";
+import type { JSX } from "react";
+import { EmptyState, ErrorState, LoadingState } from "../components/ui";
+import { TaskCalendar, TasksHeader } from "../features/tasks/components";
+import useGetTasks from "../features/tasks/hooks/useGetTasks";
 
 export default function CalendarView() {
+  const {
+      tasks,
+      isLoading,
+      error,
+      selectedDeleteTask,
+      selectedEditTask,
+      handleConfirmDelete,
+      closeDeletePopup,
+      handleDelete,
+      handleConfirmEdit,
+      closeEditPopup,
+      handleEdit,
+      setIsCompleted,
+      filters,
+      pageDetails,
+      updateFilters,
+      resetFilters,
+      setPage,
+      isStale,
+      isSearching,
+    } = useGetTasks()
+
+  let MainContent = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
+
+  if (error) {
+      MainContent = <ErrorState error={error}/>
+    } else if (isLoading && (!tasks || tasks.length === 0)) {
+      MainContent = <LoadingState loadMessage="Getting tasks..."/>
+    } else if (tasks && tasks.length > 0) {
+      MainContent = (
+      <TaskCalendar
+        handleConfirmDelete={handleConfirmDelete}
+        handleConfirmEdit={handleConfirmEdit}
+        setIsCompleted={setIsCompleted}
+        tasks={tasks}
+      />)
+    } 
+
   return (
-    <section className="flex flex-col gap-6 min-h-full card">
-      <header className="grow-[0.9] shrink-0 w-full  flex flex-col items-center sm:items-start">
-        <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks Calendar</h1>
-        <p className="text-text-sub">Manage your daily goals.</p>
-      </header>
-      <TaskCalendar/>
+    <section className="flex flex-col gap-6 min-h-full">
+      <TasksHeader 
+        filters={filters} 
+        updateFilters={updateFilters} 
+        resetFilters={resetFilters} 
+        totalTasks={pageDetails.totalItems}
+      />
+      {MainContent}
     </section>
   )
 }

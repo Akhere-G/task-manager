@@ -19,7 +19,7 @@ export default function Popup({
   showCloseButton = true,
   actionText = "Confirm", 
   actionButtonVariant = "failure",
-  sleek = true    
+  sleek = false 
 }: PopupProps) {
   const actionButtonClass = `btn-${actionButtonVariant}`
   

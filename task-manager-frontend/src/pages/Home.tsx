@@ -1,203 +1,34 @@
-import { useDeferredValue, useEffect, useState, type JSX } from "react";
-import { type CreateTaskInput, type Task } from "../features/tasks/types";
-import { taskService } from "../services/api";
-import { EmptyState, LoadingState, ErrorState, Popup, Pagination } from "../components/ui";
-import { TasksHeader, TaskForm, TaskList } from "../features/tasks/components";
-import { formatDate } from "../features/tasks/utils";
+import { EmptyState, LoadingState, ErrorState, Pagination } from "../components/ui";
+import { TasksHeader, TaskList } from "../features/tasks/components";
+import TaskPopups from "../features/tasks/components/TaskPopups";
+import useGetTasks from "../features/tasks/hooks/useGetTasks";
 
 const PER_PAGE = 10;
 
 export default function Home() {
-  const [tasks, setTasks] = useState<null | Task[]>(null)
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null)
-  const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(null)
-  const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null)
-  const [pageDetails, setPageDetails] = useState({ 
-    currentPage: 1, 
-    totalItems: 0, 
-    totalPages: 0,
-    perPage: PER_PAGE
-  })
-  const [filters, setFilters] = useState({
-    search: "",
-    category: "",
-    duration: "",
-    isCompleted: "",
-    dueDate: "",
-    sortBy: "due_date",
-    order: "asc"
-  })
+  const {
+    tasks,
+    isLoading,
+    error,
+    selectedDeleteTask,
+    selectedEditTask,
+    handleConfirmDelete,
+    closeDeletePopup,
+    handleDelete,
+    handleConfirmEdit,
+    closeEditPopup,
+    handleEdit,
+    setIsCompleted,
+    filters,
+    pageDetails,
+    updateFilters,
+    resetFilters,
+    setPage,
+    isStale,
+    isSearching,
+  } = useGetTasks({ perPage: PER_PAGE })
 
-  const deferredSearch = useDeferredValue(filters.search)
-
-  useEffect(() => {
-    async function fetchTasks() {
-      setIsLoading(true)      
-      try {
-        const params = new URLSearchParams()
-        const apiParamMap: Record<string, string> = {
-        search: "q",
-        category: "category",
-        duration: "task_duration",
-        isCompleted: "is_completed",
-        dueDate: "due_date",
-        sortBy: "sort_by",
-        order: "order",
-      };
-
-      const newFilters ={
-        search: deferredSearch, 
-        category: filters.category, 
-        duration: filters.duration, 
-        isCompleted: filters.isCompleted, 
-        dueDate: filters.dueDate, 
-        sortBy: filters.sortBy, 
-        order: filters.order,
-      }
-
-      Object.entries(newFilters).forEach(([key, value]) => {
-        if (value) {
-          params.set(apiParamMap[key], value);
-        } else {
-          params.delete(apiParamMap[key])
-        }
-      });
-
-      if (filters.dueDate) {
-        params.set("today", formatDate() );
-      }
-
-      params.set("page", String(pageDetails.currentPage))
-      params.set("limit", String(pageDetails.perPage))
-
-      const { tasks, totalPages, totalTasks } = await taskService.getAll(params);
-      setTasks(tasks);
-      setPageDetails(prev => ({ ...prev, totalPages, totalItems: totalTasks, }))
-      setError(null)
-    } catch (err) {
-      setError("Couldn't load tasks.");
-      console.log(err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-    
-  const delayDebounceFn = setTimeout(fetchTasks, deferredSearch ? 400 : 0)
-  
-  return () => clearTimeout(delayDebounceFn)
-
-  }, [
-    deferredSearch, 
-    filters.category, 
-    filters.duration, 
-    filters.isCompleted, 
-    filters.dueDate, 
-    filters.sortBy, 
-    filters.order, 
-    pageDetails.currentPage, 
-    pageDetails.perPage
-  ]);
-
-  const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
-  
-  async function handleDelete(id: number){
-    const prevTasks = tasks;
-    const prevPageDetails = pageDetails;
-
-    setTasks(prev => prev!.filter(task => task.id !== id))
-    const totalItems = pageDetails.totalItems - 1
-    const totalPages = Math.ceil(totalItems / pageDetails.perPage)
-    const currentPage = Math.min(pageDetails.currentPage, totalPages)
-
-    try {
-      await taskService.delete(id);
-      setPageDetails(prev => ({ ...prev, totalItems, totalPages, currentPage }))
-      // cannot do optimistic update as changing current page before delete refetches all tasks before delete occurs
-      // causing totalPages to be wrong
-    } catch (err) {
-      console.log(err)
-      setTasks(prevTasks)
-      setPageDetails(prevPageDetails)
-    }
-  }
-  
-  const handleConfirmEdit = (id: number) => setSelectedEditTask(tasks?.find(t => t.id === id) || null)
-  
-  async function handleEdit(newTask: CreateTaskInput) {
-  if (!selectedEditTask || !tasks) return;
-
-  const prevTasks = tasks;
-
-  const rawData = {
-    title: newTask.title.trim(),
-    description: newTask.description.trim(),
-    category: newTask.category,
-    dueDate: newTask.dueDate,
-    estimatedTime: newTask.estimatedTime,
-  };
-
-  const patchData: Partial<Task> = Object.fromEntries(
-    Object.entries(rawData).filter(([, value]) => value !== "")
-  );
-
-  try {
-    // 3. Optimistic Update (UI needs the merged data to stay consistent)
-    const updatedTask: Task = {
-      ...selectedEditTask,
-      ...patchData,
-    };
-
-    setTasks(tasks.map(t => (t.id === selectedEditTask.id ? updatedTask : t)));
-
-    // 4. Send ONLY the non-empty fields to the backend
-    await taskService.update(selectedEditTask.id, patchData);
-    
-    setSelectedEditTask(null);
-  } catch (err) {
-    setTasks(prevTasks);
-    console.error("Update failed:", err);
-    throw err;
-  }
-}
-
-  async function setIsCompleted(id: number, isCompleted: boolean){
-    const prevTasks = tasks;
-    try {
-      setTasks(prev => prev!.map(task => task.id === id ? ({...task, isCompleted }) : task))
-      await taskService.update(id, { isCompleted })
-    } catch (err) {
-      console.log(err)
-      setTasks(prevTasks)
-    }
-  }
-
-  const updateFilters = (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setPageDetails({...pageDetails, currentPage: 1 });
-    setFilters(prev => ({ ...prev, [e.target.name] : e.target.value }))
-  }
-
-  function resetFilters(){
-    setFilters({
-      search: "",
-      category: "",
-      duration: "",
-      isCompleted: "",
-      dueDate: "",
-      sortBy: "due_date",
-      order: "asc"
-    })
-  }
-
-  function setPage(page: number){
-    setPageDetails(prev => ({ ...prev, currentPage: page }))
-  }
-
-  const isStale = isLoading || filters.search !== deferredSearch
-
-  const isSearching = !!filters.search.trim() || !!filters.category || !!filters.duration || !!filters.isCompleted || !!filters.dueDate;
-  
-  let MainContent: JSX.Element = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
+  let MainContent = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
 
   if (error) {
     MainContent = <ErrorState error={error}/>
@@ -230,33 +61,15 @@ export default function Home() {
 
     {tasks && tasks.length > 0 && <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate/>}
 
-    {selectedDeleteTask && (
-      <Popup 
-        title="Delete Task"  
-        close={() => setSelectedDeleteTask(null)}
-        handleConfirm={() => {
-          handleDelete(selectedDeleteTask.id); 
-          setSelectedDeleteTask(null);
-        }}
-        actionText="Delete Task"
-      >
-        {`Delete task '${selectedDeleteTask.title}'?`}
-      </Popup>
-    )}
-    {selectedEditTask && (
-      <Popup 
-        title={`Edit task '${selectedEditTask.title}'?`}
-        close={() => setSelectedEditTask(null)}
-        showCloseButton={false}
-      >
-        <TaskForm
-          confirmButtonText="Edit Task"
-          initialData={selectedEditTask}
-          submitAction={handleEdit}
-          close={(() => setSelectedEditTask(null))}
-        />
-      </Popup>
-    )}
+    {tasks && (
+      <TaskPopups 
+        selectedDeleteTask={selectedDeleteTask}
+        selectedEditTask={selectedEditTask}
+        closeDeletePopup={closeDeletePopup}
+        closeEditPopup={closeEditPopup}
+        handleDelete={handleDelete}
+        handleEdit={handleEdit}
+      />)}
     </section>
   )
 }

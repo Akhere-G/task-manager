@@ -4,7 +4,6 @@ interface PaginationProps {
   currentPage: number; 
   totalItems: number; 
   totalPages: number;
-  perPage: number;
   setPage: (page: number) => void;
   scrollUpOnNavigate?: boolean;
 }
