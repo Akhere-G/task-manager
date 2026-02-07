@@ -2,6 +2,7 @@ import type { JSX } from "react";
 import { EmptyState, ErrorState, LoadingState } from "../components/ui";
 import { TaskCalendar, TasksHeader } from "../features/tasks/components";
 import useGetTasks from "../features/tasks/hooks/useGetTasks";
+import TaskPopups from "../features/tasks/components/TaskPopups";
 
 export default function CalendarView() {
   const {
@@ -21,7 +22,6 @@ export default function CalendarView() {
       pageDetails,
       updateFilters,
       resetFilters,
-      setPage,
       isStale,
       isSearching,
     } = useGetTasks()
@@ -49,8 +49,20 @@ export default function CalendarView() {
         updateFilters={updateFilters} 
         resetFilters={resetFilters} 
         totalTasks={pageDetails.totalItems}
+        sortable={false}
+
       />
-      {MainContent}
+      <section className={`transition-opacity duration-200 ${isStale ? 'opacity-75' : 'opacity-100'}`}>
+        {MainContent}
+      </section>
+      <TaskPopups 
+        handleDelete={handleDelete}
+        closeDeletePopup={closeDeletePopup}
+        selectedDeleteTask={selectedDeleteTask}
+        handleEdit={handleEdit}
+        closeEditPopup={closeEditPopup}
+        selectedEditTask={selectedEditTask}
+      />
     </section>
   )
 }

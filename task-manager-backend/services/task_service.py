@@ -67,7 +67,6 @@ def get_all_tasks(category=None, search=None, task_duration=None, is_completed=N
     offset = 0
     limit = total_count if total_count > 0 else 1
   
-  print(data_query)
   cursor.execute(data_query, params)
   tasks = cursor.fetchall()
 

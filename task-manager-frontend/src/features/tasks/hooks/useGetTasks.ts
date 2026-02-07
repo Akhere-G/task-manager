@@ -7,7 +7,7 @@ interface UseGetTasksProps {
   perPage?: number;
 }
 
-export default function useGetTasks(props: UseGetTasksProps){
+export default function useGetTasks(props?: UseGetTasksProps){
   const { perPage } = props ?? {}
   const [tasks, setTasks] = useState<null | Task[]>(null)
   const [isLoading, setIsLoading] = useState(true);

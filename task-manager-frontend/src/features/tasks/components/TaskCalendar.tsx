@@ -1,9 +1,8 @@
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid' 
-import { useEffect, useState } from 'react'
-import { taskService } from '../../../services/api';
+import { useState } from 'react'
 import type { Task } from '../types';
-import { EmptyState, ErrorState, LoadingState, Popup } from '../../../components/ui';
+import {  Popup } from '../../../components/ui';
 import { formatDate } from '../utils';
 import TaskCard from './TaskCard';
 
@@ -14,24 +13,25 @@ interface CalendarProps {
   setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>,
 }
 
-export default function Calendar({ 
+export default function TaskCalendar({ 
   handleConfirmDelete, 
   handleConfirmEdit,
   setIsCompleted,
   tasks
 }: CalendarProps) {
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null)
   function selectTask(id: string){
     if (!tasks) return
     
     const selectedTask = tasks.find(task => task.id === Number(id))
     if (selectedTask)
-      setSelectedTask(selectedTask)
+      setSelectedTaskId(selectedTask.id)
   }
 
   const events = tasks.map(task => ({ title: task.title, date: formatDate(task.dueDate), id: String(task.id) }))
 
-  console.log(events)
+  const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
+
   return (
     <div className='card'>
     <FullCalendar
@@ -54,22 +54,23 @@ export default function Calendar({
       {selectedTask && (
         <Popup 
           title="" 
-          close={() => setSelectedTask(null)}
+          close={() => setSelectedTaskId(null)}
           showCloseButton={false}
           sleek
         >
           <TaskCard 
             {...selectedTask} 
-            onDelete={handleConfirmDelete} 
+            onDelete={id => {
+              handleConfirmDelete(id)
+              setSelectedTaskId(null)
+            }} 
             onEdit={handleConfirmEdit}
-            setIsCompleted={setIsCompleted}
+            setIsCompleted={(id, isCompleted) => {
+              setIsCompleted(id, isCompleted);
+            }}
           />
         </Popup>
       )}
     </div>
   )
-}
-
-function CalendarTask(){
-
 }
