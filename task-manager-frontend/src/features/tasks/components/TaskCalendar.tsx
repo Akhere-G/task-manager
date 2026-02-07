@@ -28,7 +28,7 @@ export default function TaskCalendar({
       setSelectedTaskId(selectedTask.id)
   }
 
-  const events = tasks.map(task => ({ title: task.title, date: formatDate(task.dueDate), id: String(task.id) }))
+  const events = tasks.map(task => ({ title: task.title, date: formatDate(task.dueDate), id: String(task.id), extendedProps: task }))
 
   const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
 
@@ -38,16 +38,18 @@ export default function TaskCalendar({
       plugins={[ dayGridPlugin ]}
       initialView="dayGridMonth"
       events={events}
-      
+      eventClick={({event}) => selectTask(event.id)}
       eventContent={({ event }) => {
         return (
           <div 
-          className='bg-brand truncate' 
-          onClick={() => selectTask(event.id)}
+              className={`px-2 py-0.5 rounded text-xs transition-all shadow-sm ${
+                event.extendedProps.isCompleted 
+                  ? 'bg-surface-muted text-text-sub border-l-4 border-surface-muted/90 hover:brightness-125' 
+                  : 'bg-brand text-text-inverse border-l-4 border-brand/5 hover:brightness-125'
+              } truncate cursor-pointer hover:brightness-95`}
           >
-            <b className='truncate'>{event.title}</b>
-            <i>{event.start && ""}</i>
-          </div>
+      <span className="font-semibold">{event.title}</span>
+    </div>
         )
       }}
       />
