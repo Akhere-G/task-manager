@@ -124,15 +124,16 @@ export default function TaskForm({
       <footer className='p-4 flex gap-4 justify-end'>
       {close && (
         <button 
-          className="px-4 py-2 rounded-lg font-medium hover:bg-surface-muted transition-colors " 
+          className={isLoading ? "btn-secondary-disabled": "btn-secondary"}
           type="button"
           onClick={close}
+          disabled={isLoading}
         >
             Cancel
         </button>
       )}
         <button 
-          className={`text-text-inverse p-3 rounded-md ${isLoading ? "bg-surface-muted": "bg-brand"}`}
+          className={isLoading ? "btn-primary-disabled": "btn-primary"}
           disabled={isLoading}
         >
             {confirmButtonText}

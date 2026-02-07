@@ -7,7 +7,7 @@ interface PopupProps {
   children: React.ReactNode;
   showCloseButton?: boolean;
   actionText?: string;
-  actionButtonVariant?: "failure" | "success" | "accent"
+  actionButtonVariant?: "primary" | "secondary" | "warning" | "success" | "failure"
 }
 
 export default function Popup({ 
@@ -19,7 +19,7 @@ export default function Popup({
   actionText = "Confirm", 
   actionButtonVariant = "failure"   
 }: PopupProps) {
-  const actionButtonClass = `bg-${actionButtonVariant}`
+  const actionButtonClass = `btn-${actionButtonVariant}`
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -33,7 +33,7 @@ export default function Popup({
 
   return (
     <div className='fixed w-screen h-screen z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center'>
-      <div className='bg-surface rounded-2xl overflow-hidden w-4/5 md:max-w-2xl'>
+      <div className='bg-surface shadow-sm rounded-2xl overflow-hidden w-4/5 md:max-w-2xl'>
         <header className='bg-accent p-4 text-text-inverse flex justify-between items-center'>
           <h1>{title}</h1>
           <button className="text-xl" aria-label='close' onClick={close}>&times;</button>
@@ -52,7 +52,7 @@ export default function Popup({
         )}
           {handleConfirm && (
             <button 
-              className={`px-4 py-2 rounded-lg font-bold text-text-inverse hover:brightness-110 transition-all shadow-md active:scale-95 ${actionButtonClass}`} 
+              className={actionButtonClass} 
               onClick={handleConfirm}
             >
               {actionText}

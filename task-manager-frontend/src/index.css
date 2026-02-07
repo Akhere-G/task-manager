@@ -78,4 +78,16 @@
   .btn-secondary-disabled {
     @apply text-text-main py-1.5 px-3 rounded-md bg-surface-muted brightness-90 cursor-not-allowed 
   }
+
+  .btn-failure {
+    @apply text-text-inverse py-1.5 px-3 rounded-md bg-failure font-bold hover:brightness-110 cursor-pointer transition-all shadow-sm
+  }
+
+  .btn-sucess {
+    @apply text-text-inverse py-1.5 px-3 rounded-md bg-success font-bold hover:brightness-110 cursor-pointer transition-all shadow-sm
+  }
+
+  .btn-warning {
+    @apply text-text-inverse py-1.5 px-3 rounded-md bg-warning font-bold hover:brightness-110 cursor-pointer transition-all shadow-sm
+  }
 }
