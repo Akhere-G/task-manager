@@ -22,8 +22,8 @@ def list_tasks():
   today = request.args.get('today')
   sort_by = request.args.get('sort_by')
   order = request.args.get('order')
-  page = request.args.get('page', 1)
-  limit = request.args.get('limit', 10)
+  page = request.args.get('page')
+  limit = request.args.get('limit')
 
   raw_tasks = get_all_tasks(
     category, 

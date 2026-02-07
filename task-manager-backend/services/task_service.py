@@ -2,7 +2,7 @@ from db import get_db_connection
 from utils.formatters import format_json_response
 from datetime import date
 
-def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None, sort_by=None, order=None, limit=10, page=1):
+def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None, sort_by=None, order=None, limit=None, page=None):
   SHORT_TASK_THRESHOLD = 30
   if today is None:
     today = date.today()
@@ -10,7 +10,6 @@ def get_all_tasks(category=None, search=None, task_duration=None, is_completed=N
   conn = get_db_connection()
   cursor = conn.cursor(dictionary=True)
   
-  # 1. Build the base query (without SELECT *)
   params = []
   base_filters = " WHERE 1=1"
   
@@ -49,23 +48,27 @@ def get_all_tasks(category=None, search=None, task_duration=None, is_completed=N
       base_filters += " AND estimated_time > %s" 
       params.append(SHORT_TASK_THRESHOLD)
 
-  # 2. Get the TOTAL COUNT for these filters
   count_query = f"SELECT COUNT(*) as total FROM tasks{base_filters}"
   cursor.execute(count_query, params)
   total_count = cursor.fetchone()['total']
 
-  # 3. Get the ACTUAL DATA with sorting and pagination
   SORTABLE_FIELDS = ["created_at", "title", "due_date", "estimated_time"]
   sort_by_field = sort_by if sort_by in SORTABLE_FIELDS else "created_at"
   order_value = "ASC" if order == "asc" else "DESC"
   
-  offset = int(limit) * (int(page) - 1)
-  data_query = f"SELECT * FROM tasks{base_filters} ORDER BY {sort_by_field} {order_value} LIMIT %s OFFSET %s"
+  data_query = f"SELECT * FROM tasks{base_filters} ORDER BY {sort_by_field} {order_value}"
+
+  if page is not None and limit is not None:
+    offset = int(limit) * (int(page) - 1)
+    data_query += " LIMIT %s OFFSET %s"
+    params.extend([int(limit), offset])
+  else:
+    page = 1
+    offset = 0
+    limit = total_count  
   
-  # Add pagination params to a copy of params
-  data_params = params + [int(limit), offset]
-  
-  cursor.execute(data_query, data_params)
+  print(data_query)
+  cursor.execute(data_query, params)
   tasks = cursor.fetchall()
 
   cursor.close()
