@@ -90,4 +90,8 @@
   .btn-warning {
     @apply text-text-inverse py-1.5 px-3 rounded-md bg-warning font-bold hover:brightness-110 cursor-pointer transition-all shadow-sm
   }
+
+  .card {
+    @apply shadow-sm bg-surface p-4 rounded-md
+  }
 }
