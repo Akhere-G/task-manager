@@ -137,6 +137,7 @@ def delete_task(id):
   cursor.execute("DELETE FROM tasks WHERE id = %s", (id,))
   deleted_rows = cursor.rowcount
 
+  conn.commit()
   cursor.close()
   conn.close()
   return id if deleted_rows > 0 else None

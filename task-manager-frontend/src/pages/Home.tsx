@@ -85,12 +85,14 @@ export default function Home() {
   async function handleDelete(id: number){
     const prevTasks = tasks;
     setTasks(prev => prev!.filter(task => task.id !== id))
+    setPageDetails(prev => ({ ...prev, totalItems: prev.totalItems - 1 }))
 
     try {
       await taskService.delete(id);
     } catch (err) {
       console.log(err)
       setTasks(prevTasks)
+      setPageDetails(prev => ({ ...prev, totalItems: prev.totalItems + 1 }))
     }
   }
   
