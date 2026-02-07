@@ -1,10 +1,8 @@
 import { useDeferredValue, useEffect, useState, type JSX } from "react";
-import { categories, type CreateTaskInput, type Task } from "../features/tasks/types";
+import { type CreateTaskInput, type Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
-import TaskForm from "../features/tasks/components/TaskForm";
-import { EmptyState, LoadingState, ErrorState, Popup, FormInput } from "../components/ui";
-import TaskList from "../features/tasks/components/TaskList";
-import Pagination from "../components/ui/Pagination";
+import { EmptyState, LoadingState, ErrorState, Popup, Pagination } from "../components/ui";
+import { TasksHeader, TaskForm, TaskList } from "../features/tasks/components";
 
 const PER_PAGE = 10;
 
@@ -47,7 +45,17 @@ export default function Home() {
         order: "order",
       };
 
-      Object.entries(filters).forEach(([key, value]) => {
+      const newFilters ={
+        search: deferredSearch, 
+        category: filters.category, 
+        duration: filters.duration, 
+        isCompleted: filters.isCompleted, 
+        dueDate: filters.dueDate, 
+        sortBy: filters.sortBy, 
+        order: filters.order,
+      }
+
+      Object.entries(newFilters).forEach(([key, value]) => {
         if (value) {
           params.set(apiParamMap[key], value);
         } else {
@@ -74,10 +82,21 @@ export default function Home() {
     }
   }
     
-  const delayDebounceFn = setTimeout(fetchTasks, filters.search ? 400 : 0)
+  const delayDebounceFn = setTimeout(fetchTasks, deferredSearch ? 400 : 0)
+  
   return () => clearTimeout(delayDebounceFn)
 
-  }, [filters, pageDetails.currentPage, pageDetails.perPage]);
+  }, [
+    deferredSearch, 
+    filters.category, 
+    filters.duration, 
+    filters.isCompleted, 
+    filters.dueDate, 
+    filters.sortBy, 
+    filters.order, 
+    pageDetails.currentPage, 
+    pageDetails.perPage
+  ]);
 
   const handleConfirmDelete = (id: number) => setSelectedDeleteTask(tasks?.find(t => t.id === id) || null)
   
@@ -157,7 +176,7 @@ export default function Home() {
     setFilters(prev => ({ ...prev, [e.target.name] : e.target.value }))
   }
 
-  function restFilters(){
+  function resetFilters(){
     setFilters({
       search: "",
       category: "",
@@ -175,45 +194,7 @@ export default function Home() {
 
   const isStale = isLoading || filters.search !== deferredSearch
 
-  const isSearching = Object.values(filters).filter(f => f !== "").length > 1 // only has sortBy
-
-  const categoryOptions = [
-    { name: "All", value: "" }, 
-    ...categories
-  ]
-
-  const taskDurationOptions = [
-    { name: "All", value: "" },
-    { name: "Long Tasks", value: "long_tasks" },
-    { name: "Short Tasks", value: "short_tasks" },
-  ]
-
-  const completedTasksOptions = [
-    { name: "All", value: "" },
-    { name: "Completed", value: "true" },
-    { name: "Pending", value: "false" },
-  ]
-
-  const dueDateOptions = [
-    { name: "All", value: "" },
-    { name: "Today", value: "today" },
-    { name: "This Week", value: "this_week" },
-    { name: "This Month", value: "this_month" },
-    { name: "Overdue", value: "overdue" },
-  ]
-
-  const sortByOptions = [
-    { name: "Due Date", value: "due_date"},
-    { name: "Created At", value: "created_at"},
-    { name: "Title", value: "title"},
-    { name: "Estimated Time", value: "estimated_time"},
-    { name: "", value: ""},
-  ]
-
-  const isAscOptions = [
-    { name: "Ascending", value: "asc" },
-    { name: "Descending", value: "desc" },
-  ]
+  const isSearching = !!filters.search.trim() || !!filters.category || !!filters.duration || !!filters.isCompleted || !!filters.dueDate;
   
   let MainContent: JSX.Element = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
 
@@ -233,76 +214,12 @@ export default function Home() {
 
   return (
     <section className="flex flex-col gap-6 min-h-full">
-      <div className="flex justify-between bg-surface p-4 rounded-xl items-center sm:items-start flex-col lg:flex-row gap-5">
-        <header className="grow-[0.9] shrink-0 w-full max-w-52 flex flex-col items-center sm:items-start">
-          <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks ({pageDetails.totalItems})</h1>
-          <p className="text-text-sub">Manage your daily goals.</p>
-        </header>
-        <form className="flex gap-4 items-baseline flex-row flex-wrap grow-[0.5]">
-          <FormInput 
-            name="search"
-            value={filters.search}
-            handleChange={updateFilters}
-            label="Search"
-            formClassNames="grow-[0.9] max-w-52"
-          />
-          <FormInput 
-            name="category"
-            value={filters.category}
-            handleChange={updateFilters}
-            label="Category"
-            options={categoryOptions}
-            formClassNames="grow-[0.9] max-w-52"
-          />
-          <FormInput 
-            name="duration"
-            value={filters.duration}
-            handleChange={updateFilters}
-            label="Duration"
-            options={taskDurationOptions}
-            formClassNames="grow-[0.9] max-w-52"
-          />
-          <FormInput 
-            name="isCompleted"
-            value={filters.isCompleted}
-            handleChange={updateFilters}
-            label="Is Complete"
-            options={completedTasksOptions}
-            formClassNames="grow-[0.9] max-w-52"
-          />
-          <FormInput 
-            name="dueDate"
-            value={filters.dueDate}
-            handleChange={updateFilters}
-            label="Due Date"
-            options={dueDateOptions}
-            formClassNames="grow-[0.9] max-w-52"
-          />
-          <FormInput 
-            name="sortBy"
-            value={filters.sortBy}
-            handleChange={updateFilters}
-            label="Sort By"
-            options={sortByOptions}
-            formClassNames="grow-[0.9] max-w-52"
-          />
-          <FormInput 
-            name="order"
-            value={filters.order}
-            handleChange={updateFilters}
-            label="Order"
-            options={isAscOptions}
-            formClassNames="grow-[0.9] max-w-52"
-          />
-            <button 
-              type="button"
-              className="self-end mb-1 btn-primary text-text-inverse py-1.5 px-3 rounded-md bg-brand"
-              onClick={restFilters}
-            >
-              Reset Filters
-            </button>
-          </form>
-      </div>
+      <TasksHeader 
+        filters={filters} 
+        updateFilters={updateFilters} 
+        resetFilters={resetFilters} 
+        totalTasks={pageDetails.totalItems} 
+      />
 
     {tasks && tasks.length > 0 && <Pagination {...pageDetails} setPage={setPage} />}
 
