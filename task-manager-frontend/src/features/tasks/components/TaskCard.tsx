@@ -19,7 +19,7 @@ export default function TaskCard({
   estimatedTime,
   setIsCompleted,
   onDelete,
-  onEdit
+  onEdit,
 }: TaskCardProps) {
   const [showMore, setShowMore] = useState(false);
   const isOverdue = !isCompleted && new Date(dueDate) < new Date();

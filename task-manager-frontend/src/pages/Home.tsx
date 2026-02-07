@@ -3,6 +3,7 @@ import { type CreateTaskInput, type Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
 import { EmptyState, LoadingState, ErrorState, Popup, Pagination } from "../components/ui";
 import { TasksHeader, TaskForm, TaskList } from "../features/tasks/components";
+import { formatDate } from "../features/tasks/utils";
 
 const PER_PAGE = 10;
 
@@ -64,7 +65,7 @@ export default function Home() {
       });
 
       if (filters.dueDate) {
-        params.set("today", new Date().toISOString().substring(0, 10));
+        params.set("today", formatDate() );
       }
 
       params.set("page", String(pageDetails.currentPage))

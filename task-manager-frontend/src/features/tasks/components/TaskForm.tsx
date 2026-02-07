@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { categories, type CreateTaskInput } from "../../../features/tasks/types";
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
+import { formatDate } from "../utils";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string }
 
@@ -45,7 +46,7 @@ export default function TaskForm({
   const [isLoading, setIsloading] = useState(false);
 
   useEffect(() => {
-    if (initialData) setFormState(({...initialData, dueDate: new Date(initialData.dueDate).toISOString().substring(0, 10)}))
+    if (initialData) setFormState(({...initialData, dueDate: formatDate(initialData.dueDate)}))
   }, [initialData])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>){
