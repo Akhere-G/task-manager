@@ -2,68 +2,82 @@ from db import get_db_connection
 from utils.formatters import format_json_response
 from datetime import date
 
-def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None, sort_by=None, order=None):
+def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None, sort_by=None, order=None, limit=10, page=1):
   SHORT_TASK_THRESHOLD = 30
-
-  if today == None:
+  if today is None:
     today = date.today()
 
   conn = get_db_connection()
   cursor = conn.cursor(dictionary=True)
+  
+  # 1. Build the base query (without SELECT *)
   params = []
-  sql_query = """
-                SELECT * FROM tasks
-                WHERE 1=1 
-              """
+  base_filters = " WHERE 1=1"
   
   if category and category != "all":
-    sql_query += " AND category = %s"
+    base_filters += " AND category = %s"
     params.append(category)
 
   if search:
-    search_param = f"{search}*"
-    sql_query += " AND MATCH(title, description) AGAINST(%s IN BOOLEAN MODE)"
-    params.append(search_param)
+    base_filters += " AND MATCH(title, description) AGAINST(%s IN BOOLEAN MODE)"
+    params.append(f"{search}*")
 
   if is_completed is not None and is_completed != "all":
-    is_completed = 1 if str(is_completed).lower() == "true" else 0 
-    sql_query += " AND is_completed = %s"
-    params.append(is_completed)
+    is_completed_val = 1 if str(is_completed).lower() == "true" else 0 
+    base_filters += " AND is_completed = %s"
+    params.append(is_completed_val)
 
   if due_date:
     if due_date == "today":
-      sql_query += " AND due_date = %s"
+      base_filters += " AND due_date = %s"
       params.append(today)
     if due_date == "this_week":
-      sql_query += " AND due_date BETWEEN %s AND DATE_ADD(%s, INTERVAL 7 DAY)"
+      base_filters += " AND due_date BETWEEN %s AND DATE_ADD(%s, INTERVAL 7 DAY)"
       params.extend([today, today])
     if due_date == "this_month":
-      sql_query += " AND due_date BETWEEN %s AND DATE_ADD(%s, INTERVAL 30 DAY)"
+      base_filters += " AND due_date BETWEEN %s AND DATE_ADD(%s, INTERVAL 30 DAY)"
       params.extend([today, today])
     if due_date == "overdue":
-      sql_query += " AND due_date < %s AND is_completed = 0"
+      base_filters += " AND due_date < %s AND is_completed = 0"
       params.append(today)
 
   if task_duration:
     if task_duration == "short_tasks":
-      sql_query += " AND estimated_time <= %s"
+      base_filters += " AND estimated_time <= %s"
       params.append(SHORT_TASK_THRESHOLD)
     elif task_duration == "long_tasks":
-      sql_query += " AND estimated_time > %s" 
+      base_filters += " AND estimated_time > %s" 
       params.append(SHORT_TASK_THRESHOLD)
-  
+
+  # 2. Get the TOTAL COUNT for these filters
+  count_query = f"SELECT COUNT(*) as total FROM tasks{base_filters}"
+  cursor.execute(count_query, params)
+  total_count = cursor.fetchone()['total']
+
+  # 3. Get the ACTUAL DATA with sorting and pagination
   SORTABLE_FIELDS = ["created_at", "title", "due_date", "estimated_time"]
   sort_by_field = sort_by if sort_by in SORTABLE_FIELDS else "created_at"
-  order_value = "ASC" if order == "asc" else "desc"
+  order_value = "ASC" if order == "asc" else "DESC"
   
-  sql_query += f" ORDER BY {sort_by_field} {order_value};"
-
-  cursor.execute(sql_query, params)
+  offset = int(limit) * (int(page) - 1)
+  data_query = f"SELECT * FROM tasks{base_filters} ORDER BY {sort_by_field} {order_value} LIMIT %s OFFSET %s"
+  
+  # Add pagination params to a copy of params
+  data_params = params + [int(limit), offset]
+  
+  cursor.execute(data_query, data_params)
   tasks = cursor.fetchall()
 
   cursor.close()
   conn.close()
-  return tasks
+
+  # 4. Return both the tasks and pagination info
+  return {
+    "tasks": tasks,
+    "total_tasks": total_count,
+    "total_pages": (total_count + int(limit) - 1) // int(limit),
+    "current_page": int(page)
+  }
 
 def create_tasks(title, description, category, due_date, estimated_time):
   conn = get_db_connection()
