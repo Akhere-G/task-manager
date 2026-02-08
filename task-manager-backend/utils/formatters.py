@@ -1,3 +1,5 @@
+from datetime import datetime, date
+
 def to_camel_case(snake_str):
     """Converts a snake_case string to camelCase."""
     components = snake_str.split('_')
@@ -19,5 +21,8 @@ def format_json_response(data):
             new_key = to_camel_case(key)
             new_dict[new_key] = format_json_response(value)
         return new_dict
+    
+    if isinstance(data, (datetime, date)):
+        return data.isoformat()
     
     return data

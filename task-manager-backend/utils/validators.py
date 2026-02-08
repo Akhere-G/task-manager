@@ -35,7 +35,7 @@ def validate_task(data, is_update=False):
                 datetime.strptime(str(due_date), '%Y-%m-%d')
             except (ValueError, TypeError):
                 errors['dueDate'] = "Invalid date format. Please use YYYY-MM-DD."
-
+    
     if 'estimatedTime' in data or not is_update:
         est = data.get('estimatedTime')
         if est in [None, ""]:
@@ -51,6 +51,28 @@ def validate_task(data, is_update=False):
         is_comp = data.get('isCompleted')
         if not isinstance(is_comp, bool):
             errors['isCompleted'] = "Completion status must be a boolean (true/false)."
+
+        completed_at = data.get("completedAt")
+        if is_comp and not completed_at:
+            errors['isCompleted'] = "Must send completed at date if completing task."
+        elif not is_comp and completed_at:
+            errors['isCompleted'] = "Must send null for completed at date if uncompleting task."
+
+    if 'completedAt' in data and is_update:
+        completed_at = data.get('completedAt')
+        if completed_at:
+            try:
+                # Handle the 'Z' suffix if coming from JavaScript's toISOString()
+                clean_ts = str(completed_at).replace('Z', '')
+                
+                # Check for the two most common formats
+                if 'T' in clean_ts:
+                    datetime.strptime(clean_ts, '%Y-%m-%dT%H:%M:%S')
+                else:
+                    datetime.strptime(clean_ts, '%Y-%m-%d %H:%M:%S')
+                    
+            except (ValueError, TypeError):
+                errors['completedAt'] = "Invalid timestamp. Use YYYY-MM-DD HH:MM:SS or ISO format."
 
     if 'category' in data or not is_update:
         cat = str(data.get('category', '')).strip()

@@ -92,7 +92,7 @@ def create_tasks(title, description, category, due_date, estimated_time):
   conn.close()
   return new_id
 
-def update_task(id, title=None, description=None, category=None, due_date=None, estimated_time=None, is_completed=None):
+def update_task(id, title=None, description=None, category=None, due_date=None, estimated_time=None, is_completed=None, completed_at=None, has_completed_at=False):
   conn = get_db_connection()
   cursor = conn.cursor(dictionary=True)
 
@@ -110,12 +110,13 @@ def update_task(id, title=None, description=None, category=None, due_date=None, 
   updated_due = due_date if due_date else task['due_date']
   updated_time = estimated_time if estimated_time else task['estimated_time']
   updated_status = is_completed if is_completed is not None else task['is_completed']
+  updated_completed_at = completed_at if has_completed_at else task['completed_at']
   
   cursor.execute("""
         UPDATE tasks 
-        SET title = %s, description = %s, category = %s, due_date = %s, estimated_time = %s, is_completed = %s
+        SET title = %s, description = %s, category = %s, due_date = %s, estimated_time = %s, is_completed = %s, completed_at = %s
         WHERE id = %s
-    """, (updated_title, updated_desc, updated_cat, updated_due, updated_time, int(updated_status), id))
+    """, (updated_title, updated_desc, updated_cat, updated_due, updated_time, int(updated_status), updated_completed_at, id))
   
   conn.commit()
   cursor.close()
@@ -129,7 +130,8 @@ def update_task(id, title=None, description=None, category=None, due_date=None, 
         "due_date": updated_due,
         "estimated_time": updated_time,
         "is_completed": updated_status,
-        "created_at": task.get("created_at")
+        "created_at": task.get("created_at"),
+        "completed_at": updated_completed_at
   }
   
 def delete_task(id):

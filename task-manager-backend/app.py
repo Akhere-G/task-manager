@@ -4,7 +4,6 @@ from flask_cors import CORS
 from services.task_service import get_all_tasks, create_tasks, update_task, delete_task
 from utils.formatters import format_json_response
 from dotenv import load_dotenv
-from datetime import datetime
 from utils.validators import validate_task
 
 load_dotenv()
@@ -61,7 +60,8 @@ def add_task():
     "category": category,
     "isCompleted": False,
     "estimatedTime": estimated_time,
-    "dueDate": due_date
+    "dueDate": due_date,
+    "completedAt": None
   }), 201
 
 @app.route('/api/tasks/<int:task_id>', methods=['PATCH'])
@@ -78,7 +78,8 @@ def edit_task(task_id):
   due_date = data.get('dueDate')
   estimated_time = data.get('estimatedTime')
   is_completed = data.get('isCompleted')  
-  
+  completed_at = data.get('completedAt')
+
   updated_result = update_task(
         task_id, 
         title=title, 
@@ -86,8 +87,11 @@ def edit_task(task_id):
         description=description, 
         estimated_time=estimated_time, 
         is_completed=is_completed, 
-        due_date=due_date
+        due_date=due_date,
+        completed_at=completed_at,
+        has_completed_at="completedAt" in data
     )
+  
   if updated_result is None:
     return jsonify({ "error": f"No task with the id {task_id} exists." }), 404
 
