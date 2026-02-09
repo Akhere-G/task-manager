@@ -77,7 +77,7 @@ export default function StatsOverview() {
   if (error) return <ErrorState error={error} />;
 
   return (
-    <div className="flex flex-wrap gap-4 mb-8">
+    <div className="flex flex-wrap gap-6">
       <StatCard isLoading={isLoading} title="Completion Rate" subtext={stats.completionRate} suffix="%" />
       <StatCard isLoading={isLoading} title="Total Invested" subtext={stats.timeInvested} suffix=" hrs" />
       <StatCard isLoading={isLoading} title="Daily Streak" subtext={stats.currentStreak} suffix=" days" />

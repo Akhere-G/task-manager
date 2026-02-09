@@ -44,7 +44,6 @@ export default function ActivityHeatmap() {
   const today = new Date();
   const lastYear = new Date();
   lastYear.setFullYear(today.getFullYear() - 1);
-  lastYear.setFullYear(today.getDay() - 10);
 
   const heatmapValues = productivityData?.map(item => ({
     date: item.date,
@@ -52,7 +51,7 @@ export default function ActivityHeatmap() {
   })) || [];
 
   return (
-    <div>
+    <div className="w-full">
       <CalendarHeatmap
         startDate={lastYear}
         endDate={today}

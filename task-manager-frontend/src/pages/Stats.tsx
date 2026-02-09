@@ -15,7 +15,7 @@ export default function Stats() {
           title="Task Status"
           subtitle="Current completion progress"
           width="lg:w-[35%]"
-          height="h-100 lg:h-150"
+          height="h-90 lg:h-120"
           flex="0.25"
         >
           <BacklogHealthChart />
@@ -25,7 +25,7 @@ export default function Stats() {
           title="Productivity"
           subtitle="Tasks completed daily"
           width="lg:w-[65%]"
-          height="h-100 lg:h-150"
+          height="h-90 lg:h-120"
           flex="0.75"
         >
           <ProductivityChart />
@@ -36,7 +36,7 @@ export default function Stats() {
           title="Active Balance"
           subtitle="Pending tasks by category"
           width="lg:w-[35%]"
-          height="h-100 lg:h-150"
+          height="h-90 lg:h-120"
           flex="0.25"
         >
           <CategoryVolumeChart />
@@ -46,7 +46,7 @@ export default function Stats() {
           title="Time spent"
           subtitle="Total time spent per category"
           width="lg:w-[65%]"
-          height="h-150"
+          height="h-90 lg:h-120"
           flex="0.75"
         >
             <TimeSpentChart />
@@ -55,7 +55,7 @@ export default function Stats() {
       <div className="card">
         <h2 className="text-2xl text-text-main">Activity</h2> 
         <p className="text-text-sub">Activity this year</p>
-        {/* <ActivityHeatMap /> */}
+        <ActivityHeatMap />
       </div>
     </div>
   </div>
