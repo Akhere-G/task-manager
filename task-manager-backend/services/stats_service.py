@@ -1,16 +1,15 @@
 from db import get_db_connection
 from datetime import datetime, timedelta
 
-def get_productivity_trend():
+def get_productivity_trend(days=30):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
     cursor.execute("""
         SELECT DATE(completed_at) as completed_at_date, COUNT(*) as completed_tasks
         FROM tasks
-        WHERE is_completed = 1 AND completed_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        WHERE is_completed = 1 AND completed_at >= DATE_SUB(CURDATE(), INTERVAL %s DAY)
         GROUP BY completed_at_date;
-    """)
+    """, (days, ))
     
     raw_data = cursor.fetchall() 
     cursor.close()
@@ -22,7 +21,7 @@ def get_productivity_trend():
     }
     
     trend_data = []
-    for i in range(30, -1, -1):
+    for i in range(days, -1, -1):
         target_date = (datetime.now() - timedelta(days=i)).date()
         date_str = target_date.isoformat()
         
@@ -45,6 +44,7 @@ def get_time_spent():
         ORDER BY time_spent DESC;
                 """)
     data = cursor.fetchall()
+    data = [{ "category": d["category"], "time_spent" : int(d["time_spent"]) } for d in data]
     cursor.close()
     conn.close()
     return data
@@ -85,5 +85,5 @@ def get_category_volume():
     data = cursor.fetchall()
     cursor.close()
     conn.close()
-    
+
     return data
