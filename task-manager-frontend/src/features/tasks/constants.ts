@@ -37,3 +37,17 @@ export const isAscOptions = [
   { name: "Ascending", value: "asc" },
   { name: "Descending", value: "desc" },
 ]
+
+export const categoryColours: Record<string, string> = {
+  "work": "#6366f1",        // Indigo-600 (Your Brand Colour)
+  "home": "#8b5cf6",        // Violet-500 (Your Accent Colour)
+  "chores": "#94a3b8",      // Slategray (Neutral/Routine)
+  "life-admin": "#0ea5e9",  // Sky-500 (Organised/Info)
+  "health": "#10b981",      // Emerald-500 (Success/Vitality)
+  "self-care": "#ec4899",   // Pink-500 (Soft/Personal)
+  "social": "#f59e0b",      // Amber-500 (Energy/Warning-ish)
+  "hobbies": "#f43f5e",     // Rose-500 (Passion)
+  "learning": "#3b82f6",    // Blue-600 (Intellectual/Link)
+  "finance": "#059669",     // Green-600 (Money)
+  "general": "#64748b"      // Slate-500 (Default)
+};

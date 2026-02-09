@@ -38,10 +38,11 @@ def get_time_spent():
     cursor = conn.cursor(dictionary=True)
     
     cursor.execute("""
-        SELECT category, SUM(estimated_time) as estimated_time
+        SELECT category, SUM(estimated_time) as time_spent
         FROM tasks
         WHERE is_completed = 1
-        GROUP BY category;
+        GROUP BY category
+        ORDER BY time_spent DESC;
                 """)
     data = cursor.fetchall()
     cursor.close()
@@ -65,4 +66,24 @@ def get_backlog_health():
                     """)
     
     data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return data
+
+def get_category_volume():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT category, COUNT(*) as count
+        FROM tasks
+        WHERE is_completed = 0
+        GROUP BY category
+        ORDER BY count;
+                """)
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
     return data

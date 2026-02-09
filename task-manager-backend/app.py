@@ -5,7 +5,7 @@ from services.task_service import get_all_tasks, create_tasks, update_task, dele
 from utils.formatters import format_json_response
 from dotenv import load_dotenv
 from utils.validators import validate_task
-from services.stats_service import get_productivity_trend, get_time_spent, get_backlog_health
+from services.stats_service import get_productivity_trend, get_time_spent, get_backlog_health, get_category_volume
 
 load_dotenv()
 
@@ -124,7 +124,13 @@ def fetch_backlog_health():
   data = get_backlog_health()
 
   return jsonify(format_json_response(data))
-  
+
+@app.route('/api/stats/categoryvolume', methods=["GET"])
+def fetch_category_volume():
+  data = get_category_volume()
+
+  return jsonify(format_json_response(data))
+
 if __name__ == "__main__":
     app.run(
         host=os.getenv('FLASK_RUN_HOST', '127.0.0.1'),

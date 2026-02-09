@@ -1,4 +1,4 @@
-import { BacklogHealthChart, ProductivityChart, TimeSpentChart } from "../features/stats/components";
+import { BacklogHealthChart, CategoryVolumeChart, ProductivityChart, TimeSpentChart } from "../features/stats/components";
 
 export default function Stats() {
   return (
@@ -11,6 +11,7 @@ export default function Stats() {
         <ProductivityChart />
         <TimeSpentChart />
         <BacklogHealthChart />
+        <CategoryVolumeChart />
     </div>
   );
 }

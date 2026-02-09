@@ -26,3 +26,4 @@ export const categories: readonly Option[] = [
   { name: "Finance", value: "finance" },
   { name: "General", value: "general" },
 ]
+
