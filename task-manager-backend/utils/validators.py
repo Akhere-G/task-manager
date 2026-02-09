@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 
 def validate_task(data, is_update=False):
     """
@@ -82,5 +83,42 @@ def validate_task(data, is_update=False):
             errors['category'] = "Category name is too long."
         elif cat not in VALID_CATEGORIES:
             errors['category'] = f"Invalid category. Must be one of: {', '.join(VALID_CATEGORIES)}."
+
+    return errors
+
+
+def validate_contact_request(data):
+    errors = {}
+    
+    # 1. Full Name Validation
+    full_name = data.get('fullName', '').strip()
+    if not full_name:
+        errors['fullName'] = "Full name is required."
+    elif len(full_name) > 100:
+        errors['fullName'] = "Name must be under 100 characters."
+
+    # 2. Email Validation
+    email = data.get('email', '').strip()
+    email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    if not email:
+        errors['email'] = "Email address is required."
+    elif not re.match(email_regex, email):
+        errors['email'] = "Please enter a valid email address."
+
+    # 3. Subject Validation
+    subject = data.get('subject', '').strip()
+    if not subject:
+        errors['subject'] = "Please select a subject for your enquiry."
+    elif len(subject) > 100:
+        errors['subject'] = "Subject must be under 100 characters."
+
+    # 4. Message Validation
+    message = data.get('message', '').strip()
+    if not message:
+        errors['message'] = "Message content is required."
+    elif len(message) < 10:
+        errors['message'] = "Please provide a bit more detail (minimum 10 characters)."
+    elif len(message) > 2000:
+        errors['message'] = "Message exceeds the 2000 character limit."
 
     return errors

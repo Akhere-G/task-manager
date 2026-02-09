@@ -10,7 +10,7 @@ export interface Task {
   completedAt: string | null;       
 }
 
-export type CreateTaskInput = Omit<Task, 'id' | 'createdAt' | 'isCompleted'>;
+export type CreateTaskInput = Omit<Task, 'id' | 'createdAt' | 'isCompleted' | 'completedAt'>;
 type Option = { name: string; value: string }
 
 export const categories: readonly Option[] = [

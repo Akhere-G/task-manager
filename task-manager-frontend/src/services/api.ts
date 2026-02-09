@@ -82,4 +82,17 @@ export const statsService = {
   }
 }
 
+export interface ContactEnquiry {
+  fullName: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export const contactService = {
+  sendEnquiry: async (enquiryData: ContactEnquiry) => {
+    const response = await api.post('/contact', enquiryData);
+    return response.data;
+  }
+}
 export default api

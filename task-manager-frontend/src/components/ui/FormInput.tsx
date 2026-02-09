@@ -3,10 +3,11 @@ export interface FormInputprops {
   name: string;
   type?: string;
   value: string | number;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   errorMessage?: string;
   options?: {name: string; value: string}[];
-  formClassNames?: string
+  formClassNames?: string;
+  textarea?: boolean
 }
 
 
@@ -18,25 +19,26 @@ export default function FormInput({
   handleChange, 
   errorMessage, 
   options,
-  formClassNames = ""
+  formClassNames = "",
+  textarea = false
   }: FormInputprops){
 
   return (
     <div className={"group flex flex-col text-text-main " + formClassNames}>
-      <label htmlFor={name} className="group-focus-within:text-accent text-xs text-text-sub">{label}</label>
-      {!options && ( 
+      <label htmlFor={name} className="group-focus-within:text-accent text-sm font-bold text-text-main mb-2">{label}</label>
+      {!options && ! textarea && ( 
         <input
           id={name}
-          className="rounded-md px-3 py-2 my-1 outline-accent bg-surface-muted"
+          className="w-full p-3 rounded-xl border border-border-light focus:outline-none focus:border-brand bg-bg-secondary text-text-main transition-all placeholder:text-text-sub/50"
           name={name}
           type={type}
           value={value} 
           onChange={handleChange}
         />
       )}
-      {options && (
+      {options && !textarea && (
         <select 
-          className="rounded-md px-3 py-2 my-1 outline-accent bg-surface-muted"
+          className="w-full p-3 rounded-xl border border-border-light focus:outline-none focus:border-brand bg-bg-secondary text-text-main transition-all placeholder:text-text-sub/50"
           id={name}
           name={name}
           value={value}
@@ -45,6 +47,19 @@ export default function FormInput({
           {options.map(({name, value}) => <option key={name} value={value}>{name}</option>)}
         </select>
       )}
+      {
+        textarea && !options && (
+          <textarea 
+            id="message"
+            name="message"
+            rows={6}
+            className="w-full p-3 rounded-xl border border-border-light focus:outline-none focus:border-brand bg-bg-secondary text-text-main transition-all resize-none"
+            value={value}
+            onChange={handleChange}
+          />
+          
+        )
+      }
       {errorMessage && (
         <p 
           className="text-failure bg-failure/10 p-1 pl-4 rounded-md border-l-failure border-l-4"
