@@ -9,6 +9,13 @@ export default function Stats() {
       </header>
 
     <StatsOverview />
+    
+    <div className="card">
+        <h2 className="text-2xl text-text-main">Activity</h2> 
+        <p className="text-text-sub">Activity this year</p>
+        <ActivityHeatMap />
+    </div>
+
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-6 lg:flex-row ">
         <ChartCard 
@@ -52,11 +59,7 @@ export default function Stats() {
             <TimeSpentChart />
         </ChartCard>
       </div>
-      <div className="card">
-        <h2 className="text-2xl text-text-main">Activity</h2> 
-        <p className="text-text-sub">Activity this year</p>
-        <ActivityHeatMap />
-      </div>
+      
     </div>
   </div>
   );

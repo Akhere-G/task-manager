@@ -51,7 +51,7 @@ export default function CategoryVolumeChart() {
                 cy="50%"
                 innerRadius="60%"
                 outerRadius="80%"
-                paddingAngle={5}
+                paddingAngle={1}
                 dataKey="count"
                 nameKey="category"
               />
