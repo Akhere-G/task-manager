@@ -50,7 +50,7 @@ export interface GetProductivityResult {
 }
 export interface GetTimeSpentResult {
   category: string;
-  time_spent: number
+  timeSpent: number
 }
 
 export interface GetBacklogHealthResult {
@@ -64,8 +64,8 @@ export interface GetCategoryVolumeResult {
 }
 
 export const statsService = {
-  getProductivity: async (): Promise<GetProductivityResult[]> => {
-    const response = await api.get("/stats/productivity")
+  getProductivity: async (days: number = 30): Promise<GetProductivityResult[]> => {
+    const response = await api.get(`/stats/productivity?days=${days}`) 
     return response.data;
   },
   getTimeSpent: async (): Promise<GetTimeSpentResult[]> => {
