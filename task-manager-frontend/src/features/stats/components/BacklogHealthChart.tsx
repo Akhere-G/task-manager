@@ -44,7 +44,7 @@ export default function BacklogHealthChart() {
         (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart
-              margin={{ top: 20, right: 30, left: 30, bottom: 70 }}
+              margin={{ top: 20, right: 0, left: 0, bottom: 70 }}
             >
               <Pie
                 data={chartData}

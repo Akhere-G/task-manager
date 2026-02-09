@@ -37,7 +37,7 @@ export default function ProductivityChart() {
   return (
       productivityData && (
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={productivityData} margin={{ top: 20, right: 0, left: 0, bottom: 50 }}>
+          <LineChart data={productivityData} margin={{ top: 20, right: 30, left: 0, bottom: 50 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
             <XAxis 
               dataKey="date" 

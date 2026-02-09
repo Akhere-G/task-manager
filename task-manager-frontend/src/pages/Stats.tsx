@@ -1,19 +1,20 @@
-import { BacklogHealthChart, CategoryVolumeChart, ChartCard, ProductivityChart, TimeSpentChart } from "../features/stats/components";
+import { ActivityHeatMap, BacklogHealthChart, CategoryVolumeChart, ChartCard, ProductivityChart, StatsOverview, TimeSpentChart } from "../features/stats/components";
 
 export default function Stats() {
   return (
     <div className="flex flex-col gap-6">
       <header className="card">
         <h1 className="text-3xl font-bold text-text-main">Dashboard</h1>
-        <p className="text-text-sub">Your productivity over the last 30 days.</p>
+        <p className="text-text-sub">Your productivity.</p>
       </header>
 
+    <StatsOverview />
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-6 lg:flex-row ">
         <ChartCard 
-          title="Backlog Health"
-          subtitle="Tasks by status"
-          width="w-full"
+          title="Task Status"
+          subtitle="Current completion progress"
+          width="lg:w-[35%]"
           height="h-100 lg:h-150"
           flex="0.25"
         >
@@ -23,7 +24,7 @@ export default function Stats() {
         <ChartCard 
           title="Productivity"
           subtitle="Tasks completed daily"
-          width="w-full"
+          width="lg:w-[65%]"
           height="h-100 lg:h-150"
           flex="0.75"
         >
@@ -32,9 +33,9 @@ export default function Stats() {
       </div>
       <div className="flex flex-col gap-6 lg:flex-row">
         <ChartCard 
-          title="Category Volume"
+          title="Active Balance"
           subtitle="Pending tasks by category"
-          width="w-full"
+          width="lg:w-[35%]"
           height="h-100 lg:h-150"
           flex="0.25"
         >
@@ -44,12 +45,17 @@ export default function Stats() {
         <ChartCard 
           title="Time spent"
           subtitle="Total time spent per category"
-          width="w-full"
+          width="lg:w-[65%]"
           height="h-150"
           flex="0.75"
         >
             <TimeSpentChart />
         </ChartCard>
+      </div>
+      <div className="card">
+        <h2 className="text-2xl text-text-main">Activity</h2> 
+        <p className="text-text-sub">Activity this year</p>
+        {/* <ActivityHeatMap /> */}
       </div>
     </div>
   </div>

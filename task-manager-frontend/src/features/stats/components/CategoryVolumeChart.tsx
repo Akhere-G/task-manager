@@ -8,7 +8,7 @@ import { useBreakpoint } from "../../../hooks/useBreakpoint";
 export default function CategoryVolumeChart() {
   const [isLoading, setIsloading] = useState(true);
   const [error, setError] = useState("");
-  const [backlogData, setBacklogData] = useState<GetCategoryVolumeResult[] | null>(null);
+  const [categoryVolumeData, setCategoryVolumeData] = useState<GetCategoryVolumeResult[] | null>(null);
   const breakpoint = useBreakpoint()
   
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function CategoryVolumeChart() {
       setIsloading(true);
       try {
         const result = await statsService.getCategoryVolume();
-        setBacklogData(result);
+        setCategoryVolumeData(result);
         setError("");
       } catch (err: unknown) {
         console.log(err)
@@ -28,7 +28,7 @@ export default function CategoryVolumeChart() {
     fetchData();
   }, []);
 
-  const chartData = backlogData?.map(entry =>  ({
+  const chartData = categoryVolumeData?.map(entry =>  ({
     ...entry,
     fill: categoryColours[entry.category] || '#cbd5e1'
   }));
@@ -39,11 +39,11 @@ export default function CategoryVolumeChart() {
   if (error) return <ErrorState error={error} />;
 
   return (
-        backlogData && 
+        categoryVolumeData && 
         (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart
-              margin={{ top: 20, right: 30, left: 30, bottom: 100 }}
+              margin={{ top: 20, right: 0, left: 0, bottom: 120 }}
             >
               <Pie
                 data={chartData}
