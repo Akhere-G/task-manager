@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { statsService, type GetTimeSpentResult } from "../../../services/api";
 import { ErrorState, LoadingState } from "../../../components/ui";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import { categoryColours } from "../../tasks/constants";
 
 export default function TimeSpentChart() {
@@ -40,7 +40,6 @@ export default function TimeSpentChart() {
   return (
     
       timeSpentData && (
-        <ResponsiveContainer width="100%" height="100%">
           <BarChart 
             data={data} 
             layout="vertical" 
@@ -60,10 +59,12 @@ export default function TimeSpentChart() {
               dataKey="category" 
               type="category" 
               width={100}
-              tick={{ fill: 'var(--text-main)' }}
+              tick={{ fill: 'var(--color-text-main)', fontSize: '12px' }}
+              axisLine={false}
+              tickLine={false}
               tickFormatter={(str: string) => {
-                const formattedStr = str.replace("-", " ")
-                return formattedStr[0].toUpperCase() + formattedStr.substring(1)
+                const formattedStr = str.replace("-", " ");
+                return formattedStr[0].toUpperCase() + formattedStr.substring(1);
               }} 
             />
             <Tooltip 
@@ -83,7 +84,6 @@ export default function TimeSpentChart() {
               activeBar={{ style: { filter: "brightness(120%)"}}}
             />
           </BarChart>
-        </ResponsiveContainer>
     )
   );
 }

@@ -31,17 +31,31 @@
 
 /* --- Dark Mode Overrides --- */
 /* This block triggers when the 'dark' class is added to the <html> tag */
+/* This is essential - without this, the heatmap is invisible */
+.react-calendar-heatmap .color-empty { fill: #ebedf0; }
+.react-calendar-heatmap .color-scale-1 { fill: #c7d2fe; }
+.react-calendar-heatmap .color-scale-2 { fill: #818cf8; }
+.react-calendar-heatmap .color-scale-3 { fill: #4f46e5; }
+.react-calendar-heatmap .color-scale-4 { fill: #3730a3; }
+
+/* Set a default height so it doesn't collapse to 0px */
+.react-calendar-heatmap {
+  max-height: 200px;
+  width: 100%;
+}
+
 @layer base {
   .dark {
     --color-canvas: var(--color-slate-950);
     --color-surface: var(--color-slate-900);
     --color-surface-muted: var(--color-slate-800);
     
-    --color-text-main: var(--color-slate-100);
-    --color-text-sub: var(--color-slate-400);
+    /* Lightened for better legibility */
+    --color-text-main: var(--color-white);      /* Was slate-100 */
+    --color-text-sub: var(--color-slate-300);   /* Was slate-400 */
     
-    --color-brand: var(--color-indigo-500);
-    --color-brand-hover: var(--color-indigo-400);
+    --color-brand: var(--color-indigo-500);     
+    --color-brand-hover: var(--color-indigo-300);
     --color-accent: var(--color-violet-400);
     --color-link: var(--color-blue-400);
     --color-link-hover: var(--color-blue-300);
@@ -52,7 +66,7 @@
     --color-info: var(--color-sky-400);
 
     --color-disabled-bg: var(--color-slate-800);
-    --color-disabled-text: var(--color-slate-600);
+    --color-disabled-text: var(--color-slate-500); /* Was slate-600 */
   }
 
   body {
@@ -101,15 +115,24 @@
   transition: filter 0.2s ease;
 }
 
-/* This is essential - without this, the heatmap is invisible */
-.react-calendar-heatmap .color-empty { fill: #ebedf0; }
-.react-calendar-heatmap .color-scale-1 { fill: #c7d2fe; }
-.react-calendar-heatmap .color-scale-2 { fill: #818cf8; }
-.react-calendar-heatmap .color-scale-3 { fill: #4f46e5; }
-.react-calendar-heatmap .color-scale-4 { fill: #3730a3; }
 
-/* Set a default height so it doesn't collapse to 0px */
-.react-calendar-heatmap {
-  max-height: 200px;
-  width: 100%;
+/* Dark Mode Heatmap - Indigo Glow Theme */
+.dark .react-calendar-heatmap .color-empty { 
+  fill: #1e293b; /* Slate-800: Deep background for empty days */
+}
+
+.dark .react-calendar-heatmap .color-scale-1 { 
+  fill: #312e81; /* Indigo-900: Subtle activity */
+}
+
+.dark .react-calendar-heatmap .color-scale-2 { 
+  fill: #4338ca; /* Indigo-700: Moderate activity */
+}
+
+.dark .react-calendar-heatmap .color-scale-3 { 
+  fill: #6366f1; /* Indigo-500: High activity */
+}
+
+.dark .react-calendar-heatmap .color-scale-4 { 
+  fill: #a5b4fc; /* Indigo-300: Peak activity - bright for contrast */
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { statsService, type GetCategoryVolumeResult } from "../../../services/api";
 import { ErrorState, LoadingState } from "../../../components/ui";
-import { PieChart, Pie, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Tooltip, Legend } from "recharts";
 import { categoryColours } from "../../tasks/constants";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 
@@ -41,7 +41,6 @@ export default function CategoryVolumeChart() {
   return (
         categoryVolumeData && 
         (
-          <ResponsiveContainer width="100%" height="100%">
             <PieChart
               margin={{ top: 20, right: 0, left: 0, bottom: 120 }}
             >
@@ -65,7 +64,6 @@ export default function CategoryVolumeChart() {
               />
               {!isMobile && <Legend className="xs:blocksm:block md:block lg:block xl:block 2xl:block " verticalAlign="bottom" height={36} />}
             </PieChart>
-          </ResponsiveContainer>
         )
   );
 }

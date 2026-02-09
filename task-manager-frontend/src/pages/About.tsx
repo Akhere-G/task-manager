@@ -85,7 +85,7 @@ export default function AboutPage() {
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <div className="group p-8 bg-white rounded-2xl border border-border-light shadow-sm hover:border-brand/40 hover:shadow-md transition-all duration-300">
+    <div className="group p-8 bg-surface rounded-2xl border border-border-light shadow-sm hover:border-brand/40 hover:shadow-md transition-all duration-300">
       <div className="mb-5 p-3 bg-brand/5 rounded-xl w-fit group-hover:bg-brand/10 transition-colors">
         {icon}
       </div>

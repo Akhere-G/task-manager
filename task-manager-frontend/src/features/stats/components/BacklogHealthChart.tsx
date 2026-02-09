@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { statsService, type GetBacklogHealthResult } from "../../../services/api";
 import { ErrorState, LoadingState } from "../../../components/ui";
-import { PieChart, Pie, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Tooltip, Legend } from "recharts";
 
 const COLORS: Record<string, string> = {
   Completed: '#10b981', 
@@ -42,7 +42,6 @@ export default function BacklogHealthChart() {
   return (
         backlogData && 
         (
-          <ResponsiveContainer width="100%" height="100%">
             <PieChart
               margin={{ top: 20, right: 0, left: 0, bottom: 70 }}
             >
@@ -62,7 +61,6 @@ export default function BacklogHealthChart() {
               />
               <Legend verticalAlign="bottom" height={36} />
             </PieChart>
-          </ResponsiveContainer>
         )
   );
 }

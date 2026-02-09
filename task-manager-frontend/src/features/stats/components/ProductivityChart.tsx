@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { statsService, type GetProductivityResult } from "../../../services/api";
 import { ErrorState, LoadingState } from "../../../components/ui";
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
 
 export default function ProductivityChart() {
   const [isLoading, setIsloading] = useState(true);
@@ -16,7 +16,7 @@ export default function ProductivityChart() {
         setProductivityData(result);
         setError("");
       } catch (err: unknown) {
-        console.log(err)
+        console.error(err);
         setError("Could not load data");
       } finally {
         setIsloading(false);
@@ -26,47 +26,78 @@ export default function ProductivityChart() {
   }, []);
 
   if (isLoading) return (
-  <div className="flex justify-center items-center">
-    <LoadingState />
-  </div>
-  )
+    <div className="flex justify-center items-center h-full">
+      <LoadingState />
+    </div>
+  );
+  
   if (error) return (
-    <ErrorState error={error} />
-  )
+    <div className="flex justify-center items-center h-full">
+      <ErrorState error={error} />
+    </div>
+  );
 
   return (
-      productivityData && (
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={productivityData} margin={{ top: 20, right: 30, left: 0, bottom: 50 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-            <XAxis 
-              dataKey="date" 
-              tickFormatter={(str) => {
-                const date = new Date(str);
-                return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-              }}
-              minTickGap={30}
-            />
-            <YAxis allowDecimals={false} />
-            <Tooltip 
-              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-              labelFormatter={(str) => {
-                const date = new Date(str);
-                return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: "numeric" });
-              }}
-            />
-            <Legend verticalAlign="top" height={36}/>
-            <Line 
-              name="Tasks completed"
-              type="monotone" 
-              dataKey="tasks" 
-              stroke="#6366f1" 
-              strokeWidth={3}
-              dot={{ r: 4, fill: '#6366f1' }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      )
-  )
+    productivityData && (
+        <LineChart data={productivityData} margin={{ top: 20, right: 30, left: 0, bottom: 50 }}>
+          {/* Grid lines using your surface-muted variable */}
+          <CartesianGrid 
+            strokeDasharray="3 3" 
+            vertical={false} 
+            stroke="var(--color-surface-muted)" 
+          />
+          
+          <XAxis 
+            dataKey="date" 
+            tick={{ fill: 'var(--color-text-sub)', fontSize: '12px' }}
+            axisLine={{ stroke: 'var(--color-surface-muted)' }}
+            tickLine={false}
+            tickFormatter={(str) => {
+              const date = new Date(str);
+              return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            }}
+            minTickGap={30}
+          />
+          
+          <YAxis 
+            allowDecimals={false} 
+            tick={{ fill: 'var(--color-text-sub)', fontSize: '12px' }}
+            axisLine={false}
+            tickLine={false}
+          />
+          
+          <Tooltip 
+            contentStyle={{ 
+              backgroundColor: 'var(--color-surface)', 
+              borderColor: 'var(--color-surface-muted)',
+              borderRadius: '12px',
+              color: 'var(--color-text-main)',
+              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+            }}
+            itemStyle={{ color: 'var(--color-brand)', fontWeight: 'bold' }}
+            labelStyle={{ color: 'var(--color-text-sub)', marginBottom: '4px' }}
+            labelFormatter={(str) => {
+              const date = new Date(str);
+              return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: "numeric" });
+            }}
+          />
+          
+          <Legend 
+            verticalAlign="top" 
+            height={40}
+            formatter={(value) => <span style={{ color: 'var(--color-text-main)', fontSize: '14px', fontWeight: 500 }}>{value}</span>}
+          />
+          
+          <Line 
+            name="Tasks completed"
+            type="monotone" 
+            dataKey="tasks" 
+            stroke="var(--color-brand)" 
+            strokeWidth={3}
+            dot={{ r: 4, fill: 'var(--color-brand)', strokeWidth: 2, stroke: 'var(--color-surface)' }}
+            activeDot={{ r: 6, strokeWidth: 0 }}
+          />
+        </LineChart>
+    )
+  );
 }
