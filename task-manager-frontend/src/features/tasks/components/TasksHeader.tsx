@@ -12,7 +12,7 @@ interface TaskFilters {
 }
 interface TasksHeaderProps {
   filters: TaskFilters;
-  updateFilters: (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  updateFilters: (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement |  HTMLTextAreaElement>) => void;
   resetFilters: () => void; 
   totalTasks: number;
   sortable?: boolean

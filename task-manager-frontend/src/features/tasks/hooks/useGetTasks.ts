@@ -25,12 +25,13 @@ export default function useGetTasks(props?: UseGetTasksProps) {
     search: "",
     category: "",
     duration: "",
-    isCompleted: "",
+    isCompleted: "false",
     dueDate: "",
     sortBy: "due_date",
     order: "asc",
   });
 
+  console.log(filters)
   const deferredSearch = useDeferredValue(filters.search);
 
   useEffect(() => {
