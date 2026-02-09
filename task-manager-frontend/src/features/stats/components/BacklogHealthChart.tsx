@@ -40,13 +40,12 @@ export default function BacklogHealthChart() {
   if (error) return <ErrorState error={error} />;
 
   return (
-    <div className="card h-100 w-full flex flex-col">
-      <h2 className="text-2xl text-text-main mb-4">Backlog Health</h2> 
-      <p className="text-text-sub">Tasks by status</p>
-      <div className="flex-1 w-full">
-        {backlogData && (
+        backlogData && 
+        (
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart
+              margin={{ top: 20, right: 30, left: 30, bottom: 70 }}
+            >
               <Pie
                 data={chartData}
                 cx="50%"
@@ -56,6 +55,7 @@ export default function BacklogHealthChart() {
                 paddingAngle={5}
                 dataKey="count"
                 nameKey="status"
+                // shape={({ isActive }) => ({ style: { filter: isActive ? "brightness(120%)" : ""}})}
               />
               <Tooltip 
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -63,8 +63,6 @@ export default function BacklogHealthChart() {
               <Legend verticalAlign="bottom" height={36} />
             </PieChart>
           </ResponsiveContainer>
-        )}
-      </div>
-    </div>
+        )
   );
 }

@@ -95,3 +95,8 @@
     @apply shadow-sm bg-surface p-4 rounded-md
   }
 }
+
+.recharts-pie-sector:hover {
+  filter: brightness(1.2);
+  transition: filter 0.2s ease;
+}

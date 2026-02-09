@@ -3,12 +3,14 @@ import { statsService, type GetCategoryVolumeResult } from "../../../services/ap
 import { ErrorState, LoadingState } from "../../../components/ui";
 import { PieChart, Pie, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { categoryColours } from "../../tasks/constants";
+import { useBreakpoint } from "../../../hooks/useBreakpoint";
 
 export default function CategoryVolumeChart() {
   const [isLoading, setIsloading] = useState(true);
   const [error, setError] = useState("");
   const [backlogData, setBacklogData] = useState<GetCategoryVolumeResult[] | null>(null);
-
+  const breakpoint = useBreakpoint()
+  
   useEffect(() => {
     async function fetchData() {
       setIsloading(true);
@@ -31,17 +33,18 @@ export default function CategoryVolumeChart() {
     fill: categoryColours[entry.category] || '#cbd5e1'
   }));
 
+  const isMobile = breakpoint === "xs";
+
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
   if (error) return <ErrorState error={error} />;
 
   return (
-    <div className="card h-100 w-full flex flex-col">
-      <h2 className="text-2xl text-text-main mb-4">Category Volume</h2> 
-      <p className="text-text-sub">Pending tasks by category</p>
-      <div className="flex-1 w-full">
-        {backlogData && (
+        backlogData && 
+        (
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart
+              margin={{ top: 20, right: 30, left: 30, bottom: 100 }}
+            >
               <Pie
                 data={chartData}
                 cx="50%"
@@ -54,12 +57,15 @@ export default function CategoryVolumeChart() {
               />
               <Tooltip 
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                formatter={(value, name) => {
+                  if (typeof name !== "string") return
+                  const formatted = name.replace("-", " ");
+                  return [value, formatted.charAt(0).toUpperCase() + formatted.slice(1)];
+                }}
               />
-              <Legend verticalAlign="bottom" height={36} />
+              {!isMobile && <Legend className="xs:blocksm:block md:block lg:block xl:block 2xl:block " verticalAlign="bottom" height={36} />}
             </PieChart>
           </ResponsiveContainer>
-        )}
-      </div>
-    </div>
+        )
   );
 }

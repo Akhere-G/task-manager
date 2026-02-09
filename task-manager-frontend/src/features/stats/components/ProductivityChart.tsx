@@ -35,12 +35,9 @@ export default function ProductivityChart() {
   )
 
   return (
-    <div className="card h-100 w-full">
-      <h2 className="text-2xl text-text-main">Productivity</h2> 
-      <p className="text-text-sub">Tasks completed daily</p>
-      {productivityData && (
+      productivityData && (
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={productivityData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+          <LineChart data={productivityData} margin={{ top: 20, right: 0, left: 0, bottom: 50 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
             <XAxis 
               dataKey="date" 
@@ -53,10 +50,14 @@ export default function ProductivityChart() {
             <YAxis allowDecimals={false} />
             <Tooltip 
               contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              labelFormatter={(str) => {
+                const date = new Date(str);
+                return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: "numeric" });
+              }}
             />
             <Legend verticalAlign="top" height={36}/>
             <Line 
-              name="Tasks Completed"
+              name="Tasks completed"
               type="monotone" 
               dataKey="tasks" 
               stroke="#6366f1" 
@@ -66,7 +67,6 @@ export default function ProductivityChart() {
             />
           </LineChart>
         </ResponsiveContainer>
-      )}
-  </div>
-  );
+      )
+  )
 }
