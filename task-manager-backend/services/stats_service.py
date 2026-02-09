@@ -47,3 +47,22 @@ def get_time_spent():
     cursor.close()
     conn.close()
     return data
+
+def get_backlog_health():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            CASE 
+                WHEN is_completed = 1 THEN 'Completed'
+                WHEN due_date < CURDATE() AND is_completed = 0 THEN 'Overdue'
+                ELSE 'Pending'
+            END as status,
+            COUNT(*) as count
+        FROM tasks
+        GROUP BY status;
+                    """)
+    
+    data = cursor.fetchall()
+    return data
