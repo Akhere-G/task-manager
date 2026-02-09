@@ -5,6 +5,7 @@ from services.task_service import get_all_tasks, create_tasks, update_task, dele
 from utils.formatters import format_json_response
 from dotenv import load_dotenv
 from utils.validators import validate_task
+from services.stats_service import get_productivity_trend
 
 load_dotenv()
 
@@ -106,6 +107,11 @@ def delete(task_id):
 
   return jsonify({ "error": f'No task with the id {task_id} exists.' }), 404
 
+@app.route('/api/stats/productivity', methods=['GET'])
+def fetch_productivity_data():
+  data = get_productivity_trend()
+
+  return jsonify(format_json_response(data))
 
 if __name__ == "__main__":
     app.run(
