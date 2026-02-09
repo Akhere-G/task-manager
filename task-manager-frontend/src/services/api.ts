@@ -48,11 +48,19 @@ export interface GetProductivityResult {
   date: string;
   tasks: number
 }
+export interface GetTimeSpentResult {
+  category: string;
+  estimatedTime: number
+}
 
 export const statsService = {
   getProductivity: async (): Promise<GetProductivityResult[]> => {
     const response = await api.get("/stats/productivity")
     return response.data;
+  },
+  getTimeSpent: async () => {
+    const response = await api.get("/stats/timespent");
+    return response.data
   }
 }
 

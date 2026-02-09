@@ -1,4 +1,4 @@
-import { ProductivityChart } from "../features/stats/components";
+import { ProductivityChart, TimeSpentChart } from "../features/stats/components";
 
 export default function Stats() {
   return (
@@ -9,6 +9,7 @@ export default function Stats() {
       </header>
 
         <ProductivityChart />
+        <TimeSpentChart />
     </div>
   );
 }

@@ -32,3 +32,18 @@ def get_productivity_trend():
         })
     
     return trend_data
+
+def get_time_spent():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT category, SUM(estimated_time) as estimated_time
+        FROM tasks
+        WHERE is_completed = 1
+        GROUP BY category;
+                """)
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return data
