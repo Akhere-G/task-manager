@@ -197,23 +197,32 @@ export default function useGetTasks(props?: UseGetTasksProps) {
     }
   }
 
+
   async function setIsCompleted(id: number, isCompleted: boolean) {
     const prevTasks = tasks;
+    const completedAt = isCompleted 
+    ? new Date().toISOString().slice(0, 19).replace('T', ' ') 
+    : null;
+
     try {
       setTasks(
         (prev) =>
           prev &&
           prev.map((task) =>
-            task.id === id ? { ...task, isCompleted } : task,
-          ),
+            task.id === id ? { ...task, isCompleted, completedAt } : task,
+          )
       );
-      await taskService.update(id, { isCompleted });
+
+      await taskService.update(id, { 
+        isCompleted, 
+        completedAt 
+      });
+
     } catch (err) {
-      console.log(err);
+      console.log(err)
       setTasks(prevTasks);
     }
-  }
-
+}
   const updateFilters = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {

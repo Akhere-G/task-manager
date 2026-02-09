@@ -7,6 +7,7 @@ export interface Task {
   dueDate: string;         
   estimatedTime: number;   
   createdAt: string;       
+  completedAt: string | null;       
 }
 
 export type CreateTaskInput = Omit<Task, 'id' | 'createdAt' | 'isCompleted'>;

@@ -1,6 +1,9 @@
 export const formatDate = (dateStr?: string) => {
-  if (!dateStr){
-    return new Date().toISOString().substring(0, 10)
-  }
-  return new Date(dateStr).toISOString().substring(0, 10)
-}
+  const date = dateStr ? new Date(dateStr) : new Date();
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+};
