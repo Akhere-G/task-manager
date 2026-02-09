@@ -37,6 +37,7 @@ export default function ProductivityChart() {
   return (
     <div className="card h-100 w-full">
       <h2 className="text-2xl text-text-main">Productivity</h2> 
+      <p className="text-text-sub">Tasks completed daily</p>
       {productivityData && (
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={productivityData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>

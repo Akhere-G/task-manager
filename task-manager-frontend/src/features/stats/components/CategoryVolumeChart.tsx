@@ -37,6 +37,7 @@ export default function CategoryVolumeChart() {
   return (
     <div className="card h-100 w-full flex flex-col">
       <h2 className="text-2xl text-text-main mb-4">Category Volume</h2> 
+      <p className="text-text-sub">Pending tasks by category</p>
       <div className="flex-1 w-full">
         {backlogData && (
           <ResponsiveContainer width="100%" height="100%">

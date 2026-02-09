@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { statsService, type GetTimeSpentResult } from "../../../services/api";
 import { ErrorState, LoadingState } from "../../../components/ui";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { categoryColours } from "../../tasks/constants";
 
 export default function TimeSpentChart() {
   const [isLoading, setIsloading] = useState(true);
@@ -34,13 +35,16 @@ export default function TimeSpentChart() {
     <ErrorState error={error} />
   )
 
+  const data = timeSpentData?.map(data => ({...data, fill: categoryColours[data.category] || categoryColours['General'] }))
+
   return (
     <div className="card h-100 w-full">
-      <h2 className="text-2xl text-text-main">Total time spent per category</h2> 
+      <h2 className="text-2xl text-text-main">Time spent</h2> 
+      <p className="text-text-sub">Total time spent by category</p>
       {timeSpentData && (
         <ResponsiveContainer width="100%" height="100%">
             <BarChart 
-              data={timeSpentData} 
+              data={data} 
               layout="vertical" 
               margin={{ top: 5, right: 30, left: 40, bottom: 35 }}
             >
