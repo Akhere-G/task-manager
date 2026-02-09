@@ -44,4 +44,16 @@ export const taskService = {
   } 
 }
 
+export interface GetProductivityResult {
+  date: string;
+  tasks: number
+}
+
+export const statsService = {
+  getProductivity: async (): Promise<GetProductivityResult[]> => {
+    const response = await api.get("/stats/productivity")
+    return response.data;
+  }
+}
+
 export default api
