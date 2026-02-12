@@ -1,4 +1,5 @@
 import { Popup } from "../../../components/ui";
+import { useTaskContext } from "../../../context/TaskContext";
 import type { CreateTaskInput, Task } from "../types";
 import TaskForm from "./TaskForm";
 
@@ -10,7 +11,7 @@ interface TaskPopupsProps {
   handleDelete: (id: number) => void;
   handleEdit: (task: CreateTaskInput) => Promise<void>;
 }
-export default function TaskPopups({
+function TaskPopups({
   selectedDeleteTask,
   selectedEditTask,
   closeDeletePopup,
@@ -48,5 +49,28 @@ export default function TaskPopups({
       </Popup>
     )}
     </>
+  )
+}
+
+
+export default function TaskPopupsConnected(){
+  const { 
+    selectedDeleteTask,
+    selectedEditTask,
+    closeDeletePopup,
+    closeEditPopup,
+    handleDelete,
+    handleEdit
+  } = useTaskContext()
+
+  return (
+    <TaskPopups 
+        selectedDeleteTask={selectedDeleteTask}
+        selectedEditTask={selectedEditTask}
+        closeDeletePopup={closeDeletePopup}
+        closeEditPopup={closeEditPopup}
+        handleDelete={handleDelete}
+        handleEdit={handleEdit}    
+    />
   )
 }

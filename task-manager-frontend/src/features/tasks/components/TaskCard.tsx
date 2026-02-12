@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Task } from "../types";
 import { Trash2, CheckCircle, Clock, AlertCircle, Pencil, ChevronDown, ChevronUp } from "lucide-react";
+import { useTaskContext } from "../../../context/TaskContext";
 
 // Add function props so the Home page can handle the logic
 interface TaskCardProps extends Task {
@@ -9,7 +10,7 @@ interface TaskCardProps extends Task {
   onEdit: (id: number) => void;
 }
 
-export default function TaskCard({
+function TaskCard({
   id,
   title,
   category,
@@ -118,4 +119,27 @@ export default function TaskCard({
       </footer>
     </article>
   );
+}
+
+interface TaskCardConnectedProps extends Task {
+  setIsCompleted?: (id: number, isComplete: boolean) => void;
+  onDelete?: (id: number) => void;
+  onEdit?: (id: number) => void;
+}
+export default function TaskCardConnected(props: TaskCardConnectedProps){
+  const {
+    setIsCompleted,
+    handleConfirmDelete,
+    handleConfirmEdit
+  } = useTaskContext()
+
+  return (
+    <TaskCard 
+      setIsCompleted={setIsCompleted}
+      onDelete={handleConfirmDelete}
+      onEdit={handleConfirmEdit}
+      {...props}
+    />
+
+  )
 }

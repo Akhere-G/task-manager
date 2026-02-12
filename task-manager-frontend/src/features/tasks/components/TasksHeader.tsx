@@ -1,4 +1,5 @@
 import { FormInput } from "../../../components/ui";
+import { useTaskContext } from "../../../context/TaskContext";
 import { categoryOptions, completedTasksOptions, dueDateOptions, isAscOptions, sortByOptions, taskDurationOptions } from "../constants";
 
 interface TaskFilters {
@@ -15,15 +16,17 @@ interface TasksHeaderProps {
   updateFilters: (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement |  HTMLTextAreaElement>) => void;
   resetFilters: () => void; 
   totalTasks: number;
-  sortable?: boolean
+  sortable?: boolean;
+  showDueDateFilter?: boolean
 }
 
-export default function TasksHeader({ 
+function TasksHeader({ 
   filters, 
   updateFilters, 
   resetFilters, 
   totalTasks,
-  sortable = true 
+  sortable = true,
+  showDueDateFilter = true
 }: TasksHeaderProps){
   const formClassNames="grow lg:grow-[0.9] max-w-80";
   return (
@@ -64,14 +67,16 @@ export default function TasksHeader({
             options={completedTasksOptions}
             formClassNames={formClassNames}
           />
-          <FormInput 
+          {showDueDateFilter &&
+          ( <FormInput 
             name="dueDate"
             value={filters.dueDate}
             handleChange={updateFilters}
             label="Due Date"
             options={dueDateOptions}
             formClassNames={formClassNames}
-          />
+          /> 
+          )}
           {( sortable &&
             <>
               <FormInput 
@@ -101,5 +106,25 @@ export default function TasksHeader({
             </button>
         </form>
       </div>
+  )
+}
+
+export default function TasksHeaderConnected ({ sortable = true, showDueDateFilter = true } : { sortable?: boolean; showDueDateFilter: boolean }){
+  const {
+    filters,
+    updateFilters,
+    resetFilters,
+    pageDetails
+  } = useTaskContext()
+
+  return (
+    <TasksHeader
+      sortable={sortable}
+      showDueDateFilter={showDueDateFilter} 
+      filters={filters} 
+      updateFilters={updateFilters} 
+      resetFilters={resetFilters} 
+      totalTasks={pageDetails.totalItems} 
+    />
   )
 }

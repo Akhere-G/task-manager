@@ -6,6 +6,7 @@ import {  Popup } from '../../../components/ui';
 import { formatDate } from '../utils';
 import TaskCard from './TaskCard';
 import interactionPlugin from '@fullcalendar/interaction';
+import { useTaskContext } from '../../../context/TaskContext';
 
 interface CalendarProps {
   tasks: Task[]
@@ -19,10 +20,8 @@ interface Info {
     revert: () => void;
 }
 
-export default function TaskCalendar({ 
+function TaskCalendar({ 
   handleConfirmDelete, 
-  handleConfirmEdit,
-  setIsCompleted,
   tasks,
   updateTask
 }: CalendarProps) {
@@ -95,13 +94,30 @@ export default function TaskCalendar({
               handleConfirmDelete(id)
               setSelectedTaskId(null)
             }} 
-            onEdit={handleConfirmEdit}
-            setIsCompleted={(id, isCompleted) => {
-              setIsCompleted(id, isCompleted);
-            }}
+            
           />
         </Popup>
       )}
     </div>
+  )
+}
+
+export default function TaskCalendarConnected(){
+  const {
+    tasks,
+    handleConfirmDelete,
+    handleConfirmEdit,
+    setIsCompleted,
+    updateTask
+   } = useTaskContext()
+
+  return (
+    <TaskCalendar
+      tasks={tasks || []}
+      handleConfirmDelete={handleConfirmDelete}
+      handleConfirmEdit={handleConfirmEdit}
+      setIsCompleted={setIsCompleted}
+      updateTask={updateTask} 
+    />
   )
 }

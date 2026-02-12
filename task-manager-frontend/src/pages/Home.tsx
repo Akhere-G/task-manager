@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { EmptyState, LoadingState, ErrorState, Pagination } from "../components/ui";
+import { useTaskContext } from "../context/TaskContext";
 import { TasksHeader, TaskList } from "../features/tasks/components";
 import TaskPopups from "../features/tasks/components/TaskPopups";
-import useGetTasks from "../features/tasks/hooks/useGetTasks";
 
 const PER_PAGE = 10;
 
@@ -10,25 +11,30 @@ export default function Home() {
     tasks,
     isLoading,
     error,
-    selectedDeleteTask,
-    selectedEditTask,
-    handleConfirmDelete,
-    closeDeletePopup,
-    handleDelete,
-    handleConfirmEdit,
-    closeEditPopup,
-    handleEdit,
-    setIsCompleted,
     filters,
     pageDetails,
-    updateFilters,
-    resetFilters,
     setPage,
     isStale,
     isSearching,
-  } = useGetTasks({ perPage: PER_PAGE })
+    deferredSearch,
+    fetchTasks
+  } = useTaskContext()
 
-  let MainContent = <EmptyState  searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
+  useEffect(() => {
+      const delayDebounceFn = setTimeout(() => fetchTasks(PER_PAGE), deferredSearch ? 400 : 0);
+      return () => clearTimeout(delayDebounceFn);
+    }, [
+      deferredSearch,
+      filters.category,
+      filters.duration,
+      filters.isCompleted,
+      filters.dueDate,
+      filters.sortBy,
+      filters.order,
+      pageDetails.currentPage,
+    ]);
+
+  let MainContent = <EmptyState searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
 
   if (error) {
     MainContent = <ErrorState error={error}/>
@@ -36,22 +42,12 @@ export default function Home() {
     MainContent = <LoadingState loadMessage="Getting tasks..."/>
   } else if (tasks && tasks.length > 0) {
     MainContent = (
-    <TaskList 
-      tasks={tasks} 
-      handleConfirmDelete={handleConfirmDelete} 
-      handleConfirmEdit={handleConfirmEdit}
-      setIsCompleted={setIsCompleted}
-    />)
+    <TaskList />)
   } 
 
   return (
     <section className="flex flex-col gap-6 min-h-full">
-      <TasksHeader 
-        filters={filters} 
-        updateFilters={updateFilters} 
-        resetFilters={resetFilters} 
-        totalTasks={pageDetails.totalItems} 
-      />
+      <TasksHeader />
 
     {tasks && tasks.length > 0 && <Pagination {...pageDetails} setPage={setPage} />}
 
@@ -61,15 +57,7 @@ export default function Home() {
 
     {tasks && tasks.length > 0 && <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate/>}
 
-    {tasks && (
-      <TaskPopups 
-        selectedDeleteTask={selectedDeleteTask}
-        selectedEditTask={selectedEditTask}
-        closeDeletePopup={closeDeletePopup}
-        closeEditPopup={closeEditPopup}
-        handleDelete={handleDelete}
-        handleEdit={handleEdit}
-      />)}
+    {tasks && <TaskPopups />}
     </section>
   )
 }

@@ -31,7 +31,6 @@ export default function useGetTasks(props?: UseGetTasksProps) {
     order: "asc",
   });
 
-  console.log(filters)
   const deferredSearch = useDeferredValue(filters.search);
 
   useEffect(() => {

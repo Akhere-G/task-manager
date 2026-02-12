@@ -1,3 +1,4 @@
+import { useTaskContext } from "../../../context/TaskContext";
 import type { Task } from "../types";
 import TaskCard from "./TaskCard";
 
@@ -8,7 +9,7 @@ interface TaskListProps {
   setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>
 }
 
-export default function TaskList({tasks, handleConfirmDelete, handleConfirmEdit, setIsCompleted}: TaskListProps){
+function TaskList({tasks, handleConfirmDelete, handleConfirmEdit, setIsCompleted}: TaskListProps){
   return (
     <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {tasks.map(task => (
@@ -22,5 +23,23 @@ export default function TaskList({tasks, handleConfirmDelete, handleConfirmEdit,
           </li>
           ))}
         </ul> 
+  )
+}
+
+export default function TaskListConnected(){
+  const {
+    tasks,
+    handleConfirmDelete,
+    handleConfirmEdit,
+    setIsCompleted
+  } = useTaskContext()
+
+  return (
+    <TaskList 
+      tasks={tasks || []}
+      handleConfirmDelete={handleConfirmDelete}
+      handleConfirmEdit={handleConfirmEdit}
+      setIsCompleted={setIsCompleted}
+    />
   )
 }
