@@ -57,11 +57,12 @@ def get_all_tasks(category=None, search=None, task_duration=None, is_completed=N
   order_value = "ASC" if order == "asc" else "DESC"
   
   data_query = f"SELECT * FROM tasks{base_filters} ORDER BY {sort_by_field} {order_value}"
-
   if page is not None and limit is not None:
-    offset = int(limit) * (int(page) - 1)
+    page = max(int(page), 1)
+    limit = max(int(limit), 1)
+    offset = limit * (page - 1)
     data_query += " LIMIT %s OFFSET %s"
-    params.extend([int(limit), offset])
+    params.extend([limit, offset])
   else:
     page = 1
     offset = 0
@@ -69,7 +70,7 @@ def get_all_tasks(category=None, search=None, task_duration=None, is_completed=N
   
   cursor.execute(data_query, params)
   tasks = cursor.fetchall()
-
+  
   cursor.close()
   conn.close()
 
