@@ -4,7 +4,7 @@ import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
 import { formatDate } from "../utils";
 
-type ErrorMesageType = { [P in keyof CreateTaskInput]: string }
+type ErrorMesageType = { [P in keyof CreateTaskInput]: string;  } & { general: string}
 
 interface TaskFormProps {
   confirmButtonText?: string;
@@ -32,7 +32,8 @@ export default function TaskForm({
     category: "",
     description: "",
     dueDate: "",
-    estimatedTime: ""
+    estimatedTime: "",
+    general: ""
   })
 
   const defaultErrorMessages = {
@@ -40,7 +41,8 @@ export default function TaskForm({
     category: "",
     description: "",
     dueDate: "",
-    estimatedTime: ""
+    estimatedTime: "",
+    general: ""
   }
 
   const [isLoading, setIsloading] = useState(false);
@@ -49,7 +51,7 @@ export default function TaskForm({
     if (initialData) setFormState(({...initialData, dueDate: formatDate(initialData.dueDate)}))
   }, [initialData])
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>){
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
     const { name, value } = e.target;
     setFormState(prev => ({...prev, [name]: value}))
   }
@@ -64,10 +66,13 @@ export default function TaskForm({
       if (!axios.isAxiosError(err)){
           return
       }
-
+      console.log(err.response?.status)
       if (err.status === 400){
+
         const errors: Partial<ErrorMesageType> = err.response?.data?.errors;
         setErrorMessages(({ ...defaultErrorMessages, ...errors}))
+      } else {
+        setErrorMessages({...errorMessages, general: "Could not send data"})
       }
     } finally {
       setIsloading(false)
@@ -84,6 +89,13 @@ export default function TaskForm({
       onSubmit={handleSubmit}
       className="flex flex-col gap-4"
     >
+      {errorMessages.general && (
+        <p 
+          className="mt-4 text-failure bg-failure/10 p-1 pl-4 rounded-md border-l-failure border-l-4"
+        >
+          {errorMessages.general}
+        </p>
+        )}
       <FormInput 
         label="Title" 
         name="title" 

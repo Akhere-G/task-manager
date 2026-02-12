@@ -62,7 +62,7 @@ export default function FormInput({
       }
       {errorMessage && (
         <p 
-          className="text-failure bg-failure/10 p-1 pl-4 rounded-md border-l-failure border-l-4"
+          className="mt-4 text-failure bg-failure/10 p-1 pl-4 rounded-md border-l-failure border-l-4"
         >
           {errorMessage}
         </p>
