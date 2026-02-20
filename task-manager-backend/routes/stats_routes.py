@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from utils.formatters import format_json_response
 from services.stats_service import get_productivity_trend, get_time_spent, get_backlog_health, get_category_volume
 
-stats_bp = Blueprint("stats", "stats")
+stats_bp = Blueprint("stats", __name__)
 
 @stats_bp.route('/api/stats/productivity', methods=['GET'])
 def fetch_productivity_data():

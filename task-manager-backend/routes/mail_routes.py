@@ -4,7 +4,7 @@ from flask_mail import Message
 from extensions import mail
 import os
 
-mail_bp = Blueprint("contact", import_name="contact")
+mail_bp = Blueprint("contact", __name__)
 
 
 @mail_bp.route('/api/contact', methods=['POST'])

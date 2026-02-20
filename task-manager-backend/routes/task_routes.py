@@ -3,7 +3,7 @@ from utils.formatters import format_json_response
 from utils.validators import validate_task
 from services.task_service import get_all_tasks, create_tasks, update_task, delete_task
 
-task_bp = Blueprint("tasks", import_name="tasks")
+task_bp = Blueprint("tasks", __name__)
 
 
 @task_bp.route('/api/tasks', methods=['GET'])
