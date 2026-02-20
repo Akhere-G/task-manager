@@ -1,5 +1,5 @@
-import { Menu } from "lucide-react";
-import { useState } from "react";
+import { Menu, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 type Props = {
@@ -9,10 +9,22 @@ type Props = {
 
 export default function Header({ links, currentPath }: Props) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode])
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
-
+  const toggleDarkMode = () => setDarkMode(prev => !prev)
+  
   return (
     <>
       {/* Mobile Sidebar Overlay */}
@@ -29,10 +41,10 @@ export default function Header({ links, currentPath }: Props) {
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <span className="font-bold text-brand text-xl">Menu</span>
+          <span className="font-bold text-brand text-xl">Menu</span>            
           <button onClick={closeSidebar} className="text-text-main text-2xl" aria-label="Close menu">&times;</button>
         </div>
-        <nav className="p-4">
+        <nav className="p-4 flex flex-col">
           <ul className="flex flex-col gap-2">
             {links.map(({ title, path }) => (
               <li key={path}>
@@ -50,6 +62,13 @@ export default function Header({ links, currentPath }: Props) {
               </li>
             ))}
           </ul>
+          <button 
+            onClick={toggleDarkMode}
+            className="self-end p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
         </nav>
       </aside>
 
@@ -72,7 +91,7 @@ export default function Header({ links, currentPath }: Props) {
           </div>
           
           {/* Desktop Navigation (Hidden on Mobile) */}
-          <nav className="hidden md:block">
+          <nav className="hidden md:flex items-center gap-8">
             <ul className="flex gap-8">
               {links.map(({ title, path }) => (
                 <li key={path}>
@@ -89,6 +108,13 @@ export default function Header({ links, currentPath }: Props) {
                 </li>
               ))}
             </ul>
+            <button 
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
           </nav>
         </div>
       </header>
