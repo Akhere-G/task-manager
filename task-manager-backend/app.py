@@ -1,12 +1,11 @@
 import os
-from flask import Flask, jsonify, request
+from flask import Flask
 from flask_cors import CORS
-from services.task_service import get_all_tasks, create_tasks, update_task, delete_task
-from utils.formatters import format_json_response
+from routes.task_routes import task_bp
+from routes.stats_routes import stats_bp
+from routes.mail_routes import mail_bp
 from dotenv import load_dotenv
-from utils.validators import validate_task, validate_contact_request
-from services.stats_service import get_productivity_trend, get_time_spent, get_backlog_health, get_category_volume
-from flask_mail import Mail, Message
+from extensions import mail
 
 load_dotenv()
 
@@ -20,178 +19,11 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+mail.init_app(app)
 
-mail = Mail(app)
-
-@app.route('/api/tasks', methods=['GET'])
-def list_tasks():
-  category = request.args.get("category")
-  search = request.args.get("q")
-  task_duration = request.args.get("task_duration")
-  is_completed = request.args.get("is_completed")
-  due_date = request.args.get('due_date')
-  today = request.args.get('today')
-  sort_by = request.args.get('sort_by')
-  order = request.args.get('order')
-  page = request.args.get('page')
-  limit = request.args.get('limit')
-
-  raw_tasks = get_all_tasks(
-    category, 
-    search, 
-    task_duration, 
-    is_completed, 
-    due_date, 
-    today, 
-    sort_by, 
-    order, 
-    limit, 
-    page)
-  return jsonify(format_json_response(raw_tasks))
-
-@app.route('/api/tasks', methods=['POST'])
-def add_task():
-  data = request.json
-  errors = validate_task(data)
-    
-  if errors:
-    return jsonify({ 'errors': errors }), 400
-  
-  title = str(data.get('title', '')).strip()
-  description = str(data.get('description', '')).strip()
-  category = str(data.get('category', 'General')).strip()
-  due_date = data.get('dueDate')
-  estimated_time = data.get('estimatedTime')
-
-  task_id = create_tasks(title, description, category, due_date, estimated_time)
-
-  return jsonify({
-    "id" : task_id,
-    "title": title,
-    "description": description,
-    "category": category,
-    "isCompleted": False,
-    "estimatedTime": estimated_time,
-    "dueDate": due_date,
-    "completedAt": None
-  }), 201
-
-@app.route('/api/tasks/<int:task_id>', methods=['PATCH'])
-def edit_task(task_id):
-  data = request.json  
-  errors = validate_task(data, True)
-
-  if errors:
-    return jsonify({ 'errors': errors }), 400
-
-  title = str(data.get('title', '')).strip()
-  description = str(data.get('description', '')).strip()
-  category = str(data.get('category', '')).strip()
-  due_date = data.get('dueDate')
-  estimated_time = data.get('estimatedTime')
-  is_completed = data.get('isCompleted')  
-  completed_at = data.get('completedAt')
-
-  updated_result = update_task(
-        task_id, 
-        title=title, 
-        category=category, 
-        description=description, 
-        estimated_time=estimated_time, 
-        is_completed=is_completed, 
-        due_date=due_date,
-        completed_at=completed_at,
-        has_completed_at="completedAt" in data
-    )
-  
-  if updated_result is None:
-    return jsonify({ "error": f"No task with the id {task_id} exists." }), 404
-
-  return jsonify(format_json_response(updated_result)), 200
-
-@app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
-def delete(task_id):
-  deleted_id = delete_task(task_id)
-
-  if deleted_id is not None:
-    return jsonify({ "id" : deleted_id, "message": "Deleted successfully" }), 200
-
-  return jsonify({ "error": f'No task with the id {task_id} exists.' }), 404
-
-@app.route('/api/stats/productivity', methods=['GET'])
-def fetch_productivity_data():
-  days = request.args.get('days', 30)
-  try:
-    int_days = int(days)
-    data = get_productivity_trend(int_days)
-  except (ValueError, TypeError):
-    return jsonify({ 'error': "Days must be a number" }), 400
-
-  return jsonify(format_json_response(data)), 200
-
-@app.route('/api/stats/timespent', methods=['GET'])
-def fetch_time_spent_data():
-  data = get_time_spent()
-
-  return jsonify(format_json_response(data)), 200
-
-@app.route('/api/stats/backloghealth', methods=["GET"])
-def fetch_backlog_health():
-  data = get_backlog_health()
-
-  return jsonify(format_json_response(data)), 200
-
-@app.route('/api/stats/categoryvolume', methods=["GET"])
-def fetch_category_volume():
-  data = get_category_volume()
-
-  return jsonify(format_json_response(data)), 200
-
-@app.route('/api/contact', methods=['POST'])
-def handle_contact():
-  data = request.json
-  
-  # Run validation
-  validation_errors = validate_contact_request(data)
-  
-  if validation_errors:
-      # Return 400 and the errors object to the frontend
-      return jsonify({
-          "status": "error",
-          "errors": validation_errors
-      }), 400
-
-  full_name = data.get('fullName')
-  email = data.get('email')
-  subject = data.get('subject')
-  message = data.get('message')
-  # 1. Create the Email Message
-  msg = Message(
-      subject=f"New Enquiry: {subject} from {full_name}",
-      recipients=[os.getenv('MAIL_USERNAME')] # Where you want to receive the alerts
-  )
-  
-  # 2. Format the Email Body
-  msg.body = f"""
-  New Enquiry Received via Task Manager:
-  
-  From: {full_name} ({email})
-  Subject: {subject}
-  
-  Message:
-  {message}
-  
-  ---
-  This email was automatically generated by your Flask backend.
-  """
-
-  try:
-      # 3. Send the Email
-      mail.send(msg)
-      return jsonify({"message": "Enquiry sent successfully"}), 201
-  except Exception as e:
-      print(f"Failed to send email: {e}")
-      return jsonify({"error": "Failed to deliver enquiry"}), 500  
+app.register_blueprint(task_bp)
+app.register_blueprint(stats_bp)
+app.register_blueprint(mail_bp)
 
 if __name__ == "__main__":
     app.run(
