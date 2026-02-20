@@ -122,3 +122,57 @@ def validate_contact_request(data):
         errors['message'] = "Message exceeds the 2000 character limit."
 
     return errors
+
+def validate_user(data, is_registering=False):
+    errors = {}
+
+    def get_clean(field):
+        return str(data.get(field, "")).strip()
+
+    email = get_clean("email")
+    password = get_clean("password")
+
+    if not email:
+        errors["email"] = "Email is required."
+    
+    if not password:
+        errors["password"] = "Password is required."
+
+    if not is_registering:
+        return errors
+
+    first_name = get_clean("firstName")
+    last_name = get_clean("lastName")
+
+    if not first_name:
+        errors["firstName"] = "First name is required."
+    elif len(first_name) > 50:
+        errors["firstName"] = "First name must be 50 characters or less."
+
+    if not last_name:
+        errors["lastName"] = "Last name is required."
+    elif len(last_name) > 50:
+        errors["lastName"] = "Last name must be 50 characters or less."
+
+    if email and len(email) > 100:
+        errors["email"] = "Email must be 100 characters or less."
+    elif email:
+        email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+        if not re.match(email_regex, email):
+            errors['email'] = "Please enter a valid email address."
+
+    if password:
+        if len(password) < 8:
+            errors["password"] = "Password must be at least 8 characters."
+        elif len(password) > 50:
+            errors["password"] = "Password must be 50 characters or less."
+        elif not (re.search(r'[A-Za-z]', password) and re.search(r'[0-9]', password)):
+            errors["password"] = "Password must contain both letters and numbers."
+
+    confirm_password = get_clean("confirmPassword")
+    if not confirm_password:
+        errors["confirmPassword"] = "Confirm password is required."
+    elif confirm_password != password:
+        errors["confirmPassword"] = "Passwords do not match."
+
+    return errors
