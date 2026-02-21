@@ -56,6 +56,7 @@ export default function ActivityHeatmap() {
         startDate={lastYear}
         endDate={today}
         values={heatmapValues}
+        
         classForValue={(value: HeatmapValueType) => {
           if (!value || value.count === 0) return 'color-empty';
           // Caps at scale-4 for the darkest indigo
@@ -63,9 +64,7 @@ export default function ActivityHeatmap() {
         }}
         tooltipDataAttrs={(value: HeatmapValueType) => ({
           'data-tooltip-id': 'heatmap-tooltip',
-          'data-tooltip-content': value.date 
-            ? `${value.count} tasks on ${new Date(value.date).toLocaleDateString('en-GB')}`
-            : 'No activity',
+          'data-tooltip-content':`${value.count} tasks on ${new Date(value.date).toLocaleDateString('en-GB')}`
         })}
       />
       <Tooltip id="heatmap-tooltip" />

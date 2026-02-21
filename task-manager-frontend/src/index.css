@@ -29,21 +29,6 @@
   --color-disabled-text: var(--color-slate-400);
 }
 
-/* --- Dark Mode Overrides --- */
-/* This block triggers when the 'dark' class is added to the <html> tag */
-/* This is essential - without this, the heatmap is invisible */
-.react-calendar-heatmap .color-empty { fill: #ebedf0; }
-.react-calendar-heatmap .color-scale-1 { fill: #c7d2fe; }
-.react-calendar-heatmap .color-scale-2 { fill: #818cf8; }
-.react-calendar-heatmap .color-scale-3 { fill: #4f46e5; }
-.react-calendar-heatmap .color-scale-4 { fill: #3730a3; }
-
-/* Set a default height so it doesn't collapse to 0px */
-.react-calendar-heatmap {
-  max-height: 200px;
-  width: 100%;
-}
-
 @layer base {
   .dark {
     --color-canvas: var(--color-slate-950);
@@ -110,11 +95,21 @@
   }
 }
 
+.react-calendar-heatmap .color-empty { fill: #ebedf0; }
+.react-calendar-heatmap .color-scale-1 { fill: #c7d2fe; }
+.react-calendar-heatmap .color-scale-2 { fill: #818cf8; }
+.react-calendar-heatmap .color-scale-3 { fill: #4f46e5; }
+.react-calendar-heatmap .color-scale-4 { fill: #3730a3; }
+
+.react-calendar-heatmap {
+  max-height: 200px;
+  width: 100%;
+}
+
 .recharts-pie-sector:hover {
   filter: brightness(1.2);
   transition: filter 0.2s ease;
 }
-
 
 /* Dark Mode Heatmap - Indigo Glow Theme */
 .dark .react-calendar-heatmap .color-empty { 

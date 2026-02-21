@@ -22,7 +22,7 @@ export default function Stats() {
           title="Task Status"
           subtitle="Current completion progress"
           width="lg:w-[35%]"
-          height="h-90 lg:h-120"
+          height="h-90 lg:h-90"
           flex="0.25"
         >
           <BacklogHealthChart />
@@ -32,7 +32,7 @@ export default function Stats() {
           title="Productivity"
           subtitle="Tasks completed daily"
           width="lg:w-[65%]"
-          height="h-90 lg:h-120"
+          height="h-90 lg:h-90"
           flex="0.75"
         >
           <ProductivityChart />
@@ -43,7 +43,7 @@ export default function Stats() {
           title="Active Balance"
           subtitle="Pending tasks by category"
           width="lg:w-[35%]"
-          height="h-90 lg:h-120"
+          height="h-90 lg:h-90"
           flex="0.25"
         >
           <CategoryVolumeChart />
@@ -53,7 +53,7 @@ export default function Stats() {
           title="Time spent"
           subtitle="Total time spent per category"
           width="lg:w-[65%]"
-          height="h-90 lg:h-120"
+          height="h-90 lg:h-90"
           flex="0.75"
         >
             <TimeSpentChart />

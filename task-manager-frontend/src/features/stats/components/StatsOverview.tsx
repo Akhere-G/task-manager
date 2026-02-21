@@ -89,7 +89,7 @@ export default function StatsOverview() {
 
 function StatCard({ title, subtext, suffix, isLoading }: { title: string; subtext: string; suffix?: string; isLoading: boolean }) {
   return (
-    <div className="card flex-1 min-w-45 p-4 flex flex-col items-center justify-center text-center shadow-sm border border-border-light transition-all hover:border-brand/30">
+    <div className="card flex-1 min-w-40 p-4 flex flex-col items-center justify-center text-center shadow-sm border border-border-light transition-all hover:border-brand/30">
       <h3 className="text-text-sub text-sm font-medium uppercase tracking-wider mb-2">{title}</h3>
       {isLoading ? (
         <div className="h-10 w-24 bg-bg-secondary animate-pulse rounded-md" />

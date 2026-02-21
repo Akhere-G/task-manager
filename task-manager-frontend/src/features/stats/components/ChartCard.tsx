@@ -2,10 +2,10 @@
 interface ChartCardProps {
   title: string;
   subtitle: string;
-  children: React.ReactElement; // Recharts components work best as a single element here
+  children: React.ReactElement; 
   width: string;
   height: string;
-  flex?: string; // Made optional as Tailwind classes often handle this
+  flex?: string; 
 }
 
 export default function ChartCard({ title, subtitle, children, width, height }: ChartCardProps) {
@@ -16,8 +16,7 @@ export default function ChartCard({ title, subtitle, children, width, height }: 
         <p className="text-text-sub text-sm">{subtitle}</p>
       </div>
       
-      {/* The wrapper div below ensures the chart expands to fill the card */}
-      <div className="flex-grow w-full">
+      <div className="grow w-full">
           {children}
       </div>
     </div>
