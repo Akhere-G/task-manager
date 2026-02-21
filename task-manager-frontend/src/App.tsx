@@ -1,5 +1,5 @@
 import { Route, Routes, useLocation } from "react-router-dom";
-import { About, AddTask, Contact, Home, Stats, TaskDetails, CalendarView } from "./pages";
+import { About, AddTask, Contact, Home, Stats, TaskDetails, CalendarView, Register } from "./pages";
 import { Footer, Header } from "./components/layout";
 
 function App() {
@@ -10,6 +10,7 @@ function App() {
     { title: "Stats", path: "/stats" },
     { title: "About", path: "/about" },
     { title: "Contact", path: "/contact" },
+    { title: "Register", path: "/register" },
   ];
 
   const location = useLocation();
@@ -26,6 +27,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/task/:id" element={<TaskDetails />} />
+          <Route path="/register" element={<Register />} />
           
           <Route path="*" element={<div className="text-center py-20">Page Not Found</div>} />
         </Routes>
