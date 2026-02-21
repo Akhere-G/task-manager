@@ -4,6 +4,7 @@ import axios from "axios";
 import type { LoginUserInput } from "../features/auth/types";
 import { authService } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../context/AuthContext";
 
 type ErrorMesageType = { [P in keyof LoginUserInput]: string;  } & { general: string }
 
@@ -21,6 +22,7 @@ export default function Login() {
   const [isLoading, setIsloading] = useState(false)
 
   const navigate = useNavigate()
+  const { login } = useAuthContext()
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
     const { name, value } = e.target;
@@ -39,7 +41,7 @@ export default function Login() {
       setIsloading(true)
       
       const { token } = await authService.login(formData)
-      localStorage.setItem("token", token)
+      login(token)
 
       navigate("/")
     } catch (err) {
