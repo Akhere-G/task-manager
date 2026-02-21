@@ -1,0 +1,27 @@
+# Ignore local environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Ignore the heavy dependencies folder
+node_modules/
+
+# Ignore build outputs (we build inside Docker instead)
+dist/
+build/
+
+# Ignore Git metadata
+.git
+.gitignore
+
+# Ignore Docker files
+Dockerfile
+.dockerignore
+
+# Ignore logs and system files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+.vscode/

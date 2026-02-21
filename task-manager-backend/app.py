@@ -16,7 +16,8 @@ app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY") 
 jwt = JWTManager(app)
 
-CORS(app)
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+CORS(app, resources={r"/*": {"origins": [frontend_url, "http://localhost:5173"]}})
 
 # Email Configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -31,6 +32,10 @@ app.register_blueprint(task_bp)
 app.register_blueprint(stats_bp)
 app.register_blueprint(mail_bp)
 app.register_blueprint(auth_bp)
+
+@app.route('/health')
+def health_check():
+    return {"status": "healthy"}, 200
 
 if __name__ == "__main__":
     app.run(
