@@ -5,9 +5,11 @@ import { Link } from "react-router-dom";
 type Props = {
   links: { path: string; title: string }[];
   currentPath: string;
+  isAuthenticated: boolean;
+  logout: () => void
 };
 
-export default function Header({ links, currentPath }: Props) {
+export default function Header({ links, currentPath, isAuthenticated,logout }: Props) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
@@ -62,13 +64,18 @@ export default function Header({ links, currentPath }: Props) {
               </li>
             ))}
           </ul>
-          <button 
-            onClick={toggleDarkMode}
-            className="self-end p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
+          <div className="flex gap-4 mt-4">
+            {isAuthenticated && <button className="btn-primary self-start" onClick={() => {logout(); toggleSidebar()}}>Logout</button>}
+
+            <button 
+              onClick={toggleDarkMode}
+              className="p-2 mb-3 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
+              aria-label="Toggle dark mode"
+              >
+              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          </div>
+
         </nav>
       </aside>
 
@@ -108,13 +115,16 @@ export default function Header({ links, currentPath }: Props) {
                 </li>
               ))}
             </ul>
-            <button 
-              onClick={toggleDarkMode}
-              className="p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
+            <div className="flex gap-2"> 
+              <button 
+                onClick={toggleDarkMode}
+                className="p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
+                aria-label="Toggle dark mode"
+                >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              {isAuthenticated && <button className="btn-primary" onClick={logout}>Logout</button>}
+              </div>
           </nav>
         </div>
       </header>

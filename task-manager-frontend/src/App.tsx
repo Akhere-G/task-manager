@@ -4,7 +4,7 @@ import { Footer, Header, ProtectedRoute } from "./components/layout";
 import { useAuthContext } from "./context/AuthContext";
 
 function App() {
-  const { isAuthenticated } = useAuthContext()
+  const { isAuthenticated, logout } = useAuthContext()
   const location = useLocation();
 
     const protectedRoutes  = [
@@ -34,7 +34,12 @@ function App() {
 
   return (
     <div className="min-h-screen bg-canvas flex flex-col">
-      <Header links={navLinks} currentPath={location.pathname}/>
+      <Header 
+        links={navLinks} 
+        currentPath={location.pathname}
+        logout={logout}
+        isAuthenticated={isAuthenticated}
+      />
       <main className="grow max-w-7xl mx-auto w-full px-6 py-8">
         <Routes>    
           <Route path="/" element={<ProtectedRoute redirect={!isAuthenticated}><Home /></ProtectedRoute>} />
