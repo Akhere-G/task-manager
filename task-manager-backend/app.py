@@ -20,7 +20,7 @@ frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 CORS(app, resources={
     r"/*": {
         "origins": [frontend_url, "http://localhost:5173"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
 })
