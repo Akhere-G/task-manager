@@ -57,7 +57,7 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-6">
+    <div>
       <section className="mb-10">
         <h1 className="text-4xl font-extrabold text-text-main mb-3 tracking-tight">
           Contact <span className="text-brand">Support.</span>

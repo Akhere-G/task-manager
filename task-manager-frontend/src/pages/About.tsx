@@ -3,7 +3,7 @@ import { Target, BarChart3, Activity, PieChart, Clock, Timer, Cpu } from 'lucide
 
 export default function AboutPage() {
   return (
-    <div className="max-w-5xl mx-auto py-12 px-6">
+    <div>
       {/* Hero Section */}
       <section className="text-center mb-20">
         <h1 className="text-5xl font-extrabold text-text-main mb-6 tracking-tight">

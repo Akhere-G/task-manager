@@ -40,7 +40,7 @@ function App() {
         logout={logout}
         isAuthenticated={isAuthenticated}
       />
-      <main className="grow max-w-7xl mx-auto w-full px-6 py-8">
+      <main className="grow max-w-7xl mx-auto w-full px-6 py-6 md:px-12 md:py-12">
         <Routes>    
           <Route path="/" element={<ProtectedRoute redirect={!isAuthenticated}><Home /></ProtectedRoute>} />
           <Route path="/addtasks" element={<ProtectedRoute redirect={!isAuthenticated}><AddTask /></ProtectedRoute>} />

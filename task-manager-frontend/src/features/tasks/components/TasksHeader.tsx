@@ -109,7 +109,7 @@ function TasksHeader({
   )
 }
 
-export default function TasksHeaderConnected ({ sortable = true, showDueDateFilter = true } : { sortable?: boolean; showDueDateFilter: boolean }){
+export default function TasksHeaderConnected ({ sortable = true, showDueDateFilter = true } : { sortable?: boolean; showDueDateFilter?: boolean }){
   const {
     filters,
     updateFilters,
