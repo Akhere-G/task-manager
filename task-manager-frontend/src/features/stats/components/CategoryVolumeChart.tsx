@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { statsService, type GetCategoryVolumeResult } from "../../../services/api";
-import { ErrorState, LoadingState } from "../../../components/ui";
-import { PieChart, Pie, Tooltip, Legend } from "recharts";
+import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
+import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { categoryColours } from "../../tasks/constants";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 
@@ -37,10 +37,18 @@ export default function CategoryVolumeChart() {
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
   if (error) return <ErrorState error={error} />;
+  if (chartData && chartData.length == 0){
+      return (
+        <div>
+          <EmptyState searchMessage="No pending tasks"/>
+        </div>
+      )
+  }
 
   return (
         categoryVolumeData && 
         (
+          <ResponsiveContainer>
             <PieChart
               margin={{ top: 20, right: 0, left: 0, bottom: 120 }}
             >
@@ -64,6 +72,7 @@ export default function CategoryVolumeChart() {
               />
               {!isMobile && <Legend className="xs:blocksm:block md:block lg:block xl:block 2xl:block " verticalAlign="bottom" height={36} />}
             </PieChart>
+          </ResponsiveContainer>  
         )
   );
 }

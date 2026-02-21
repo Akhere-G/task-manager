@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { statsService, type GetTimeSpentResult } from "../../../services/api";
-import { ErrorState, LoadingState } from "../../../components/ui";
-import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
+import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { categoryColours } from "../../tasks/constants";
 
 export default function TimeSpentChart() {
@@ -37,9 +37,17 @@ export default function TimeSpentChart() {
 
   const data = timeSpentData?.map(data => ({...data, fill: categoryColours[data.category] || categoryColours['General'] }))
 
+  if (data && data.length == 0){
+        return (
+          <div>
+            <EmptyState searchMessage="No tasks completed recently"/>
+          </div>
+        )
+    }
+
   return (
-    
       timeSpentData && (
+        <ResponsiveContainer>
           <BarChart 
             data={data} 
             layout="vertical" 
@@ -84,6 +92,7 @@ export default function TimeSpentChart() {
               activeBar={{ style: { filter: "brightness(120%)"}}}
             />
           </BarChart>
+        </ResponsiveContainer>
     )
   );
 }

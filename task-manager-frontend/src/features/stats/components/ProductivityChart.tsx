@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { statsService, type GetProductivityResult } from "../../../services/api";
-import { ErrorState, LoadingState } from "../../../components/ui";
-import { CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
+import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export default function ProductivityChart() {
   const [isLoading, setIsloading] = useState(true);
@@ -25,6 +25,8 @@ export default function ProductivityChart() {
     fetchData();
   }, []);
 
+  const hasData = productivityData && productivityData.some(d => d.tasks > 0)
+
   if (isLoading) return (
     <div className="flex justify-center items-center h-full">
       <LoadingState />
@@ -36,9 +38,17 @@ export default function ProductivityChart() {
       <ErrorState error={error} />
     </div>
   );
+  if (productivityData && !hasData){
+      return (
+        <div>
+          <EmptyState searchMessage="No tasks completed recently"/>
+        </div>
+      )
+    }
 
   return (
     productivityData && (
+      <ResponsiveContainer>
         <LineChart data={productivityData} margin={{ top: 20, right: 30, left: 0, bottom: 50 }}>
           {/* Grid lines using your surface-muted variable */}
           <CartesianGrid 
@@ -98,6 +108,7 @@ export default function ProductivityChart() {
             activeDot={{ r: 6, strokeWidth: 0 }}
           />
         </LineChart>
+      </ResponsiveContainer>
     )
   );
 }

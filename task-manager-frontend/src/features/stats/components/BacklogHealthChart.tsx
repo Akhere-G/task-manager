@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { statsService, type GetBacklogHealthResult } from "../../../services/api";
-import { ErrorState, LoadingState } from "../../../components/ui";
-import { PieChart, Pie, Tooltip, Legend } from "recharts";
+import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
+import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const COLORS: Record<string, string> = {
   Completed: '#10b981', 
@@ -38,13 +38,20 @@ export default function BacklogHealthChart() {
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
   if (error) return <ErrorState error={error} />;
-
+  if (backlogData && backlogData.length == 0){
+    return (
+      <div>
+        <EmptyState searchMessage="No tasks"/>
+      </div>
+    )
+  }
   return (
         backlogData && 
         (
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart
               margin={{ top: 20, right: 0, left: 0, bottom: 70 }}
-            >
+              >
               <Pie
                 data={chartData}
                 cx="50%"
@@ -55,12 +62,13 @@ export default function BacklogHealthChart() {
                 dataKey="count"
                 nameKey="status"
                 // shape={({ isActive }) => ({ style: { filter: isActive ? "brightness(120%)" : ""}})}
-              />
+                />
               <Tooltip 
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-              />
+                />
               <Legend verticalAlign="bottom" height={36} />
             </PieChart>
+          </ResponsiveContainer>
         )
   );
 }
