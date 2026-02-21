@@ -21,14 +21,3 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 
 CREATE FULLTEXT INDEX IF NOT EXISTS idx_tasks_search ON tasks(title, description);
-
-CREATE TRIGGER tr_ensure_completion_timestamp
-BEFORE UPDATE ON tasks
-FOR EACH ROW
-BEGIN
-    IF NEW.is_completed = 1 AND NEW.completed_at IS NULL THEN
-        SET NEW.completed_at = NOW();
-    ELSEIF NEW.is_completed = 0 THEN
-        SET NEW.completed_at = NULL;
-    END IF;
-END;
