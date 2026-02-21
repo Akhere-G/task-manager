@@ -56,7 +56,6 @@ export default function BacklogHealthChart() {
                 cy="50%"
                 innerRadius="60%"
                 outerRadius="80%"
-                paddingAngle={1}
                 dataKey="count"
                 nameKey="status"
                 // shape={({ isActive }) => ({ style: { filter: isActive ? "brightness(120%)" : ""}})}

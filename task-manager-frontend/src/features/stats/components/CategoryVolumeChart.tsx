@@ -80,7 +80,16 @@ export default function CategoryVolumeChart() {
                   return [value, formatted.charAt(0).toUpperCase() + formatted.slice(1)];
                 }}
               />
-              {!isMobile && <Legend className="xs:blocksm:block md:block lg:block xl:block 2xl:block " verticalAlign="bottom" height={36} />}
+              {!isMobile && (
+                <Legend 
+                  className="xs:blocksm:block md:block lg:block xl:block 2xl:block " 
+                  verticalAlign="bottom" 
+                  height={36} 
+                  formatter={(label: string) => {
+                    const formatted = label.replace("-", " ")
+                    return formatted[0].toUpperCase() + formatted.slice(1)
+                  }}
+                />)}
             </PieChart>
           </ResponsiveContainer>  
         )

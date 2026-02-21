@@ -87,7 +87,6 @@ export default function TimeSpentChart() {
               labelFormatter={(value) => {
                 if (typeof value !== "string") return;
                 const formatted = value.replace("-", " ");
-                console.log(formatted)
                 return formatted.charAt(0).toUpperCase() + formatted.slice(1);
               }}
             />

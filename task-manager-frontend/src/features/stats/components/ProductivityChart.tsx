@@ -84,8 +84,7 @@ export default function ProductivityChart() {
               color: 'var(--color-text-main)',
               boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
             }}
-            itemStyle={{ color: 'var(--color-brand)', fontWeight: 'bold' }}
-            labelStyle={{ color: 'var(--color-text-sub)', marginBottom: '4px' }}
+            labelStyle={{ color: 'var(--color-text-main)', marginBottom: '4px' }}
             labelFormatter={(str) => {
               const date = new Date(str);
               return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: "numeric" });
