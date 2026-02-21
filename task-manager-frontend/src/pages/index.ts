@@ -6,3 +6,4 @@ export { default as Stats } from "./Stats"
 export { default as TaskDetails} from "./TaskDetails"
 export { default as CalendarView } from './CalendarView'
 export { default as Register } from './Register'
+export { default as Login } from './Login'

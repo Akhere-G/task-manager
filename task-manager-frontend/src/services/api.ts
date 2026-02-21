@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { CreateTaskInput, Task } from '../features/tasks/types';
-import type { RegisterUserInput } from '../features/auth/types';
+import type { LoginUserInput, RegisterUserInput } from '../features/auth/types';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080/api',
@@ -97,11 +97,15 @@ export const contactService = {
   }
 }
 
-interface RegisterResult { token: string }
+interface AuthResult { token: string }
 
 export const authService = {
-  register: async (newUserData: RegisterUserInput): Promise<RegisterResult> => {
+  register: async (newUserData: RegisterUserInput): Promise<AuthResult> => {
     const response = await api.post("/auth/register", newUserData);
+    return response.data
+  },
+  login: async (userData: LoginUserInput): Promise<AuthResult> => {
+    const response = await api.post("/auth/login", userData);
     return response.data
   }
 }
