@@ -21,7 +21,7 @@ export default function Stats() {
         <ChartCard 
           title="Task Status"
           subtitle="Current completion progress"
-          width="min-w-100 lg:w-[35%]"
+          width="lg:w-[35%]"
           height="h-90 lg:h-120"
           flex="0.25"
         >

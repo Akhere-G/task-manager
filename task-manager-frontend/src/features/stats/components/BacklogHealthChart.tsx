@@ -38,11 +38,9 @@ export default function BacklogHealthChart() {
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
   if (error) return <ErrorState error={error} />;
-  if (backlogData && backlogData.length == 0){
+  if (backlogData && backlogData.length === 0){
     return (
-      <div>
         <EmptyState searchMessage="No tasks"/>
-      </div>
     )
   }
   return (
@@ -50,7 +48,7 @@ export default function BacklogHealthChart() {
         (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart
-              margin={{ top: 20, right: 0, left: 0, bottom: 70 }}
+              margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
               >
               <Pie
                 data={chartData}
@@ -64,7 +62,16 @@ export default function BacklogHealthChart() {
                 // shape={({ isActive }) => ({ style: { filter: isActive ? "brightness(120%)" : ""}})}
                 />
               <Tooltip 
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                contentStyle={{ 
+                  backgroundColor: 'var(--color-surface)', 
+                  borderColor: 'var(--color-surface-muted)',
+                  borderRadius: '12px',
+                  color: 'var(--color-text-main)',
+                  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+                }}
+                itemStyle={{
+                  color: 'var(--color-text-main)', 
+                }}                
                 />
               <Legend verticalAlign="bottom" height={36} />
             </PieChart>

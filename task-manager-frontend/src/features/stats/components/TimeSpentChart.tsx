@@ -37,7 +37,7 @@ export default function TimeSpentChart() {
 
   const data = timeSpentData?.map(data => ({...data, fill: categoryColours[data.category] || categoryColours['General'] }))
 
-  if (data && data.length == 0){
+  if (data && data.length === 0){
         return (
           <div>
             <EmptyState searchMessage="No tasks completed recently"/>
@@ -51,7 +51,7 @@ export default function TimeSpentChart() {
           <BarChart 
             data={data} 
             layout="vertical" 
-            margin={{ top: 5, right: 30, left: 40, bottom: 60 }}
+            margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <XAxis 
@@ -75,12 +75,19 @@ export default function TimeSpentChart() {
                 return formattedStr[0].toUpperCase() + formattedStr.substring(1);
               }} 
             />
-            <Tooltip 
+            <Tooltip
+              contentStyle={{ 
+                backgroundColor: 'var(--color-surface)', 
+                borderColor: 'var(--color-surface-muted)',
+                borderRadius: '12px',
+                color: 'var(--color-text-main)',
+                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+              }} 
               cursor={{ fill: 'transparent' }}
-              contentStyle={{ borderRadius: '8px', border: 'none' }}
               labelFormatter={(value) => {
                 if (typeof value !== "string") return;
                 const formatted = value.replace("-", " ");
+                console.log(formatted)
                 return formatted.charAt(0).toUpperCase() + formatted.slice(1);
               }}
             />

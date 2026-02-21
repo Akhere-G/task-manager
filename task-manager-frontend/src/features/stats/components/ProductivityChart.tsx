@@ -49,7 +49,7 @@ export default function ProductivityChart() {
   return (
     productivityData && (
       <ResponsiveContainer>
-        <LineChart data={productivityData} margin={{ top: 20, right: 30, left: 0, bottom: 50 }}>
+        <LineChart data={productivityData} margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
           {/* Grid lines using your surface-muted variable */}
           <CartesianGrid 
             strokeDasharray="3 3" 

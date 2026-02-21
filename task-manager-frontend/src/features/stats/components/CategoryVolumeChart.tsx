@@ -34,10 +34,11 @@ export default function CategoryVolumeChart() {
   }));
 
   const isMobile = breakpoint === "xs";
+  const isDesktop = ["lg", "xl", "2xl"].includes(breakpoint);
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
   if (error) return <ErrorState error={error} />;
-  if (chartData && chartData.length == 0){
+  if (chartData && chartData.length === 0){
       return (
         <div>
           <EmptyState searchMessage="No pending tasks"/>
@@ -50,7 +51,7 @@ export default function CategoryVolumeChart() {
         (
           <ResponsiveContainer>
             <PieChart
-              margin={{ top: 20, right: 0, left: 0, bottom: 120 }}
+              margin={{ top: 0, right: 0, left: 0, bottom: isDesktop ? 50 : 0 }}
             >
               <Pie
                 data={chartData}
@@ -58,12 +59,21 @@ export default function CategoryVolumeChart() {
                 cy="50%"
                 innerRadius="60%"
                 outerRadius="80%"
-                paddingAngle={1}
                 dataKey="count"
                 nameKey="category"
               />
               <Tooltip 
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                contentStyle={{ 
+                  backgroundColor: 'var(--color-surface)', 
+                  borderColor: 'var(--color-surface-muted)',
+                  borderRadius: '12px',
+                  color: 'var(--color-text-main)',
+                  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+                }}
+                itemStyle={{
+                  color: 'var(--color-text-main)', 
+                }}
+                cursor={{ fill: 'transparent' }}
                 formatter={(value, name) => {
                   if (typeof name !== "string") return
                   const formatted = name.replace("-", " ");
