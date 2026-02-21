@@ -12,11 +12,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 4. Copy and install Python dependencies
-COPY requirements.txt .
+COPY ./requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 5. Copy the rest of your Flask code
-COPY . .
+COPY ./ ./
 
 # 6. Expose the port Flask runs on
 EXPOSE 8080
