@@ -54,7 +54,7 @@ export default function Login() {
         const errors: Partial<ErrorMesageType> = err.response?.data?.errors;
         setErrorMessages(({ ...defaultErrorMessages, ...errors}))
       } else {
-        setErrorMessages({...errorMessages, general: "Could not make account"})
+        setErrorMessages({...errorMessages, general: "Sorry... Something went wrong."})
       }
     } finally {
       setIsloading(false)
