@@ -2,12 +2,14 @@ from flask import Blueprint, request, jsonify
 from utils.formatters import format_json_response
 from utils.validators import validate_task
 from services.task_service import get_all_tasks, create_tasks, update_task, delete_task
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 task_bp = Blueprint("tasks", __name__)
 
-
 @task_bp.route('/api/tasks', methods=['GET'])
+@jwt_required()
 def list_tasks():
+  user_id = get_jwt_identity()
   category = request.args.get("category")
   search = request.args.get("q")
   task_duration = request.args.get("task_duration")
@@ -20,6 +22,7 @@ def list_tasks():
   limit = request.args.get('limit')
 
   raw_tasks = get_all_tasks(
+    user_id,
     category, 
     search, 
     task_duration, 
@@ -33,7 +36,9 @@ def list_tasks():
   return jsonify(format_json_response(raw_tasks))
 
 @task_bp.route('/api/tasks', methods=['POST'])
+@jwt_required()
 def add_task():
+  user_id = get_jwt_identity()
   data = request.json
   errors = validate_task(data)
     
@@ -46,7 +51,7 @@ def add_task():
   due_date = data.get('dueDate')
   estimated_time = data.get('estimatedTime')
 
-  task_id = create_tasks(title, description, category, due_date, estimated_time)
+  task_id = create_tasks(user_id, title, description, category, due_date, estimated_time)
 
   return jsonify({
     "id" : task_id,
@@ -60,7 +65,9 @@ def add_task():
   }), 201
 
 @task_bp.route('/api/tasks/<int:task_id>', methods=['PATCH'])
+@jwt_required()
 def edit_task(task_id):
+  user_id = get_jwt_identity()
   data = request.json  
   errors = validate_task(data, True)
 
@@ -76,6 +83,7 @@ def edit_task(task_id):
   completed_at = data.get('completedAt')
 
   updated_result = update_task(
+        user_id,
         task_id, 
         title=title, 
         category=category, 
@@ -93,8 +101,10 @@ def edit_task(task_id):
   return jsonify(format_json_response(updated_result)), 200
 
 @task_bp.route('/api/tasks/<int:task_id>', methods=['DELETE'])
+@jwt_required()
 def delete(task_id):
-  deleted_id = delete_task(task_id)
+  user_id = get_jwt_identity()
+  deleted_id = delete_task(user_id, task_id)
 
   if deleted_id is not None:
     return jsonify({ "id" : deleted_id, "message": "Deleted successfully" }), 200

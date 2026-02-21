@@ -1,13 +1,13 @@
 import os
 from flask import Flask
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
 from routes.task_routes import task_bp
 from routes.stats_routes import stats_bp
 from routes.mail_routes import mail_bp
 from routes.auth_routes import auth_bp
 from dotenv import load_dotenv
 from extensions import mail
+from flask_jwt_extended import JWTManager
 
 load_dotenv()
 

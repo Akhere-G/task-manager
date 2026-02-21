@@ -2,7 +2,7 @@ from db import get_db_connection
 from utils.formatters import format_json_response
 from datetime import date
 
-def get_all_tasks(category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None, sort_by=None, order=None, limit=None, page=None):
+def get_all_tasks(user_id, category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None, sort_by=None, order=None, limit=None, page=None):
   SHORT_TASK_THRESHOLD = 30
   if today is None:
     today = date.today()
@@ -10,8 +10,8 @@ def get_all_tasks(category=None, search=None, task_duration=None, is_completed=N
   conn = get_db_connection()
   cursor = conn.cursor(dictionary=True)
   
-  params = []
-  base_filters = " WHERE 1=1"
+  params = [user_id]
+  base_filters = " WHERE user_id = %s"
   
   if category and category != "all":
     base_filters += " AND category = %s"
@@ -82,22 +82,22 @@ def get_all_tasks(category=None, search=None, task_duration=None, is_completed=N
     "current_page": int(page)
   }
 
-def create_tasks(title, description, category, due_date, estimated_time):
+def create_tasks(user_id, title, description, category, due_date, estimated_time):
   conn = get_db_connection()
   cursor = conn.cursor()
-  cursor.execute("INSERT INTO tasks (title, description, category, due_date, estimated_time) VALUES (%s, %s, %s, %s, %s);",
-                  (title, description, category, due_date, estimated_time))
+  cursor.execute("INSERT INTO tasks (title, description, category, due_date, estimated_time, user_id) VALUES (%s, %s, %s, %s, %s, %s);",
+                  (title, description, category, due_date, estimated_time, user_id))
   conn.commit()
   new_id = cursor.lastrowid
   cursor.close()
   conn.close()
   return new_id
 
-def update_task(id, title=None, description=None, category=None, due_date=None, estimated_time=None, is_completed=None, completed_at=None, has_completed_at=False):
+def update_task(user_id, id, title=None, description=None, category=None, due_date=None, estimated_time=None, is_completed=None, completed_at=None, has_completed_at=False):
   conn = get_db_connection()
   cursor = conn.cursor(dictionary=True)
 
-  cursor.execute("SELECT * FROM tasks WHERE id = %s", (id,))
+  cursor.execute("SELECT * FROM tasks WHERE id = %s and user_id = %s", (id, user_id))
   task = cursor.fetchone()
 
   if task is None:
@@ -116,8 +116,8 @@ def update_task(id, title=None, description=None, category=None, due_date=None, 
   cursor.execute("""
         UPDATE tasks 
         SET title = %s, description = %s, category = %s, due_date = %s, estimated_time = %s, is_completed = %s, completed_at = %s
-        WHERE id = %s
-    """, (updated_title, updated_desc, updated_cat, updated_due, updated_time, int(updated_status), updated_completed_at, id))
+        WHERE id = %s and user_id = %s
+    """, (updated_title, updated_desc, updated_cat, updated_due, updated_time, int(updated_status), updated_completed_at, id, user_id))
   
   conn.commit()
   cursor.close()
@@ -135,14 +135,14 @@ def update_task(id, title=None, description=None, category=None, due_date=None, 
         "completed_at": updated_completed_at
   }
   
-def delete_task(id):
+def delete_task(user_id, task_id):
   conn = get_db_connection()
   cursor = conn.cursor()
 
-  cursor.execute("DELETE FROM tasks WHERE id = %s", (id,))
+  cursor.execute("DELETE FROM tasks WHERE user_id = %s AND id = %s ", (user_id, task_id))
   deleted_rows = cursor.rowcount
 
   conn.commit()
   cursor.close()
   conn.close()
-  return id if deleted_rows > 0 else None
+  return task_id if deleted_rows > 0 else None
