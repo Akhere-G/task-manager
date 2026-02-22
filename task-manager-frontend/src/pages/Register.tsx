@@ -4,6 +4,7 @@ import axios from "axios";
 import type { RegisterUserInput } from "../features/auth/types";
 import { authService } from "../services/api";
 import { useAuthContext } from "../context/AuthContext";
+import { validateUser, type UserData } from "../utils/validators";
 
 type ErrorMesageType = { [P in keyof RegisterUserInput]: string;  } & { general: string }
 
@@ -24,13 +25,32 @@ export default function Register() {
     confirmPassword: "",
     general: ""
   }) 
+  const [touched, setTouched] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+    general: false
+  }) 
   const [isLoading, setIsloading] = useState(false)
 
   const { login } = useAuthContext()
 
+  const validateForm = (data: UserData) => {
+    setErrorMessages({...defaultErrorMessages, ...validateUser(data, true) })
+  }
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
     const { name, value } = e.target;
-    setFormData(prev => ({...prev, [name]: value}))
+    const newFormData = ({...formData, [name]: value})
+    setFormData(newFormData)
+    validateForm(newFormData)
+  }
+
+  function handleBlur(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
+    const { name } = e.target;
+    setTouched(prev => ({...prev, [name]: true}))
   }
 
   const defaultErrorMessages = {
@@ -44,6 +64,16 @@ export default function Register() {
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>){
     e.preventDefault()
+    setTouched({
+        firstName: true,
+        lastName: true,
+        email: true,
+        password: true,
+        confirmPassword: true,
+        general: true
+    })
+
+    if (Object.values(errorMessages).some(e => e !== "")) return
     try {
       setIsloading(true)
       
@@ -88,6 +118,8 @@ export default function Register() {
             name="firstName"
             value={formData.firstName}
             errorMessage={errorMessages.firstName}
+            touched={touched.firstName}
+            handleBlur={handleBlur}
           />
           <FormInput 
             handleChange={handleChange}
@@ -95,6 +127,8 @@ export default function Register() {
             name="lastName"
             value={formData.lastName}
             errorMessage={errorMessages.lastName}
+            touched={touched.lastName}
+            handleBlur={handleBlur}
           />
           <FormInput 
             handleChange={handleChange}
@@ -103,6 +137,8 @@ export default function Register() {
             value={formData.email}
             errorMessage={errorMessages.email}
             type="email"
+            touched={touched.email}
+            handleBlur={handleBlur}
           />
           <FormInput 
             handleChange={handleChange}
@@ -111,6 +147,8 @@ export default function Register() {
             value={formData.password}
             errorMessage={errorMessages.password}
             type="password"
+            touched={touched.password}
+            handleBlur={handleBlur}
           />
           <FormInput 
             handleChange={handleChange}
@@ -119,6 +157,8 @@ export default function Register() {
             value={formData.confirmPassword}
             errorMessage={errorMessages.confirmPassword}
             type="password"
+            touched={touched.confirmPassword}
+            handleBlur={handleBlur}
           />
           <button 
             className={isLoading ? "self-end btn-primary-disabled": "self-end btn-primary"}

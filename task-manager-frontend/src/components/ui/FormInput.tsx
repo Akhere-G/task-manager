@@ -4,6 +4,8 @@ export interface FormInputprops {
   type?: string;
   value: string | number;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  handleBlur?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  touched?: boolean;
   errorMessage?: string;
   options?: {name: string; value: string}[];
   formClassNames?: string;
@@ -16,7 +18,9 @@ export default function FormInput({
   name, 
   type="text", 
   value, 
-  handleChange, 
+  handleChange,
+  handleBlur = () => {},
+  touched = true, 
   errorMessage, 
   options,
   formClassNames = "",
@@ -34,6 +38,7 @@ export default function FormInput({
           type={type}
           value={value} 
           onChange={handleChange}
+          onBlur={handleBlur}
         />
       )}
       {options && !textarea && (
@@ -43,7 +48,8 @@ export default function FormInput({
           name={name}
           value={value}
           onChange={(e) => handleChange(e)}
-          >
+          onBlur={handleBlur}
+        >
           {options.map(({name, value}) => <option key={name} value={value}>{name}</option>)}
         </select>
       )}
@@ -55,12 +61,13 @@ export default function FormInput({
             name={name}
             value={value}
             onChange={handleChange}
+            onBlur={handleBlur}
             rows={6}
           />
           
         )
       }
-      {errorMessage && (
+      {errorMessage && touched && (
         <p 
           className="mt-4 text-failure bg-failure/10 p-1 pl-4 rounded-md border-l-failure border-l-4"
         >
