@@ -1,29 +1,9 @@
-import { useEffect, useState } from "react";
-import { statsService, type GetProductivityResult } from "../../../services/api";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import useGetProductivity from "../hooks/useGetProductivity";
 
 export default function ProductivityChart() {
-  const [isLoading, setIsloading] = useState(true);
-  const [error, setError] = useState("");
-  const [productivityData, setProductivityData] = useState<GetProductivityResult[] | null>(null);
-
-  useEffect(() => {
-    async function fetchData() {
-      setIsloading(true);
-      try {
-        const result = await statsService.getProductivity();
-        setProductivityData(result);
-        setError("");
-      } catch (err: unknown) {
-        console.error(err);
-        setError("Could not load data");
-      } finally {
-        setIsloading(false);
-      }
-    }
-    fetchData();
-  }, []);
+  const { data: productivityData, isLoading, error } = useGetProductivity(30)
 
   const hasData = productivityData && productivityData.some(d => d.tasks > 0)
 
@@ -35,7 +15,7 @@ export default function ProductivityChart() {
   
   if (error) return (
     <div className="flex justify-center items-center h-full">
-      <ErrorState error={error} />
+      <ErrorState error={error ? "Could not load data" : ""} />
     </div>
   );
   if (productivityData && !hasData){

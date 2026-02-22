@@ -2,6 +2,7 @@ import { createContext, useContext, useState } from "react";
 import type { CreateTaskInput, Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
 import { useQueryClient } from "@tanstack/react-query";
+import { statsQueryKeys } from "../features/stats/constants";
 export interface TaskFilters {
   search: string;
   category: string;
@@ -33,6 +34,9 @@ export default function TaskContextProvider({ children }: { children: React.Reac
   const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null);
   const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(null);
   
+  const queryKeysAffectedByMutations = ["tasks", ...statsQueryKeys]
+  const invalidateKeys = () => queryKeysAffectedByMutations.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }))
+
   const handleConfirmDelete = (task: Task) => setSelectedDeleteTask(task);
 
   const closeDeletePopup = () => setSelectedDeleteTask(null);
@@ -40,7 +44,7 @@ export default function TaskContextProvider({ children }: { children: React.Reac
   async function handleDelete(id: number) {
     try {
       await taskService.delete(id);
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      invalidateKeys()
     } catch (err) {
       console.error(err);
     }
@@ -53,7 +57,7 @@ export default function TaskContextProvider({ children }: { children: React.Reac
   async function updateTask(id: number, newTaskData: Partial<Task>) {
     try {
       await taskService.update(id, newTaskData);
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      invalidateKeys()
     } catch (err) {
       console.error("Update failed:", err);
       throw err;
@@ -90,7 +94,8 @@ export default function TaskContextProvider({ children }: { children: React.Reac
 
     try {
       await taskService.update(id, { isCompleted, completedAt });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      invalidateKeys()
+
     } catch (err) {
       console.error(err);
     }
