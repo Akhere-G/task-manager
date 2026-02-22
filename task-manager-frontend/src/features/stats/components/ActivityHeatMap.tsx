@@ -1,36 +1,17 @@
-import { useEffect, useState } from "react";
 import CalendarHeatmap from "react-calendar-heatmap";
-import { statsService, type GetProductivityResult } from "../../../services/api";
 import { LoadingState, ErrorState } from "../../../components/ui";
 import { Tooltip } from "react-tooltip";
 import "react-calendar-heatmap/dist/styles.css";
+import useGetProductivity from "../hooks/useGetProductivity";
 
 interface HeatmapValueType {
   date: string;
   count: number;
 }
 
-export default function ActivityHeatmap() {
-  const [isLoading, setIsloading] = useState(true);
-  const [error, setError] = useState("");
-  const [productivityData, setProductivityData] = useState<GetProductivityResult[] | null>(null);
+export default function ActivityHeatmap(){ 
+  const { data: productivityData, isLoading, error } = useGetProductivity(365)
   
-  useEffect(() => {
-    async function fetchData() {
-      setIsloading(true);
-      try {
-        const result = await statsService.getProductivity(365);
-        setProductivityData(result);
-        setError("");
-      } catch (err: unknown) {
-        console.log(err)
-        setError("Could not load data");
-      } finally {
-        setIsloading(false);
-      }
-    }
-    fetchData();
-  }, []);
 
   if (isLoading) return (
     <div className="flex justify-center items-center">
@@ -38,7 +19,7 @@ export default function ActivityHeatmap() {
     </div>
     )
   if (error) return (
-    <ErrorState error={error} />
+    <ErrorState error={error ? "Could not load data" : ""} />
   )
 
   const today = new Date();
