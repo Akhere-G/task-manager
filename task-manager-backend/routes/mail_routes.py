@@ -2,8 +2,15 @@ from flask import Blueprint, request, jsonify
 from utils.validators import validate_contact_request
 import os
 from mailersend import MailerSendClient, EmailBuilder
+from dotenv import load_dotenv
 
-ms = MailerSendClient(os.getenv("MAIL_SEND_API_KEY"))
+load_dotenv()
+
+from_email = os.getenv("MAIL_SEND_EMAIL")
+to_email = os.getenv("MAIL_USERNAME")
+ms_api_key = os.getenv("MAIL_SEND_API_KEY")
+
+ms = MailerSendClient(ms_api_key)
 
 def send_enquiry_email(full_name, email, subject, message):
     html_content = f"""
@@ -28,9 +35,10 @@ def send_enquiry_email(full_name, email, subject, message):
         </div>
     </div>
     """
+
     email = (EmailBuilder()
-      .from_email(os.getenv("MAIL_SEND_EMAIL"), full_name)
-      .to_many([{"email": os.getenv('MAIL_USERNAME'), "name": "Ak"}])
+      .from_email(from_email, full_name)
+      .to_many([{"email": to_email, "name": "Ak"}])
       .subject(subject)
       .html(html_content)
       .build())
