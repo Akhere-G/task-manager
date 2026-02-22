@@ -1,32 +1,13 @@
-import { useEffect, useState } from "react";
-import { statsService, type GetCategoryVolumeResult } from "../../../services/api";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { categoryColours } from "../../tasks/constants";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
+import useGetCategoryVolume from "../hooks/useGetCategoryVolume";
 
 export default function CategoryVolumeChart() {
-  const [isLoading, setIsloading] = useState(true);
-  const [error, setError] = useState("");
-  const [categoryVolumeData, setCategoryVolumeData] = useState<GetCategoryVolumeResult[] | null>(null);
   const breakpoint = useBreakpoint()
-  
-  useEffect(() => {
-    async function fetchData() {
-      setIsloading(true);
-      try {
-        const result = await statsService.getCategoryVolume();
-        setCategoryVolumeData(result);
-        setError("");
-      } catch (err: unknown) {
-        console.log(err)
-        setError("Could not load data");
-      } finally {
-        setIsloading(false);
-      }
-    }
-    fetchData();
-  }, []);
+
+  const { data: categoryVolumeData, isLoading, isError } = useGetCategoryVolume()
 
   const chartData = categoryVolumeData?.map(entry =>  ({
     ...entry,
@@ -37,7 +18,7 @@ export default function CategoryVolumeChart() {
   const isDesktop = ["lg", "xl", "2xl"].includes(breakpoint);
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
-  if (error) return <ErrorState error={error} />;
+  if (isError) return <ErrorState error={isError ? "Could not load data" : ""} />;
   if (chartData && chartData.length === 0){
       return (
         <div>

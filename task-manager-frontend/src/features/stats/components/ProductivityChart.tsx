@@ -3,7 +3,7 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 import useGetProductivity from "../hooks/useGetProductivity";
 
 export default function ProductivityChart() {
-  const { data: productivityData, isLoading, error } = useGetProductivity(30)
+  const { data: productivityData, isLoading, isError } = useGetProductivity(30)
 
   const hasData = productivityData && productivityData.some(d => d.tasks > 0)
 
@@ -13,9 +13,9 @@ export default function ProductivityChart() {
     </div>
   );
   
-  if (error) return (
+  if (isError) return (
     <div className="flex justify-center items-center h-full">
-      <ErrorState error={error ? "Could not load data" : ""} />
+      <ErrorState error={isError ? "Could not load data" : ""} />
     </div>
   );
   if (productivityData && !hasData){

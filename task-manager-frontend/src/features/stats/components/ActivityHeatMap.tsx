@@ -10,7 +10,7 @@ interface HeatmapValueType {
 }
 
 export default function ActivityHeatmap(){ 
-  const { data: productivityData, isLoading, error } = useGetProductivity(365)
+  const { data: productivityData, isLoading, isError } = useGetProductivity(365)
   
 
   if (isLoading) return (
@@ -18,8 +18,8 @@ export default function ActivityHeatmap(){
       <LoadingState />
     </div>
     )
-  if (error) return (
-    <ErrorState error={error ? "Could not load data" : ""} />
+  if (isError) return (
+    <ErrorState error={isError ? "Could not load data" : ""} />
   )
 
   const today = new Date();
