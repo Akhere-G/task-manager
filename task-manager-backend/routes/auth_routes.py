@@ -41,7 +41,7 @@ def login():
     user = login_user(email, password)
 
     if not user:
-        return jsonify({ "error" : "Email or password is incorrect" }), 401
+        return jsonify({ "error" : "Email or password is incorrect" }), 400
     
     token = create_access_token(identity=str(user['id']), expires_delta=timedelta(hours=24))
     return jsonify({ "token" : token }), 200
