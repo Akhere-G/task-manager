@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { statsService, type GetBacklogHealthResult } from "../../../services/api";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import useGetBacklogHealth from "../hooks/useGetBacklogHealth";
 
 const COLORS: Record<string, string> = {
   Completed: '#10b981', 
@@ -10,26 +9,8 @@ const COLORS: Record<string, string> = {
 };
 
 export default function BacklogHealthChart() {
-  const [isLoading, setIsloading] = useState(true);
-  const [error, setError] = useState("");
-  const [backlogData, setBacklogData] = useState<GetBacklogHealthResult[] | null>(null);
+  const { data: backlogData, isLoading, error } = useGetBacklogHealth()
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsloading(true);
-      try {
-        const result = await statsService.getBacklogHealth();
-        setBacklogData(result);
-        setError("");
-      } catch (err: unknown) {
-        console.log(err)
-        setError("Could not load data");
-      } finally {
-        setIsloading(false);
-      }
-    }
-    fetchData();
-  }, []);
 
   const chartData = backlogData?.map(entry => ({
     ...entry,
@@ -37,12 +18,13 @@ export default function BacklogHealthChart() {
   }));
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
-  if (error) return <ErrorState error={error} />;
+  if (error) return <ErrorState error={error ? "Could not load data" : ""} />;
   if (backlogData && backlogData.length === 0){
     return (
         <EmptyState searchMessage="No tasks"/>
     )
   }
+  
   return (
         backlogData && 
         (

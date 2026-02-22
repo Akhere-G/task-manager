@@ -1,1 +1,1 @@
-export const statsQueryKeys = ["productivity"]
+export const statsQueryKeys = ["productivity", "backlogHealth"]
