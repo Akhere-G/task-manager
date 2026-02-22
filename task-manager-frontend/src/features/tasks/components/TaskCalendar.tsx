@@ -33,7 +33,7 @@ function TaskCalendar({
   useEffect(() => {
     setAllTasks(tasks)
   }, [tasks])
-  
+
   const events = allTasks.map(task => ({ title: task.title, date: formatDate(task.dueDate), id: String(task.id), extendedProps: task }))
 
   async function handleEventDrop(info: Info) {
@@ -46,7 +46,7 @@ function TaskCalendar({
       setAllTasks(prev => prev.map(t => t.id === taskId ? ({...t, dueDate }) : t))
       await updateTask(taskId, { dueDate })
     } catch (err) {
-      console.log(err)
+      console.error(err)
       info.revert(); 
       alert("Failed to move the task. Please try again.");
     }

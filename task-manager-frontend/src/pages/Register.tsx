@@ -77,7 +77,7 @@ export default function Register() {
       const { token } = await authService.register(formData)
       login(token)
     } catch (err) {
-      console.log(err)
+      console.error(err)
       if (!axios.isAxiosError(err)){
         return
       }

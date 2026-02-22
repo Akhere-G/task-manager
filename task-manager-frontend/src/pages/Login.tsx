@@ -8,7 +8,6 @@ import { validateUser, type UserData } from "../utils/validators";
 
 type ErrorMesageType = { [P in keyof LoginUserInput]: string;  } & { general: string }
 
-
 export default function Login() {
   const [formData, setFormData] = useState({
     email: "",
@@ -29,8 +28,8 @@ export default function Login() {
   const { login } = useAuthContext()
 
   const validateForm = (data: UserData) => {
-      setErrorMessages({...defaultErrorMessages, ...validateUser(data, false) })
-    }
+    setErrorMessages({...defaultErrorMessages, ...validateUser(data, false) })
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
     const { name, value } = e.target;
@@ -53,8 +52,8 @@ export default function Login() {
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>){
     e.preventDefault()
     setTouched({
-        email: true,
-        password: true,
+      email: true,
+      password: true,
     })
 
     if (Object.entries(errorMessages).some(([k, v]) => v !== "" && k !== "general")) return 
@@ -66,7 +65,7 @@ export default function Login() {
       login(token)
 
     } catch (err) {
-      console.log(err)
+      console.error(err)
       if (!axios.isAxiosError(err)){
           return
       }

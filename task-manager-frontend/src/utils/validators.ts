@@ -8,6 +8,13 @@ export interface TaskData {
   completedAt?: string | null;
 }
 
+export interface ContactData {
+  fullName: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
 export interface UserData {
   email: string;
   password?: string;
@@ -55,7 +62,7 @@ export const validateTask = (
     } else {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(dueDate) || isNaN(Date.parse(dueDate))) {
-        errors.dueDate = "Invalid date.";
+        errors.dueDate = "Invalid date format.";
       }
     }
   }
@@ -103,6 +110,29 @@ export const validateTask = (
       errors.category = `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}.`;
     }
   }
+
+  return errors;
+};
+
+export const validateContactRequest = (data: ContactData): ValidationErrors => {
+  const errors: ValidationErrors = {};
+
+  const fullName = (data.fullName || '').trim();
+  if (!fullName) errors.fullName = "Full name is required.";
+  else if (fullName.length > 100) errors.fullName = "Name must be under 100 characters.";
+
+  const email = (data.email || '').trim();
+  if (!email) errors.email = "Email address is required.";
+  else if (!EMAIL_REGEX.test(email)) errors.email = "Please enter a valid email address.";
+
+  const subject = (data.subject || '').trim();
+  if (!subject) errors.subject = "Please select a subject.";
+  else if (subject.length > 100) errors.subject = "Subject too long.";
+
+  const message = (data.message || '').trim();
+  if (!message) errors.message = "Message content is required.";
+  else if (message.length < 10) errors.message = "Message must be at least 10 characters.";
+  else if (message.length > 2000) errors.message = "Message exceeds 2000 characters.";
 
   return errors;
 };

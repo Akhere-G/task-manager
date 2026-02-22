@@ -3,6 +3,7 @@ import { Send } from 'lucide-react';
 import { contactService, type ContactEnquiry } from '../services/api';
 import { isAxiosError } from 'axios';
 import { FormInput } from '../components/ui';
+import { validateContactRequest, type ContactData } from '../utils/validators';
 
 export default function ContactPage() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'success'>('idle');
@@ -21,6 +22,13 @@ export default function ContactPage() {
     message: ''
   });
 
+  const [touched, setTouched] = useState({
+    fullName: false,
+    email: false,
+    subject: false,
+    message: false
+  }) 
+
   const defaultErrorMessages = {
     fullName: '',
     email: '',
@@ -29,14 +37,33 @@ export default function ContactPage() {
     general: ""
   }
 
+  const validateForm = (data: ContactData) => {
+    setErrorMessages({...defaultErrorMessages, ...validateContactRequest(data) })
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const newFormData = ({...formData, [name]: value})
+    setFormData(newFormData)
+    validateForm(newFormData)
   };
+
+  function handleBlur(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
+    const { name } = e.target;
+    setTouched(prev => ({...prev, [name]: true}))
+  }
 
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setStatus('sending');
+    setTouched({
+      fullName: true,
+      email: true,
+      subject: true,
+      message: true
+    })
+
+    if (Object.entries(errorMessages).some(([k, v]) => v !== "" && k !== "general")) return 
 
     try {
       await contactService.sendEnquiry(formData);
@@ -49,7 +76,6 @@ export default function ContactPage() {
         setErrorMessages({...defaultErrorMessages, ...error?.response?.data.errors });
       } else {
         setErrorMessages(prev => ({...prev, general: "Sorry! Something went wrong..." }));
-
       }
     }
   };
@@ -84,19 +110,23 @@ export default function ContactPage() {
           <FormInput 
             label="Full Name"
             name="fullName"
+            formClassNames="w-full"
             value={formData.fullName}
             handleChange={handleChange}
             errorMessage={errorMessages.fullName}
-            formClassNames="w-full"
+            touched={touched.fullName}
+            handleBlur={handleBlur}
           />
           <FormInput 
             label="Email Address"
             name="email"
             type="email"
+            formClassNames="w-full"
             value={formData.email}
             handleChange={handleChange}
             errorMessage={errorMessages.email}
-            formClassNames="w-full"
+            touched={touched.email}
+            handleBlur={handleBlur}
           />
         </div>
 
@@ -107,6 +137,8 @@ export default function ContactPage() {
           handleChange={handleChange}
           options={subjectOptions}
           errorMessage={errorMessages.subject}
+          touched={touched.subject}
+          handleBlur={handleBlur}
         />
         <FormInput 
           label="Message"
@@ -115,6 +147,8 @@ export default function ContactPage() {
           handleChange={handleChange}
           errorMessage={errorMessages.message}
           textarea
+          touched={touched.message}
+          handleBlur={handleBlur}
         />
 
         <div className="flex justify-end pt-2">
