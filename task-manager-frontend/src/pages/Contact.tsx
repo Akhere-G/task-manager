@@ -6,7 +6,13 @@ import { FormInput } from '../components/ui';
 
 export default function ContactPage() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'success'>('idle');
-  const [errorMessages, setErrorMessages] = useState<Record<string, string>>({});
+  const [errorMessages, setErrorMessages] = useState<Record<string, string>>({
+    fullName: '',
+    email: '',
+    subject: '',
+    message: '',
+    general: ""
+  });
 
   const [formData, setFormData] = useState<ContactEnquiry>({
     fullName: '',
@@ -14,6 +20,14 @@ export default function ContactPage() {
     subject: 'General Support',
     message: ''
   });
+
+  const defaultErrorMessages = {
+    fullName: '',
+    email: '',
+    subject: '',
+    message: '',
+    general: ""
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -23,19 +37,19 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setStatus('sending');
-    setErrorMessages({});
 
     try {
       await contactService.sendEnquiry(formData);
       setStatus('success');
       setFormData({ fullName: '', email: '', subject: 'General Support', message: '' });
+      setErrorMessages({ ...defaultErrorMessages })
     } catch (error: unknown) {
       setStatus('idle');
       if (isAxiosError(error) && error.response && error.response.status === 400) {
-        setErrorMessages(error.response.data.errors);
+        setErrorMessages({...defaultErrorMessages, ...error?.response?.data.errors });
       } else {
-        console.error("Submission failed:", error);
-        alert("An unexpected error occurred. Please try again later.");
+        setErrorMessages(prev => ({...prev, general: "Sorry! Something went wrong..." }));
+
       }
     }
   };
@@ -59,7 +73,13 @@ export default function ContactPage() {
       </section>
 
       <form onSubmit={handleSubmit} className="card flex flex-col gap-6">
-        
+        {errorMessages.general && (
+            <p 
+              className="mt-4 text-failure bg-failure/10 p-1 pl-4 rounded-md border-l-failure border-l-4"
+            >
+              {errorMessages.general}
+            </p>
+          )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormInput 
             label="Full Name"
