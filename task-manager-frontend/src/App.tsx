@@ -7,7 +7,7 @@ function App() {
   const { isAuthenticated, logout } = useAuthContext()
   const location = useLocation();
 
-    const protectedRoutes  = [
+  const protectedRoutes  = [
     { title: "Tasks", path: "/" },
     { title: "Add Task", path: "/addtasks" },
     { title: "Calendar", path: "/calendar" },
@@ -30,7 +30,6 @@ function App() {
   } else {
     navLinks.unshift(...loggedOutRoutes)
   }
-
 
   return (
     <div className="min-h-screen bg-canvas flex flex-col">
