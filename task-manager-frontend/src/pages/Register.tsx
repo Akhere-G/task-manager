@@ -58,7 +58,7 @@ export default function Register() {
         const errors: Partial<ErrorMesageType> = err.response?.data?.errors;
         setErrorMessages(({ ...defaultErrorMessages, ...errors}))
       } else {
-        setErrorMessages({...errorMessages, general: "Could not make account"})
+        setErrorMessages({...errorMessages, general: "Unable to create account. Please try again or log in."})
       }
     } finally {
       setIsloading(false)

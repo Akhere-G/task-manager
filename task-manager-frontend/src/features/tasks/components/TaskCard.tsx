@@ -5,22 +5,25 @@ import { useTaskContext } from "../../../context/TaskContext";
 
 interface TaskCardProps extends Task {
   setIsCompleted: (id: number, isComplete: boolean) => void;
-  onDelete: (id: number) => void;
-  onEdit: (id: number) => void;
+  onDelete: (task: Task) => void;
+  onEdit: (task: Task) => void;
 }
 
 function TaskCard({
-  id,
-  title,
-  category,
-  description,
-  isCompleted,
-  dueDate,
-  estimatedTime,
   setIsCompleted,
   onDelete,
   onEdit,
+  ...task
 }: TaskCardProps) {
+  const {
+    id,
+    title,
+    category,
+    description,
+    isCompleted,
+    dueDate,
+    estimatedTime
+  } = task
   const [showMore, setShowMore] = useState(false);
   const isOverdue = !isCompleted && new Date(dueDate) < new Date();
 
@@ -83,7 +86,7 @@ function TaskCard({
 
         <div className="flex gap-3">
           <button 
-            onClick={() => onDelete(id)}
+            onClick={() => onDelete(task)}
             title="Delete Task"
             aria-label={`Delete task: ${title}`}
             className="p-1.5 rounded-md hover:bg-failure/10 transition-colors group cursor-pointer"
@@ -93,7 +96,7 @@ function TaskCard({
               className="w-5 h-5 text-failure/70 group-hover:text-failure group-hover:scale-110 transition-all" />
           </button>
           <button 
-            onClick={() => onEdit(id)}
+            onClick={() => onEdit(task)}
             title="Edit Task"
             aria-label={`Edit task: ${title}`}
             className="p-1.5 rounded-md hover:bg-info/10 transition-colors group cursor-pointer"
@@ -122,8 +125,8 @@ function TaskCard({
 
 interface TaskCardConnectedProps extends Task {
   setIsCompleted?: (id: number, isComplete: boolean) => void;
-  onDelete?: (id: number) => void;
-  onEdit?: (id: number) => void;
+  onDelete?: (task: Task) => void;
+  onEdit?: (task: Task) => void;
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps){
   const {

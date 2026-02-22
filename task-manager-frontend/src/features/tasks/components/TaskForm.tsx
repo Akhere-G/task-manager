@@ -66,7 +66,6 @@ export default function TaskForm({
       if (!axios.isAxiosError(err)){
           return
       }
-      console.log(err.response?.status)
       if (err.status === 400){
 
         const errors: Partial<ErrorMesageType> = err.response?.data?.errors;

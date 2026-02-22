@@ -1,5 +1,4 @@
 import { FormInput } from "../../../components/ui";
-import { useTaskContext } from "../../../context/TaskContext";
 import { categoryOptions, completedTasksOptions, dueDateOptions, isAscOptions, sortByOptions, taskDurationOptions } from "../constants";
 
 interface TaskFilters {
@@ -20,7 +19,7 @@ interface TasksHeaderProps {
   showDueDateFilter?: boolean
 }
 
-function TasksHeader({ 
+export default function TasksHeader({ 
   filters, 
   updateFilters, 
   resetFilters, 
@@ -106,25 +105,5 @@ function TasksHeader({
             </button>
         </form>
       </div>
-  )
-}
-
-export default function TasksHeaderConnected ({ sortable = true, showDueDateFilter = true } : { sortable?: boolean; showDueDateFilter?: boolean }){
-  const {
-    filters,
-    updateFilters,
-    resetFilters,
-    pageDetails
-  } = useTaskContext()
-
-  return (
-    <TasksHeader
-      sortable={sortable}
-      showDueDateFilter={showDueDateFilter} 
-      filters={filters} 
-      updateFilters={updateFilters} 
-      resetFilters={resetFilters} 
-      totalTasks={pageDetails.totalItems} 
-    />
   )
 }

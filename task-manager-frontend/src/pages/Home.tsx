@@ -1,38 +1,26 @@
-import { useEffect } from "react";
 import { EmptyState, LoadingState, ErrorState, Pagination } from "../components/ui";
-import { useTaskContext } from "../context/TaskContext";
 import { TasksHeader, TaskList } from "../features/tasks/components";
 import TaskPopups from "../features/tasks/components/TaskPopups";
+import { useTasks } from "../features/tasks/hooks/useTasks";
 
 const PER_PAGE = 10;
 
 export default function Home() {
   const {
-    tasks,
+    data,
     isLoading,
     error,
-    filters,
     pageDetails,
     setPage,
     isStale,
     isSearching,
-    deferredSearch,
-    fetchTasks
-  } = useTaskContext()
+    filters,
+    resetFilters,
+    updateFilters
+  } = useTasks({ perPage: PER_PAGE })
 
-  useEffect(() => {
-      const delayDebounceFn = setTimeout(() => fetchTasks(PER_PAGE), deferredSearch ? 400 : 0);
-      return () => clearTimeout(delayDebounceFn);
-    }, [
-      deferredSearch,
-      filters.category,
-      filters.duration,
-      filters.isCompleted,
-      filters.dueDate,
-      filters.sortBy,
-      filters.order,
-      pageDetails.currentPage,
-    ]);
+  const tasks = data?.tasks || null 
+  
 
   let MainContent = <EmptyState searchMessage={ isSearching ? "Your search returned no tasks" :"No tasks found. Time to relax!"} />
 
@@ -42,12 +30,17 @@ export default function Home() {
     MainContent = <LoadingState loadMessage="Getting tasks..."/>
   } else if (tasks && tasks.length > 0) {
     MainContent = (
-    <TaskList />)
+    <TaskList tasks={data?.tasks ?? []} />)
   } 
 
   return (
     <section className="flex flex-col gap-6 min-h-full">
-      <TasksHeader />
+      <TasksHeader
+        filters={filters}
+        resetFilters={resetFilters}
+        totalTasks={data?.totalTasks || 0}
+        updateFilters={updateFilters}
+      />
 
     {tasks && tasks.length > 0 && <Pagination {...pageDetails} setPage={setPage} />}
 
