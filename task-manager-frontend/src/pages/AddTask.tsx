@@ -9,7 +9,7 @@ export default function AddTask() {
 
   async function handleCreate(newTask: CreateTaskInput) {
     await taskService.create(newTask);
-    navigate("/") // try and catch is handled in TaskForm
+    navigate("/")
   }
 
   return (

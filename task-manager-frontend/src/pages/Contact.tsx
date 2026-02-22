@@ -8,7 +8,6 @@ export default function ContactPage() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'success'>('idle');
   const [errorMessages, setErrorMessages] = useState<Record<string, string>>({});
 
-  // Controlled form state
   const [formData, setFormData] = useState<ContactEnquiry>({
     fullName: '',
     email: '',
@@ -19,14 +18,6 @@ export default function ContactPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error for a field when the user starts typing in it again
-    if (errorMessages[name]) {
-      setErrorMessages(prev => {
-        const newErrors = { ...prev };
-        newErrors[name] = "";
-        return newErrors;
-      });
-    }
   };
 
   const handleSubmit = async (e: React.SubmitEvent) => {

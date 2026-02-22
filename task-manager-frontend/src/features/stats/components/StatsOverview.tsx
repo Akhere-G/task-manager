@@ -35,7 +35,6 @@ export default function StatsOverview() {
     fetchData();
   }, []);
 
-  // Default values
   const stats = {
     completionRate: "0",
     timeInvested: "0",
@@ -45,15 +44,12 @@ export default function StatsOverview() {
   };
 
   if (!isLoading && backlogData && productivityData && categoryVolumeData && timeSpentData) {
-    // 1. Completion Rate (Completed / Total)
     const completed = backlogData.find(d => d.status === "Completed")?.count || 0;
     const total = backlogData.reduce((acc, cur) => acc + cur.count, 0);
     stats.completionRate = total > 0 ? ((completed / total) * 100).toFixed(0) : "0";
 
-    // 2. Time Invested (Total hours)
     stats.timeInvested = Math.round(timeSpentData.reduce((acc, cur) => acc + cur.timeSpent, 0) / 60).toString();
 
-    // 3. Current Streak (Working backwards from the end)
     let streak = 0;
     for (let i = productivityData.length - 1; i >= 0; i--) {
       if (productivityData[i].tasks > 0) streak++;
@@ -61,12 +57,10 @@ export default function StatsOverview() {
     }
     stats.currentStreak = streak.toString();
 
-    // 4. Clearing Speed (Last 7 days average)
     const last7Days = productivityData.slice(-7);
     const totalTasks = last7Days.reduce((acc, cur) => acc + cur.tasks, 0);
     stats.clearingSpeed = (totalTasks / 7).toFixed(1);
 
-    // 5. Weekly Focus (Top category by volume)
     if (categoryVolumeData.length > 0) {
       const top = categoryVolumeData.reduce((acc, cur) => acc.count > cur.count ? acc : cur);
       stats.weeklyFocus = top.category.replace(/[_-]/g, " ");

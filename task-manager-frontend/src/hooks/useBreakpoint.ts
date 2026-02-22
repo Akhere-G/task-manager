@@ -30,7 +30,6 @@ export function useBreakpoint(): Breakpoint {
     };
   }, []);
 
-  // Simple, fast calculation
   if (width >= BREAKPOINTS['2xl']) return '2xl';
   if (width >= BREAKPOINTS.xl) return 'xl';
   if (width >= BREAKPOINTS.lg) return 'lg';

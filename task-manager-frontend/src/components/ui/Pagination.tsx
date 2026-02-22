@@ -26,7 +26,6 @@ export default function Pagination({
   else if (currentPage === totalPages - 1) indexes = [-3, -2, -1, 0, 1];
   else if (currentPage === totalPages) indexes = [-4, -3, -2, -1, 0];
 
-  // Ensure we don't show buttons for pages that don't exist
   const pageNumbers = indexes
     .map(i => currentPage + i)
     .filter(p => p > 0 && p <= totalPages);

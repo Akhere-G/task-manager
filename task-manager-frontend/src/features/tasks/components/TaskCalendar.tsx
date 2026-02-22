@@ -41,15 +41,14 @@ function TaskCalendar({
   async function handleEventDrop(info: Info) {
     const { event } = info;
 
-    const newDueDate = event.startStr; // This gives you the new YYYY-MM-DD
+    const newDueDate = event.startStr; 
     const taskId = Number(event.id);
 
     try {
       await updateTask(taskId, { dueDate: newDueDate })
     } catch (err) {
-      // 3. Revert on Error
       console.log(err)
-      info.revert(); // FullCalendar provides this handy function to snap the task back
+      info.revert(); 
       alert("Failed to move the task. Please try again.");
     }
 }

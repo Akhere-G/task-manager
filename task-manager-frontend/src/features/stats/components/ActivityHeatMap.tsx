@@ -59,7 +59,6 @@ export default function ActivityHeatmap() {
         
         classForValue={(value: HeatmapValueType) => {
           if (!value || value.count === 0) return 'color-empty';
-          // Caps at scale-4 for the darkest indigo
           return `color-scale-${Math.min(value.count, 4)}`;
         }}
         tooltipDataAttrs={(value: HeatmapValueType) => ({

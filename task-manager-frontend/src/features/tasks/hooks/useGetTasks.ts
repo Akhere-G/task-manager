@@ -175,7 +175,6 @@ export default function useGetTasks(props?: UseGetTasksProps) {
     const prevTasks = tasks;
 
     try {
-      // 3. Optimistic Update (UI needs the merged data to stay consistent)
       const oldTask = tasks.find((t) => t.id === id);
 
       if (!oldTask) {
@@ -188,7 +187,6 @@ export default function useGetTasks(props?: UseGetTasksProps) {
 
       setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
 
-      // 4. Send ONLY the non-empty fields to the backend
       await taskService.update(id, newTaskData);
     } catch (err) {
       setTasks(prevTasks);

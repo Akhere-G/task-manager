@@ -39,15 +39,15 @@ export const isAscOptions = [
 ]
 
 export const categoryColours: Record<string, string> = {
-  "work": "#6366f1",        // Indigo-600 (Your Brand Colour)
-  "home": "#8b5cf6",        // Violet-500 (Your Accent Colour)
-  "chores": "#94a3b8",      // Slategray (Neutral/Routine)
-  "life-admin": "#0ea5e9",  // Sky-500 (Organised/Info)
-  "health": "#10b981",      // Emerald-500 (Success/Vitality)
-  "self-care": "#ec4899",   // Pink-500 (Soft/Personal)
-  "social": "#f59e0b",      // Amber-500 (Energy/Warning-ish)
-  "hobbies": "#f43f5e",     // Rose-500 (Passion)
-  "learning": "#3b82f6",    // Blue-600 (Intellectual/Link)
-  "finance": "#059669",     // Green-600 (Money)
-  "general": "#64748b"      // Slate-500 (Default)
+  "work": "#6366f1",        // Indigo-600
+  "home": "#8b5cf6",        // Violet-500
+  "chores": "#94a3b8",      // Slategray
+  "life-admin": "#0ea5e9",  // Sky-500
+  "health": "#10b981",      // Emerald-500
+  "self-care": "#ec4899",   // Pink-500
+  "social": "#f59e0b",      // Amber-500
+  "hobbies": "#f43f5e",     // Rose-500
+  "learning": "#3b82f6",    // Blue-600
+  "finance": "#059669",     // Green-600
+  "general": "#64748b"      // Slate-500
 };

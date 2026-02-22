@@ -3,7 +3,6 @@ import type { Task } from "../types";
 import { Trash2, CheckCircle, Clock, AlertCircle, Pencil, ChevronDown, ChevronUp } from "lucide-react";
 import { useTaskContext } from "../../../context/TaskContext";
 
-// Add function props so the Home page can handle the logic
 interface TaskCardProps extends Task {
   setIsCompleted: (id: number, isComplete: boolean) => void;
   onDelete: (id: number) => void;
