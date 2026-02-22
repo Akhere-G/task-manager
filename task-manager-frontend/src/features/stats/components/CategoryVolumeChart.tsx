@@ -40,7 +40,7 @@ export default function CategoryVolumeChart() {
                 cy="50%"
                 innerRadius="60%"
                 outerRadius="80%"
-                dataKey="count"
+                dataKey="pending"
                 nameKey="category"
               />
               <Tooltip 

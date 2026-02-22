@@ -1,12 +1,9 @@
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import useGetBacklogHealth from "../hooks/useGetBacklogHealth";
+import { statusColors } from "../constants";
 
-const COLORS: Record<string, string> = {
-  Completed: '#10b981', 
-  Pending: '#f59e0b',   
-  Overdue: '#ef4444'    
-};
+
 
 export default function BacklogHealthChart() {
   const { data: backlogData, isLoading, isError } = useGetBacklogHealth()
@@ -14,7 +11,7 @@ export default function BacklogHealthChart() {
 
   const chartData = backlogData?.map(entry => ({
     ...entry,
-    fill: COLORS[entry.status] || '#cbd5e1'
+    fill: statusColors[entry.status] || '#cbd5e1'
   }));
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;

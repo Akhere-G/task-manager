@@ -61,7 +61,9 @@ export interface GetBacklogHealthResult {
 
 export interface GetCategoryVolumeResult {
   category: string;
-  count: number;
+  completed: number;
+  overdue: number;
+  pending: number;
 }
 
 export const statsService = {

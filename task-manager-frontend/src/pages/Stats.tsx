@@ -1,4 +1,4 @@
-import { ActivityHeatMap, BacklogHealthChart, CategoryVolumeChart, ChartCard, ProductivityChart, StatsOverview, TimeSpentChart } from "../features/stats/components";
+import { ActivityHeatMap, BacklogHealthChart, ChartCard, ProductivityChart, StatsOverview, StatusByCategoryChart, TimeSpentChart } from "../features/stats/components";
 
 export default function Stats() {
   return (
@@ -22,7 +22,7 @@ export default function Stats() {
           title="Task Status"
           subtitle="Current completion progress"
           width="lg:w-[35%]"
-          height="h-90 lg:h-90"
+          height="h-90"
           flex="0.25"
         >
           <BacklogHealthChart />
@@ -32,7 +32,7 @@ export default function Stats() {
           title="Productivity"
           subtitle="Tasks completed daily"
           width="lg:w-[65%]"
-          height="h-90 lg:h-90"
+          height="h-90"
           flex="0.75"
         >
           <ProductivityChart />
@@ -40,26 +40,25 @@ export default function Stats() {
       </div>
       <div className="flex flex-col gap-6 lg:flex-row">
         <ChartCard 
-          title="Active Balance"
-          subtitle="Pending tasks by category"
+          title="Distribution Overview"
+          subtitle="Task status by category."
           width="lg:w-[35%]"
-          height="h-90 lg:h-90"
-          flex="0.25"
+          height="h-120"
+          flex="1"
         >
-          <CategoryVolumeChart />
+          <StatusByCategoryChart />
         </ChartCard>
 
         <ChartCard 
           title="Time spent"
           subtitle="Total time spent per category"
           width="lg:w-[65%]"
-          height="h-90 lg:h-90"
+          height="h-120"
           flex="0.75"
         >
             <TimeSpentChart />
         </ChartCard>
       </div>
-      
     </div>
   </div>
   );

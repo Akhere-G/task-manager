@@ -76,7 +76,6 @@ export default function ProductivityChart() {
             height={40}
             formatter={(value) => <span style={{ color: 'var(--color-text-main)', fontSize: '14px', fontWeight: 500 }}>{value}</span>}
           />
-          
           <Line 
             name="Tasks completed"
             type="monotone" 

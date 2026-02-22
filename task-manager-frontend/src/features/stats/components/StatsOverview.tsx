@@ -13,7 +13,6 @@ export default function StatsOverview() {
   const isError = isBacklogError || isCategoryVolumeError || isTimeSpentError || isProductivityError
   const isLoading = isBacklogLoading || isCategoryVolumeLoading || isTimeSpentLoading || isProductivityLoading
 
-
   const stats = {
     completionRate: "0",
     timeInvested: "0",
@@ -41,7 +40,7 @@ export default function StatsOverview() {
     stats.clearingSpeed = (totalTasks / 7).toFixed(1);
 
     if (categoryVolumeData.length > 0) {
-      const top = categoryVolumeData.reduce((acc, cur) => acc.count > cur.count ? acc : cur);
+      const top = categoryVolumeData.reduce((acc, cur) => acc.pending + acc.overdue > cur.pending + cur.overdue  ? acc : cur);
       stats.weeklyFocus = top.category.replace(/[_-]/g, " ");
       stats.weeklyFocus = stats.weeklyFocus[0].toUpperCase() + stats.weeklyFocus.slice(1);
     }
