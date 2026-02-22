@@ -64,6 +64,7 @@ export interface GetCategoryVolumeResult {
   completed: number;
   overdue: number;
   pending: number;
+  total: number;
 }
 
 export const statsService = {

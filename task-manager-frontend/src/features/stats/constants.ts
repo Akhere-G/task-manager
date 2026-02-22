@@ -1,7 +1,8 @@
 export const statsQueryKeys = ["productivity", "backlogHealth", "categoryVolume", "timeSpent"]
 
 export const statusColors: Record<string, string> = {
-  Completed: '#10b981', 
-  Pending: '#f59e0b',   
-  Overdue: '#ef4444'    
+  completed: '#10b981', 
+  pending: '#f59e0b',   
+  overdue: '#ef4444',   
+  total: 'oklch(58.5% 0.233 277.117)'    
 };

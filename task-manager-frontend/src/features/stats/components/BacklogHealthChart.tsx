@@ -11,7 +11,7 @@ export default function BacklogHealthChart() {
 
   const chartData = backlogData?.map(entry => ({
     ...entry,
-    fill: statusColors[entry.status] || '#cbd5e1'
+    fill: statusColors[entry.status.toLowerCase()] || '#cbd5e1'
   }));
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;

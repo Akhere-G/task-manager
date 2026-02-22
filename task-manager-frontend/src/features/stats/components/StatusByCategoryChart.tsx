@@ -41,7 +41,7 @@ export default function CategoryVolumeChart() {
           const completed = activeSeries.completed ? category.completed : 0
           const overdue = activeSeries.overdue ? category.overdue : 0
           const pending = activeSeries.pending ? category.pending : 0
-          const total = activeSeries.total ? category.pending + category.overdue + category.completed : 0
+          const total = activeSeries.total ? category.total : 0
           return Math.max(completed, overdue, pending, total)
         }
     )
@@ -81,8 +81,8 @@ export default function CategoryVolumeChart() {
         <Radar
           name="Completed"
           dataKey="completed"
-          stroke="#10b981"
-          fill="#10b981"
+          stroke={statusColors.completed}
+          fill={statusColors.completed}
           fillOpacity={activeSeries.completed ? 0.5 : 0}
           strokeOpacity={activeSeries.completed ? 1 : 0}
           animationDuration={300}
@@ -91,8 +91,8 @@ export default function CategoryVolumeChart() {
         <Radar
           name="Pending"
           dataKey="pending"
-          stroke="#3b82f6"
-          fill="#3b82f6"
+          stroke={statusColors.pending}
+          fill={statusColors.pending}
           fillOpacity={activeSeries.pending ? 0.3 : 0}
           strokeOpacity={activeSeries.pending ? 1 : 0}
           animationDuration={300}
@@ -101,8 +101,8 @@ export default function CategoryVolumeChart() {
         <Radar
           name="Overdue"
           dataKey="overdue"
-          stroke="#ef4444"
-          fill="#ef4444"
+          stroke={statusColors.overdue}
+          fill={statusColors.overdue}
           fillOpacity={activeSeries.overdue ? 0.4 : 0}
           strokeOpacity={activeSeries.overdue ? 1 : 0}
           animationDuration={300}
@@ -111,8 +111,8 @@ export default function CategoryVolumeChart() {
         <Radar
           name="Total"
           dataKey="total"
-          stroke="oklch(58.5% 0.233 277.117)"
-          fill="oklch(58.5% 0.233 277.117)"
+          stroke={statusColors.total}
+          fill={statusColors.total}
           fillOpacity={activeSeries.total ? 0.4 : 0}
           strokeOpacity={activeSeries.total ? 1 : 0}
           animationDuration={300}
