@@ -32,14 +32,14 @@ function TaskCard({
 
   return (
     <article className={`
-      relative flex flex-col h-full shadow-sm rounded-md border transition-all duration-300 bg-surface
+      relative flex flex-col h-full shadow-sm rounded-md border transition-all duration-300 bg-surface overflow-hidden
       ${isCompleted 
         ? "border-slate-200 dark:border-slate-800 opacity-60" 
         : "border-slate-200 dark:border-slate-800 hover:border-brand/50 hover:shadow-md"}
     `}>
       
       <header className={`
-        p-4 flex justify-between items-center rounded-t-md
+        p-4 flex justify-between items-center
         ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}
       `}>
         <h3 className={`font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}>

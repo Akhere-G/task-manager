@@ -117,6 +117,7 @@ export default function TaskForm({
         value={formState.description} 
         handleChange={handleChange}
         errorMessage={errorMessages.description}
+        textarea
       />
       <FormInput 
         label="Due Date" 
@@ -134,7 +135,7 @@ export default function TaskForm({
         handleChange={handleChange}
         errorMessage={errorMessages.estimatedTime}
       />
-      <footer className='p-4 flex gap-4 justify-end'>
+      <footer className='flex gap-4 justify-end'>
       {close && (
         <button 
           className={isLoading ? "btn-secondary-disabled": "btn-secondary"}

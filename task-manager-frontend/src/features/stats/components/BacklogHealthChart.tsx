@@ -48,7 +48,7 @@ export default function BacklogHealthChart() {
         (
           <ResponsiveContainer width="100%" height="100%" maxHeight={300}>
             <PieChart
-              margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+              margin={{ top: 0, right: 0, left: 0, bottom: 5 }}
               >
               <Pie
                 data={chartData}
@@ -58,7 +58,6 @@ export default function BacklogHealthChart() {
                 outerRadius="80%"
                 dataKey="count"
                 nameKey="status"
-                // shape={({ isActive }) => ({ style: { filter: isActive ? "brightness(120%)" : ""}})}
                 />
               <Tooltip 
                 contentStyle={{ 

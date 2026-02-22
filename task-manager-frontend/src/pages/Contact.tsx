@@ -67,7 +67,7 @@ export default function ContactPage() {
         </p>
       </section>
 
-      <form onSubmit={handleSubmit} className="card p-8 bg-surface border border-border-light shadow-sm rounded-2xl flex flex-col gap-6">
+      <form onSubmit={handleSubmit} className="card flex flex-col gap-6">
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormInput 

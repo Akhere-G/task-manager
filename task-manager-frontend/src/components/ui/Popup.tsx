@@ -53,7 +53,7 @@ export default function Popup({
   }
   return (
     <div className='fixed w-screen h-screen z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center'>
-      <section className='card p-0 overflow-hidden w-4/5 md:max-w-2xl'>
+      <section className='card p-0 w-9/10 md:w-4/5 md:max-w-2xl max-h-9/10 overflow-y-scroll'>
         <header className='bg-accent p-4 text-text-inverse flex justify-between items-center'>
           <h1>{title}</h1>
           <button className="text-xl" aria-label='close' onClick={close}>&times;</button>
