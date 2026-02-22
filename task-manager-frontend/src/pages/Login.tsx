@@ -4,6 +4,7 @@ import axios from "axios";
 import type { LoginUserInput } from "../features/auth/types";
 import { authService } from "../services/api";
 import { useAuthContext } from "../context/AuthContext";
+import { validateUser, type UserData } from "../utils/validators";
 
 type ErrorMesageType = { [P in keyof LoginUserInput]: string;  } & { general: string }
 
@@ -17,14 +18,30 @@ export default function Login() {
     email: "",
     password: "",
     general: ""
+  })
+  const [touched, setTouched] = useState({
+    email: false,
+    password: false,
   }) 
+
   const [isLoading, setIsloading] = useState(false)
 
   const { login } = useAuthContext()
 
+  const validateForm = (data: UserData) => {
+      setErrorMessages({...defaultErrorMessages, ...validateUser(data, false) })
+    }
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
     const { name, value } = e.target;
-    setFormData(prev => ({...prev, [name]: value}))
+    const newFormData = ({...formData, [name]: value})
+    setFormData(newFormData)
+    validateForm(newFormData)
+  }
+
+  function handleBlur(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
+    const { name } = e.target;
+    setTouched(prev => ({...prev, [name]: true}))
   }
 
   const defaultErrorMessages = {
@@ -35,6 +52,13 @@ export default function Login() {
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>){
     e.preventDefault()
+    setTouched({
+        email: true,
+        password: true,
+    })
+
+    if (Object.entries(errorMessages).some(([k, v]) => v !== "" && k !== "general")) return 
+
     try {
       setIsloading(true)
       
@@ -47,12 +71,9 @@ export default function Login() {
           return
       }
       
-      if (err.status === 401) {
-        setErrorMessages({...defaultErrorMessages, general: "Email or password is incorrect"})
-      }
       else if (err.status === 400){
         const errors: Partial<ErrorMesageType> = err.response?.data?.errors;
-        setErrorMessages(({ ...defaultErrorMessages, ...errors}))
+        setErrorMessages(({ ...defaultErrorMessages, ...errors, general: err.response?.data?.error ?? "" }))
       } else {
         setErrorMessages({...errorMessages, general: "Sorry... Something went wrong."})
       }
@@ -85,6 +106,8 @@ export default function Login() {
             value={formData.email}
             errorMessage={errorMessages.email}
             type="email"
+            touched={touched.email}
+            handleBlur={handleBlur}
           />
           <FormInput 
             handleChange={handleChange}
@@ -93,6 +116,8 @@ export default function Login() {
             value={formData.password}
             errorMessage={errorMessages.password}
             type="password"
+            touched={touched.password}
+            handleBlur={handleBlur}
           />
           <button 
             className={isLoading ? "self-end btn-primary-disabled": "self-end btn-primary"}

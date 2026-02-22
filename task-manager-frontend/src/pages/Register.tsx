@@ -31,7 +31,6 @@ export default function Register() {
     email: false,
     password: false,
     confirmPassword: false,
-    general: false
   }) 
   const [isLoading, setIsloading] = useState(false)
 
@@ -70,19 +69,17 @@ export default function Register() {
         email: true,
         password: true,
         confirmPassword: true,
-        general: true
     })
-
-    if (Object.values(errorMessages).some(e => e !== "")) return
+    if (Object.entries(errorMessages).some(([k, v]) => v !== "" && k !== "general")) return 
+    
     try {
       setIsloading(true)
-      
       const { token } = await authService.register(formData)
       login(token)
     } catch (err) {
       console.log(err)
       if (!axios.isAxiosError(err)){
-          return
+        return
       }
       if (err.status === 400){
         const errors: Partial<ErrorMesageType> = err.response?.data?.errors;
