@@ -93,8 +93,6 @@ def create_tasks(user_id, title, description, category, due_date, estimated_time
                     (title, description, category, due_date, estimated_time, user_id))
     conn.commit()
     new_id = cursor.lastrowid
-    cursor.close()
-    conn.close()
     return new_id
   except Exception as err:
         raise err
@@ -111,8 +109,6 @@ def update_task(user_id, id, title=None, description=None, category=None, due_da
     task = cursor.fetchone()
 
     if task is None:
-      cursor.close()
-      conn.close()
       return None
     
     updated_title = title if title else task['title']
@@ -130,8 +126,6 @@ def update_task(user_id, id, title=None, description=None, category=None, due_da
       """, (updated_title, updated_desc, updated_cat, updated_due, updated_time, int(updated_status), updated_completed_at, id, user_id))
     
     conn.commit()
-    cursor.close()
-    conn.close()
 
     return {
           "id": id,
@@ -159,8 +153,6 @@ def delete_task(user_id, task_id):
     deleted_rows = cursor.rowcount
 
     conn.commit()
-    cursor.close()
-    conn.close()
     return task_id if deleted_rows > 0 else None
   except Exception as err:
         raise err
