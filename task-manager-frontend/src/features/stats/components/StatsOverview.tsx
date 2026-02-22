@@ -1,39 +1,18 @@
-import { useEffect, useState } from "react";
-import { statsService, type GetBacklogHealthResult, type GetCategoryVolumeResult, type GetProductivityResult, type GetTimeSpentResult } from "../../../services/api";
 import { ErrorState } from "../../../components/ui";
+import useGetBacklogHealth from "../hooks/useGetBacklogHealth";
+import useGetCategoryVolume from "../hooks/useGetCategoryVolume";
+import useGetTimeSpent from "../hooks/useGetTimeSpent";
+import useGetProductivity from "../hooks/useGetProductivity";
 
 export default function StatsOverview() {
-  const [isLoading, setIsloading] = useState(true);
-  const [error, setError] = useState("");
-  const [backlogData, setBacklogData] = useState<GetBacklogHealthResult[] | null>(null);
-  const [categoryVolumeData, setCategoryVolumeData] = useState<GetCategoryVolumeResult[] | null>(null);
-  const [timeSpentData, setTimeSpentData] = useState<GetTimeSpentResult[] | null>(null);
-  const [productivityData, setProductivityData] = useState<GetProductivityResult[] | null>(null);
+  const { data: backlogData, isLoading: isBacklogLoading, isError: isBacklogError } = useGetBacklogHealth()
+  const { data: categoryVolumeData, isLoading: isCategoryVolumeLoading, isError: isCategoryVolumeError } = useGetCategoryVolume()
+  const { data: timeSpentData, isLoading: isTimeSpentLoading, isError: isTimeSpentError  } = useGetTimeSpent()
+  const { data: productivityData, isLoading: isProductivityLoading, isError: isProductivityError } = useGetProductivity(365)
+    
+  const isError = isBacklogError || isCategoryVolumeError || isTimeSpentError || isProductivityError
+  const isLoading = isBacklogLoading || isCategoryVolumeLoading || isTimeSpentLoading || isProductivityLoading
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsloading(true);
-      try {
-        const [backlog, volume, time, productivity] = await Promise.all([
-          statsService.getBacklogHealth(),
-          statsService.getCategoryVolume(),
-          statsService.getTimeSpent(),
-          statsService.getProductivity(365),
-        ]);
-        setBacklogData(backlog);
-        setCategoryVolumeData(volume);
-        setTimeSpentData(time);
-        setProductivityData(productivity);
-        setError("");
-      } catch (err: unknown) {
-        console.log(err)
-        setError("Could not load data");
-      } finally {
-        setIsloading(false);
-      }
-    }
-    fetchData();
-  }, []);
 
   const stats = {
     completionRate: "0",
@@ -68,7 +47,7 @@ export default function StatsOverview() {
     }
   }
 
-  if (error) return <ErrorState error={error} />;
+  if (isError) return <ErrorState error={isError ? "Could not load data" : ""} />;
 
   return (
     <div className="flex flex-wrap gap-6">

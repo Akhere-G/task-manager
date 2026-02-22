@@ -9,7 +9,7 @@ const COLORS: Record<string, string> = {
 };
 
 export default function BacklogHealthChart() {
-  const { data: backlogData, isLoading, error } = useGetBacklogHealth()
+  const { data: backlogData, isLoading, isError } = useGetBacklogHealth()
 
 
   const chartData = backlogData?.map(entry => ({
@@ -18,13 +18,13 @@ export default function BacklogHealthChart() {
   }));
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
-  if (error) return <ErrorState error={error ? "Could not load data" : ""} />;
+  if (isError) return <ErrorState error={isError ? "Could not load data" : ""} />;
   if (backlogData && backlogData.length === 0){
     return (
         <EmptyState searchMessage="No tasks"/>
     )
   }
-  
+
   return (
         backlogData && 
         (
