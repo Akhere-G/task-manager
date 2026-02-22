@@ -2,13 +2,15 @@ import type { CreateTaskInput } from "../features/tasks/types";
 import { taskService } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import TaskForm from "../features/tasks/components/TaskForm";
+import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
 
 
 export default function AddTask() {
   const navigate = useNavigate();
-
+  const invalidateTaskKeys = useInvalidateTaskKeys()
   async function handleCreate(newTask: CreateTaskInput) {
     await taskService.create(newTask);
+    invalidateTaskKeys()
     navigate("/")
   }
 

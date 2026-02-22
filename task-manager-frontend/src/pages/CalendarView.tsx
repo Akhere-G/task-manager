@@ -21,7 +21,7 @@ export default function CalendarView() {
 
   if (error) {
       MainContent = <ErrorState error={error}/>
-    } else if (isLoading && (!tasks || tasks.length === 0)) {
+    } else if (isLoading) {
       MainContent = <LoadingState loadMessage="Getting tasks..."/>
     } else if (tasks && tasks.length > 0) {
       MainContent = (

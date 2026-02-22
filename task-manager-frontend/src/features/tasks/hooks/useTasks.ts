@@ -96,31 +96,31 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
       setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
   
-    const resetFilters = () => {
-      setFilters({
-        search: "",
-        category: "",
-        duration: "",
-        isCompleted: "false",
-        dueDate: "",
-        sortBy: "due_date",
-        order: "asc",
-      });
-    };
+  const resetFilters = () => {
+    setFilters({
+      search: "",
+      category: "",
+      duration: "",
+      isCompleted: "false",
+      dueDate: "",
+      sortBy: "due_date",
+      order: "asc",
+    });
+  };
   
-    const setPage = (page: number) => {
-      setPageDetails((prev) => ({ ...prev, currentPage: page }));
-    };
+  const setPage = (page: number) => {
+    setPageDetails((prev) => ({ ...prev, currentPage: page }));
+  };
   
-    const isStale = result.isFetching || filters.search !== deferredSearch;
+  const isStale = result.isFetching || filters.search !== deferredSearch;
   
-    const isSearching =
-      !!filters.search.trim() ||
-      !!filters.category ||
-      !!filters.duration ||
-      filters.isCompleted !== 'false' ||
-      !!filters.dueDate;
-  
+  const isSearching =
+    !!filters.search.trim() ||
+    !!filters.category ||
+    !!filters.duration ||
+    filters.isCompleted !== 'false' ||
+    !!filters.dueDate;
+
   return {
     ...result,
     error: result.error ? "Could not get tasks." : "", 

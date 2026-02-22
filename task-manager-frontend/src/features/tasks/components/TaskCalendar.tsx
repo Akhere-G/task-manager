@@ -1,6 +1,6 @@
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid' 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type {  Task } from '../types';
 import {  Popup } from '../../../components/ui';
 import { formatDate } from '../utils';
@@ -28,18 +28,23 @@ function TaskCalendar({
   setIsCompleted
 }: CalendarProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  
+  const [allTasks, setAllTasks] = useState(tasks)
 
-  const events = tasks.map(task => ({ title: task.title, date: formatDate(task.dueDate), id: String(task.id), extendedProps: task }))
+  useEffect(() => {
+    setAllTasks(tasks)
+  }, [tasks])
+  
+  const events = allTasks.map(task => ({ title: task.title, date: formatDate(task.dueDate), id: String(task.id), extendedProps: task }))
 
   async function handleEventDrop(info: Info) {
     const { event } = info;
 
-    const newDueDate = event.startStr; 
+    const dueDate = event.startStr; 
     const taskId = Number(event.id);
 
     try {
-      await updateTask(taskId, { dueDate: newDueDate })
+      setAllTasks(prev => prev.map(t => t.id === taskId ? ({...t, dueDate }) : t))
+      await updateTask(taskId, { dueDate })
     } catch (err) {
       console.log(err)
       info.revert(); 
