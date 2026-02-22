@@ -6,7 +6,6 @@ from routes.stats_routes import stats_bp
 from routes.mail_routes import mail_bp
 from routes.auth_routes import auth_bp
 from dotenv import load_dotenv
-from extensions import mail
 from flask_jwt_extended import JWTManager
 
 load_dotenv()
@@ -24,15 +23,6 @@ CORS(app, resources={
         "allow_headers": ["Content-Type", "Authorization"]
     }
 })
-# Email Configuration
-app.config['MAIL_SERVER'] = '74.125.140.108'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
-mail.init_app(app)
 
 app.register_blueprint(task_bp)
 app.register_blueprint(stats_bp)
