@@ -72,6 +72,8 @@ def get_all_tasks(user_id, category=None, search=None, task_duration=None, is_co
     cursor.execute(data_query, params)
     tasks = cursor.fetchall()
 
+    for task in tasks:
+      task["is_completed"] = True if task["is_completed"] == 1 else False
     # 4. Return both the tasks and pagination info
     return {
       "tasks": tasks,
@@ -134,7 +136,7 @@ def update_task(user_id, id, title=None, description=None, category=None, due_da
           "category": updated_cat,
           "due_date": updated_due,
           "estimated_time": updated_time,
-          "is_completed": updated_status,
+          "is_completed": True if updated_status == 1 else False,
           "created_at": task.get("created_at"),
           "completed_at": updated_completed_at
     }

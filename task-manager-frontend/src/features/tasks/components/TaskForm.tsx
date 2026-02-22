@@ -3,6 +3,7 @@ import { categories, type CreateTaskInput } from "../../../features/tasks/types"
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
 import { formatDate } from "../utils";
+import { validateTask, type TaskData } from "../../../utils/validators";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string;  } & { general: string}
 
@@ -36,6 +37,14 @@ export default function TaskForm({
     general: ""
   })
 
+  const [touched, setTouched] = useState({
+    title: false,
+    category: false,
+    description: false,
+    dueDate: false,
+    estimatedTime: false,
+  }) 
+
   const defaultErrorMessages = {
     title: "",
     category: "",
@@ -51,13 +60,34 @@ export default function TaskForm({
     if (initialData) setFormState(({...initialData, dueDate: formatDate(initialData.dueDate)}))
   }, [initialData])
 
+  const validateForm = (data: TaskData) => {
+        setErrorMessages({...defaultErrorMessages, ...validateTask(data, !!initialData) })
+  }
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
     const { name, value } = e.target;
-    setFormState(prev => ({...prev, [name]: value}))
+    const newFormState = ({...formState, [name]: value})
+    setFormState(newFormState)
+    validateForm(newFormState)
+  }
+
+  function handleBlur(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>){
+    const { name } = e.target;
+    setTouched(prev => ({...prev, [name]: true}))
   }
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>){
     e.preventDefault()
+    setTouched({
+      title: true,
+      category: true,
+      description: true,
+      dueDate: true,
+      estimatedTime: true,
+    })
+
+    if (Object.entries(errorMessages).some(([k, v]) => v !== "" && k !== "general")) return 
+
     try {
       setIsloading(true)
       await submitAction({...formState, estimatedTime: Number(formState.estimatedTime)})
@@ -101,6 +131,8 @@ export default function TaskForm({
         value={formState.title} 
         handleChange={handleChange}
         errorMessage={errorMessages.title}
+        touched={touched.title}
+        handleBlur={handleBlur}
       />
       <FormInput 
         label="Category" 
@@ -109,6 +141,8 @@ export default function TaskForm({
         handleChange={handleChange}
         errorMessage={errorMessages.category}
         options={options}
+        touched={touched.category}
+        handleBlur={handleBlur}
       />
       <FormInput 
         label="Description" 
@@ -116,6 +150,8 @@ export default function TaskForm({
         value={formState.description} 
         handleChange={handleChange}
         errorMessage={errorMessages.description}
+        touched={touched.description}
+        handleBlur={handleBlur}
         textarea
       />
       <FormInput 
@@ -125,6 +161,8 @@ export default function TaskForm({
         value={formState.dueDate} 
         handleChange={handleChange}
         errorMessage={errorMessages.dueDate}
+        touched={touched.dueDate}
+        handleBlur={handleBlur}
       />
       <FormInput 
         label="Estimated Time" 
@@ -133,6 +171,8 @@ export default function TaskForm({
         value={formState.estimatedTime} 
         handleChange={handleChange}
         errorMessage={errorMessages.estimatedTime}
+        touched={touched.estimatedTime}
+        handleBlur={handleBlur}
       />
       <footer className='flex gap-4 justify-end'>
       {close && (
