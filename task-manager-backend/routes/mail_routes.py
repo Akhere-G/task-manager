@@ -6,14 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from_email = os.getenv("MAIL_SEND_EMAIL")
-to_email = os.getenv("MAIL_USERNAME")
-ms_api_key = os.getenv("MAIL_SEND_API_KEY")
-
-ms = MailerSendClient(ms_api_key)
-
 def send_enquiry_email(full_name, email, subject, message):
-    html_content = f"""
+    return f"""
     <div style="background-color: #f8fafc; padding: 20px; font-family: sans-serif;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="background-color: #4f46e5; padding: 20px; color: #ffffff;">
@@ -36,14 +30,7 @@ def send_enquiry_email(full_name, email, subject, message):
     </div>
     """
 
-    email = (EmailBuilder()
-      .from_email(from_email, full_name)
-      .to_many([{"email": to_email, "name": "Ak"}])
-      .subject(subject)
-      .html(html_content)
-      .build())
-
-    ms.emails.send(email)
+    
 mail_bp = Blueprint("contact", __name__)
 
 @mail_bp.route('/api/contact', methods=['POST'])
@@ -63,11 +50,25 @@ def handle_contact():
   subject = data.get('subject')
   message = data.get('message')
   
+  from_email = os.getenv("MAIL_SEND_EMAIL")
+  to_email = os.getenv("MAIL_USERNAME")
+  ms_api_key = os.getenv("MAIL_SEND_API_KEY")
+
+  ms = MailerSendClient(ms_api_key)
 
   try:
-    send_enquiry_email(full_name, email, subject, message)
+    html_content = send_enquiry_email(full_name, email, subject, message)
+    email = (EmailBuilder()
+      .from_email(from_email, full_name)
+      .to_many([{"email": to_email, "name": "Ak"}])
+      .subject(subject)
+      .html(html_content)
+      .build())
+
+    ms.emails.send(email)
+
   except Exception as e:
     print(e)
-    jsonify({"message": "Enquiry could not be sent"}), 400      
+    return jsonify({"message": "Enquiry could not be sent"}), 400      
 
   return jsonify({"message": "Enquiry sent successfully"}), 201 
