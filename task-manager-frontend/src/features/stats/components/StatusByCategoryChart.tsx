@@ -22,11 +22,11 @@ export default function CategoryVolumeChart() {
   const [activeSeries, setActiveSeries] = useState({
     completed: true,
     pending: false,
-    overdue: false
+    overdue: false,
+    total: false,
   });
 
   const handleLegendClick = ({ dataKey }: LegendPayload) => {
-    if (!dataKey) return;
     setActiveSeries((prev) => ({
       ...prev,
       [dataKey as keyof typeof activeSeries]: !prev[dataKey as keyof typeof activeSeries]
@@ -41,7 +41,8 @@ export default function CategoryVolumeChart() {
           const completed = activeSeries.completed ? category.completed : 0
           const overdue = activeSeries.overdue ? category.overdue : 0
           const pending = activeSeries.pending ? category.pending : 0
-          return Math.max(completed, overdue, pending)
+          const total = activeSeries.total ? category.pending + category.overdue + category.completed : 0
+          return Math.max(completed, overdue, pending, total)
         }
     )
       )
@@ -57,7 +58,6 @@ export default function CategoryVolumeChart() {
   if (!categoryVolumeData || categoryVolumeData.length === 0) {
     return <EmptyState searchMessage="No tasks found" />;
   }
-  console.log(dynamicMax)
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -67,6 +67,7 @@ export default function CategoryVolumeChart() {
           domain={[0, dynamicMax]} 
           tick={false} 
           axisLine={false} 
+          allowDataOverflow
         />
         <PolarAngleAxis 
           dataKey="category" 
@@ -104,6 +105,16 @@ export default function CategoryVolumeChart() {
           fill="#ef4444"
           fillOpacity={activeSeries.overdue ? 0.4 : 0}
           strokeOpacity={activeSeries.overdue ? 1 : 0}
+          animationDuration={300}
+        />
+
+        <Radar
+          name="Total"
+          dataKey="total"
+          stroke="oklch(58.5% 0.233 277.117)"
+          fill="oklch(58.5% 0.233 277.117)"
+          fillOpacity={activeSeries.total ? 0.4 : 0}
+          strokeOpacity={activeSeries.total ? 1 : 0}
           animationDuration={300}
         />
 

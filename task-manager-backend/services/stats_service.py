@@ -97,6 +97,7 @@ def get_category_volume(user_id):
         "pending": int(row["pending"]),
         "completed": int(row["completed"]),
         "overdue": int(row["overdue"]),
+        "total": int(row["pending"]) + int(row["completed"]) + int(row["overdue"]),
 
     } for row in rawData]
     cursor.close()
