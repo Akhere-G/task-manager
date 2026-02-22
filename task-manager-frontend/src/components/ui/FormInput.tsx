@@ -50,12 +50,12 @@ export default function FormInput({
       {
         textarea && !options && (
           <textarea 
-            id="message"
-            name="message"
-            rows={6}
             className="w-full p-3 rounded-xl border border-border-light focus:outline-none focus:border-brand bg-bg-secondary text-text-main transition-all resize-none"
+            id={name}
+            name={name}
             value={value}
             onChange={handleChange}
+            rows={6}
           />
           
         )
