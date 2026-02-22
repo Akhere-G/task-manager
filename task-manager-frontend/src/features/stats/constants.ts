@@ -1,1 +1,1 @@
-export const statsQueryKeys = ["productivity", "backlogHealth", "categoryVolume"]
+export const statsQueryKeys = ["productivity", "backlogHealth", "categoryVolume", "timeSpent"]

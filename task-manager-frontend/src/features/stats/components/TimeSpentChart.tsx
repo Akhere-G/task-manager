@@ -1,38 +1,18 @@
-import { useEffect, useState } from "react";
-import { statsService, type GetTimeSpentResult } from "../../../services/api";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { categoryColours } from "../../tasks/constants";
+import useGetTimeSpent from "../hooks/useGetTimeSpent";
 
 export default function TimeSpentChart() {
-  const [isLoading, setIsloading] = useState(true);
-  const [error, setError] = useState("");
-  const [timeSpentData, setTimeSpentData] = useState<GetTimeSpentResult[] | null>(null);
-
-  useEffect(() => {
-    async function fetchData() {
-      setIsloading(true);
-      try {
-        const result = await statsService.getTimeSpent();
-        setTimeSpentData(result);
-        setError("");
-      } catch (err: unknown) {
-        console.log(err)
-        setError("Could not load data");
-      } finally {
-        setIsloading(false);
-      }
-    }
-    fetchData();
-  }, []);
+  const { data: timeSpentData, isLoading, isError } = useGetTimeSpent()
 
   if (isLoading) return (
   <div className="flex justify-center items-center">
     <LoadingState />
   </div>
   )
-  if (error) return (
-    <ErrorState error={error} />
+  if (isError) return (
+    <ErrorState error={isError ? "Could not load data." : ""} />
   )
 
   const data = timeSpentData?.map(data => ({...data, fill: categoryColours[data.category] || categoryColours['General'] }))
