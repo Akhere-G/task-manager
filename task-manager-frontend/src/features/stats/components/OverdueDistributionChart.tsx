@@ -1,10 +1,18 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ErrorState, LoadingState } from "../../../components/ui";
 import useGetOverdueDistribution from "../hooks/useGetOverdueDistribution";
+import { useBreakpoint } from "../../../hooks/useBreakpoint";
 
 export default function OverdueDistributionChart() {
   const { data, isLoading, isError } = useGetOverdueDistribution()
+  const breakpoint = useBreakpoint()
 
+  function formatDaysOverdue(daysOverdue: string){
+    if (["xs", "sm", "md"].includes(breakpoint)) {
+      return daysOverdue.replace("Days", "D").replace("Week", "W").replace("Month", "M")
+    }
+    return daysOverdue
+  }
   const colors = [
   "#ffba08", 
   "#f48c06", 
@@ -15,7 +23,7 @@ export default function OverdueDistributionChart() {
   if (isLoading) return <LoadingState />
   if (isError) return <ErrorState error={isError ? "Could not load data." : ""} />
 
-  const chartData = data?.map((d, i) => ({...d, fill: colors[i]}))
+  const chartData = data?.map((d, i) => ({...d, fill: colors[i], daysOverdue: formatDaysOverdue(d.daysOverdue)}))
 
   return (
     <ResponsiveContainer>
