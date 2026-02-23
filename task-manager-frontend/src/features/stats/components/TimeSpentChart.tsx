@@ -36,12 +36,7 @@ export default function TimeSpentChart() {
             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <XAxis 
               type="number" 
-              label={{ 
-                value: "minutes", 
-                position: "insideBottom", 
-                offset: -10, 
-                style: { fill: 'var(--text-sub)', fontSize: '14px' } 
-              }} 
+              tick={{ fill: 'var(--color-text-sub)', fontSize: '14px' }} 
             />
             <YAxis 
               dataKey="category" 

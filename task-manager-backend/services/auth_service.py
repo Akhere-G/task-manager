@@ -3,6 +3,8 @@ from db import get_db_connection
 import mysql.connector
 
 def create_user(first_name, last_name, email, password):
+    conn = None
+    cursor = None
     try:
         hashed_password = generate_password_hash(password)
         conn = get_db_connection()
@@ -20,10 +22,14 @@ def create_user(first_name, last_name, email, password):
             return "EXISTS"
         raise err
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 def login_user(email, password):
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -38,5 +44,7 @@ def login_user(email, password):
     except Exception as err:
         raise err
     finally:    
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()

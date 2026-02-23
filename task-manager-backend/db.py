@@ -15,7 +15,7 @@ db_config = {
 try:
     connection_pool = mysql.connector.pooling.MySQLConnectionPool(
         pool_name="task_pool",
-        pool_size=5,
+        pool_size=10,
         pool_reset_session=True,
         **db_config
     )

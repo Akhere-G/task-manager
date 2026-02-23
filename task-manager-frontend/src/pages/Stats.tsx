@@ -1,4 +1,4 @@
-import { ActivityHeatMap, BacklogHealthChart, ChartCard, ProductivityChart, StatsOverview, StatusByCategoryChart, TimeSpentChart } from "../features/stats/components";
+import { ActivityHeatMap, BacklogHealthChart, ChartCard, OverdueDistributionChart, ProductivityChart, StatsOverview, StatusByCategoryChart, TimeSpentChart } from "../features/stats/components";
 
 export default function Stats() {
   return (
@@ -58,6 +58,17 @@ export default function Stats() {
         >
             <TimeSpentChart />
         </ChartCard>
+      </div>
+      <div className="flex gap-6">
+        <ChartCard 
+          title="Overdue Task Distribution"
+          subtitle="How overdue your tasks are"
+          width="w-1/2"
+          height="h-90"
+        >
+          <OverdueDistributionChart />
+        </ChartCard>
+
       </div>
     </div>
   </div>

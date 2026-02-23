@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from utils.formatters import format_json_response
-from services.stats_service import get_productivity_trend, get_time_spent, get_backlog_health, get_category_volume
+from services.stats_service import get_productivity_trend, get_time_spent, get_backlog_health, get_category_volume, get_overdue_distribution
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 stats_bp = Blueprint("stats", __name__)
@@ -39,6 +39,14 @@ def fetch_backlog_health():
 def fetch_category_volume():
   user_id = get_jwt_identity()
   data = get_category_volume(user_id)
+
+  return jsonify(format_json_response(data)), 200
+
+@stats_bp.route('/api/stats/overduedistribution')
+@jwt_required()
+def fetch_overdue_distribution():
+  user_id = get_jwt_identity()
+  data = get_overdue_distribution(user_id)
 
   return jsonify(format_json_response(data)), 200
 

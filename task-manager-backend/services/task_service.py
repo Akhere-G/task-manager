@@ -3,6 +3,8 @@ from utils.formatters import format_json_response
 from datetime import date
 
 def get_all_tasks(user_id, category=None, search=None, task_duration=None, is_completed=None, due_date=None, today=None, sort_by=None, order=None, limit=None, page=None):
+  conn = None
+  cursor = None
   try:
     SHORT_TASK_THRESHOLD = 30
     if today is None:
@@ -84,10 +86,14 @@ def get_all_tasks(user_id, category=None, search=None, task_duration=None, is_co
   except Exception as err:
         raise err
   finally:    
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 def create_tasks(user_id, title, description, category, due_date, estimated_time):
+  conn = None
+  cursor = None  
   try:
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -99,10 +105,14 @@ def create_tasks(user_id, title, description, category, due_date, estimated_time
   except Exception as err:
         raise err
   finally:    
-        cursor.close()
-        conn.close()  
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()  
 
 def update_task(user_id, id, title=None, description=None, category=None, due_date=None, estimated_time=None, is_completed=None, completed_at=None, has_completed_at=False):
+  conn = None
+  cursor = None
   try:
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -143,10 +153,14 @@ def update_task(user_id, id, title=None, description=None, category=None, due_da
   except Exception as err:
         raise err
   finally:    
-        cursor.close()
-        conn.close()  
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()  
   
 def delete_task(user_id, task_id):
+  conn = None
+  cursor = None
   try:
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -159,5 +173,7 @@ def delete_task(user_id, task_id):
   except Exception as err:
         raise err
   finally:    
-        cursor.close()
-        conn.close()  
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()  

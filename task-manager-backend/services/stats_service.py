@@ -2,6 +2,8 @@ from db import get_db_connection
 from datetime import datetime, timedelta
 
 def get_productivity_trend(user_id, days=30):
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -37,10 +39,14 @@ def get_productivity_trend(user_id, days=30):
     except Exception as err:
         raise err
     finally:    
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 def get_time_spent(user_id):
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -59,10 +65,14 @@ def get_time_spent(user_id):
     except Exception as err:
         raise err
     finally:    
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 def get_backlog_health(user_id):
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -86,10 +96,14 @@ def get_backlog_health(user_id):
     except Exception as err:
         raise err
     finally:    
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 def get_category_volume(user_id):
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -120,5 +134,51 @@ def get_category_volume(user_id):
     except Exception as err:
         raise err
     finally:    
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
+def get_overdue_distribution(user_id):
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        sql_query = """
+        SELECT 
+        CASE 
+            WHEN DATEDIFF(CURDATE(), due_date) <= 3 THEN "< 3 Days"
+            WHEN DATEDIFF(CURDATE(), due_date) <= 7 THEN "1 Week"
+            WHEN DATEDIFF(CURDATE(), due_date) <= 30 THEN "1 Month"
+            WHEN DATEDIFF(CURDATE(), due_date) <= 90 THEN "3 Months"
+            ELSE "+3 Months"
+        END as days_overdue,
+        COUNT(*) as count,
+        CASE 
+            WHEN DATEDIFF(CURDATE(), due_date) <= 3 THEN 1
+            WHEN DATEDIFF(CURDATE(), due_date) <= 7 THEN 2
+            WHEN DATEDIFF(CURDATE(), due_date) <= 30 THEN 3
+            WHEN DATEDIFF(CURDATE(), due_date) <= 90 THEN 4
+            ELSE 5
+        END as sort_order
+        FROM tasks
+        WHERE user_id = %s 
+        AND is_completed = 0 
+        AND due_date < CURDATE() 
+        GROUP BY days_overdue, sort_order
+        ORDER BY sort_order ASC;            
+                    """
+        
+        cursor.execute(sql_query, (user_id,))
+        data = cursor.fetchall()
+        return data
+    except Exception as err:
+        raise err
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
+
