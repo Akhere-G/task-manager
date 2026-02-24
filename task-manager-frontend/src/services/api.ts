@@ -35,6 +35,10 @@ export const taskService = {
     const response = await api.post('/tasks', taskData)
     return response.data
   }, 
+  createAll: async (tasksData: CreateTaskInput[]) => {
+    const response = await api.post('/tasks/bulk', tasksData)
+    return response.data
+  }, 
   update: async (id: number, taskData: Partial<Task>): Promise<Task> => {
     const response = await api.patch(`/tasks/${id}`, taskData);
     return response.data;

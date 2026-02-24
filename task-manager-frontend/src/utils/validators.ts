@@ -1,3 +1,5 @@
+import type { Task } from "../features/tasks/types";
+
 export interface TaskData {
   title: string;
   description: string;
@@ -23,7 +25,9 @@ export interface UserData {
   confirmPassword?: string;
 }
 
-export type ValidationErrors = Record<string, string>;
+export type TaskError = { [P in keyof Task ]: string;  }
+export type ContactError = { [P in keyof ContactData ]: string;  }
+export type UserError = { [P in keyof UserData ]: string;  }
 
 const VALID_CATEGORIES = [
   "work", "home", "chores", "life-admin", "health", 
@@ -32,12 +36,11 @@ const VALID_CATEGORIES = [
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-
 export const validateTask = (
   data: Partial<TaskData>, 
   isUpdate = false
-): ValidationErrors => {
-  const errors: ValidationErrors = {};
+) => {
+  const errors: Partial<TaskError> = {};
 
   if ('title' in data || !isUpdate) {
     const title = (data.title || '').toString().trim();
@@ -114,8 +117,20 @@ export const validateTask = (
   return errors;
 };
 
-export const validateContactRequest = (data: ContactData): ValidationErrors => {
-  const errors: ValidationErrors = {};
+export const validateTaskList = (tasks: TaskData[]) => {
+  const allErrors: Partial<TaskError>[] = [];
+  let hasErrors = false;
+  for (const task of tasks){
+    const errors = validateTask(task);
+    allErrors.push(errors)
+    hasErrors = hasErrors || Object.values(errors).some(err => err !== "")
+  }
+
+  return { hasErrors, allErrors }
+}
+
+export const validateContactRequest = (data: ContactData): Partial<ContactError> => {
+  const errors: Partial<ContactError> = {};
 
   const fullName = (data.fullName || '').trim();
   if (!fullName) errors.fullName = "Full name is required.";
@@ -140,8 +155,8 @@ export const validateContactRequest = (data: ContactData): ValidationErrors => {
 export const validateUser = (
   data: UserData, 
   isRegistering = false
-): ValidationErrors => {
-  const errors: ValidationErrors = {};
+) => {
+  const errors: Partial<UserError> = {};
   const getClean = (val?: string) => (val || "").toString().trim();
 
   const email = getClean(data.email);
