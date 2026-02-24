@@ -67,9 +67,14 @@ export interface GetCategoryVolumeResult {
   total: number;
 }
 
-export interface OverdueDistribution {
+export interface OverdueDistributionResult {
   daysOverdue: string;
   count: number
+}
+
+export interface CategoryVelocityResult {
+  category: string;
+  score: number;
 }
 
 export const statsService = {
@@ -89,8 +94,12 @@ export const statsService = {
     const response = await api.get("/stats/categoryvolume")
     return response.data;
   },
-  getOverdueDistribution: async () : Promise<OverdueDistribution[]> => {
+  getOverdueDistribution: async () : Promise<OverdueDistributionResult[]> => {
     const response = await api.get("/stats/overduedistribution")
+    return response.data;
+  },
+  getCategoryVelocity: async () : Promise<CategoryVelocityResult[]> => {
+    const response = await api.get("/stats/categoryvelocity")
     return response.data;
   }
 }

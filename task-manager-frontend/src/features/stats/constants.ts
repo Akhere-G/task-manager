@@ -1,4 +1,4 @@
-export const statsQueryKeys = ["productivity", "backlogHealth", "categoryVolume", "timeSpent"]
+export const statsQueryKeys = ["productivity", "backlogHealth", "categoryVolume", "timeSpent", "overdueDistribution", "categoryVelocity"]
 
 export const statusColors: Record<string, string> = {
   completed: '#10b981', 

@@ -1,4 +1,4 @@
-import { ActivityHeatMap, BacklogHealthChart, ChartCard, OverdueDistributionChart, ProductivityChart, StatsOverview, StatusByCategoryChart, TimeSpentChart } from "../features/stats/components";
+import { ActivityHeatMap, BacklogHealthChart, CategoryVelocityChart, ChartCard, OverdueDistributionChart, ProductivityChart, StatsOverview, StatusByCategoryChart, TimeSpentChart } from "../features/stats/components";
 
 export default function Stats() {
   return (
@@ -65,8 +65,18 @@ export default function Stats() {
           subtitle="How overdue your tasks are"
           width="w-1/2"
           height="h-90"
+          flex="0.5"
         >
           <OverdueDistributionChart />
+        </ChartCard>
+        <ChartCard 
+          title="Category Velocity"
+          subtitle="Average time until due dates per category."
+          width="w-1/2"
+          height="h-90"
+          flex="0.5"
+        >
+          <CategoryVelocityChart />
         </ChartCard>
 
       </div>

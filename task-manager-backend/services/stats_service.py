@@ -182,3 +182,34 @@ def get_overdue_distribution(user_id):
         if conn and conn.is_connected():
             conn.close()
 
+def get_category_velocity(user_id):
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                category, 
+                AVG(DATEDIFF(due_date, CURDATE())) as performance_score
+            FROM tasks
+            WHERE user_id = %s 
+            AND is_completed = 0 
+            GROUP BY category
+            ORDER BY performance_score DESC;
+        """
+        cursor.execute(query, (user_id,))
+        results = cursor.fetchall()
+        
+        return [{
+            "category": r["category"],
+            "score": float(r["performance_score"])
+        } for r in results]
+    except Exception as err:
+        raise err
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
