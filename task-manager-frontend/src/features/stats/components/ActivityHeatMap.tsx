@@ -2,7 +2,8 @@ import CalendarHeatmap from "react-calendar-heatmap";
 import { LoadingState, ErrorState } from "../../../components/ui";
 import { Tooltip } from "react-tooltip";
 import "react-calendar-heatmap/dist/styles.css";
-import useGetProductivity from "../hooks/useGetProductivity";
+import useGetStats from "../hooks/useGetStats";
+import type { ProductivityData } from "../../../services/api";
 
 interface HeatmapValueType {
   date: string;
@@ -10,7 +11,7 @@ interface HeatmapValueType {
 }
 
 export default function ActivityHeatmap(){ 
-  const { data: productivityData, isLoading, isError } = useGetProductivity(365)
+  const { data: productivity , isLoading, isError } = useGetStats<ProductivityData[]>(data => data.productivity)
   
 
   if (isLoading) return (
@@ -26,7 +27,7 @@ export default function ActivityHeatmap(){
   const lastYear = new Date();
   lastYear.setFullYear(today.getFullYear() - 1);
 
-  const heatmapValues = productivityData?.map(item => ({
+  const heatmapValues = productivity?.map(item => ({
     date: item.date,
     count: item.tasks
   })) || [];

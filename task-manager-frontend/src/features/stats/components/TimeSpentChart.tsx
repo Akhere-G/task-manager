@@ -1,10 +1,11 @@
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { categoryColours } from "../../tasks/constants";
-import useGetTimeSpent from "../hooks/useGetTimeSpent";
+import useGetStats from "../hooks/useGetStats";
+import type { TimeSpentData } from "../../../services/api";
 
 export default function TimeSpentChart() {
-  const { data: timeSpentData, isLoading, isError } = useGetTimeSpent()
+  const { data: timeSpent, isLoading, isError } = useGetStats<TimeSpentData[]>(data => data.timeSpent)
 
   if (isLoading) return (
   <div className="flex justify-center items-center">
@@ -15,9 +16,9 @@ export default function TimeSpentChart() {
     <ErrorState error={isError ? "Could not load data." : ""} />
   )
 
-  const data = timeSpentData?.map(data => ({...data, fill: categoryColours[data.category] || categoryColours['General'] }))
+  const chartData = timeSpent?.map(data => ({...data, fill: categoryColours[data.category] || categoryColours['General'] }))
 
-  if (data && data.length === 0){
+  if (chartData && chartData.length === 0){
         return (
           <div>
             <EmptyState searchMessage="No tasks completed recently"/>
@@ -26,10 +27,10 @@ export default function TimeSpentChart() {
     }
 
   return (
-      timeSpentData && (
+      chartData && (
         <ResponsiveContainer>
           <BarChart 
-            data={data} 
+            data={chartData} 
             layout="vertical" 
             margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
           >

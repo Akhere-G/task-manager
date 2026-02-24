@@ -2,14 +2,15 @@ import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { categoryColours } from "../../tasks/constants";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
-import useGetCategoryVolume from "../hooks/useGetCategoryVolume";
+import useGetStats from "../hooks/useGetStats";
+import type { CategoryVolumeData } from "../../../services/api";
 
 export default function CategoryVolumeChart() {
   const breakpoint = useBreakpoint()
 
-  const { data: categoryVolumeData, isLoading, isError } = useGetCategoryVolume()
+  const { data: categoryVolume, isLoading, isError } = useGetStats<CategoryVolumeData[]>(data => data.categoryVolume)
 
-  const chartData = categoryVolumeData?.map(entry =>  ({
+  const chartData = categoryVolume?.map(entry =>  ({
     ...entry,
     fill: categoryColours[entry.category] || '#cbd5e1'
   }));
@@ -28,7 +29,7 @@ export default function CategoryVolumeChart() {
   }
 
   return (
-        categoryVolumeData && 
+        categoryVolume && 
         (
           <ResponsiveContainer>
             <PieChart

@@ -1,29 +1,29 @@
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import useGetBacklogHealth from "../hooks/useGetBacklogHealth";
 import { statusColors } from "../constants";
+import useGetStats from "../hooks/useGetStats";
+import type { BacklogHealthData } from "../../../services/api";
 
 
 
 export default function BacklogHealthChart() {
-  const { data: backlogData, isLoading, isError } = useGetBacklogHealth()
+  const { data: backlogHealth, isLoading, isError } = useGetStats<BacklogHealthData[]>(data => data.backlogHealth)
 
-
-  const chartData = backlogData?.map(entry => ({
+  const chartData = backlogHealth?.map(entry => ({
     ...entry,
     fill: statusColors[entry.status.toLowerCase()] || '#cbd5e1'
   }));
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
   if (isError) return <ErrorState error={isError ? "Could not load data" : ""} />;
-  if (backlogData && backlogData.length === 0){
+  if (backlogHealth && backlogHealth.length === 0){
     return (
         <EmptyState searchMessage="No tasks"/>
     )
   }
 
   return (
-        backlogData && 
+        backlogHealth && 
         (
           <ResponsiveContainer width="100%" height="100%" maxHeight={300}>
             <PieChart

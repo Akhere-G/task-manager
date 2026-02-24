@@ -45,21 +45,21 @@ export const taskService = {
   } 
 }
 
-export interface GetProductivityResult {
+export interface ProductivityData {
   date: string;
   tasks: number
 }
-export interface GetTimeSpentResult {
+export interface TimeSpentData {
   category: string;
   timeSpent: number
 }
 
-export interface GetBacklogHealthResult {
+export interface BacklogHealthData {
   status: string;
   count: number;
 }
 
-export interface GetCategoryVolumeResult {
+export interface CategoryVolumeData {
   category: string;
   completed: number;
   overdue: number;
@@ -67,42 +67,32 @@ export interface GetCategoryVolumeResult {
   total: number;
 }
 
-export interface OverdueDistributionResult {
+export interface OverdueDistributionData {
   daysOverdue: string;
   count: number
 }
 
-export interface CategoryVelocityResult {
+export interface CategoryVelocityData {
   category: string;
   score: number;
 }
 
+export interface StatsResult {
+    "productivity": ProductivityData[];
+    "timeSpent": TimeSpentData[];
+    "backlogHealth": BacklogHealthData[];
+    "categoryVolume": CategoryVolumeData[];
+    "overdueDistribution": OverdueDistributionData[];
+    "categoryVelocity": CategoryVelocityData[];
+}
 export const statsService = {
-  getProductivity: async (days: number = 30): Promise<GetProductivityResult[]> => {
-    const response = await api.get(`/stats/productivity?days=${days}`) 
-    return response.data;
-  },
-  getTimeSpent: async (): Promise<GetTimeSpentResult[]> => {
-    const response = await api.get("/stats/timespent");
-    return response.data;
-  },
-  getBacklogHealth: async () : Promise<GetBacklogHealthResult[]> => {
-    const response = await api.get("/stats/backloghealth")
-    return response.data;
-  },
-  getCategoryVolume: async () : Promise<GetCategoryVolumeResult[]> => {
-    const response = await api.get("/stats/categoryvolume")
-    return response.data;
-  },
-  getOverdueDistribution: async () : Promise<OverdueDistributionResult[]> => {
-    const response = await api.get("/stats/overduedistribution")
-    return response.data;
-  },
-  getCategoryVelocity: async () : Promise<CategoryVelocityResult[]> => {
-    const response = await api.get("/stats/categoryvelocity")
+  getStats: async () : Promise<StatsResult> => {
+    const response = await api.get("/stats/dashboard")
     return response.data;
   }
+
 }
+
 
 export interface ContactEnquiry {
   fullName: string;

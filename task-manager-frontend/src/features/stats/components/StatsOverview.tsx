@@ -1,18 +1,11 @@
 import { ErrorState } from "../../../components/ui";
-import useGetBacklogHealth from "../hooks/useGetBacklogHealth";
-import useGetCategoryVolume from "../hooks/useGetCategoryVolume";
-import useGetTimeSpent from "../hooks/useGetTimeSpent";
-import useGetProductivity from "../hooks/useGetProductivity";
+import useGetStats from "../hooks/useGetStats";
 
 export default function StatsOverview() {
-  const { data: backlogData, isLoading: isBacklogLoading, isError: isBacklogError } = useGetBacklogHealth()
-  const { data: categoryVolumeData, isLoading: isCategoryVolumeLoading, isError: isCategoryVolumeError } = useGetCategoryVolume()
-  const { data: timeSpentData, isLoading: isTimeSpentLoading, isError: isTimeSpentError  } = useGetTimeSpent()
-  const { data: productivityData, isLoading: isProductivityLoading, isError: isProductivityError } = useGetProductivity(365)
+  const { data, isLoading, isError } = useGetStats()
     
-  const isError = isBacklogError || isCategoryVolumeError || isTimeSpentError || isProductivityError
-  const isLoading = isBacklogLoading || isCategoryVolumeLoading || isTimeSpentLoading || isProductivityLoading
 
+  const { categoryVolume, backlogHealth, timeSpent, productivity } = data ?? {}
   const stats = {
     completionRate: "0",
     timeInvested: "0",
@@ -21,26 +14,26 @@ export default function StatsOverview() {
     weeklyFocus: "None"
   };
 
-  if (!isLoading && backlogData && productivityData && categoryVolumeData && timeSpentData) {
-    const completed = backlogData.find(d => d.status === "Completed")?.count || 0;
-    const total = backlogData.reduce((acc, cur) => acc + cur.count, 0);
+  if (!isLoading && backlogHealth && productivity && categoryVolume && timeSpent) {
+    const completed = backlogHealth.find(d => d.status === "Completed")?.count || 0;
+    const total = backlogHealth.reduce((acc, cur) => acc + cur.count, 0);
     stats.completionRate = total > 0 ? ((completed / total) * 100).toFixed(0) : "0";
 
-    stats.timeInvested = Math.round(timeSpentData.reduce((acc, cur) => acc + cur.timeSpent, 0) / 60).toString();
+    stats.timeInvested = Math.round(timeSpent.reduce((acc, cur) => acc + cur.timeSpent, 0) / 60).toString();
 
     let streak = 0;
-    for (let i = productivityData.length - 1; i >= 0; i--) {
-      if (productivityData[i].tasks > 0) streak++;
+    for (let i = productivity.length - 1; i >= 0; i--) {
+      if (productivity[i].tasks > 0) streak++;
       else break;
     }
     stats.currentStreak = streak.toString();
 
-    const last7Days = productivityData.slice(-7);
+    const last7Days = productivity.slice(-7);
     const totalTasks = last7Days.reduce((acc, cur) => acc + cur.tasks, 0);
     stats.clearingSpeed = (totalTasks / 7).toFixed(1);
 
-    if (categoryVolumeData.length > 0) {
-      const top = categoryVolumeData.reduce((acc, cur) => acc.pending + acc.overdue > cur.pending + cur.overdue  ? acc : cur);
+    if (categoryVolume.length > 0) {
+      const top = categoryVolume.reduce((acc, cur) => acc.pending + acc.overdue > cur.pending + cur.overdue  ? acc : cur);
       stats.weeklyFocus = top.category.replace(/[_-]/g, " ");
       stats.weeklyFocus = stats.weeklyFocus[0].toUpperCase() + stats.weeklyFocus.slice(1);
     }

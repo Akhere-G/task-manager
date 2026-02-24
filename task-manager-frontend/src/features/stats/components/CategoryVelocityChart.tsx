@@ -1,9 +1,10 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ErrorState, LoadingState } from "../../../components/ui";
-import useGetCategoryVelocity from "../hooks/useGetCategoryVelocity.ts";
+import useGetStats from "../hooks/useGetStats";
+import type { CategoryVelocityData } from "../../../services/api";
 
 export default function CategoryVelocityChart() {
-  const { data, isLoading, isError } = useGetCategoryVelocity()
+  const { data: categoryVelocity, isLoading, isError } = useGetStats<CategoryVelocityData[]>(data => data.categoryVelocity)
 
   const getBarColor = (score: number) => {
     const positiveColors = [
@@ -36,7 +37,7 @@ export default function CategoryVelocityChart() {
   if (isLoading) return <LoadingState />
   if (isError) return <ErrorState error={isError ? "Could not load data." : ""} />
 
-  const chartData = data?.map((d) => ({...d, fill: getBarColor(d.score) }))
+  const chartData = categoryVelocity?.map((d) => ({...d, fill: getBarColor(d.score) }))
 
   return (
     <ResponsiveContainer>

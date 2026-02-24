@@ -12,12 +12,13 @@ import {
 } from "recharts";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
-import useGetCategoryVolume from "../hooks/useGetCategoryVolume";
 import { statusColors } from "../constants";
+import useGetStats from "../hooks/useGetStats";
+import type { CategoryVolumeData } from "../../../services/api";
 
 export default function CategoryVolumeChart() {
   const breakpoint = useBreakpoint();
-  const { data: categoryVolumeData, isLoading, isError } = useGetCategoryVolume();
+  const { data: categoryVolume, isLoading, isError } = useGetStats<CategoryVolumeData[]>(data => data.categoryVolume);
 
   const [activeSeries, setActiveSeries] = useState({
     completed: true,
@@ -34,9 +35,9 @@ export default function CategoryVolumeChart() {
   };
 
   const getDynamicMax = () => {
-    if (!categoryVolumeData) return 0;
+    if (!categoryVolume) return 0;
     const maxValue = Math.max(
-      ...categoryVolumeData.map((category) =>
+      ...categoryVolume.map((category) =>
         {
           const completed = activeSeries.completed ? category.completed : 0
           const overdue = activeSeries.overdue ? category.overdue : 0
@@ -55,13 +56,13 @@ export default function CategoryVolumeChart() {
 
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
   if (isError) return <ErrorState error="Could not load data" />;
-  if (!categoryVolumeData || categoryVolumeData.length === 0) {
+  if (!categoryVolume || categoryVolume.length === 0) {
     return <EmptyState searchMessage="No tasks found" />;
   }
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <RadarChart data={categoryVolumeData} margin={{top:-20, right: 0, left: 0, bottom: 10}}>
+      <RadarChart data={categoryVolume} margin={{top:-20, right: 0, left: 0, bottom: 10}}>
         <PolarGrid stroke="var(--color-surface-muted)" />
         <PolarRadiusAxis 
           domain={[0, dynamicMax]} 
