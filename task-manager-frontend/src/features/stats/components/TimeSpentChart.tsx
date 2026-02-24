@@ -19,12 +19,10 @@ export default function TimeSpentChart() {
   const chartData = timeSpent?.map(data => ({...data, fill: categoryColours[data.category] || categoryColours['General'] }))
 
   if (chartData && chartData.length === 0){
-        return (
-          <div>
-            <EmptyState searchMessage="No tasks completed recently"/>
-          </div>
-        )
-    }
+    return (
+      <EmptyState searchMessage="No tasks completed yet."/>
+    )
+  }
 
   return (
       chartData && (

@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ErrorState, LoadingState } from "../../../components/ui";
+import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import useGetStats from "../hooks/useGetStats";
 import type { OverdueDistributionData } from "../../../services/api";
@@ -25,6 +25,12 @@ export default function OverdueDistributionChart() {
   if (isError) return <ErrorState error={isError ? "Could not load data." : ""} />
 
   const chartData = overdueDistribution?.map((d, i) => ({...d, fill: colors[i], daysOverdue: formatDaysOverdue(d.daysOverdue)}))
+
+  if (chartData && chartData.length === 0){
+      return (
+        <EmptyState searchMessage="No overdue tasks. Hooraay!"/>
+      )
+  }
 
   return (
     <ResponsiveContainer>

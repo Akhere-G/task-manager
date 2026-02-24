@@ -18,7 +18,7 @@ export default function BacklogHealthChart() {
   if (isError) return <ErrorState error={isError ? "Could not load data" : ""} />;
   if (backlogHealth && backlogHealth.length === 0){
     return (
-        <EmptyState searchMessage="No tasks"/>
+        <EmptyState searchMessage="No tasks yet."/>
     )
   }
 

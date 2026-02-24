@@ -1,5 +1,5 @@
 import CalendarHeatmap from "react-calendar-heatmap";
-import { LoadingState, ErrorState } from "../../../components/ui";
+import { LoadingState, ErrorState, EmptyState } from "../../../components/ui";
 import { Tooltip } from "react-tooltip";
 import "react-calendar-heatmap/dist/styles.css";
 import useGetStats from "../hooks/useGetStats";
@@ -22,6 +22,14 @@ export default function ActivityHeatmap(){
   if (isError) return (
     <ErrorState error={isError ? "Could not load data" : ""} />
   )
+
+  const hasData = productivity && productivity.some(d => d.tasks > 0)
+
+  if (productivity && !hasData){
+        return (
+          <EmptyState searchMessage="No tasks completed this year."/>
+        )
+    }
 
   const today = new Date();
   const lastYear = new Date();

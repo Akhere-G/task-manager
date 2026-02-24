@@ -57,7 +57,7 @@ export default function CategoryVolumeChart() {
   if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
   if (isError) return <ErrorState error="Could not load data" />;
   if (!categoryVolume || categoryVolume.length === 0) {
-    return <EmptyState searchMessage="No tasks found" />;
+    return <EmptyState searchMessage="No tasks found." />;
   }
 
   return (

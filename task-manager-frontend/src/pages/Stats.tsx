@@ -64,7 +64,7 @@ export default function Stats() {
       {/* Row 3: Status by Category (Small) & Time Spent (Large > 50%) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard 
-          title="Distribution Overview"
+          title="Category Overview"
           subtitle="Task status by category."
           width="lg:col-span-5" // 41%
           height="h-90 md:h-125"

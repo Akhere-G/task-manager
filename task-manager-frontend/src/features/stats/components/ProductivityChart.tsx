@@ -22,9 +22,7 @@ export default function ProductivityChart() {
   );
   if (productivity && !hasData){
       return (
-        <div>
-          <EmptyState searchMessage="No tasks completed recently"/>
-        </div>
+        <EmptyState searchMessage="No tasks recently completed."/>
       )
   }
 

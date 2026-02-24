@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ErrorState, LoadingState } from "../../../components/ui";
+import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import useGetStats from "../hooks/useGetStats";
 import type { CategoryVelocityData } from "../../../services/api";
 
@@ -39,6 +39,12 @@ export default function CategoryVelocityChart() {
 
   const chartData = categoryVelocity?.map((d) => ({...d, fill: getBarColor(d.score) }))
 
+  if (chartData && chartData.length === 0){
+    return (
+      <EmptyState searchMessage="No tasks pending or overdue."/>
+    )
+  }
+
   return (
     <ResponsiveContainer>
       <BarChart
@@ -74,6 +80,7 @@ export default function CategoryVelocityChart() {
               Math.abs(Math.round(value as number)), 
               value as number >= 0  ? "Avg days ahead of due date" : "Avg days behind due date"]
           }}
+          labelFormatter={(str) => (str[0].toUpperCase() + str.slice(1)).replace("-", " ")}
           itemStyle={{
             color: 'var(--color-text-main)', 
           }}
