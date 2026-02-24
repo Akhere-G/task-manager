@@ -9,7 +9,7 @@ export default function OverdueDistributionChart() {
 
   function formatDaysOverdue(daysOverdue: string){
     if (["xs", "sm", "md"].includes(breakpoint)) {
-      return daysOverdue.replace("Days", "D").replace("Week", "W").replace("Month", "M")
+      return daysOverdue.replace(" Days", "D").replace(" Week", "W").replace(" Month", "M")
     }
     return daysOverdue
   }

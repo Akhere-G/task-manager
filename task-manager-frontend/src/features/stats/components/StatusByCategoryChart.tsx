@@ -44,8 +44,8 @@ export default function CategoryVolumeChart() {
           const total = activeSeries.total ? category.total : 0
           return Math.max(completed, overdue, pending, total)
         }
-    )
       )
+    )
     
     return Math.ceil(maxValue)
   };
@@ -61,7 +61,7 @@ export default function CategoryVolumeChart() {
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <RadarChart data={categoryVolumeData} margin={{top:0, right: 40, left: 40, bottom: 0}}>
+      <RadarChart data={categoryVolumeData} margin={{top:-20, right: 0, left: 0, bottom: 10}}>
         <PolarGrid stroke="var(--color-surface-muted)" />
         <PolarRadiusAxis 
           domain={[0, dynamicMax]} 
@@ -143,7 +143,7 @@ export default function CategoryVolumeChart() {
         
         <Legend 
           onClick={handleLegendClick}
-          wrapperStyle={{ cursor: 'pointer', paddingTop: '20px' }}
+          wrapperStyle={{ cursor: 'pointer', paddingTop: '40px' }}
           formatter={(value: string, { dataKey }: LegendPayload )  => (
             <span 
               className={`

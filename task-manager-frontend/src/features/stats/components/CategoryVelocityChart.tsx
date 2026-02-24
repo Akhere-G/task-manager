@@ -69,7 +69,9 @@ export default function CategoryVelocityChart() {
           }} 
           cursor={{ fill: 'transparent' }}
           formatter={(value) => {
-            return [Math.round(value as number), value as number >= 0  ? "Avg days ahead of due date" : "Avg days behind due date"]
+            return [
+              Math.abs(Math.round(value as number)), 
+              value as number >= 0  ? "Avg days ahead of due date" : "Avg days behind due date"]
           }}
           itemStyle={{
             color: 'var(--color-text-main)', 
