@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from utils.formatters import format_json_response
-from utils.validators import validate_task
-from services.task_service import get_all_tasks, create_tasks, update_task, delete_task
+from utils.validators import validate_task, validate_task_list
+from services.task_service import get_all_tasks, create_tasks, update_task, delete_task, create_tasks_from_list
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 task_bp = Blueprint("tasks", __name__)
@@ -63,6 +63,26 @@ def add_task():
     "dueDate": due_date,
     "completedAt": None
   }), 201
+
+@task_bp.route('/api/tasks/bulk', methods=['POST'])
+@jwt_required()
+def add_task_list():
+  user_id = get_jwt_identity()
+  data = request.json
+
+  if not data or not isinstance(data, list):
+    return jsonify({"error": "Invalid data format"}), 400
+
+  errors, has_errors  = validate_task_list(data)
+  print(errors, has_errors)
+  if has_errors:
+    return jsonify({"errors": errors}), 400
+  
+  try:
+    count = create_tasks_from_list(user_id, data)
+    return jsonify({"tasks_created": count}), 201
+  except Exception:
+    return jsonify({"error": "Database operation failed"}), 500
 
 @task_bp.route('/api/tasks/<int:task_id>', methods=['PATCH'])
 @jwt_required()

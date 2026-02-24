@@ -110,6 +110,47 @@ def create_tasks(user_id, title, description, category, due_date, estimated_time
         if conn and conn.is_connected():
             conn.close()  
 
+def create_tasks_from_list(user_id, tasks):
+  conn = None
+  cursor = None
+
+  try:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    sql = """
+      INSERT INTO tasks (title, description, category, due_date, estimated_time, user_id)
+      VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    
+    data = [
+      (
+        t["title"], 
+        t["description"], 
+        t["category"], 
+        t["dueDate"], 
+        t["estimatedTime"], 
+        user_id
+      ) 
+      for t in tasks
+    ]
+
+    cursor.executemany(sql, data)
+    conn.commit()
+    
+    return cursor.rowcount
+
+  except Exception as err:
+    if conn:
+      conn.rollback()
+    raise err
+  finally:
+    if cursor:
+      cursor.close()
+    if conn and conn.is_connected():
+      conn.close()
+
+
 def update_task(user_id, id, title=None, description=None, category=None, due_date=None, estimated_time=None, is_completed=None, completed_at=None, has_completed_at=False):
   conn = None
   cursor = None

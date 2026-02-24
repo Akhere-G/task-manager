@@ -86,6 +86,15 @@ def validate_task(data, is_update=False):
 
     return errors
 
+def validate_task_list(tasks):
+    all_errors = []
+    has_errors = False
+    for task in tasks:
+        errors = validate_task(task)
+        all_errors.append(errors)
+        has_errors = has_errors or errors
+
+    return all_errors, has_errors
 
 def validate_contact_request(data):
     errors = {}
