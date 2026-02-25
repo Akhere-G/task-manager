@@ -1,0 +1,100 @@
+Title,Category,Description,Due Date,Estimated Time,is_completed,completed_at
+"Restored Vintage Turntable",hobbies,"Sourced original capacitors and a new drive belt for a 1970s Marantz deck. Requires steady hand for soldering.","2025-07-10",300,1,"2025-07-12 16:30:00"
+"Night Photography Soho",hobbies,"Long exposure session focusing on light trails and neon signs near Piccadilly Circus. Used a tripod and ND filters.","2025-07-15",180,1,"2025-07-15 23:45:00"
+"Summer Music Festival",social,"Full weekend event. Coordination of camping gear, travel logistics, and managing the group itinerary for three stages.","2025-07-20",2880,1,"2025-07-21 12:00:00"
+"River Thames Kayaking",health,"Paddling session from Putney to Richmond during high tide. Focused on upper body endurance and navigating river traffic.","2025-07-28",240,1,"2025-07-28 15:00:00"
+"Learn to Make Bao Buns",hobbies,"Step-by-step process of fermenting yeast dough, preparing char siu pork filling, and mastering the pleated folding technique.","2025-08-05",240,1,"2025-08-05 20:00:00"
+"Meteor Shower Camping",self-care,"Travelled to a designated Dark Sky Discovery Site to witness the Perseids. Total digital detox for twenty-four hours.","2025-08-12",480,1,"2025-08-13 02:00:00"
+"Deep Clean Conservatory",chores,"Extensive removal of algae and moss from glass panels and gutters to prepare for the autumn rains and improve light.","2025-08-18",180,1,"2025-08-19 11:00:00"
+"Outdoor Film Screening",social,"Organised a backyard cinema night using a projector and white sheet. Screened classic 80s horror for the neighbourhood.","2025-08-25",180,1,"2025-08-25 22:30:00"
+"Foraged Blackberry Jam",hobbies,"Hand-picked wild berries from local hedgerows. Sterilised jars and achieved the perfect set point using natural pectin.","2025-09-02",150,1,"2025-09-02 18:00:00"
+"Sunset 10k Run",health,"Personal best attempt on the flat canal path. Monitored heart rate zones and focused on consistent five-minute kilometres.","2025-09-10",60,1,"2025-09-10 19:30:00"
+"Museum of Curiosities",social,"Explored the Viktor Wynd Museum of Curiosities. Researched the historical context of the oddities on display beforehand.","2025-09-18",120,1,"2025-09-18 14:00:00"
+"Autumn Equinox Yoga",self-care,"Early morning flow designed to transition energy for the colder months. Focused on grounding poses and breathwork.","2025-09-22",60,1,"2025-09-22 07:00:00"
+"Knit Chunky Beanie",hobbies,"Utilised a circular needle technique with merino wool. Finished with a handmade pom-pom and custom leather tag.","2025-10-05",240,1,"2025-10-06 21:00:00"
+"Car Winter Health Check",life-admin,"Inspected tyre tread depth, topped up screen wash with anti-freeze, and tested battery voltage before first frost.","2025-10-15",120,1,"2025-10-15 09:00:00"
+"Detailed Pumpkin Carving",social,"Used linoleum cutters to create a complex 'haunted house' scene rather than a traditional face. Lit with LED pucks.","2025-10-30",90,1,"2025-10-30 20:00:00"
+"Community Firepit Night",social,"Gathered wood and hosted a small gathering. Discussed winter travel plans while roasting artisanal marshmallows.","2025-11-05",120,1,"2025-11-05 21:00:00"
+"Learn Terraforming Mars",social,"Deep dive into the rules and mechanics of the board game. Played a full four-player session at the local gaming cafe.","2025-11-14",240,1,"2025-11-14 22:00:00"
+"Ceramics Glazing",hobbies,"Applied three layers of 'Midnight Blue' glaze to the bowls thrown in October. Managed the kiln firing schedule.","2025-11-22",120,1,"2025-11-22 13:00:00"
+"Town Lights Event",social,"Attended the annual lighting ceremony. Researched local vendors to support during the Christmas market portion.","2025-12-01",120,1,"2025-12-01 19:30:00"
+"Traditional Stollen",hobbies,"Prepared the marzipan core from scratch and soaked dried fruits in rum for forty-eight hours prior to baking.","2025-12-10",240,1,"2025-12-11 11:00:00"
+"Winter Solstice Hike",health,"A five-mile trek through the Epping Forest to catch the sunrise on the shortest day of the year. Very muddy conditions.","2025-12-21",180,1,"2025-12-21 08:30:00"
+"Digital Photo Culling",life-admin,"Reviewed 4,000 photos from 2025. Deleted duplicates, edited the best fifty, and uploaded to the long-term cloud vault.","2026-01-04",300,1,"2026-01-05 16:00:00"
+"Guest Room Overhaul",home,"Stripped old wallpaper, patched plaster, and applied two coats of 'Misty Grey' emulsion. Assembled new bedside tables.","2026-01-12",360,1,"2026-01-14 17:00:00"
+"Live Jazz at Ronnie Scotts",social,"Booked a late-night set. Researched the quartet's discography to better appreciate the improvisational sections.","2026-01-20",240,1,"2026-01-20 23:00:00"
+"Gym Bouldering Session",health,"Focused on V3-V4 graded routes. Worked on foot placement and dynamic movements for two hours.","2026-01-25",120,1,"2026-01-25 15:00:00"
+"Passport Digital App",life-admin,"Took a compliant photo and completed the online renewal form for the ten-year UK passport. Paid via credit card.","2026-01-26",45,1,"2026-01-26 10:00:00"
+"Mindfulness Kickoff",self-care,"Established a new morning routine. Fifteen minutes of focused breathing before checking any electronic devices.","2026-01-27",15,1,"2026-01-27 07:15:00"
+"Mass Email Archive",work,"Used filters to sort through 500+ unread messages. Unsubscribed from junk and filed important project threads.","2026-01-28",90,1,"2026-01-28 17:00:00"
+"Kitchen Tap Cartridge",home,"Disassembled the mixer tap to stop a persistent drip. Cleaned out limescale and installed a fresh ceramic disc.","2026-01-29",45,1,"2026-01-29 19:00:00"
+"Home Calisthenics",health,"Completed a bodyweight circuit including pull-ups, dips, and planks. Recorded reps to track strength gains over time.","2026-01-30",45,1,"2026-01-30 08:00:00"
+"Weekly Meal Prep",chores,"Cooked a large batch of vegetarian chilli and roasted root vegetables for the upcoming work week lunches.","2026-01-31",120,1,"2026-01-31 16:30:00"
+"Linen Refresh Sunday",chores,"Stripped all beds, washed at 60 degrees, and utilised the tumble dryer for a crisp finish. Replaced all towels.","2026-02-01",30,1,"2026-02-01 10:00:00"
+"Quarterly Sprint Plan",life-admin,"Mapped out the major personal and professional milestones for Feb-April. Identified potential bottlenecks.","2026-02-02",30,1,"2026-02-02 09:00:00"
+"Python Parser Cleanup",work,"Refactored the task importer script to use Type Hinting and improved error handling for empty CSV cells.","2026-02-03",120,1,"2026-02-03 14:00:00"
+"Green Tariff Switch",life-admin,"Compared energy providers on a neutral site and switched to a 100% renewable electricity plan. Verified exit fees.","2026-02-04",20,1,"2026-02-04 11:00:00"
+"CSS Container Queries",learning,"Completed an online workshop on @container rules. Built a responsive card component that adapts to its parent size.","2026-02-05",180,1,"2026-02-05 23:00:00"
+"Non-Fiction Reading",learning,"Finished thirty pages of 'Thinking, Fast and Slow'. Took notes on the concept of loss aversion in decision making.","2026-02-06",45,1,"2026-02-06 21:30:00"
+"Local Farmers Market",social,"Purchased organic sourdough, local honey, and seasonal kale. Spoke with the vendors about sustainable farming.","2026-02-07",90,1,"2026-02-07 10:30:00"
+"Grinder Calibration",chores,"Deep cleaned the burrs on the coffee grinder. Dialled in the grind size for a new light-roast Ethiopian bean.","2026-02-08",40,1,"2026-02-08 14:00:00"
+"Q1 Strategy Sync",work,"Presented the roadmap for the new API documentation. Gathered feedback from the design team on layout.","2026-02-09",60,1,"2026-02-09 11:00:00"
+"Fruit Tree Dormancy",hobbies,"Pruned the spur systems on the apple trees. Applied a winter wash to protect against overwintering pests.","2026-02-10",120,1,"2026-02-10 15:00:00"
+"Alphabetical Spices",home,"Transferred bulk spices into uniform glass jars. Printed waterproof labels and organised by frequency of use.","2026-02-11",60,1,"2026-02-11 19:00:00"
+"RDS Database Snapshot",work,"Performed a manual backup of the production database before the major migration. Verified the integrity of the dump.","2026-02-12",30,1,"2026-02-12 10:00:00"
+"React Hooks Draft",learning,"Wrote 1,500 words on the pitfalls of useEffect. Included code examples for custom hooks and clean-up functions.","2026-02-13",120,1,"2026-02-13 16:00:00"
+"Artisanal Pasta Night",social,"Hand-rolled tagliatelle for a Valentine's dinner. Experimented with a spicy nduja and tomato cream sauce.","2026-02-14",180,1,"2026-02-14 20:00:00"
+"Houseplant Foliage Care",home,"Wiped down the large leaves of the Monstera to improve photosynthesis. Checked soil pH levels and watered.","2026-02-15",45,1,"2026-02-15 11:00:00"
+"Safari Layout Shift",work,"Fixed a bug where the mobile navigation jumped five pixels on scroll. Adjusted the CSS transform-origin property.","2026-02-16",60,1,"2026-02-16 09:30:00"
+"Hip Mobility Flow",health,"Focused on psoas and glute stretches to counteract a day spent sitting. Used a foam roller for myofascial release.","2026-02-17",20,1,"2026-02-17 21:00:00"
+"Technical README Audit",work,"Rewrote the 'Getting Started' section to include Docker Compose instructions. Validated links to the staging environment.","2026-02-18",45,1,"2026-02-18 14:00:00"
+"Butchers Block Oil",chores,"Sanded down the wooden kitchen island and applied food-grade mineral oil to prevent cracking and staining.","2026-02-19",20,1,"2026-02-19 18:30:00"
+"Laptop Spec Comparison",life-admin,"Analysed benchmarks for the M3 vs M4 chips. Weighed up 32GB RAM vs 16GB for heavy development workloads.","2026-02-20",60,1,"2026-02-20 20:00:00"
+"Gallery Opening Night",social,"Attended the preview of a local abstract artist. Networked with other attendees and discussed the use of colour.","2026-02-21",120,1,"2026-02-21 15:00:00"
+"Lamb Slow Roast",chores,"Seven-hour slow roast with rosemary and garlic. Prepared homemade mint sauce and roasted honey-glazed parsnips.","2026-02-22",240,1,"2026-02-22 17:00:00"
+"HEPA Filter Vacuum",chores,"Deep cleaned all carpets and hard floors. Emptied the bin and cleaned the filters to maintain maximum suction.","2026-02-23",60,1,"2026-02-23 09:00:00"
+"Pentatonic Minor Speed",hobbies,"Metronome practice on the guitar. Increased speed from 80bpm to 100bpm while maintaining clean alternate picking.","2026-02-24",30,1,"2026-02-24 19:30:00"
+"API Bulk Logic Test",work,"Verified that the backend correctly handles the new is_completed logic. Ran three successful test imports.","2026-02-25",30,1,"2026-02-25 08:45:00"
+"Bespoke Jewellery Order",social,"Finalised the design for a custom silver necklace. Communicated with the jeweller regarding the engraving details.","2026-02-25",45,1,"2026-02-25 11:30:00"
+"Q1 Expense Filing",finance,"Digitised all paper receipts from the quarter and assigned them to project categories in the accounting software.","2026-02-25",20,1,"2026-02-25 14:00:00"
+"Plan Iceland Trip",social,"Researching the best spots for Northern Lights in November. Booking a 4x4 vehicle and checking glacial hiking tours.","2026-03-05",180,0,
+"Sow Tomato Seeds",hobbies,"Starting the heritage varieties (Cherokee Purple and San Marzano) in heated propagators for the summer season.","2026-03-10",60,0,
+"Dentist Checkup",health,"Routine scale and polish appointment. Checking on the wisdom tooth progress and updating the dental record.","2026-03-12",45,0,
+"Re-stain Garden Fence",home,"Applying a weatherproof cedar finish to the rear fence panels. Requires two days of dry weather to cure properly.","2026-03-20",480,0,
+"Update Life Insurance",finance,"Reviewing the current policy to ensure it covers the new mortgage value. Comparing three different providers.","2026-03-25",90,0,
+"React Conf Watching",learning,"Catching up on the keynote and the 'State of the Union' talks from the latest React conference online.","2026-04-02",120,0,
+"Spring Lawn Feed",chores,"Scarifying the grass to remove thatch and applying a high-nitrogen fertiliser to encourage early spring growth.","2026-04-10",120,0,
+"Easter Brunch Hosting",social,"Planning a menu for six people including eggs benedict and homemade pastries. Shopping for seasonal decor.","2026-04-12",240,0,
+"Service Road Bike",health,"Replacing the chain and cassette. Adjusting the indexing on the derailleurs for the start of the cycling season.","2026-04-18",150,0,
+"Migrate Personal Site",work,"Moving the portfolio from a legacy VPS to a modern serverless platform using Vercel or Netlify. Updating DNS.","2026-04-25",300,0,
+"Prune Spring Shrubs",hobbies,"Trimming back the Forsythia once the flowers have faded to encourage new wood for next year's blooming.","2026-05-05",60,0,
+"Summer Holiday Booking",social,"Finalising the flights and accommodation for the June trip to the Greek Islands. Checking ferry schedules.","2026-05-12",120,0,
+"Deep Clean Windows",chores,"Using a telescopic pole and pure water system to clean all external windows and frames on the upper floor.","2026-05-20",180,0,
+"Learn Rust Basics",learning,"Starting the 'Rust Book'. Focusing on the ownership and borrowing concepts which differ from JavaScript.","2026-06-01",600,0,
+"Father's Day Lunch",social,"Booking a table at the local gastropub and sourcing a high-quality bottle of single malt whisky as a gift.","2026-06-21",120,0,
+"Summer Solstice BBQ",social,"Hosting a garden party for the longest day. Prepping skewers, burgers, and a variety of homemade salads.","2026-06-21",360,0,
+"Blood Donation Appt",health,"Quarterly donation at the local community centre. Ensuring iron levels are high and staying hydrated beforehand.","2026-07-05",60,0,
+"Paint Shed Exterior",home,"Sand down the flaking bits of the garden shed and apply a fresh coat of forest green wood preserver.","2026-07-15",240,0,
+"Renew Home Insurance",finance,"Standard annual review of the buildings and contents cover. Checking for any new valuable items to list.","2026-07-28",45,0,
+"August Camping Trip",social,"Heading to the Lake District for a four-day wild camping expedition. Testing the new lightweight stove.","2026-08-10",5760,0,
+"Preserve Summer Fruit",hobbies,"Making jam and chutney from the surplus of the summer harvest. Sterilising jars and labelling correctly.","2026-08-20",180,0,
+"Tech Conference London",work,"Attending a two-day event in Shoreditch. Networking with other developers and attending the AI workshops.","2026-09-10",960,0,
+"Autumn Wardrobe Prep",chores,"Moving summer clothes to the loft and bringing down the wool coats and boots. Checking for moth damage.","2026-09-25",120,0,
+"Boiler Annual Service",home,"Qualified engineer visit to check the heat exchanger and carbon monoxide levels before the heating goes on.","2026-10-05",60,0,
+"Halloween Movie Night",social,"Curating a list of five classic horror films. Buying pumpkins for carving and themed snacks for the group.","2026-10-31",180,0,
+"Bonfire Night Setup",social,"Buying fireworks from a licensed retailer and building the wood stack for the communal garden fire.","2026-11-05",120,0,
+"Christmas Gift List",social,"Starting a spreadsheet for family and friends. Budgeting for the festive season to avoid January debt.","2026-11-15",60,0,
+"Winterise the Garden",hobbies,"Wrapping tender plants in fleece and moving the succulents indoors to prevent frost damage to the roots.","2026-11-25",120,0,
+"Write Year in Review",self-care,"Reflecting on the 2026 goals. Writing a blog post about the biggest technical challenges overcome this year.","2026-12-10",180,0,
+"Renew Car Insurance",finance,"Annual renewal. Checking for no-claims discount and comparing at least three different price points.","2026-12-15",45,0,
+"Bake Mince Pies",hobbies,"Making the suet-free mincemeat three weeks in advance to allow the flavours to develop before baking.","2026-12-20",150,0,
+"Setup 2027 Planner",life-admin,"Transferring key dates and birthdays to the new physical and digital calendars for the upcoming year.","2026-12-30",60,0,
+"New Year's Eve Dinner",social,"Booking a special restaurant for a quiet meal with friends. Reviewing the set menu and dietary options.","2026-12-31",180,0,
+"Check All Smoke Alarms",life-admin,"Testing the alarms on every floor and vacuuming out any dust from the sensors to prevent false triggers.","2027-01-02",20,0,
+"Dry January Kickoff",self-care,"Committing to thirty-one days without alcohol. Stocking up on kombucha and interesting non-alcoholic spirits.","2027-01-01",1440,0,
+"Personal Tax Return",finance,"Gathering all P60 and interest statements for the 2025/2026 tax year to submit before the Jan deadline.","2027-01-15",240,0,
+"Clean Extractor Fan",chores,"Removing the filters from the kitchen hood and soaking them in degreaser. Wiping down the internal motor housing.","2027-01-25",45,0,
+"Audit Subscriptions",finance,"Reviewing all monthly outgoings (Netflix, gym, cloud storage). Cancelling anything that hasn't been used.","2027-02-05",60,0,
+"Valentine's Day Trip",social,"Planning a weekend away to a coastal cottage. Booking a table at a local seafood restaurant.","2027-02-14",2880,0,
+"Clean Out Attic",home,"Going through old boxes and deciding what to donate to charity or sell on eBay. Maximising storage space.","2027-02-22",480,0,
+"Review Portfolio Site",work,"Checking for broken links and updating the projects section with the latest work from the end of 2026.","2027-02-28",90,0,

@@ -46,6 +46,10 @@ export default function Pomodoro() {
     estimatedTime,
   } = task;
 
+  if (isCompleted) {
+    navigate("/");
+    return <></>;
+  }
   const isOverdue = !isCompleted && new Date(dueDate) < new Date();
 
   const formatStr = (str: string) =>
@@ -140,6 +144,12 @@ export default function Pomodoro() {
                 />
               ))}
             </div>
+            <button
+              onClick={handleSessionComplete}
+              className="text-xs font-bold text-accent mt-4 hover:underline"
+            >
+              I&apos;ve finished early!
+            </button>
           </div>
         </div>
       </div>
