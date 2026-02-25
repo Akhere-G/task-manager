@@ -5,7 +5,7 @@ import {
   Contact,
   Home,
   Stats,
-  TaskDetails,
+  Pomodoro,
   CalendarView,
   Register,
   Login,
@@ -84,10 +84,10 @@ function App() {
             }
           />
           <Route
-            path="/task/:id"
+            path="/pomodoro/:taskId"
             element={
               <ProtectedRoute redirect={!isAuthenticated}>
-                <TaskDetails />
+                <Pomodoro />
               </ProtectedRoute>
             }
           />

@@ -8,8 +8,10 @@ import {
   Pencil,
   ChevronDown,
   ChevronUp,
+  Play,
 } from "lucide-react";
 import { useTaskContext } from "../../../context/TaskContext";
+import { useNavigate } from "react-router-dom";
 
 interface TaskCardProps extends Task {
   setIsCompleted: (id: number, isComplete: boolean) => void;
@@ -33,6 +35,8 @@ function TaskCard({
     estimatedTime,
   } = task;
   const [showMore, setShowMore] = useState(false);
+  const navigate = useNavigate();
+
   const isOverdue = !isCompleted && new Date(dueDate) < new Date();
 
   const desc = description || "";
@@ -117,6 +121,7 @@ function TaskCard({
               className="w-5 h-5 text-failure/70 group-hover:text-failure group-hover:scale-110 transition-all"
             />
           </button>
+
           <button
             onClick={() => onEdit(task)}
             title="Edit Task"
@@ -128,6 +133,19 @@ function TaskCard({
               className="w-5 h-5 text-info/70 group-hover:text-info group-hover:scale-110 transition-all"
             />
           </button>
+          {!task.isCompleted && (
+            <button
+              onClick={() => navigate(`/pomodoro/${task.id}`)}
+              title="Start Task"
+              aria-label={`Start task: ${title}`}
+              className="p-1.5 rounded-md hover:bg-success/10 transition-colors group cursor-pointer"
+            >
+              <Play
+                aria-hidden="true"
+                className="w-5 h-5 text-success/70 group-hover:text-success group-hover:scale-110 transition-all"
+              />
+            </button>
+          )}
           <button
             onClick={() => setIsCompleted(id, !isCompleted)}
             title={isCompleted ? "Mark as pending" : "Mark as complete"}
