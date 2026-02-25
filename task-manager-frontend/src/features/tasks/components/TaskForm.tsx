@@ -165,7 +165,7 @@ export default function TaskForm({
       <FormInput
         label="Description"
         name="description"
-        value={formState.description}
+        value={formState.description ?? ""}
         handleChange={handleChange}
         errorMessage={errorMessages.description}
         touched={touched.description}

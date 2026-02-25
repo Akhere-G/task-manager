@@ -2,7 +2,7 @@ import type { Task } from "../features/tasks/types";
 
 export interface TaskData {
   title: string;
-  description: string;
+  description: string | null;
   dueDate: string;
   estimatedTime: number | string;
   category: string;
@@ -54,13 +54,6 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
       errors.title = "Title is mandatory.";
     } else if (title.length > 255) {
       errors.title = "Title must be under 255 characters.";
-    }
-  }
-
-  if ("description" in data || !isUpdate) {
-    const desc = (data.description || "").toString().trim();
-    if (!desc) {
-      errors.description = "Description is mandatory.";
     }
   }
 

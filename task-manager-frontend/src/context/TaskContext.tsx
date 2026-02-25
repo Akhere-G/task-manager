@@ -77,7 +77,7 @@ export default function TaskContextProvider({
     if (!selectedEditTask) return;
     const rawData = {
       title: newTask.title.trim(),
-      description: newTask.description.trim(),
+      description: newTask.description?.trim(),
       category: newTask.category,
       dueDate: newTask.dueDate,
       estimatedTime: newTask.estimatedTime,

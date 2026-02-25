@@ -56,7 +56,9 @@ def add_task():
         return jsonify({"errors": errors}), 400
 
     title = str(data.get("title", "")).strip()
-    description = str(data.get("description", "")).strip()
+    description = (
+        str(data.get("description")).strip() if "description" in data else None
+    )
     category = str(data.get("category", "General")).strip()
     due_date = data.get("dueDate")
     estimated_time = data.get("estimatedTime")
@@ -122,7 +124,9 @@ def edit_task(task_id):
         return jsonify({"errors": errors}), 400
 
     title = str(data.get("title", "")).strip()
-    description = str(data.get("description", "")).strip()
+    description = (
+        str(data.get("description")).strip() if "description" in data else None
+    )
     category = str(data.get("category", "")).strip()
     due_date = data.get("dueDate")
     estimated_time = data.get("estimatedTime")

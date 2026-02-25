@@ -35,12 +35,11 @@ function TaskCard({
   const [showMore, setShowMore] = useState(false);
   const isOverdue = !isCompleted && new Date(dueDate) < new Date();
 
+  const desc = description || "";
   const maxDescriptionLength = 100;
-  const isLongDesc = description.length > maxDescriptionLength;
+  const isLongDesc = desc.length > maxDescriptionLength;
   const formattedDescription =
-    isLongDesc && !showMore
-      ? description.substring(0, 100) + "..."
-      : description;
+    isLongDesc && !showMore ? desc.substring(0, 100) + "..." : desc;
   const ShowMoreIcon = showMore ? ChevronUp : ChevronDown;
 
   return (

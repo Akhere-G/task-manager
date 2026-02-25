@@ -6,6 +6,10 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import useInvalidateTaskKeys from "../../../hooks/useInvalidateTaskKeys";
 
+function getDescription(task: Record<string, string>) {
+  const rawDescription = task.Description || task.description;
+  return rawDescription ? rawDescription.trim() : null;
+}
 export default function BulkAddForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -65,7 +69,7 @@ export default function BulkAddForm() {
           category: (task.Category || task.category || "general")
             .trim()
             .toLowerCase(),
-          description: (task.Description || task.description || "").trim(),
+          description: getDescription(task),
           dueDate:
             task["Due Date"] ||
             task["Due date"] ||

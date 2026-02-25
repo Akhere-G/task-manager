@@ -32,11 +32,6 @@ def validate_task(data, is_update=False):
         elif len(title) > 255:
             errors["title"] = "Title must be under 255 characters."
 
-    if "description" in data or not is_update:
-        desc = str(data.get("description", "")).strip()
-        if not desc:
-            errors["description"] = "Description is mandatory."
-
     if "dueDate" in data or not is_update:
         due_date = data.get("dueDate")
         if not due_date:
