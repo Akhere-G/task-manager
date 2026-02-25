@@ -77,11 +77,10 @@ export default function Pomodoro() {
         <div className="card overflow-hidden flex-1/2 p-0 flex flex-col gap-2">
           <header className="p-4 bg-brand text-white">
             <h2 className="text-2xl">{title}</h2>
-            <p className="text-text-sub">{formatStr(category)}</p>
           </header>
           <div className="px-4 pb-4">
             <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
-              {category}
+              {formatStr(category)}
             </span>
             <p>{description}</p>
           </div>

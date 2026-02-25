@@ -76,7 +76,7 @@ function TaskCard({
       <div className="p-4 grow space-y-2 flex flex-col">
         <div className="flex justify-between items-start">
           <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
-            {category}
+            {category.replace("-", " ")}
           </span>
           {isOverdue && (
             <AlertCircle className="w-4 h-4 text-failure animate-pulse" />
