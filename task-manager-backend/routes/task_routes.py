@@ -7,6 +7,7 @@ from services.task_service import (
     update_task,
     delete_task,
     create_tasks_from_list,
+    get_task,
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import datetime
@@ -43,6 +44,22 @@ def list_tasks():
         page,
     )
     return jsonify(format_json_response(raw_tasks))
+
+
+@task_bp.route("/api/tasks/<int:task_id>", methods=["GET"])
+@jwt_required()
+def fetch_task(task_id):
+    user_id = get_jwt_identity()
+
+    try:
+        task_id = int(task_id)
+        task = get_task(user_id, task_id)
+
+        if task:
+            return jsonify(format_json_response(task)), 200
+        return jsonify(({"error": "No task with that id"})), 404
+    except (ValueError, TypeError):
+        return jsonify({"error": "taskId must be a number "}), 400
 
 
 @task_bp.route("/api/tasks", methods=["POST"])

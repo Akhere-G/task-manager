@@ -1,5 +1,4 @@
 from db import get_db_connection
-from utils.formatters import format_json_response
 from datetime import date
 
 
@@ -109,6 +108,34 @@ def get_all_tasks(
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+
+def get_task(user_id, task_id):
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+              SELECT * FROM tasks
+              WHERE user_id = %s AND id = %s;
+                    """,
+            (user_id, task_id),
+        )
+        task = cursor.fetchone()
+
+        return task
+
+    except Exception as err:
+        raise err
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
+        if cursor:
+            cursor.close()
 
 
 def create_tasks(user_id, title, description, category, due_date, estimated_time):
