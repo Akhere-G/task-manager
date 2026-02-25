@@ -3,6 +3,7 @@ from utils.formatters import format_json_response
 from utils.validators import validate_task, validate_task_list
 from services.task_service import get_all_tasks, create_tasks, update_task, delete_task, create_tasks_from_list
 from flask_jwt_extended import jwt_required, get_jwt_identity
+import datetime
 
 task_bp = Blueprint("tasks", __name__)
 
@@ -73,8 +74,19 @@ def add_task_list():
   if not data or not isinstance(data, list):
     return jsonify({"error": "Invalid data format"}), 400
 
-  errors, has_errors  = validate_task_list(data)
-  print(errors, has_errors)
+  for task in data:
+    is_comp = task.get("isCompleted", False)
+    comp_at = task.get("completedAt")
+
+    if is_comp and not comp_at:
+      task["completedAt"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    elif not is_comp:
+      task["completedAt"] = None
+    
+    task["isCompleted"] = is_comp
+
+  errors, has_errors = validate_task_list(data)
+
   if has_errors:
     return jsonify({"errors": errors}), 400
   

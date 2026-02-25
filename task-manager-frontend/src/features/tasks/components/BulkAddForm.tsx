@@ -3,10 +3,17 @@ import { useRef, useState, type ChangeEvent } from "react";
 import { validateTaskList } from "../../../utils/validators";
 import { taskService } from "../../../services/api";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import useInvalidateTaskKeys from "../../../hooks/useInvalidateTaskKeys";
 
 export default function BulkAddForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  const navigate = useNavigate();
+
+  const invalidateTaskKeys = useInvalidateTaskKeys()
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const triggerUpload = () => fileInputRef.current?.click();
@@ -39,23 +46,27 @@ export default function BulkAddForm() {
       complete: async (result) => {
         const rawTasks = result.data as Record<string, string>[];
 
+        const trueValues = ["1", "true", "True", "TRUE", 1, true];
+        
         const newTasks = rawTasks.map(task => ({
           title: (task.Title || task.title || "").trim(),
           category: (task.Category || task.category || "general").trim().toLowerCase(),
           description: (task.Description || task.description || "").trim(),
-          dueDate: task["Due Date"] || task["Due date"] || task.dueDate || task.due_date || "",
-          estimatedTime: Number(task["Estimated Time"] || task["Estimated time"] || task.estimatedTime || task.estimated_time || 0),
+          dueDate: task["Due Date"] || task["Due date"] || task["due date"] || task.dueDate || task.due_date || "",
+          estimatedTime: Number(task["Estimated Time"] || task["Estimated time"] || task["estimated time"] || task.estimatedTime || task.estimated_time),
+          isCompleted: [task["Is Completed"], task["Is completed"], task["is completed"], task.isCompleted, task.is_completed].some(t => trueValues.includes(t)),
+          completedAt: task["Completed At"] || task["Completed at"] || task["completed at"] || task.completedAt || task.completed_at || null,
         }));
 
         const { hasErrors, allErrors } = validateTaskList(newTasks);
 
         if (hasErrors) {
           const taskErrorMessages = allErrors
-            .map((err) => Object.values(err).join(", "))
-            .filter(Boolean)
-            .map((message, i) => `Row ${i + 2}: ${message}`)
+            .map((err, i) => `Row ${i + 2}: ${Object.values(err).join(", ")}`)
+            .filter(m => !m.endsWith(": "))
             .join("\n");
 
+          console.log(taskErrorMessages)
           setErrorMessage(taskErrorMessages);
           setIsUploading(false);
           return;
@@ -63,6 +74,8 @@ export default function BulkAddForm() {
 
         try {
           await taskService.createAll(newTasks);
+          invalidateTaskKeys()
+          navigate("/")
         } catch (err: unknown) {
           if (axios.isAxiosError(err)) {
             setErrorMessage(err.response?.data?.message || "Server rejected the bulk upload.");

@@ -119,8 +119,11 @@ def create_tasks_from_list(user_id, tasks):
     cursor = conn.cursor()
 
     sql = """
-      INSERT INTO tasks (title, description, category, due_date, estimated_time, user_id)
-      VALUES (%s, %s, %s, %s, %s, %s)
+      INSERT INTO tasks (
+        title, description, category, due_date, 
+        estimated_time, user_id, is_completed, completed_at
+      )
+      VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
     
     data = [
@@ -130,7 +133,9 @@ def create_tasks_from_list(user_id, tasks):
         t["category"], 
         t["dueDate"], 
         t["estimatedTime"], 
-        user_id
+        user_id,
+        t["isCompleted"],
+        t["completedAt"]
       ) 
       for t in tasks
     ]
