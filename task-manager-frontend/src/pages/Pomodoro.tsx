@@ -7,15 +7,23 @@ import { useState } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useTaskContext } from "../context/TaskContext";
 
+const POMODORO_DURATION = 25 * 60;
+
 export default function Pomodoro() {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [sessionsCompleted, setSessionsCompleted] = useState(0);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
   const navigate = useNavigate();
 
   const { taskId } = useParams();
 
-  const { data: task, isLoading, isError, error } = useGetTask(taskId ?? "");
+  const {
+    data: task,
+    isLoading,
+    isError,
+    error,
+  } = useGetTask(Number(taskId ?? -1));
   const { setIsCompleted } = useTaskContext();
 
   const status = isAxiosError(error) ? error.status : 0;
@@ -42,6 +50,14 @@ export default function Pomodoro() {
 
   const formatStr = (str: string) =>
     (str[0].toUpperCase() + str.slice(1)).replace("-", " ");
+
+  const totalExpectedSessions = Math.ceil(estimatedTime / 25);
+
+  const handleSessionComplete = () => {
+    setIsPlaying(false);
+    setSessionsCompleted((prev) => prev + 1);
+    setShowCompleteModal(true);
+  };
 
   const TimerButton = isPlaying ? Pause : Play;
 
@@ -78,15 +94,14 @@ export default function Pomodoro() {
         </div>
         <div className="card flex-1/2 flex flex-col gap-4">
           <h2 className="text-2xl">Start Pomodoro Mode</h2>
-          <div className="flex items-center justify-center h-max">
+          <div className="flex items-center flex-col justify-center h-max">
             <CountdownCircleTimer
-              colors={["var(--color-brand)"]}
+              key={sessionsCompleted}
+              duration={POMODORO_DURATION}
               isPlaying={isPlaying}
-              duration={estimatedTime * 60}
-              onComplete={() => {
-                setShowCompleteModal(true);
-                setIsPlaying(false);
-              }}
+              colors={["#615fff", "#615fff"] as [`#${string}`, `#${string}`]}
+              onComplete={handleSessionComplete}
+              colorsTime={[0, 0]}
             >
               {({ remainingTime }) => {
                 const minutes = Math.floor(remainingTime / 60)
@@ -101,9 +116,9 @@ export default function Pomodoro() {
                     <button
                       className="p-1.5 group cursor-pointer"
                       aria-label={isPlaying ? "Pause Timer" : "Play Timer"}
+                      onClick={toggleIsPlaying}
                     >
                       <TimerButton
-                        onClick={toggleIsPlaying}
                         className="text-brand group-hover:brightness-150 transition-all"
                         width={40}
                         height={40}
@@ -117,22 +132,39 @@ export default function Pomodoro() {
                 );
               }}
             </CountdownCircleTimer>
-            {showCompleteModal && (
-              <Popup
-                close={() => setShowCompleteModal(false)}
-                title={`Complete task: ${title}?`}
-                handleConfirm={() => {
-                  setIsCompleted(id, true);
-                  navigate("/");
-                }}
-                actionButtonVariant="primary"
-              >
-                <div>Time&apos;s up! Complete task {title}? </div>
-              </Popup>
-            )}
+            <div className="flex gap-2 justify-center mt-4 flex-wrap">
+              {Array.from({ length: totalExpectedSessions }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-3 h-3 rounded-full ${i < sessionsCompleted ? "bg-brand" : "bg-slate-200 dark:bg-slate-700"}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
+      {showCompleteModal && (
+        <Popup
+          close={() => setShowCompleteModal(false)}
+          title={`Complete task: ${title}?`}
+          handleConfirm={() => {
+            setIsCompleted(id, true);
+            navigate("/");
+          }}
+          actionButtonVariant="primary"
+        >
+          <div className="flex flex-col gap-2">
+            <p>
+              Well done! You&apos;ve completed{" "}
+              <strong>session {sessionsCompleted}</strong>.
+            </p>
+            <p className="text-sm text-text-sub">
+              Progress: {sessionsCompleted} / {totalExpectedSessions} sessions
+            </p>
+            <p className="mt-4">Mark the entire task as complete now?</p>
+          </div>
+        </Popup>
+      )}
     </div>
   );
 }

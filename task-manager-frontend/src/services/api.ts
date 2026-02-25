@@ -27,7 +27,7 @@ export const taskService = {
     const response = await api.get(url);
     return response.data;
   },
-  getById: async (id: string): Promise<Task> => {
+  getById: async (id: number): Promise<Task> => {
     const response = await api.get(`tasks/${id}`);
     return response.data;
   },

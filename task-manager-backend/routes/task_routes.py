@@ -52,14 +52,15 @@ def fetch_task(task_id):
     user_id = get_jwt_identity()
 
     try:
-        task_id = int(task_id)
         task = get_task(user_id, task_id)
 
         if task:
             return jsonify(format_json_response(task)), 200
-        return jsonify(({"error": "No task with that id"})), 404
-    except (ValueError, TypeError):
-        return jsonify({"error": "taskId must be a number "}), 400
+
+        return jsonify({"error": "No task with that id"}), 404
+
+    except Exception:
+        return jsonify({"error": "An internal server error occurred"}), 500
 
 
 @task_bp.route("/api/tasks", methods=["POST"])

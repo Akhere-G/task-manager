@@ -118,13 +118,8 @@ def get_task(user_id, task_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute(
-            """
-              SELECT * FROM tasks
-              WHERE user_id = %s AND id = %s;
-                    """,
-            (user_id, task_id),
-        )
+        sql = "SELECT * FROM tasks WHERE user_id = %s AND id = %s"
+        cursor.execute(sql, (user_id, task_id))
         task = cursor.fetchone()
 
         return task
@@ -132,10 +127,10 @@ def get_task(user_id, task_id):
     except Exception as err:
         raise err
     finally:
-        if conn and conn.is_connected():
-            conn.close()
         if cursor:
             cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 
 def create_tasks(user_id, title, description, category, due_date, estimated_time):
