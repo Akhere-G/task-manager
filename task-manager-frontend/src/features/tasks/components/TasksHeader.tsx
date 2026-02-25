@@ -1,109 +1,122 @@
 import { FormInput } from "../../../components/ui";
-import { categoryOptions, completedTasksOptions, dueDateOptions, isAscOptions, sortByOptions, taskDurationOptions } from "../constants";
+import {
+  categoryOptions,
+  completedTasksOptions,
+  dueDateOptions,
+  isAscOptions,
+  sortByOptions,
+  taskDurationOptions,
+} from "../constants";
 
 interface TaskFilters {
-    search: string;
-    category: string;
-    duration: string;
-    isCompleted: string;
-    dueDate: string;
-    sortBy: string;
-    order: string;
+  search: string;
+  category: string;
+  duration: string;
+  isCompleted: string;
+  dueDate: string;
+  sortBy: string;
+  order: string;
 }
 interface TasksHeaderProps {
   filters: TaskFilters;
-  updateFilters: (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement |  HTMLTextAreaElement>) => void;
-  resetFilters: () => void; 
+  updateFilters: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => void;
+  resetFilters: () => void;
   totalTasks: number;
   sortable?: boolean;
-  showDueDateFilter?: boolean
+  showDueDateFilter?: boolean;
 }
 
-export default function TasksHeader({ 
-  filters, 
-  updateFilters, 
-  resetFilters, 
+export default function TasksHeader({
+  filters,
+  updateFilters,
+  resetFilters,
   totalTasks,
   sortable = true,
-  showDueDateFilter = true
-}: TasksHeaderProps){
-  const formClassNames="grow lg:grow-[0.9] max-w-80";
+  showDueDateFilter = true,
+}: TasksHeaderProps) {
+  const formClassNames = "grow lg:grow-[0.9] max-w-80";
   return (
     <div className="card flex justify-between items-center sm:items-start flex-col lg:flex-row gap-5 ">
-        <header className="grow-[0.9] shrink-0 w-full max-w-52 flex flex-col items-center sm:items-start">
-          <h1 className="text-3xl font-bold text-text-main transition-colors">Tasks ({totalTasks})</h1>
-          <p className="text-text-sub">Manage your daily goals.</p>
-        </header>
-        <form className="flex gap-4 items-baseline flex-row flex-wrap">
-          <FormInput 
-            name="search"
-            value={filters.search}
-            handleChange={updateFilters}
-            label="Search"
-            formClassNames={formClassNames}
-          />
-          <FormInput 
-            name="category"
-            value={filters.category}
-            handleChange={updateFilters}
-            label="Category"
-            options={categoryOptions}
-            formClassNames={formClassNames}
-          />
-          <FormInput 
-            name="duration"
-            value={filters.duration}
-            handleChange={updateFilters}
-            label="Duration"
-            options={taskDurationOptions}
-            formClassNames={formClassNames}
-          />
-          <FormInput 
-            name="isCompleted"
-            value={filters.isCompleted}
-            handleChange={updateFilters}
-            label="Is Complete"
-            options={completedTasksOptions}
-            formClassNames={formClassNames}
-          />
-          {showDueDateFilter &&
-          ( <FormInput 
+      <header className="grow-[0.9] shrink-0 w-full max-w-52 flex flex-col items-center sm:items-start">
+        <h1 className="text-3xl font-bold text-text-main transition-colors">
+          Tasks ({totalTasks})
+        </h1>
+        <p className="text-text-sub">Manage your daily goals.</p>
+      </header>
+      <form className="flex gap-4 items-baseline flex-row flex-wrap">
+        <FormInput
+          name="search"
+          value={filters.search}
+          handleChange={updateFilters}
+          label="Search"
+          formClassNames={formClassNames}
+        />
+        <FormInput
+          name="category"
+          value={filters.category}
+          handleChange={updateFilters}
+          label="Category"
+          options={categoryOptions}
+          formClassNames={formClassNames}
+        />
+        <FormInput
+          name="duration"
+          value={filters.duration}
+          handleChange={updateFilters}
+          label="Duration"
+          options={taskDurationOptions}
+          formClassNames={formClassNames}
+        />
+        <FormInput
+          name="isCompleted"
+          value={filters.isCompleted}
+          handleChange={updateFilters}
+          label="Is Complete"
+          options={completedTasksOptions}
+          formClassNames={formClassNames}
+        />
+        {showDueDateFilter && (
+          <FormInput
             name="dueDate"
             value={filters.dueDate}
             handleChange={updateFilters}
             label="Due Date"
             options={dueDateOptions}
             formClassNames={formClassNames}
-          /> 
-          )}
-          {( sortable &&
-            <>
-              <FormInput 
-                name="sortBy"
-                value={filters.sortBy}
-                handleChange={updateFilters}
-                label="Sort By"
-                options={sortByOptions}
-                formClassNames={formClassNames}
-              />
-              <FormInput 
-                  name="order"
-                  value={filters.order}
-                  handleChange={updateFilters}
-                  label="Order"
-                  options={isAscOptions}
-                  formClassNames={formClassNames}
-                />
-              </>
-          )}
-            <button 
-              type="button"
-              className="self-end mb-1 btn-primary"
-              onClick={resetFilters}
-            >
-              Reset Filters
-            </button>
-        </form>
-      </div>
-  )
+          />
+        )}
+        {sortable && (
+          <>
+            <FormInput
+              name="sortBy"
+              value={filters.sortBy}
+              handleChange={updateFilters}
+              label="Sort By"
+              options={sortByOptions}
+              formClassNames={formClassNames}
+            />
+            <FormInput
+              name="order"
+              value={filters.order}
+              handleChange={updateFilters}
+              label="Order"
+              options={isAscOptions}
+              formClassNames={formClassNames}
+            />
+          </>
+        )}
+        <button
+          type="button"
+          className="self-end mb-1 btn-primary"
+          onClick={resetFilters}
+        >
+          Reset Filters
+        </button>
+      </form>
+    </div>
+  );
 }

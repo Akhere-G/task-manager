@@ -28,14 +28,23 @@ export interface TaskContextType {
 
 const TaskContext = createContext<TaskContextType | null>(null);
 
-export default function TaskContextProvider({ children }: { children: React.ReactNode }) {
+export default function TaskContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const queryClient = useQueryClient();
-  
+
   const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null);
-  const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(null);
-  
-  const queryKeysAffectedByMutations = ["tasks", ...statsQueryKeys]
-  const invalidateKeys = () => queryKeysAffectedByMutations.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }))
+  const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(
+    null,
+  );
+
+  const queryKeysAffectedByMutations = ["tasks", ...statsQueryKeys];
+  const invalidateKeys = () =>
+    queryKeysAffectedByMutations.forEach((key) =>
+      queryClient.invalidateQueries({ queryKey: [key] }),
+    );
 
   const handleConfirmDelete = (task: Task) => setSelectedDeleteTask(task);
 
@@ -44,7 +53,7 @@ export default function TaskContextProvider({ children }: { children: React.Reac
   async function handleDelete(id: number) {
     try {
       await taskService.delete(id);
-      invalidateKeys()
+      invalidateKeys();
     } catch (err) {
       console.error(err);
     }
@@ -57,7 +66,7 @@ export default function TaskContextProvider({ children }: { children: React.Reac
   async function updateTask(id: number, newTaskData: Partial<Task>) {
     try {
       await taskService.update(id, newTaskData);
-      invalidateKeys()
+      invalidateKeys();
     } catch (err) {
       console.error("Update failed:", err);
       throw err;
@@ -67,35 +76,34 @@ export default function TaskContextProvider({ children }: { children: React.Reac
   async function handleEdit(newTask: CreateTaskInput) {
     if (!selectedEditTask) return;
     const rawData = {
-        title: newTask.title.trim(),
-        description: newTask.description.trim(),
-        category: newTask.category,
-        dueDate: newTask.dueDate,
-        estimatedTime: newTask.estimatedTime,
-      };
-  
-      const patchData: Partial<Task> = Object.fromEntries(
-        Object.entries(rawData).filter(([, value]) => value !== ""),
-      );
-  
-      try {
-        await updateTask(selectedEditTask.id, patchData);
-        setSelectedEditTask(null);
-      } catch (err) {
-        console.error("Update failed:", err);
-        throw err;
-      }
+      title: newTask.title.trim(),
+      description: newTask.description.trim(),
+      category: newTask.category,
+      dueDate: newTask.dueDate,
+      estimatedTime: newTask.estimatedTime,
+    };
+
+    const patchData: Partial<Task> = Object.fromEntries(
+      Object.entries(rawData).filter(([, value]) => value !== ""),
+    );
+
+    try {
+      await updateTask(selectedEditTask.id, patchData);
+      setSelectedEditTask(null);
+    } catch (err) {
+      console.error("Update failed:", err);
+      throw err;
+    }
   }
 
   async function setIsCompleted(id: number, isCompleted: boolean) {
-    const completedAt = isCompleted 
-      ? new Date().toISOString().slice(0, 19).replace('T', ' ') 
+    const completedAt = isCompleted
+      ? new Date().toISOString().slice(0, 19).replace("T", " ")
       : null;
 
     try {
       await taskService.update(id, { isCompleted, completedAt });
-      invalidateKeys()
-
+      invalidateKeys();
     } catch (err) {
       console.error(err);
     }

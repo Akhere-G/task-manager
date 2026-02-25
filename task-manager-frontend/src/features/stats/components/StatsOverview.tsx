@@ -2,24 +2,33 @@ import { ErrorState } from "../../../components/ui";
 import useGetStats from "../hooks/useGetStats";
 
 export default function StatsOverview() {
-  const { data, isLoading, isError } = useGetStats()
-    
+  const { data, isLoading, isError } = useGetStats();
 
-  const { categoryVolume, backlogHealth, timeSpent, productivity } = data ?? {}
+  const { categoryVolume, backlogHealth, timeSpent, productivity } = data ?? {};
   const stats = {
     completionRate: "0",
     timeInvested: "0",
     currentStreak: "0",
     clearingSpeed: "0",
-    weeklyFocus: "None"
+    weeklyFocus: "None",
   };
 
-  if (!isLoading && backlogHealth && productivity && categoryVolume && timeSpent) {
-    const completed = backlogHealth.find(d => d.status === "Completed")?.count || 0;
+  if (
+    !isLoading &&
+    backlogHealth &&
+    productivity &&
+    categoryVolume &&
+    timeSpent
+  ) {
+    const completed =
+      backlogHealth.find((d) => d.status === "Completed")?.count || 0;
     const total = backlogHealth.reduce((acc, cur) => acc + cur.count, 0);
-    stats.completionRate = total > 0 ? ((completed / total) * 100).toFixed(0) : "0";
+    stats.completionRate =
+      total > 0 ? ((completed / total) * 100).toFixed(0) : "0";
 
-    stats.timeInvested = Math.round(timeSpent.reduce((acc, cur) => acc + cur.timeSpent, 0) / 60).toString();
+    stats.timeInvested = Math.round(
+      timeSpent.reduce((acc, cur) => acc + cur.timeSpent, 0) / 60,
+    ).toString();
 
     let streak = 0;
     for (let i = productivity.length - 1; i >= 0; i--) {
@@ -33,29 +42,69 @@ export default function StatsOverview() {
     stats.clearingSpeed = (totalTasks / 7).toFixed(1);
 
     if (categoryVolume.length > 0) {
-      const top = categoryVolume.reduce((acc, cur) => acc.pending + acc.overdue > cur.pending + cur.overdue  ? acc : cur);
+      const top = categoryVolume.reduce((acc, cur) =>
+        acc.pending + acc.overdue > cur.pending + cur.overdue ? acc : cur,
+      );
       stats.weeklyFocus = top.category.replace(/[_-]/g, " ");
-      stats.weeklyFocus = stats.weeklyFocus[0].toUpperCase() + stats.weeklyFocus.slice(1);
+      stats.weeklyFocus =
+        stats.weeklyFocus[0].toUpperCase() + stats.weeklyFocus.slice(1);
     }
   }
 
-  if (isError) return <ErrorState error={isError ? "Could not load data" : ""} />;
+  if (isError)
+    return <ErrorState error={isError ? "Could not load data" : ""} />;
 
   return (
     <div className="flex flex-wrap gap-6">
-      <StatCard isLoading={isLoading} title="Completion Rate" subtext={stats.completionRate} suffix="%" />
-      <StatCard isLoading={isLoading} title="Total Invested" subtext={stats.timeInvested} suffix=" hrs" />
-      <StatCard isLoading={isLoading} title="Daily Streak" subtext={stats.currentStreak} suffix=" days" />
-      <StatCard isLoading={isLoading} title="Velocity" subtext={stats.clearingSpeed} suffix=" tasks/day" />
-      <StatCard isLoading={isLoading} title="Top Focus" subtext={stats.weeklyFocus} />
+      <StatCard
+        isLoading={isLoading}
+        title="Completion Rate"
+        subtext={stats.completionRate}
+        suffix="%"
+      />
+      <StatCard
+        isLoading={isLoading}
+        title="Total Invested"
+        subtext={stats.timeInvested}
+        suffix=" hrs"
+      />
+      <StatCard
+        isLoading={isLoading}
+        title="Daily Streak"
+        subtext={stats.currentStreak}
+        suffix=" days"
+      />
+      <StatCard
+        isLoading={isLoading}
+        title="Velocity"
+        subtext={stats.clearingSpeed}
+        suffix=" tasks/day"
+      />
+      <StatCard
+        isLoading={isLoading}
+        title="Top Focus"
+        subtext={stats.weeklyFocus}
+      />
     </div>
   );
 }
 
-function StatCard({ title, subtext, suffix, isLoading }: { title: string; subtext: string; suffix?: string; isLoading: boolean }) {
+function StatCard({
+  title,
+  subtext,
+  suffix,
+  isLoading,
+}: {
+  title: string;
+  subtext: string;
+  suffix?: string;
+  isLoading: boolean;
+}) {
   return (
     <div className="card flex-1 min-w-40 p-4 flex flex-col items-center justify-center text-center shadow-sm border border-border-light transition-all hover:border-brand/30">
-      <h3 className="text-text-sub text-sm font-medium uppercase tracking-wider mb-2">{title}</h3>
+      <h3 className="text-text-sub text-sm font-medium uppercase tracking-wider mb-2">
+        {title}
+      </h3>
       {isLoading ? (
         <div className="h-10 w-24 bg-bg-secondary animate-pulse rounded-md" />
       ) : (

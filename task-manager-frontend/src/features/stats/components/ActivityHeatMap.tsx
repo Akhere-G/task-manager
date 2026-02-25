@@ -10,35 +10,37 @@ interface HeatmapValueType {
   count: number;
 }
 
-export default function ActivityHeatmap(){ 
-  const { data: productivity , isLoading, isError } = useGetStats<ProductivityData[]>(data => data.productivity)
-  
+export default function ActivityHeatmap() {
+  const {
+    data: productivity,
+    isLoading,
+    isError,
+  } = useGetStats<ProductivityData[]>((data) => data.productivity);
 
-  if (isLoading) return (
-    <div className="flex justify-center items-center">
-      <LoadingState />
-    </div>
-    )
-  if (isError) return (
-    <ErrorState error={isError ? "Could not load data" : ""} />
-  )
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center">
+        <LoadingState />
+      </div>
+    );
+  if (isError)
+    return <ErrorState error={isError ? "Could not load data" : ""} />;
 
-  const hasData = productivity && productivity.some(d => d.tasks > 0)
+  const hasData = productivity && productivity.some((d) => d.tasks > 0);
 
-  if (productivity && !hasData){
-        return (
-          <EmptyState searchMessage="No tasks completed this year."/>
-        )
-    }
+  if (productivity && !hasData) {
+    return <EmptyState searchMessage="No tasks completed this year." />;
+  }
 
   const today = new Date();
   const lastYear = new Date();
   lastYear.setFullYear(today.getFullYear() - 1);
 
-  const heatmapValues = productivity?.map(item => ({
-    date: item.date,
-    count: item.tasks
-  })) || [];
+  const heatmapValues =
+    productivity?.map((item) => ({
+      date: item.date,
+      count: item.tasks,
+    })) || [];
 
   return (
     <div className="w-full">
@@ -46,18 +48,16 @@ export default function ActivityHeatmap(){
         startDate={lastYear}
         endDate={today}
         values={heatmapValues}
-        
         classForValue={(value: HeatmapValueType) => {
-          if (!value || value.count === 0) return 'color-empty';
+          if (!value || value.count === 0) return "color-empty";
           return `color-scale-${Math.min(value.count, 4)}`;
         }}
         tooltipDataAttrs={(value: HeatmapValueType) => ({
-          'data-tooltip-id': 'heatmap-tooltip',
-          'data-tooltip-content':`${value.count} tasks on ${new Date(value.date).toLocaleDateString('en-GB')}`
+          "data-tooltip-id": "heatmap-tooltip",
+          "data-tooltip-content": `${value.count} tasks on ${new Date(value.date).toLocaleDateString("en-GB")}`,
         })}
       />
       <Tooltip id="heatmap-tooltip" />
     </div>
-
   );
 }

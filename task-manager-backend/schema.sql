@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS tasks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -19,5 +18,4 @@ CREATE TABLE IF NOT EXISTS tasks (
     user_id INT NOT NULL,
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 CREATE FULLTEXT INDEX IF NOT EXISTS idx_tasks_search ON tasks(title, description);

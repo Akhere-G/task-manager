@@ -1,6 +1,6 @@
-export { default as TasksHeader } from "./TasksHeader"
-export { default as TaskCard } from "./TaskCard"
-export { default as TaskForm } from "./TaskForm"
-export { default as TaskList } from "./TaskList"
-export { default as TaskCalendar } from "./TaskCalendar"
-export { default as BulkAddForm } from "./BulkAddForm"
+export { default as TasksHeader } from "./TasksHeader";
+export { default as TaskCard } from "./TaskCard";
+export { default as TaskForm } from "./TaskForm";
+export { default as TaskList } from "./TaskList";
+export { default as TaskCalendar } from "./TaskCalendar";
+export { default as BulkAddForm } from "./BulkAddForm";

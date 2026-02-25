@@ -1,61 +1,61 @@
-import axios from 'axios'
-import type { CreateTaskInput, Task } from '../features/tasks/types';
-import type { LoginUserInput, RegisterUserInput } from '../features/auth/types';
+import axios from "axios";
+import type { CreateTaskInput, Task } from "../features/tasks/types";
+import type { LoginUserInput, RegisterUserInput } from "../features/auth/types";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080/api',
+  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8080/api",
   timeout: 5000,
   headers: {
-    'Content-Type' : 'application/json'
-  }
-})
+    "Content-Type": "application/json",
+  },
+});
 
 export interface GetTaskResult {
-    tasks: Task[];
-    totalTasks: number;
-    totalPages: number;
-    currentPage: number;
+  tasks: Task[];
+  totalTasks: number;
+  totalPages: number;
+  currentPage: number;
 }
 interface DeleteTaskResult {
   id: string;
   message: string;
 }
 
-export const taskService = { 
+export const taskService = {
   getAll: async (params?: URLSearchParams): Promise<GetTaskResult> => {
-    const url = "/tasks" + (params ? `?${params.toString()}` : "")
-    const response = await api.get(url)
+    const url = "/tasks" + (params ? `?${params.toString()}` : "");
+    const response = await api.get(url);
     return response.data;
-  }, 
+  },
   getById: async (id: number): Promise<Task> => {
-    const response = await api.get(`tasks/${id}`)
+    const response = await api.get(`tasks/${id}`);
     return response.data;
-  }, 
+  },
   create: async (taskData: CreateTaskInput) => {
-    const response = await api.post('/tasks', taskData)
-    return response.data
-  }, 
+    const response = await api.post("/tasks", taskData);
+    return response.data;
+  },
   createAll: async (tasksData: CreateTaskInput[]) => {
-    const response = await api.post('/tasks/bulk', tasksData)
-    return response.data
-  }, 
+    const response = await api.post("/tasks/bulk", tasksData);
+    return response.data;
+  },
   update: async (id: number, taskData: Partial<Task>): Promise<Task> => {
     const response = await api.patch(`/tasks/${id}`, taskData);
     return response.data;
-  }, 
+  },
   delete: async (id: number): Promise<DeleteTaskResult> => {
     const response = await api.delete(`/tasks/${id}`);
     return response.data;
-  } 
-}
+  },
+};
 
 export interface ProductivityData {
   date: string;
-  tasks: number
+  tasks: number;
 }
 export interface TimeSpentData {
   category: string;
-  timeSpent: number
+  timeSpent: number;
 }
 
 export interface BacklogHealthData {
@@ -73,7 +73,7 @@ export interface CategoryVolumeData {
 
 export interface OverdueDistributionData {
   daysOverdue: string;
-  count: number
+  count: number;
 }
 
 export interface CategoryVelocityData {
@@ -82,21 +82,19 @@ export interface CategoryVelocityData {
 }
 
 export interface StatsResult {
-    "productivity": ProductivityData[];
-    "timeSpent": TimeSpentData[];
-    "backlogHealth": BacklogHealthData[];
-    "categoryVolume": CategoryVolumeData[];
-    "overdueDistribution": OverdueDistributionData[];
-    "categoryVelocity": CategoryVelocityData[];
+  productivity: ProductivityData[];
+  timeSpent: TimeSpentData[];
+  backlogHealth: BacklogHealthData[];
+  categoryVolume: CategoryVolumeData[];
+  overdueDistribution: OverdueDistributionData[];
+  categoryVelocity: CategoryVelocityData[];
 }
 export const statsService = {
-  getStats: async () : Promise<StatsResult> => {
-    const response = await api.get("/stats/dashboard")
+  getStats: async (): Promise<StatsResult> => {
+    const response = await api.get("/stats/dashboard");
     return response.data;
-  }
-
-}
-
+  },
+};
 
 export interface ContactEnquiry {
   fullName: string;
@@ -107,43 +105,46 @@ export interface ContactEnquiry {
 
 export const contactService = {
   sendEnquiry: async (enquiryData: ContactEnquiry) => {
-    const response = await api.post('/contact', enquiryData);
+    const response = await api.post("/contact", enquiryData);
     return response.data;
-  }
-}
+  },
+};
 
-interface AuthResult { token: string }
+interface AuthResult {
+  token: string;
+}
 
 export const authService = {
   register: async (newUserData: RegisterUserInput): Promise<AuthResult> => {
     const response = await api.post("/auth/register", newUserData);
-    return response.data
+    return response.data;
   },
   login: async (userData: LoginUserInput): Promise<AuthResult> => {
     const response = await api.post("/auth/login", userData);
-    return response.data
-  }
-}
+    return response.data;
+  },
+};
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token")
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
 
-  if (token && config.headers){
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-},
-error => Promise.reject(error)
-)
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.reload()
+      localStorage.removeItem("token");
+      window.location.reload();
     }
     return Promise.reject(error);
-  }
+  },
 );
-export default api
+export default api;

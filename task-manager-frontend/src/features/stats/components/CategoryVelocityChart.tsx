@@ -1,26 +1,38 @@
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import useGetStats from "../hooks/useGetStats";
 import type { CategoryVelocityData } from "../../../services/api";
 
 export default function CategoryVelocityChart() {
-  const { data: categoryVelocity, isLoading, isError } = useGetStats<CategoryVelocityData[]>(data => data.categoryVelocity)
+  const {
+    data: categoryVelocity,
+    isLoading,
+    isError,
+  } = useGetStats<CategoryVelocityData[]>((data) => data.categoryVelocity);
 
   const getBarColor = (score: number) => {
     const positiveColors = [
       "#d9f99d", // Lightest (0-3 days ahead)
-      "#86efac", 
-      "#22c55e", 
-      "#16a34a", 
-      "#064e3b"  // Darkest (30+ days ahead)
+      "#86efac",
+      "#22c55e",
+      "#16a34a",
+      "#064e3b", // Darkest (30+ days ahead)
     ];
 
     const negativeColors = [
       "#fca5a5", // Lightest (0-3 days overdue)
-      "#f87171", 
-      "#ef4444", 
-      "#dc2626", 
-      "#991b1b"  // Darkest (30+ days overdue)
+      "#f87171",
+      "#ef4444",
+      "#dc2626",
+      "#991b1b", // Darkest (30+ days overdue)
     ];
 
     const absScore = Math.abs(score);
@@ -33,16 +45,18 @@ export default function CategoryVelocityChart() {
     if (absScore <= 30) return palette[3];
     return palette[4];
   };
-  
-  if (isLoading) return <LoadingState />
-  if (isError) return <ErrorState error={isError ? "Could not load data." : ""} />
 
-  const chartData = categoryVelocity?.map((d) => ({...d, fill: getBarColor(d.score) }))
+  if (isLoading) return <LoadingState />;
+  if (isError)
+    return <ErrorState error={isError ? "Could not load data." : ""} />;
 
-  if (chartData && chartData.length === 0){
-    return (
-      <EmptyState searchMessage="No tasks pending or overdue."/>
-    )
+  const chartData = categoryVelocity?.map((d) => ({
+    ...d,
+    fill: getBarColor(d.score),
+  }));
+
+  if (chartData && chartData.length === 0) {
+    return <EmptyState searchMessage="No tasks pending or overdue." />;
   }
 
   return (
@@ -51,41 +65,39 @@ export default function CategoryVelocityChart() {
         data={chartData}
         margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
       >
-        <CartesianGrid 
-          strokeDasharray="3 3"
-          horizontal={false}
-        />
+        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
         <XAxis
           type="category"
           dataKey="category"
-          tick={{fill: "var(--color-text-sub)"}}
-        /> 
-        <YAxis
-          type="number"
-          dataKey="score"
-
+          tick={{ fill: "var(--color-text-sub)" }}
         />
+        <YAxis type="number" dataKey="score" />
         <Bar dataKey="score" />
         <Tooltip
-          contentStyle={{ 
-                backgroundColor: 'var(--color-surface)', 
-                borderColor: 'var(--color-surface-muted)',
-                borderRadius: '12px',
-                color: 'var(--color-text-main)',
-                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
-          }} 
-          cursor={{ fill: 'transparent' }}
+          contentStyle={{
+            backgroundColor: "var(--color-surface)",
+            borderColor: "var(--color-surface-muted)",
+            borderRadius: "12px",
+            color: "var(--color-text-main)",
+            boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+          }}
+          cursor={{ fill: "transparent" }}
           formatter={(value) => {
             return [
-              Math.abs(Math.round(value as number)), 
-              value as number >= 0  ? "Avg days ahead of due date" : "Avg days behind due date"]
+              Math.abs(Math.round(value as number)),
+              (value as number) >= 0
+                ? "Avg days ahead of due date"
+                : "Avg days behind due date",
+            ];
           }}
-          labelFormatter={(str) => (str[0].toUpperCase() + str.slice(1)).replace("-", " ")}
+          labelFormatter={(str) =>
+            (str[0].toUpperCase() + str.slice(1)).replace("-", " ")
+          }
           itemStyle={{
-            color: 'var(--color-text-main)', 
+            color: "var(--color-text-main)",
           }}
         />
       </BarChart>
     </ResponsiveContainer>
-  )
+  );
 }

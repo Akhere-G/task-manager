@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { 
-  Radar, 
-  RadarChart, 
-  PolarGrid, 
-  PolarAngleAxis, 
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
   PolarRadiusAxis,
-  ResponsiveContainer, 
-  Tooltip, 
-  Legend, 
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
   type LegendPayload,
 } from "recharts";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
@@ -18,7 +18,11 @@ import type { CategoryVolumeData } from "../../../services/api";
 
 export default function CategoryVolumeChart() {
   const breakpoint = useBreakpoint();
-  const { data: categoryVolume, isLoading, isError } = useGetStats<CategoryVolumeData[]>(data => data.categoryVolume);
+  const {
+    data: categoryVolume,
+    isLoading,
+    isError,
+  } = useGetStats<CategoryVolumeData[]>((data) => data.categoryVolume);
 
   const [activeSeries, setActiveSeries] = useState({
     completed: true,
@@ -30,31 +34,35 @@ export default function CategoryVolumeChart() {
   const handleLegendClick = ({ dataKey }: LegendPayload) => {
     setActiveSeries((prev) => ({
       ...prev,
-      [dataKey as keyof typeof activeSeries]: !prev[dataKey as keyof typeof activeSeries]
+      [dataKey as keyof typeof activeSeries]:
+        !prev[dataKey as keyof typeof activeSeries],
     }));
   };
 
   const getDynamicMax = () => {
     if (!categoryVolume) return 0;
     const maxValue = Math.max(
-      ...categoryVolume.map((category) =>
-        {
-          const completed = activeSeries.completed ? category.completed : 0
-          const overdue = activeSeries.overdue ? category.overdue : 0
-          const pending = activeSeries.pending ? category.pending : 0
-          const total = activeSeries.total ? category.total : 0
-          return Math.max(completed, overdue, pending, total)
-        }
-      )
-    )
-    
-    return Math.ceil(maxValue)
+      ...categoryVolume.map((category) => {
+        const completed = activeSeries.completed ? category.completed : 0;
+        const overdue = activeSeries.overdue ? category.overdue : 0;
+        const pending = activeSeries.pending ? category.pending : 0;
+        const total = activeSeries.total ? category.total : 0;
+        return Math.max(completed, overdue, pending, total);
+      }),
+    );
+
+    return Math.ceil(maxValue);
   };
 
   const isMobile = breakpoint === "xs";
   const dynamicMax = getDynamicMax();
 
-  if (isLoading) return <div className="flex justify-center items-center h-64"><LoadingState /></div>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-64">
+        <LoadingState />
+      </div>
+    );
   if (isError) return <ErrorState error="Could not load data" />;
   if (!categoryVolume || categoryVolume.length === 0) {
     return <EmptyState searchMessage="No tasks found." />;
@@ -62,17 +70,20 @@ export default function CategoryVolumeChart() {
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <RadarChart data={categoryVolume} margin={{top:-20, right: 0, left: 0, bottom: 10}}>
+      <RadarChart
+        data={categoryVolume}
+        margin={{ top: -20, right: 0, left: 0, bottom: 10 }}
+      >
         <PolarGrid stroke="var(--color-surface-muted)" />
-        <PolarRadiusAxis 
-          domain={[0, dynamicMax]} 
-          tick={false} 
-          axisLine={false} 
+        <PolarRadiusAxis
+          domain={[0, dynamicMax]}
+          tick={false}
+          axisLine={false}
           allowDataOverflow
         />
-        <PolarAngleAxis 
-          dataKey="category" 
-          tick={{ fill: 'var(--color-text-main)', fontSize: isMobile ? 9 : 12 }}
+        <PolarAngleAxis
+          dataKey="category"
+          tick={{ fill: "var(--color-text-main)", fontSize: isMobile ? 9 : 12 }}
           tickFormatter={(value) => {
             const formatted = value.replaceAll("-", " ");
             return formatted.charAt(0).toUpperCase() + formatted.slice(1);
@@ -121,10 +132,10 @@ export default function CategoryVolumeChart() {
 
         <Tooltip
           contentStyle={{
-            backgroundColor: 'var(--color-surface)',
-            borderColor: 'var(--color-surface-muted)',
-            borderRadius: '12px',
-            color: 'var(--color-text-main)',
+            backgroundColor: "var(--color-surface)",
+            borderColor: "var(--color-surface-muted)",
+            borderRadius: "12px",
+            color: "var(--color-text-main)",
           }}
           formatter={(value, name, props) => {
             // eslint-disable-next-line react/prop-types
@@ -132,24 +143,26 @@ export default function CategoryVolumeChart() {
             if (!activeSeries[dataKey]) return [null, null];
 
             const formattedName = String(name).replaceAll("-", " ");
-            return [value, formattedName.charAt(0).toUpperCase() + formattedName.slice(1)];
+            return [
+              value,
+              formattedName.charAt(0).toUpperCase() + formattedName.slice(1),
+            ];
           }}
-          labelFormatter={
-            value => {
-              const formattedName = String(value).replaceAll("-", " ");
-              return formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
-            }
-          }
+          labelFormatter={(value) => {
+            const formattedName = String(value).replaceAll("-", " ");
+            return (
+              formattedName.charAt(0).toUpperCase() + formattedName.slice(1)
+            );
+          }}
         />
-        
-        <Legend 
+
+        <Legend
           onClick={handleLegendClick}
-          wrapperStyle={{ cursor: 'pointer', paddingTop: '40px' }}
-          formatter={(value: string, { dataKey }: LegendPayload )  => (
-            <span 
+          wrapperStyle={{ cursor: "pointer", paddingTop: "40px" }}
+          formatter={(value: string, { dataKey }: LegendPayload) => (
+            <span
               className={`
-                ${statusColors[dataKey as string]} ${activeSeries[dataKey as keyof typeof activeSeries] ? "" : "opacity-70 text-text-sub"}`
-              }
+                ${statusColors[dataKey as string]} ${activeSeries[dataKey as keyof typeof activeSeries] ? "" : "opacity-70 text-text-sub"}`}
             >
               {value}
             </span>

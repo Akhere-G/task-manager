@@ -1,16 +1,17 @@
 import mysql.connector
 import os
 
+
 def initialise_database():
     conn = None
     try:
-        db_name = os.getenv('DB_NAME', 'task_db')
-        
+        db_name = os.getenv("DB_NAME", "task_db")
+
         conn = mysql.connector.connect(
-            host=os.getenv('DB_HOST'),
-            user=os.getenv('DB_USER'),
-            password=os.getenv('DB_PASSWORD'),
-            port=int(os.getenv('DB_PORT', 3306))
+            host=os.getenv("DB_HOST"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            port=int(os.getenv("DB_PORT", 3306)),
         )
         cursor = conn.cursor()
 
@@ -60,12 +61,12 @@ def initialise_database():
 
         cursor.execute(users_table)
         cursor.execute(tasks_table)
-        
+
         try:
             cursor.execute(fulltext_index)
         except:
             pass
-            
+
         try:
             cursor.execute(trigger)
         except:
@@ -78,6 +79,7 @@ def initialise_database():
         if conn and conn.is_connected():
             cursor.close()
             conn.close()
+
 
 if __name__ == "__main__":
     initialise_database()

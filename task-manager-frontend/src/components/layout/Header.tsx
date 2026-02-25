@@ -6,12 +6,19 @@ type Props = {
   links: { path: string; title: string }[];
   currentPath: string;
   isAuthenticated: boolean;
-  logout: () => void
+  logout: () => void;
 };
 
-export default function Header({ links, currentPath, isAuthenticated,logout }: Props) {
+export default function Header({
+  links,
+  currentPath,
+  isAuthenticated,
+  logout,
+}: Props) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
+  const [darkMode, setDarkMode] = useState(
+    () => localStorage.getItem("theme") === "dark",
+  );
 
   useEffect(() => {
     if (darkMode) {
@@ -21,41 +28,49 @@ export default function Header({ links, currentPath, isAuthenticated,logout }: P
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
     }
-  }, [darkMode])
+  }, [darkMode]);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
-  const toggleDarkMode = () => setDarkMode(prev => !prev)
-  
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
+
   return (
     <>
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm" 
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
           onClick={closeSidebar}
         />
       )}
 
       {/* Mobile Sidebar Panel */}
-      <aside className={`
+      <aside
+        className={`
         fixed top-0 left-0 h-full w-64 bg-surface z-50 transform transition-transform duration-300 ease-in-out md:hidden shadow-2xl
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-      `}>
+      `}
+      >
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <span className="font-bold text-brand text-xl">Menu</span>            
-          <button onClick={closeSidebar} className="text-text-main text-2xl" aria-label="Close menu">&times;</button>
+          <span className="font-bold text-brand text-xl">Menu</span>
+          <button
+            onClick={closeSidebar}
+            className="text-text-main text-2xl"
+            aria-label="Close menu"
+          >
+            &times;
+          </button>
         </div>
         <nav className="p-4 flex flex-col">
           <ul className="flex flex-col gap-2">
             {links.map(({ title, path }) => (
               <li key={path}>
-                <Link 
-                  to={path} 
+                <Link
+                  to={path}
                   onClick={closeSidebar}
                   className={`block p-3 rounded-md font-medium transition-colors ${
-                    currentPath === path 
-                      ? "bg-brand/10 text-brand" 
+                    currentPath === path
+                      ? "bg-brand/10 text-brand"
                       : "text-text-main hover:bg-surface-muted"
                   }`}
                 >
@@ -65,17 +80,30 @@ export default function Header({ links, currentPath, isAuthenticated,logout }: P
             ))}
           </ul>
           <div className="flex gap-4 mt-4">
-            {isAuthenticated && <button className="btn-primary self-start" onClick={() => {logout(); toggleSidebar()}}>Logout</button>}
+            {isAuthenticated && (
+              <button
+                className="btn-primary self-start"
+                onClick={() => {
+                  logout();
+                  toggleSidebar();
+                }}
+              >
+                Logout
+              </button>
+            )}
 
-            <button 
+            <button
               onClick={toggleDarkMode}
               className="p-2 mb-3 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
               aria-label="Toggle dark mode"
-              >
-              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            >
+              {darkMode ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
             </button>
           </div>
-
         </nav>
       </aside>
 
@@ -84,7 +112,7 @@ export default function Header({ links, currentPath, isAuthenticated,logout }: P
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Hamburger Button (Mobile Only) */}
-            <button 
+            <button
               onClick={toggleSidebar}
               className="md:hidden p-2 -ml-2 text-text-main hover:bg-surface-muted rounded-md transition-colors"
               aria-label="Open menu"
@@ -96,17 +124,17 @@ export default function Header({ links, currentPath, isAuthenticated,logout }: P
               Task<span className="text-text-main">Flow</span>
             </h1>
           </div>
-          
+
           {/* Desktop Navigation (Hidden on Mobile) */}
           <nav className="hidden md:flex items-center gap-8">
             <ul className="flex gap-8">
               {links.map(({ title, path }) => (
                 <li key={path}>
-                  <Link 
-                    to={path} 
+                  <Link
+                    to={path}
                     className={`font-medium transition-colors ${
-                      currentPath === path 
-                        ? "text-brand" 
+                      currentPath === path
+                        ? "text-brand"
                         : "text-text-sub hover:text-brand"
                     }`}
                   >
@@ -115,16 +143,24 @@ export default function Header({ links, currentPath, isAuthenticated,logout }: P
                 </li>
               ))}
             </ul>
-            <div className="flex gap-2"> 
-              <button 
+            <div className="flex gap-2">
+              <button
                 onClick={toggleDarkMode}
                 className="p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
                 aria-label="Toggle dark mode"
-                >
-                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              >
+                {darkMode ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
               </button>
-              {isAuthenticated && <button className="btn-primary" onClick={logout}>Logout</button>}
-              </div>
+              {isAuthenticated && (
+                <button className="btn-primary" onClick={logout}>
+                  Logout
+                </button>
+              )}
+            </div>
           </nav>
         </div>
       </header>

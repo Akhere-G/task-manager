@@ -4,8 +4,8 @@ import type { CreateTaskInput, Task } from "../types";
 import TaskForm from "./TaskForm";
 
 interface TaskPopupsProps {
-  selectedDeleteTask : Task | null;
-  selectedEditTask : Task | null;
+  selectedDeleteTask: Task | null;
+  selectedEditTask: Task | null;
   closeDeletePopup: () => void;
   closeEditPopup: () => void;
   handleDelete: (id: number) => void;
@@ -17,60 +17,59 @@ function TaskPopups({
   closeDeletePopup,
   closeEditPopup,
   handleDelete,
-  handleEdit
-}: TaskPopupsProps ){
+  handleEdit,
+}: TaskPopupsProps) {
   return (
     <>
       {selectedDeleteTask && (
-      <Popup 
-        title="Delete Task"  
-        close={closeDeletePopup}
-        handleConfirm={() => {
-          handleDelete(selectedDeleteTask.id); 
-          closeDeletePopup()
-        }}
-        actionText="Delete Task"
-      >
-        {`Delete task '${selectedDeleteTask.title}'?`}
-      </Popup>
-    )}
-    {selectedEditTask && (
-      <Popup 
-        title={`Edit task '${selectedEditTask.title}'?`}
-        close={closeEditPopup}
-        showCloseButton={false}
-      >
-        <TaskForm
-          confirmButtonText="Edit Task"
-          initialData={selectedEditTask}
-          submitAction={handleEdit}
+        <Popup
+          title="Delete Task"
+          close={closeDeletePopup}
+          handleConfirm={() => {
+            handleDelete(selectedDeleteTask.id);
+            closeDeletePopup();
+          }}
+          actionText="Delete Task"
+        >
+          {`Delete task '${selectedDeleteTask.title}'?`}
+        </Popup>
+      )}
+      {selectedEditTask && (
+        <Popup
+          title={`Edit task '${selectedEditTask.title}'?`}
           close={closeEditPopup}
-        />
-      </Popup>
-    )}
+          showCloseButton={false}
+        >
+          <TaskForm
+            confirmButtonText="Edit Task"
+            initialData={selectedEditTask}
+            submitAction={handleEdit}
+            close={closeEditPopup}
+          />
+        </Popup>
+      )}
     </>
-  )
+  );
 }
 
-
-export default function TaskPopupsConnected(){
-  const { 
+export default function TaskPopupsConnected() {
+  const {
     selectedDeleteTask,
     selectedEditTask,
     closeDeletePopup,
     closeEditPopup,
     handleDelete,
-    handleEdit
-  } = useTaskContext()
+    handleEdit,
+  } = useTaskContext();
 
   return (
-    <TaskPopups 
-        selectedDeleteTask={selectedDeleteTask}
-        selectedEditTask={selectedEditTask}
-        closeDeletePopup={closeDeletePopup}
-        closeEditPopup={closeEditPopup}
-        handleDelete={handleDelete}
-        handleEdit={handleEdit}    
+    <TaskPopups
+      selectedDeleteTask={selectedDeleteTask}
+      selectedEditTask={selectedEditTask}
+      closeDeletePopup={closeDeletePopup}
+      closeEditPopup={closeEditPopup}
+      handleDelete={handleDelete}
+      handleEdit={handleEdit}
     />
-  )
+  );
 }

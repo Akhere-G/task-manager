@@ -6,4 +6,4 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-declare module 'react-calendar-heatmap';
+declare module "react-calendar-heatmap";

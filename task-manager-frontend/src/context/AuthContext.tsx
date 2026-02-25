@@ -2,16 +2,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
-  token: string | null; 
-  login: (newToken: string) => void; 
-  logout: () => void; 
-  isAuthenticated: boolean
+  token: string | null;
+  login: (newToken: string) => void;
+  logout: () => void;
+  isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType| null>(null)
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export default function AuthContextProvider ({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"))
+export default function AuthContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem("token"),
+  );
 
   const queryClient = useQueryClient();
 
@@ -21,33 +27,33 @@ export default function AuthContextProvider ({ children }: { children: React.Rea
     if (savedToken) {
       setToken(savedToken);
     }
-    
   }, []);
 
   const login = (newToken: string) => {
     setToken(newToken);
-    localStorage.setItem('token', newToken);
+    localStorage.setItem("token", newToken);
   };
 
   const logout = () => {
     setToken(null);
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     queryClient.clear();
-    window.location.href = '/login'; 
+    window.location.href = "/login";
   };
 
   return (
-    <AuthContext.Provider value={{ token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider
+      value={{ token, login, logout, isAuthenticated: !!token }}
+    >
       {children}
     </AuthContext.Provider>
-    )
+  );
 }
-
 
 export const useAuthContext = () => {
-  const context = useContext(AuthContext)
-  if (!context){
+  const context = useContext(AuthContext);
+  if (!context) {
     throw new Error("useAuthContext must be used within a AuthContextProvider");
   }
-  return context
-}
+  return context;
+};
