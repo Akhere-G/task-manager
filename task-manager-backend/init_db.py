@@ -46,6 +46,17 @@ def initialise_database():
 
         fulltext_index = "CREATE FULLTEXT INDEX IF NOT EXISTS idx_tasks_search ON tasks(title, description);"
 
+        daily_briefs_table = """
+        CREATE TABLE IF NOT EXISTS daily_briefs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            brief_text TEXT NOT NULL,
+            generated_date DATE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_user_day (user_id, generated_date),
+            CONSTRAINT fk_brief_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        """
         trigger = """
         CREATE TRIGGER IF NOT EXISTS tr_ensure_completion_timestamp
         BEFORE UPDATE ON tasks
@@ -61,6 +72,7 @@ def initialise_database():
 
         cursor.execute(users_table)
         cursor.execute(tasks_table)
+        cursor.execute(daily_briefs_table)
 
         try:
             cursor.execute(fulltext_index)

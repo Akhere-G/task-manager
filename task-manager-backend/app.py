@@ -5,6 +5,7 @@ from routes.task_routes import task_bp
 from routes.stats_routes import stats_bp
 from routes.mail_routes import mail_bp
 from routes.auth_routes import auth_bp
+from routes.ai_routes import ai_bp
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 
@@ -31,6 +32,7 @@ app.register_blueprint(task_bp)
 app.register_blueprint(stats_bp)
 app.register_blueprint(mail_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(ai_bp)
 
 
 @app.route("/health")

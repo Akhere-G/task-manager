@@ -19,3 +19,12 @@ CREATE TABLE IF NOT EXISTS tasks (
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE FULLTEXT INDEX IF NOT EXISTS idx_tasks_search ON tasks(title, description);
+CREATE TABLE IF NOT EXISTS daily_briefs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    brief_text TEXT NOT NULL,
+    generated_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_day (user_id, generated_date),
+    CONSTRAINT fk_brief_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
