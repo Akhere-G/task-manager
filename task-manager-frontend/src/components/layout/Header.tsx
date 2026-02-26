@@ -127,7 +127,7 @@ export default function Header({
 
           {/* Desktop Navigation (Hidden on Mobile) */}
           <nav className="hidden md:flex items-center gap-8">
-            <ul className="flex gap-8">
+            <ul className="flex gap-6">
               {links.map(({ title, path }) => (
                 <li key={path}>
                   <Link
