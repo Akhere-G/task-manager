@@ -4,6 +4,7 @@ import {
   ErrorState,
   Pagination,
 } from "../components/ui";
+import { DailyBrief } from "../features/ai/component";
 import { TasksHeader, TaskList } from "../features/tasks/components";
 import TaskPopups from "../features/tasks/components/TaskPopups";
 import { useTasks } from "../features/tasks/hooks/useTasks";
@@ -52,6 +53,8 @@ export default function Home() {
         totalTasks={data?.totalTasks || 0}
         updateFilters={updateFilters}
       />
+
+      {!isSearching && pageDetails.currentPage === 1 && <DailyBrief />}
 
       {tasks && tasks.length > 0 && (
         <Pagination {...pageDetails} setPage={setPage} />

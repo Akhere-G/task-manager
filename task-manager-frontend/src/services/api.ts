@@ -4,7 +4,6 @@ import type { LoginUserInput, RegisterUserInput } from "../features/auth/types";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8080/api",
-  timeout: 5000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -121,6 +120,17 @@ export const authService = {
   },
   login: async (userData: LoginUserInput): Promise<AuthResult> => {
     const response = await api.post("/auth/login", userData);
+    return response.data;
+  },
+};
+
+export interface DailyBrief {
+  brief: string;
+}
+
+export const aiService = {
+  getDailyBrief: async (): Promise<DailyBrief> => {
+    const response = await api.get("/ai/daily-brief");
     return response.data;
   },
 };
