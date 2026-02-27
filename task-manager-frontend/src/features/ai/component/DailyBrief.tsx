@@ -45,32 +45,32 @@ const DailyBrief = () => {
           rounded-xl
         `}
       >
-        <div className="absolute top-0 left-0 w-1 h-full bg-[#615fff]" />
+        <div className="absolute top-0 left-0 w-1 h-full bg-accent" />
 
-        <div className="p-6">
+        <div className="card ">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-[#615fff]">
+            <div className="flex items-center gap-2 text-accent">
               <Sparkles size={20} fill="currentColor" />
-              <h2 className="font-semibold text-slate-800">Daily Brief</h2>
+              <h2 className="font-semibold text-text-primary">Daily Brief</h2>
             </div>
 
             <div className="flex gap-2">
               <button
                 onClick={() => refetch()}
-                className="p-1 text-slate-400 hover:text-[#615fff]"
+                className="p-2 text-text-primary hover:text-brand cursor-pointer bg-brand/10 rounded-full hover:brightness-125"
               >
-                <RefreshCw size={16} />
+                <RefreshCw size={20} />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 text-slate-400 hover:text-red-500"
+                className="p-2 text-text-primary hover:text-failure cursor-pointer bg-failure/10 rounded-full hover:brightness-125"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
           </div>
 
-          <div className="prose prose-slate prose-sm max-w-none prose-p:text-slate-600">
+          <div className="text-text-main prose prose-slate prose-sm max-w-none prose-p:text-text-main">
             <ReactMarkdown>{brief}</ReactMarkdown>
           </div>
         </div>
