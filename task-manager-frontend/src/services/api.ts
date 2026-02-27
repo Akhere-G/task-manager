@@ -133,6 +133,10 @@ export const aiService = {
     const response = await api.get("/ai/daily-brief");
     return response.data;
   },
+  parseTask: async (text: string): Promise<CreateTaskInput> => {
+    const response = await api.post("/ai/parse-task", { text });
+    return response.data;
+  },
 };
 
 api.interceptors.request.use(

@@ -4,7 +4,7 @@ import {
   ErrorState,
   Pagination,
 } from "../components/ui";
-import { DailyBrief } from "../features/ai/component";
+import { DailyBrief } from "../features/ai/components";
 import { TasksHeader, TaskList } from "../features/tasks/components";
 import TaskPopups from "../features/tasks/components/TaskPopups";
 import { useTasks } from "../features/tasks/hooks/useTasks";

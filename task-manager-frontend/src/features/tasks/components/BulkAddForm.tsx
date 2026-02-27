@@ -108,7 +108,6 @@ export default function BulkAddForm() {
             .filter((m) => !m.endsWith(": "))
             .join("\n");
 
-          console.log(taskErrorMessages);
           setErrorMessage(taskErrorMessages);
           setIsUploading(false);
           return;

@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import date
 from google import genai
 from groq import Groq
@@ -114,3 +115,49 @@ def generate_daily_brief(user_id):
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+
+def parse_task_with_ai(user_input):
+    today = date.today().strftime("%Y-%m-%d")
+    allowed_categories = [
+        "work",
+        "home",
+        "chores",
+        "life-admin",
+        "health",
+        "self-care",
+        "social",
+        "hobbies",
+        "learning",
+        "finance",
+        "general",
+    ]
+
+    prompt = f"""
+    Current Date: {today}
+    Extract task details from: "{user_input}"
+    
+    Return ONLY a JSON object:
+    - title: (string)
+    - description: (string or null)
+    - category: (MUST be one of: {", ".join(allowed_categories)})
+    - dueDate: (ISO date string YYYY-MM-DD, assume today is {today})
+    - estimatedTime: (integer in minutes, default 30)
+    """
+
+    raw_json = get_generated_text(prompt)
+    clean_json = raw_json.replace("```json", "").replace("```", "").strip()
+
+    try:
+        parsed_data = json.loads(clean_json)
+        if parsed_data.get("category") not in allowed_categories:
+            parsed_data["category"] = "general"
+        return parsed_data
+    except Exception:
+        return {
+            "title": user_input[:50],
+            "description": user_input,
+            "category": "general",
+            "dueDate": today,
+            "estimatedTime": 30,
+        }

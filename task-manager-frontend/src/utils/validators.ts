@@ -90,7 +90,6 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
     }
 
     if (isComp && !data.completedAt) {
-      console.log("Fail", isComp, data);
       errors.isCompleted = "Must provide completed at date if completing task.";
     } else if (!isComp && data.completedAt) {
       errors.isCompleted =
