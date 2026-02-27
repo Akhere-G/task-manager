@@ -35,7 +35,7 @@ export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="e.g. Fix the leaking tap in the kitchen tomorrow morning"
-          className="w-full p-4 pr-12 rounded-xl border border-slate-200 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition-all disabled:bg-slate-50"
+          className="w-full p-4 pr-12 rounded-xl border border-border-light focus:outline-none focus:border-brand bg-bg-secondary text-text-main transition-all placeholder:text-text-sub/50"
           disabled={isProcessing}
         />
         <button
