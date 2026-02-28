@@ -8,6 +8,7 @@ import type { CreateTaskInput } from "../features/tasks/types";
 import useGetTask from "../features/tasks/hooks/useGetTask";
 import axios from "axios";
 import type { TaskError } from "../utils/validators";
+import { LoadingState } from "../components/ui";
 
 export default function DecomposeTask() {
   const { taskId } = useParams();
@@ -77,12 +78,7 @@ export default function DecomposeTask() {
     }
   }
 
-  if (loadingParent)
-    return (
-      <div className="p-10 text-center text-text-sub">
-        Loading task context...
-      </div>
-    );
+  if (loadingParent) return <LoadingState />;
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
