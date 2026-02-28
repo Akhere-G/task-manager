@@ -62,6 +62,21 @@ export default function DecomposeTask() {
     closeEditPopup();
   };
 
+  const handleAdd = () => {
+    if (parentTask)
+      setStagedTasks((prev) => [
+        ...prev,
+        {
+          title: `Task #${prev.length + 1}`,
+          category: parentTask.category,
+          description: "",
+          dueDate: parentTask.dueDate,
+          estimatedTime: 30,
+        },
+      ]);
+  };
+  const handleClear = () => setStagedTasks([]);
+
   async function handleConfirmAll() {
     setIsSubmitting(true);
     try {
@@ -92,7 +107,7 @@ export default function DecomposeTask() {
     return <ErrorState error="Sorry, this task doesn't exist..." />;
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
+    <div className="space-y-8">
       <section className="flex flex-col gap-6 min-h-full card">
         <header>
           <h1 className="text-3xl font-bold text-text-main transition-colors">
@@ -179,80 +194,19 @@ export default function DecomposeTask() {
       )}
       {parentTask && stagedTasks.length > 0 && (
         <section className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {stagedTasks.map((task, index) => (
-              <div
-                className="relative"
-                key={task.title}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("task", index.toString());
-                }}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  const id = Number(e.dataTransfer.getData("task"));
-                  const tasks = [...stagedTasks];
+          <TaskList
+            stagedTasks={stagedTasks}
+            setStagedTasks={setStagedTasks}
+            handleDeleteStaged={handleDeleteStaged}
+          />
 
-                  const temp = tasks[index];
-                  tasks[index] = tasks[id];
-                  tasks[id] = temp;
-                  setStagedTasks(tasks);
-                }}
-              >
-                <TaskCard
-                  {...task}
-                  titleIcon={<Move width={20} height={20} />}
-                  id={index}
-                  showSetIsComplete={false}
-                  showPomodoro={false}
-                  showDecompose={false}
-                  onDelete={(task) => handleDeleteStaged(task.id)}
-                  isCompleted={false}
-                  createdAt=""
-                  completedAt={null}
-                />
-              </div>
-            ))}
-          </div>
-
-          <footer className="sticky bottom-6 flex justify-end gap-4 bg-surface/80 backdrop-blur-md p-4 rounded-xl border shadow-lg">
-            <button
-              className="btn-secondary flex items-center gap-2"
-              onClick={() =>
-                setStagedTasks((prev) => [
-                  ...prev,
-                  {
-                    title: `Task #${prev.length + 1}`,
-                    category: parentTask.category,
-                    description: "",
-                    dueDate: parentTask.dueDate,
-                    estimatedTime: 30,
-                  },
-                ])
-              }
-            >
-              <Plus size={18} /> Add new Task
-            </button>
-            <button
-              onClick={() => setStagedTasks([])}
-              className="btn-secondary"
-              disabled={isSubmitting}
-            >
-              Clear All
-            </button>
-            <button
-              onClick={handleConfirmAll}
-              className="btn-primary flex items-center gap-2"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Plus size={18} />
-              )}
-              Confirm and Add {stagedTasks.length} Tasks
-            </button>
-          </footer>
+          <AddTaskFooter
+            handleAdd={handleAdd}
+            handleClear={handleClear}
+            handleConfirmAll={handleConfirmAll}
+            isSubmitting={isSubmitting}
+            length={stagedTasks.length}
+          />
         </section>
       )}
       {selectedEditTask && (
@@ -270,5 +224,99 @@ export default function DecomposeTask() {
         </Popup>
       )}
     </div>
+  );
+}
+
+interface TaskListProps {
+  stagedTasks: CreateTaskInput[];
+  setStagedTasks: (tasks: CreateTaskInput[]) => void;
+  handleDeleteStaged: (id: number) => void;
+}
+
+function TaskList({
+  stagedTasks,
+  setStagedTasks,
+  handleDeleteStaged,
+}: TaskListProps) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {stagedTasks.map((task, index) => (
+        <div
+          className="relative"
+          key={task.title}
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData("task", index.toString());
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            const id = Number(e.dataTransfer.getData("task"));
+            const tasks = [...stagedTasks];
+
+            const temp = tasks[index];
+            tasks[index] = tasks[id];
+            tasks[id] = temp;
+            setStagedTasks(tasks);
+          }}
+        >
+          <TaskCard
+            {...task}
+            titleIcon={<Move width={20} height={20} />}
+            id={index}
+            showSetIsComplete={false}
+            showPomodoro={false}
+            showDecompose={false}
+            onDelete={(task) => handleDeleteStaged(task.id)}
+            isCompleted={false}
+            createdAt=""
+            completedAt={null}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+interface AddTaskFooterProps {
+  handleAdd: () => void;
+  handleClear: () => void;
+  handleConfirmAll: () => void;
+  isSubmitting: boolean;
+  length: number;
+}
+function AddTaskFooter({
+  handleAdd,
+  handleClear,
+  handleConfirmAll,
+  isSubmitting,
+  length,
+}: AddTaskFooterProps) {
+  return (
+    <footer className="sticky bottom-6 flex justify-end gap-4 bg-surface/80 backdrop-blur-md p-4 rounded-xl border shadow-lg">
+      <button
+        className="btn-secondary flex items-center gap-2"
+        onClick={handleAdd}
+      >
+        <Plus size={18} /> Add new Task
+      </button>
+      <button
+        onClick={handleClear}
+        className="btn-secondary"
+        disabled={isSubmitting}
+      >
+        Clear All
+      </button>
+      <button
+        onClick={handleConfirmAll}
+        className="btn-primary flex items-center gap-2"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <Loader2 className="animate-spin" />
+        ) : (
+          <Plus size={18} />
+        )}
+        Confirm and Add {length} Tasks
+      </button>
+    </footer>
   );
 }

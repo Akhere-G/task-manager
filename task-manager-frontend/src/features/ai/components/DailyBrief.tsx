@@ -8,9 +8,7 @@ const DailyBrief = () => {
   const [isOpen, setIsOpen] = useState(true);
 
   if (isLoading)
-    return (
-      <div className="w-full h-32 bg-slate-100 animate-pulse rounded-xl" />
-    );
+    return <div className="w-full h-32 bg-surface animate-pulse rounded-xl" />;
   if (isError)
     return <div className="text-red-500">Error loading brief...</div>;
   if (!brief) return null;
