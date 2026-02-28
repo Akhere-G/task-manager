@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Sparkles, Plus, Loader2 } from "lucide-react";
+import { Sparkles, Plus, Loader2, Move } from "lucide-react";
 import { aiService, taskService } from "../services/api";
 import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
 import TaskCard from "../features/tasks/components/TaskCard";
@@ -181,18 +181,37 @@ export default function DecomposeTask() {
         <section className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {stagedTasks.map((task, index) => (
-              <TaskCard
+              <div
+                className="relative"
                 key={task.title}
-                {...task}
-                id={index}
-                showSetIsComplete={false}
-                showPomodoro={false}
-                showDecompose={false}
-                onDelete={(task) => handleDeleteStaged(task.id)}
-                isCompleted={false}
-                createdAt=""
-                completedAt={null}
-              />
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("task", index.toString());
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  const id = Number(e.dataTransfer.getData("task"));
+                  const tasks = [...stagedTasks];
+
+                  const temp = tasks[index];
+                  tasks[index] = tasks[id];
+                  tasks[id] = temp;
+                  setStagedTasks(tasks);
+                }}
+              >
+                <TaskCard
+                  {...task}
+                  titleIcon={<Move width={20} height={20} />}
+                  id={index}
+                  showSetIsComplete={false}
+                  showPomodoro={false}
+                  showDecompose={false}
+                  onDelete={(task) => handleDeleteStaged(task.id)}
+                  isCompleted={false}
+                  createdAt=""
+                  completedAt={null}
+                />
+              </div>
             ))}
           </div>
 

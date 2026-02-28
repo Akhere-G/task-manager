@@ -15,6 +15,7 @@ import { useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
 
 interface TaskCardProps extends Task {
+  titleIcon?: React.ReactNode;
   setIsCompleted: (id: number, isComplete: boolean) => void;
   onDelete: (task: Task) => void;
   onEdit: (task: Task) => void;
@@ -26,6 +27,7 @@ interface TaskCardProps extends Task {
 }
 
 function TaskCard({
+  titleIcon,
   setIsCompleted,
   onDelete,
   onEdit,
@@ -75,8 +77,9 @@ function TaskCard({
       `}
       >
         <h3
-          className={`font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}
+          className={`flex gap-2 font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}
         >
+          {titleIcon}
           {title}
         </h3>
         <span className="text-xs font-mono shrink-0 bg-white/20 px-2 py-0.5 rounded">
@@ -197,6 +200,7 @@ function TaskCard({
 }
 
 interface TaskCardConnectedProps extends Task {
+  titleIcon?: React.ReactNode;
   setIsCompleted?: (id: number, isComplete: boolean) => void;
   onDelete?: (task: Task) => void;
   onEdit?: (task: Task) => void;
