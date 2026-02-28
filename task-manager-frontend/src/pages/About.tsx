@@ -1,15 +1,54 @@
 import React from "react";
 import {
-  Target,
   BarChart3,
-  Activity,
-  PieChart,
-  Clock,
   Timer,
   Cpu,
+  Zap,
+  Split,
+  BrainCircuit,
+  LayoutList,
 } from "lucide-react";
 
 export default function AboutPage() {
+  const FEATURES = [
+    {
+      icon: <LayoutList className="text-brand" size={28} />,
+      title: "Flexible Views",
+      description:
+        "Switch between a clean list and a full calendar. Use smart filters and sorting to see exactly what needs your attention right now.",
+    },
+    {
+      icon: <BrainCircuit className="text-brand" size={28} />,
+      title: "Your Daily Brief",
+      description:
+        "Start your day with an AI coach. It looks at your pending and overdue tasks to suggest the best plan of action for a productive morning.",
+    },
+    {
+      icon: <Split className="text-brand" size={28} />,
+      title: "Break It Down",
+      description:
+        "Don't let big projects overwhelm you. Our AI can take a single large task and split it into a clear, manageable checklist of smaller steps.",
+    },
+    {
+      icon: <Zap className="text-brand" size={28} />,
+      title: "Quick-Add Tools",
+      description:
+        "Add tasks instantly by typing naturally with our AI assistant, or upload a CSV file to move an entire project's worth of tasks in one go.",
+    },
+    {
+      icon: <BarChart3 className="text-brand" size={28} />,
+      title: "Insightful Stats",
+      description:
+        "Track your progress with easy-to-read charts. Monitor your backlog, spot your busiest days, and see exactly where your time is going.",
+    },
+    {
+      icon: <Timer className="text-brand" size={28} />,
+      title: "Pomodoro Timer",
+      description:
+        "Boost your focus using timed work intervals. Every session you complete is automatically logged against your tasks for accurate time-tracking.",
+    },
+  ];
+
   return (
     <div>
       {/* Hero Section */}
@@ -29,36 +68,14 @@ export default function AboutPage() {
         Core Methodology
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-        <FeatureCard
-          icon={<Target className="text-brand" size={28} />}
-          title="Task Status"
-          description="A real-time snapshot of your backlog health, categorising items into Completed, Overdue, and Pending statuses."
-        />
-        <FeatureCard
-          icon={<BarChart3 className="text-brand" size={28} />}
-          title="Productivity Trends"
-          description="Visualise your monthly output velocity to identify peak performance windows and maintain long-term consistency."
-        />
-        <FeatureCard
-          icon={<Activity className="text-brand" size={28} />}
-          title="Activity Map"
-          description="A high-density heatmap documenting every completed task over the last 365 days to monitor behavioural patterns."
-        />
-        <FeatureCard
-          icon={<PieChart className="text-brand" size={28} />}
-          title="Active Balance"
-          description="Monitor your cognitive load across categories. See exactly where your pending commitments are currently concentrated."
-        />
-        <FeatureCard
-          icon={<Clock className="text-brand" size={28} />}
-          title="Time Allocation"
-          description="Analyse the actual minutes invested into each category for completed work to ensure effort matches your priorities."
-        />
-        <FeatureCard
-          icon={<Timer className="text-brand" size={28} />}
-          title="Pomodoro Engine"
-          description="Utilise structured focus intervals to boost concentration, with automated session syncing to your time-tracking metrics."
-        />
+        {FEATURES.map((feature) => (
+          <FeatureCard
+            key={feature.title}
+            icon={feature.icon}
+            title={feature.title}
+            description={feature.description}
+          />
+        ))}
       </div>
 
       {/* Technology Section */}
@@ -72,12 +89,17 @@ export default function AboutPage() {
               </h2>
             </div>
             <p className="text-text-sub leading-relaxed text-lg">
-              Our system utilises a robust <strong>Python & Flask</strong> REST
-              API on the backend, delivering highly structured data to a
-              reactive <strong>TypeScript</strong> frontend. This ensures that
-              complex calculations—such as <strong>visualising</strong> yearly
-              activity and <strong>categorising</strong> workload balance—are
-              rendered with surgical precision.
+              Our platform is built on a modern full-stack architecture designed
+              for high performance. We utilise a{" "}
+              <strong>Python and Flask</strong> backend to handle the heavy
+              lifting, from <strong>database management</strong> to{" "}
+              <strong>AI-driven logic</strong>. On the frontend,{" "}
+              <strong>Axios</strong> manages efficient API communication, while{" "}
+              <strong>TanStack Query</strong> provides{" "}
+              <strong>seamless state management</strong> and{" "}
+              <strong>asynchronous data caching</strong>. Built with{" "}
+              <strong>TypeScript, React and Tailwind CSS</strong>, this setup
+              ensures a snappy, type-safe interface.
             </p>
           </div>
 
