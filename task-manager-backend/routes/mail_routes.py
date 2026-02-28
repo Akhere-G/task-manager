@@ -69,7 +69,6 @@ def handle_contact():
         ms.emails.send(email)
 
     except Exception as e:
-        print(e)
         return jsonify({"message": "Enquiry could not be sent"}), 400
 
     return jsonify({"message": "Enquiry sent successfully"}), 201

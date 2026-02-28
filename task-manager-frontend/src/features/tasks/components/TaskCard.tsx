@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   Play,
+  Sparkles,
 } from "lucide-react";
 import { useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
@@ -17,12 +18,22 @@ interface TaskCardProps extends Task {
   setIsCompleted: (id: number, isComplete: boolean) => void;
   onDelete: (task: Task) => void;
   onEdit: (task: Task) => void;
+  showDelete?: boolean;
+  showEdit?: boolean;
+  showPomodoro?: boolean;
+  showSetIsComplete?: boolean;
+  showDecompose?: boolean;
 }
 
 function TaskCard({
   setIsCompleted,
   onDelete,
   onEdit,
+  showDelete = true,
+  showEdit = true,
+  showPomodoro = true,
+  showSetIsComplete = true,
+  showDecompose = true,
   ...task
 }: TaskCardProps) {
   const {
@@ -110,30 +121,34 @@ function TaskCard({
         </div>
 
         <div className="flex gap-3">
-          <button
-            onClick={() => onDelete(task)}
-            title="Delete Task"
-            aria-label={`Delete task: ${title}`}
-            className="p-1.5 rounded-md hover:bg-failure/10 transition-colors group cursor-pointer"
-          >
-            <Trash2
-              aria-hidden="true"
-              className="w-5 h-5 text-failure/70 group-hover:text-failure group-hover:scale-110 transition-all"
-            />
-          </button>
+          {showDelete && (
+            <button
+              onClick={() => onDelete(task)}
+              title="Delete Task"
+              aria-label={`Delete task: ${title}`}
+              className="p-1.5 rounded-md hover:bg-failure/10 transition-colors group cursor-pointer"
+            >
+              <Trash2
+                aria-hidden="true"
+                className="w-5 h-5 text-failure/70 group-hover:text-failure group-hover:scale-110 transition-all"
+              />
+            </button>
+          )}
 
-          <button
-            onClick={() => onEdit(task)}
-            title="Edit Task"
-            aria-label={`Edit task: ${title}`}
-            className="p-1.5 rounded-md hover:bg-info/10 transition-colors group cursor-pointer"
-          >
-            <Pencil
-              aria-hidden="true"
-              className="w-5 h-5 text-info/70 group-hover:text-info group-hover:scale-110 transition-all"
-            />
-          </button>
-          {!task.isCompleted && (
+          {showEdit && (
+            <button
+              onClick={() => onEdit(task)}
+              title="Edit Task"
+              aria-label={`Edit task: ${title}`}
+              className="p-1.5 rounded-md hover:bg-info/10 transition-colors group cursor-pointer"
+            >
+              <Pencil
+                aria-hidden="true"
+                className="w-5 h-5 text-info/70 group-hover:text-info group-hover:scale-110 transition-all"
+              />
+            </button>
+          )}
+          {!task.isCompleted && showPomodoro && (
             <button
               onClick={() => navigate(`/pomodoro/${task.id}`)}
               title="Start Task"
@@ -146,20 +161,35 @@ function TaskCard({
               />
             </button>
           )}
-          <button
-            onClick={() => setIsCompleted(id, !isCompleted)}
-            title={isCompleted ? "Mark as pending" : "Mark as complete"}
-            aria-label={
-              isCompleted ? "Mark task as pending" : "Mark task as complete"
-            }
-            className="p-1.5 rounded-md hover:bg-success/10 transition-colors group cursor-pointer"
-          >
-            <CheckCircle
-              aria-hidden="true"
-              className={`w-5 h-5 transition-all group-hover:scale-110 
+          {showSetIsComplete && (
+            <button
+              onClick={() => setIsCompleted(id, !isCompleted)}
+              title={isCompleted ? "Mark as pending" : "Mark as complete"}
+              aria-label={
+                isCompleted ? "Mark task as pending" : "Mark task as complete"
+              }
+              className="p-1.5 rounded-md hover:bg-success/10 transition-colors group cursor-pointer"
+            >
+              <CheckCircle
+                aria-hidden="true"
+                className={`w-5 h-5 transition-all group-hover:scale-110 
                 ${isCompleted ? "text-success fill-success/20" : "text-text-sub group-hover:text-success"}`}
-            />
-          </button>
+              />
+            </button>
+          )}
+          {!task.isCompleted && showDecompose && (
+            <button
+              onClick={() => navigate(`/breakdown/${task.id}`)}
+              title="Break down Task"
+              aria-label={`Break down task: ${title}`}
+              className="p-1.5 rounded-md hover:bg-brand/10 transition-colors group cursor-pointer"
+            >
+              <Sparkles
+                aria-hidden="true"
+                className="w-5 h-5 text-brand/70 group-hover:text-brand group-hover:scale-110 transition-all"
+              />
+            </button>
+          )}
         </div>
       </footer>
     </article>
@@ -170,6 +200,11 @@ interface TaskCardConnectedProps extends Task {
   setIsCompleted?: (id: number, isComplete: boolean) => void;
   onDelete?: (task: Task) => void;
   onEdit?: (task: Task) => void;
+  showDelete?: boolean;
+  showEdit?: boolean;
+  showPomodoro?: boolean;
+  showSetIsComplete?: boolean;
+  showDecompose?: boolean;
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps) {
   const { setIsCompleted, handleConfirmDelete, handleConfirmEdit } =

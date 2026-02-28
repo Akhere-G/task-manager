@@ -9,6 +9,7 @@ import {
   CalendarView,
   Register,
   Login,
+  DecomposeTask,
 } from "./pages";
 import { Footer, Header, ProtectedRoute } from "./components/layout";
 import { useAuthContext } from "./context/AuthContext";
@@ -88,6 +89,14 @@ function App() {
             element={
               <ProtectedRoute redirect={!isAuthenticated}>
                 <Pomodoro />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/breakdown/:taskId"
+            element={
+              <ProtectedRoute redirect={!isAuthenticated}>
+                <DecomposeTask />
               </ProtectedRoute>
             }
           />

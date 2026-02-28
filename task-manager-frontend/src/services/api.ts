@@ -128,6 +128,10 @@ export interface DailyBrief {
   brief: string;
 }
 
+export interface DecomposeTaskResult {
+  tasks: CreateTaskInput[];
+}
+
 export const aiService = {
   getDailyBrief: async (): Promise<DailyBrief> => {
     const response = await api.get("/ai/daily-brief");
@@ -135,6 +139,12 @@ export const aiService = {
   },
   parseTask: async (text: string): Promise<CreateTaskInput> => {
     const response = await api.post("/ai/parse-task", { text });
+    return response.data;
+  },
+  decomposeTask: async (
+    task: CreateTaskInput,
+  ): Promise<DecomposeTaskResult> => {
+    const response = await api.post("ai/decompose", task);
     return response.data;
   },
 };

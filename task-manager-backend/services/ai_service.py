@@ -183,7 +183,6 @@ def decompose_task(title, description, category, due_date, estimated_time):
     """
     try:
         raw_json = get_generated_text(prompt)
-        print("Here 1", raw_json)
 
         clean_json = raw_json.strip()
 
@@ -195,11 +194,9 @@ def decompose_task(title, description, category, due_date, estimated_time):
                 clean_json = clean_json[4:].strip()
 
         tasks = json.loads(clean_json)
-        print("Here 2", tasks)
 
         if not isinstance(tasks, list):
             return []
         return tasks
     except Exception as err:
-        print(err)
         return []
