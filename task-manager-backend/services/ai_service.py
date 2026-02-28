@@ -7,6 +7,20 @@ from db import get_db_connection
 from services.stats_service import get_all_dashboard_stats
 from services.task_service import get_all_tasks
 
+allowed_categories = [
+    "work",
+    "home",
+    "chores",
+    "life-admin",
+    "health",
+    "self-care",
+    "social",
+    "hobbies",
+    "learning",
+    "finance",
+    "general",
+]
+
 
 def get_generated_text(prompt):
     try:
@@ -119,19 +133,6 @@ def generate_daily_brief(user_id):
 
 def parse_task_with_ai(user_input):
     today = date.today().strftime("%Y-%m-%d")
-    allowed_categories = [
-        "work",
-        "home",
-        "chores",
-        "life-admin",
-        "health",
-        "self-care",
-        "social",
-        "hobbies",
-        "learning",
-        "finance",
-        "general",
-    ]
 
     prompt = f"""
     Current Date: {today}
@@ -161,3 +162,44 @@ def parse_task_with_ai(user_input):
             "dueDate": today,
             "estimatedTime": 30,
         }
+
+
+def decompose_task(title, description, category, due_date, estimated_time):
+    today = date.today().strftime("%Y-%m-%d")
+
+    task_details = (
+        f"- {title} ({category}, {description}, {estimated_time}m, {due_date})"
+    )
+
+    prompt = f"""
+    Decompose this task into 3-7 substasks that will help the user complete the task.
+    {task_details}
+    Return only a json list of objects of this format
+    - title: (string)
+    - description: (string or null)
+    - category: (MUST be one of: {", ".join(allowed_categories)})
+    - dueDate: (ISO date string YYYY-MM-DD, assume today is {today})
+    - estimatedTime: (integer in minutes, default 30)
+    """
+    try:
+        raw_json = get_generated_text(prompt)
+        print("Here 1", raw_json)
+
+        clean_json = raw_json.strip()
+
+        if "```" in clean_json:
+            parts = clean_json.split("```")
+            clean_json = parts[1].strip()
+
+            if clean_json.lower().startswith("json"):
+                clean_json = clean_json[4:].strip()
+
+        tasks = json.loads(clean_json)
+        print("Here 2", tasks)
+
+        if not isinstance(tasks, list):
+            return []
+        return tasks
+    except Exception as err:
+        print(err)
+        return []
