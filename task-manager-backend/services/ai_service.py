@@ -26,7 +26,7 @@ def get_generated_text(prompt):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a pragmatic, grounded, and witty British productivity coach.",
+                    "content": "You are a pragmatic and grounded productivity coach. Who uses British English",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -81,7 +81,7 @@ def generate_daily_brief(user_id):
         )
 
         prompt = f"""
-        Persona: Pragmatic, grounded, and witty British productivity coach.
+        Persona: Pragmatic and grounded productivity coach.
         Date: {today.strftime("%A, %d %B")}
         Recent Productivity: {total_completed_week} completed this week. Avg {avg_daily_completion:.1f}/day.
         Current Volume: 
@@ -92,7 +92,7 @@ def generate_daily_brief(user_id):
 
         Instructions:
         1. Give a 'Vibe Check'.
-        2. Identify the 'Big Frog'.
+        2. Identify the 'Main Event'.
         3. Address high overdue counts.
         4. Compare today's workload to the {avg_daily_completion:.1f} average.
         5. Under 125 words, British English, Markdown format.
