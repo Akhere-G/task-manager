@@ -22,7 +22,7 @@ export default function BulkAddForm() {
 
   const triggerUpload = () => fileInputRef.current?.click();
 
-  const downloadTemplate = () => {
+  const downloadTemplate = (withIsCompleted: boolean = false) => {
     const headers = [
       "Title",
       "Category",
@@ -37,6 +37,12 @@ export default function BulkAddForm() {
       "2026-03-01",
       "60",
     ];
+
+    if (withIsCompleted) {
+      headers.push("is_completed, completed_at");
+      sampleData.push("true", "2025-07-12 16:30:00");
+    }
+
     const csvContent = [headers, sampleData].map((e) => e.join(",")).join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -134,30 +140,37 @@ export default function BulkAddForm() {
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-4 items-center">
-        <input
-          onChange={handleChange}
-          className="hidden"
-          type="file"
-          accept=".csv"
-          ref={fileInputRef}
-        />
-
-        <button
-          className="btn-primary"
-          onClick={triggerUpload}
-          disabled={isUploading}
-        >
-          {isUploading ? "Uploading..." : "Upload CSV"}
-        </button>
-
+    <div className="flex gap-4 items-start md:items-baseline flex-col md:flex-row">
+      <input
+        onChange={handleChange}
+        className="hidden"
+        type="file"
+        accept=".csv"
+        ref={fileInputRef}
+      />
+      <button
+        className="btn-primary"
+        onClick={triggerUpload}
+        disabled={isUploading}
+      >
+        {isUploading ? "Uploading..." : "Upload CSV"}
+      </button>
+      <button
+        type="button"
+        onClick={() => downloadTemplate()}
+        className="text-sm cursor-pointer text-accent underline underline-offset-4 hover:text-accent/80"
+      >
+        Download Simple Template
+      </button>
+      <p>or</p>
+      <div className="flex flex-col items-baseline lg:flex-row lg:gap-2 flex-wrap">
+        <p>if you&apos;re exporting from another app</p>
         <button
           type="button"
-          onClick={downloadTemplate}
+          onClick={() => downloadTemplate(true)}
           className="text-sm cursor-pointer text-accent underline underline-offset-4 hover:text-accent/80"
         >
-          Download Template
+          download Advanced Template
         </button>
       </div>
 

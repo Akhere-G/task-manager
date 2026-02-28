@@ -21,7 +21,7 @@ export default function AddTask() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="card flex flex-col items-start gap-4 border-2 border-brand/20 bg-brand/5 shadow-sm">
+      <section className="card flex flex-col  gap-4 border-2">
         <header>
           <h1 className="text-3xl font-bold text-text-main flex items-center gap-2">
             <Sparkles className="text-brand" size={28} /> Magic Populate
