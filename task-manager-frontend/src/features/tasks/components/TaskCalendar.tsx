@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Calendar,
   dateFnsLocalizer,
@@ -57,14 +57,38 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const events = allTasks.map((task) => ({
-    id: task.id,
-    title: task.title,
-    start: new Date(task.dueDate),
-    end: new Date(task.dueDate),
-    allDay: true,
-    resource: task,
-  }));
+  const events = useMemo(() => {
+    if (!isMobile) {
+      return allTasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        start: new Date(task.dueDate),
+        end: new Date(task.dueDate),
+        allDay: true,
+        resource: task,
+      }));
+    }
+
+    // On Mobile: Group tasks by date so we only have one "Event Row" per day
+    const uniqueDayLookup: Record<string, number> = {};
+    allTasks.forEach((task) => {
+      const date = format(new Date(task.dueDate), "yyyy-MM-dd");
+      if (uniqueDayLookup[date]) {
+        uniqueDayLookup[date] += 1;
+      } else {
+        uniqueDayLookup[date] = 1;
+      }
+    });
+
+    return Object.entries(uniqueDayLookup).map(([dayStr, count]) => ({
+      id: dayStr,
+      title: "", // Title not needed for dots
+      start: new Date(dayStr),
+      end: new Date(dayStr),
+      allDay: true,
+      resource: count,
+    }));
+  }, [allTasks, isMobile]);
 
   const tasksForSelectedDay = allTasks.filter((t) =>
     isSameDay(new Date(t.dueDate), currentDate),
@@ -159,11 +183,17 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           })}
           components={{
             toolbar: CustomToolbar,
-            event: ({ title }) => {
+            event: ({ title, event }) => {
               if (isMobile) {
+                const count = Math.min(9, (event as Event).resource);
                 return (
-                  <div className="flex justify-center gap-0.5 mt-1">
-                    <div className={`w-1.5 h-1.5 rounded-full bg-brand`} />
+                  <div className="flex justify-center gap-0.5 mt-1 flex-wrap">
+                    {new Array(count).fill(1).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-1.5 h-1.5 rounded-full bg-brand`}
+                      />
+                    ))}
                   </div>
                 );
               }
@@ -172,7 +202,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           }}
           eventPropGetter={(event: Event) => ({
             className: isMobile
-              ? "!bg-transparent !border-none !shadow-none "
+              ? "!bg-transparent !border-none !shadow-none !pointer-events-none"
               : `!border-none !shadow-sm !rounded-md !px-2 !py-1 !text-xs !font-medium transition-all ${
                   (event.resource as Task).isCompleted
                     ? "!bg-slate-200 !text-slate-500 !line-through"

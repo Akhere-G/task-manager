@@ -123,7 +123,7 @@ function TaskCard({
           </time>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-1">
           {showDelete && (
             <button
               onClick={() => onDelete(task)}
