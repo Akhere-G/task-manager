@@ -1,90 +1,233 @@
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import { useEffect, useState } from "react";
-import type { Task } from "../types";
-import { Popup } from "../../../components/ui";
-import { formatDate } from "../utils";
+import { useState, useEffect } from "react";
+import {
+  Calendar,
+  dateFnsLocalizer,
+  Views,
+  type Event,
+} from "react-big-calendar";
+import withDragAndDrop, {
+  type EventInteractionArgs,
+} from "react-big-calendar/lib/addons/dragAndDrop";
+import { format, parse, startOfWeek, getDay, isSameDay } from "date-fns";
+import { enGB } from "date-fns/locale/en-GB";
+
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+
 import TaskCard from "./TaskCard";
-import interactionPlugin from "@fullcalendar/interaction";
+import { Popup } from "../../../components/ui";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  CheckCircle2,
+  Circle,
+} from "lucide-react";
 import { useTaskContext } from "../../../context/TaskContext";
+import type { Task } from "../types";
 
-interface CalendarProps {
-  tasks: Task[];
-  handleConfirmDelete: (task: Task) => void;
-  handleConfirmEdit: (task: Task) => void;
-  updateTask: (id: number, task: Partial<Task>) => Promise<void>;
-  setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>;
-}
-interface Info {
-  event: { id: string; startStr: string };
-  revert: () => void;
-}
+const locales = { "en-GB": enGB };
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
+  getDay,
+  locales,
+});
 
-function TaskCalendar({
-  tasks,
-  handleConfirmDelete,
-  handleConfirmEdit,
-  updateTask,
-  setIsCompleted,
-}: CalendarProps) {
+const DnDCalendar = withDragAndDrop(Calendar);
+
+export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
+  const { updateTask, handleConfirmDelete, handleConfirmEdit, setIsCompleted } =
+    useTaskContext();
+
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [allTasks, setAllTasks] = useState(tasks);
+  const [allTasks, setAllTasks] = useState<Task[]>(tasks);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setAllTasks(tasks);
   }, [tasks]);
 
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const events = allTasks.map((task) => ({
+    id: task.id,
     title: task.title,
-    date: formatDate(task.dueDate),
-    id: String(task.id),
-    extendedProps: task,
+    start: new Date(task.dueDate),
+    end: new Date(task.dueDate),
+    allDay: true,
+    resource: task,
   }));
 
-  async function handleEventDrop(info: Info) {
-    const { event } = info;
+  const tasksForSelectedDay = allTasks.filter((t) =>
+    isSameDay(new Date(t.dueDate), currentDate),
+  );
 
-    const dueDate = event.startStr;
-    const taskId = Number(event.id);
+  const onEventDrop = async ({
+    event,
+    start,
+  }: EventInteractionArgs<object>) => {
+    const formattedDate = format(new Date(start as Date), "yyyy-MM-dd");
+    const taskId = (event as Task).id;
+    const previousTasks = [...allTasks];
+
+    setAllTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, dueDate: formattedDate } : t)),
+    );
 
     try {
-      setAllTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, dueDate } : t)),
-      );
-      await updateTask(taskId, { dueDate });
+      await updateTask(taskId, { dueDate: formattedDate });
     } catch (err) {
-      console.error(err);
-      info.revert();
-      alert("Failed to move the task. Please try again.");
+      console.error("Failed to update task date", err);
+      setAllTasks(previousTasks);
     }
-  }
+  };
+
+  const CustomToolbar = () => {
+    const goToBack = () => {
+      const m = new Date(currentDate);
+      m.setMonth(m.getMonth() - 1);
+      setCurrentDate(m);
+    };
+    const goToNext = () => {
+      const m = new Date(currentDate);
+      m.setMonth(m.getMonth() + 1);
+      setCurrentDate(m);
+    };
+    return (
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <CalendarIcon className="text-brand" size={20} />
+          <h2 className="text-lg md:text-2xl font-bold text-text-main">
+            {format(currentDate, "MMMM yyyy")}
+          </h2>
+        </div>
+        <div className="flex items-center bg-surface-muted p-1 rounded-lg border border-border-light shadow-sm">
+          <button
+            onClick={goToBack}
+            className="p-1.5 hover:bg-surface rounded-md transition-colors"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={() => setCurrentDate(new Date())}
+            className="px-3 py-1 text-xs font-semibold border-x border-border-light"
+          >
+            Today
+          </button>
+          <button
+            onClick={goToNext}
+            className="p-1.5 hover:bg-surface rounded-md transition-colors"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="card">
-      <FullCalendar
-        plugins={[dayGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        events={events}
-        editable
-        eventDrop={handleEventDrop}
-        eventClick={({ event }) => setSelectedTask(event.extendedProps as Task)}
-        eventContent={({ event }) => {
-          return (
-            <div
-              draggable
-              className={`px-2 py-0.5 rounded text-xs transition-all shadow-sm cursor-pointer active:cursor-grabbing 
-              truncate hover:brightness-95
-              ${
-                event.extendedProps.isCompleted
-                  ? "bg-surface-muted text-text-sub border-l-4 border-surface-muted/90 hover:brightness-125"
-                  : "bg-brand text-text-inverse border-l-4 border-brand/5 hover:brightness-125"
-              }`}
-            >
-              <span className="font-semibold">{event.title}</span>
+    <div className="space-y-6">
+      <div className="card p-2 md:p-6 bg-surface shadow-xl border-border-light h-112.5 md:h-200">
+        <DnDCalendar
+          localizer={localizer}
+          events={events}
+          date={currentDate}
+          onNavigate={(date) => setCurrentDate(date as Date)}
+          onDrillDown={(date) => setCurrentDate(date)}
+          onSelectSlot={({ start }) => setCurrentDate(start as Date)}
+          selectable
+          messages={{ showMore: () => isMobile }}
+          view={Views.MONTH}
+          views={[Views.MONTH]}
+          onEventDrop={onEventDrop}
+          // Disabled on mobile so dots aren't clickable
+          onSelectEvent={(event: Event) =>
+            !isMobile && setSelectedTask(event.resource as Task)
+          }
+          dayPropGetter={(date) => ({
+            className: isSameDay(date, currentDate)
+              ? "!bg-brand/5 !border-brand/30 border-2 rounded-lg"
+              : "",
+          })}
+          components={{
+            toolbar: CustomToolbar,
+            event: ({ title }) => {
+              if (isMobile) {
+                return (
+                  <div className="flex justify-center gap-0.5 mt-1">
+                    <div className={`w-1.5 h-1.5 rounded-full bg-brand`} />
+                  </div>
+                );
+              }
+              return <span className="text-xs truncate">{title}</span>;
+            },
+          }}
+          eventPropGetter={(event: Event) => ({
+            className: isMobile
+              ? "!bg-transparent !border-none !shadow-none "
+              : `!border-none !shadow-sm !rounded-md !px-2 !py-1 !text-xs !font-medium transition-all ${
+                  (event.resource as Task).isCompleted
+                    ? "!bg-slate-200 !text-slate-500 !line-through"
+                    : "!bg-brand !text-white"
+                }`,
+          })}
+        />
+      </div>
+
+      <div className="md:hidden space-y-4">
+        <div className="flex items-center justify-between border-b border-border-light pb-2 px-1">
+          <p className="text-sm font-bold text-text-sub uppercase tracking-widest">
+            {format(currentDate, "do MMMM")}
+          </p>
+          <span className="text-xs font-medium text-brand bg-brand/10 px-2 py-0.5 rounded-full">
+            {tasksForSelectedDay.length} Tasks
+          </span>
+        </div>
+
+        <div className="grid gap-2">
+          {tasksForSelectedDay.length > 0 ? (
+            tasksForSelectedDay.map((task) => (
+              <div
+                key={task.id}
+                className="flex items-center justify-between p-4 bg-surface border border-border-light rounded-2xl shadow-sm active:bg-surface-muted transition-colors"
+                onClick={() => setSelectedTask(task)}
+              >
+                <div className="flex items-center gap-4 ">
+                  <button
+                    onClick={() => {
+                      setIsCompleted(task.id, !task.isCompleted);
+                    }}
+                  >
+                    {task.isCompleted ? (
+                      <CheckCircle2 size={24} className="text-brand" />
+                    ) : (
+                      <Circle size={24} className="text-slate-300" />
+                    )}
+                  </button>
+                  <span
+                    className={`text-base font-semibold truncate ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
+                  >
+                    {task.title}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-10 text-center border-2 border-dashed border-slate-100 rounded-3xl bg-surface">
+              <p className="text-text-sub text-sm italic">No tasks today.</p>
             </div>
-          );
-        }}
-      />
+          )}
+        </div>
+      </div>
+
       {selectedTask && (
         <Popup
           title=""
@@ -102,28 +245,13 @@ function TaskCalendar({
               handleConfirmEdit(task);
               setSelectedTask(null);
             }}
-            setIsCompleted={(id) => {
-              setIsCompleted(id, !selectedTask.id);
+            setIsCompleted={(id, completed) => {
+              setIsCompleted(id, completed);
               setSelectedTask(null);
             }}
           />
         </Popup>
       )}
     </div>
-  );
-}
-
-export default function TaskCalendarConnected({ tasks }: { tasks: Task[] }) {
-  const { handleConfirmDelete, handleConfirmEdit, setIsCompleted, updateTask } =
-    useTaskContext();
-
-  return (
-    <TaskCalendar
-      tasks={tasks}
-      handleConfirmDelete={handleConfirmDelete}
-      handleConfirmEdit={handleConfirmEdit}
-      setIsCompleted={setIsCompleted}
-      updateTask={updateTask}
-    />
   );
 }

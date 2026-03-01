@@ -1,7 +1,7 @@
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { formatDate } from '../utils';
-import { taskService } from '../../../services/api';
-import { useDeferredValue, useEffect, useState } from 'react';
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { formatDate } from "../utils";
+import { taskService } from "../../../services/api";
+import { useDeferredValue, useEffect, useState } from "react";
 
 export interface TaskFilters {
   search: string;
@@ -42,7 +42,15 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
   const deferredSearch = useDeferredValue(filters.search);
 
   const result = useQuery({
-    queryKey: ['tasks', { ...filters, search: deferredSearch, page: pageDetails.currentPage, perPage }],
+    queryKey: [
+      "tasks",
+      {
+        ...filters,
+        search: deferredSearch,
+        page: pageDetails.currentPage,
+        perPage,
+      },
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
 
@@ -75,27 +83,32 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
       return await taskService.getAll(params);
     },
     placeholderData: keepPreviousData,
-    staleTime: 1000 * 60 * 5, 
+    staleTime: 1000 * 60 * 5,
   });
 
   useEffect(() => {
-    const { data } = result
+    const { data } = result;
     if (data) {
       setPageDetails((prev) => ({
         totalPages: data.totalPages,
         totalItems: data.totalTasks,
-        currentPage: (data.totalPages < prev.currentPage && data.totalPages > 0) 
-          ? data.totalPages 
-          : prev.currentPage // if deleting a task on a page with one task, go to previous page
+        currentPage:
+          data.totalPages < prev.currentPage && data.totalPages > 0
+            ? data.totalPages
+            : prev.currentPage, // if deleting a task on a page with one task, go to previous page
       }));
     }
   }, [result.data?.totalPages, result.data?.totalTasks]);
 
-  const updateFilters = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-      setPageDetails((prev) => ({ ...prev, currentPage: 1 }));
-      setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    };
-  
+  const updateFilters = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
+    setPageDetails((prev) => ({ ...prev, currentPage: 1 }));
+    setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
   const resetFilters = () => {
     setFilters({
       search: "",
@@ -107,30 +120,30 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
       order: "asc",
     });
   };
-  
+
   const setPage = (page: number) => {
     setPageDetails((prev) => ({ ...prev, currentPage: page }));
   };
-  
+
   const isStale = result.isFetching || filters.search !== deferredSearch;
-  
+
   const isSearching =
     !!filters.search.trim() ||
     !!filters.category ||
     !!filters.duration ||
-    filters.isCompleted !== 'false' ||
+    filters.isCompleted !== "false" ||
     !!filters.dueDate;
 
   return {
     ...result,
-    error: result.error ? "Could not get tasks." : "", 
-    pageDetails, 
-    setPageDetails, 
-    filters, 
-    setPage, 
-    isStale, 
+    error: result.error ? "Could not get tasks." : "",
+    pageDetails,
+    setPageDetails,
+    filters,
+    setPage,
+    isStale,
     isSearching,
     updateFilters,
-    resetFilters
-  }
+    resetFilters,
+  };
 };

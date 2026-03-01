@@ -45,9 +45,7 @@ export default function CalendarView() {
         sortable={false}
         showDueDateFilter={false}
       />
-      <section
-        className={`transition-opacity duration-200 ${isStale ? "opacity-75" : "opacity-100"}`}
-      >
+      <section className={`transition-opacity duration-200`}>
         {MainContent}
       </section>
       <TaskPopups />
