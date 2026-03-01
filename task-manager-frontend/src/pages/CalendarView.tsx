@@ -8,7 +8,6 @@ export default function CalendarView() {
     data,
     isLoading,
     error,
-    isStale,
     isSearching,
     filters,
     resetFilters,
