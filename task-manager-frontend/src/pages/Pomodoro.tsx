@@ -47,7 +47,7 @@ export default function Pomodoro() {
   } = task;
 
   if (isCompleted) {
-    navigate("/");
+    navigate(-1);
     return <></>;
   }
   const isOverdue = !isCompleted && new Date(dueDate) < new Date();
@@ -158,7 +158,7 @@ export default function Pomodoro() {
           title={`Complete task: ${title}?`}
           handleConfirm={() => {
             setIsCompleted(id, true);
-            navigate("/");
+            navigate(-1);
           }}
           actionButtonVariant="primary"
         >

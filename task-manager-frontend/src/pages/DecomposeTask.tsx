@@ -82,7 +82,7 @@ export default function DecomposeTask() {
     try {
       await taskService.createAll(stagedTasks);
       invalidateTaskKeys();
-      navigate("/");
+      navigate(-1);
     } catch (err) {
       console.error("Bulk creation failed", err);
 
