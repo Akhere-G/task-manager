@@ -4,7 +4,7 @@ import { Sparkles, Plus, Loader2, Move } from "lucide-react";
 import { aiService, taskService } from "../services/api";
 import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
 import TaskCard from "../features/tasks/components/TaskCard";
-import type { CreateTaskInput } from "../features/tasks/types";
+import type { CreateTaskInput, Task } from "../features/tasks/types";
 import useGetTask from "../features/tasks/hooks/useGetTask";
 import axios from "axios";
 import type { TaskError } from "../utils/validators";
@@ -13,6 +13,7 @@ import { TaskForm } from "../features/tasks/components";
 import { useTaskContext } from "../context/TaskContext";
 
 export default function DecomposeTask() {
+  const [idCount, setIdCount] = useState(0);
   const { taskId } = useParams();
   const navigate = useNavigate();
   const invalidateTaskKeys = useInvalidateTaskKeys();
@@ -23,7 +24,7 @@ export default function DecomposeTask() {
     isError: isGetParentError,
   } = useGetTask(Number(taskId));
 
-  const [stagedTasks, setStagedTasks] = useState<CreateTaskInput[]>([]);
+  const [stagedTasks, setStagedTasks] = useState<Task[]>([]);
   const [isDecomposing, setIsDecomposing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bulkAddErrors, setBulkAddErrors] = useState("");
@@ -36,7 +37,15 @@ export default function DecomposeTask() {
     setIsDecomposing(true);
     try {
       const { tasks } = await aiService.decomposeTask(parentTask);
-      setStagedTasks(tasks);
+      const formattedTasks: Task[] = tasks.map((task, id) => ({
+        ...task,
+        id,
+        isCompleted: false,
+        createdAt: "",
+        completedAt: null,
+      }));
+      setStagedTasks(formattedTasks);
+      setIdCount(formattedTasks.length);
       setDecomposeErrors("");
     } catch (err) {
       console.error("Failed to decompose task", err);
@@ -56,7 +65,7 @@ export default function DecomposeTask() {
   const handleEdit = async (updatedTask: CreateTaskInput) => {
     const id = selectedEditTask?.id;
     const updated = stagedTasks.map((task, i) =>
-      i === id ? updatedTask : task,
+      i === id ? { ...task, ...updatedTask } : task,
     );
     setStagedTasks(updated);
     closeEditPopup();
@@ -72,12 +81,19 @@ export default function DecomposeTask() {
           description: "",
           dueDate: parentTask.dueDate,
           estimatedTime: 30,
+          id: idCount + 1,
+          createdAt: "",
+          isCompleted: false,
+          completedAt: null,
         },
       ]);
+    setIdCount((prev) => prev + 1);
   };
+
   const handleClear = () => setStagedTasks([]);
 
   async function handleConfirmAll() {
+    if (stagedTasks.length === 0) return;
     setIsSubmitting(true);
     try {
       await taskService.createAll(stagedTasks);
@@ -193,22 +209,19 @@ export default function DecomposeTask() {
         </div>
       )}
       {parentTask && stagedTasks.length > 0 && (
-        <section className="space-y-6">
-          <TaskList
-            stagedTasks={stagedTasks}
-            setStagedTasks={setStagedTasks}
-            handleDeleteStaged={handleDeleteStaged}
-          />
-
-          <AddTaskFooter
-            handleAdd={handleAdd}
-            handleClear={handleClear}
-            handleConfirmAll={handleConfirmAll}
-            isSubmitting={isSubmitting}
-            length={stagedTasks.length}
-          />
-        </section>
+        <TaskList
+          stagedTasks={stagedTasks}
+          setStagedTasks={setStagedTasks}
+          handleDeleteStaged={handleDeleteStaged}
+        />
       )}
+      <AddTaskFooter
+        handleAdd={handleAdd}
+        handleClear={handleClear}
+        handleConfirmAll={handleConfirmAll}
+        isSubmitting={isSubmitting}
+        length={stagedTasks.length}
+      />
       {selectedEditTask && (
         <Popup
           title={`Edit task '${selectedEditTask.title}'?`}
@@ -228,8 +241,8 @@ export default function DecomposeTask() {
 }
 
 interface TaskListProps {
-  stagedTasks: CreateTaskInput[];
-  setStagedTasks: (tasks: CreateTaskInput[]) => void;
+  stagedTasks: Task[];
+  setStagedTasks: (tasks: Task[]) => void;
   handleDeleteStaged: (id: number) => void;
 }
 
@@ -262,14 +275,10 @@ function TaskList({
           <TaskCard
             {...task}
             titleIcon={<Move width={20} height={20} />}
-            id={index}
             showSetIsComplete={false}
             showPomodoro={false}
             showDecompose={false}
             onDelete={(task) => handleDeleteStaged(task.id)}
-            isCompleted={false}
-            createdAt=""
-            completedAt={null}
           />
         </div>
       ))}
@@ -290,32 +299,34 @@ function AddTaskFooter({
   isSubmitting,
   length,
 }: AddTaskFooterProps) {
+  const isDisabled = isSubmitting || length === 0;
   return (
     <footer className="sticky bottom-6 flex justify-end gap-4 bg-surface/80 backdrop-blur-md p-4 rounded-xl border shadow-lg">
       <button
-        className="btn-secondary flex items-center gap-2"
+        className={`${isSubmitting ? "btn-secondary-disabled" : "btn-secondary"} flex items-center gap-2`}
         onClick={handleAdd}
+        disabled={isSubmitting}
       >
-        <Plus size={18} /> Add new Task
+        <Plus size={18} /> Add task
       </button>
       <button
         onClick={handleClear}
-        className="btn-secondary"
+        className={isDisabled ? "btn-secondary-disabled" : "btn-secondary"}
         disabled={isSubmitting}
       >
         Clear All
       </button>
       <button
         onClick={handleConfirmAll}
-        className="btn-primary flex items-center gap-2"
-        disabled={isSubmitting}
+        className={`btn-primary flex items-center gap-2 ${isDisabled ? "btn-primary-disabled" : ""}`}
+        disabled={isDisabled}
       >
         {isSubmitting ? (
           <Loader2 className="animate-spin" />
         ) : (
           <Plus size={18} />
         )}
-        Confirm and Add {length} Tasks
+        Save {length} Tasks
       </button>
     </footer>
   );
