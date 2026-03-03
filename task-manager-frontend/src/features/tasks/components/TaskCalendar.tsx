@@ -237,7 +237,8 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
         <div className="grid gap-2">
           {tasksForSelectedDay.length > 0 ? (
             tasksForSelectedDay.map((task) => {
-              const isOverdue = new Date(task.dueDate) < new Date();
+              const isOverdue =
+                !task.isCompleted && new Date(task.dueDate) < new Date();
 
               return (
                 <div
