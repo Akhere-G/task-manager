@@ -256,14 +256,14 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
                       <Circle size={24} className="text-slate-300" />
                     )}
                   </button>
-                  <p className="flex justify-between w-full flex-1">
+                  <p className="flex justify-between flex-1 ">
                     <span
-                      className={`text-base font-semibold truncate ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
+                      className={`font-semibold truncate text-sm text-wrap ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
                     >
                       {task.title}
                     </span>
                     <span
-                      className={isOverdue ? "text-failure" : "text-text-sub"}
+                      className={`text-sm text-nowrap ${isOverdue ? "text-failure" : "text-text-sub"}`}
                     >
                       {format(new Date(task.dueDate), "p")}
                     </span>

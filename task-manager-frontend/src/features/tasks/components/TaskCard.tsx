@@ -78,7 +78,7 @@ function TaskCard({
           className={`flex gap-2 font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}
         >
           {titleIcon}
-          {title}
+          <span className="truncate">{title}</span>
         </h3>
         <span className="text-xs font-mono shrink-0 bg-white/20 px-2 py-0.5 rounded">
           {estimatedTime}m
