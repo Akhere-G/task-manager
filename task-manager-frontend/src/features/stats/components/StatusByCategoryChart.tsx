@@ -69,10 +69,10 @@ export default function CategoryVolumeChart() {
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer className="pb-2" width="100%" height="100%">
       <RadarChart
         data={categoryVolume}
-        margin={{ top: -20, right: 0, left: 0, bottom: 10 }}
+        margin={{ top: -20, right: 0, left: 0, bottom: -10 }}
       >
         <PolarGrid stroke="var(--color-surface-muted)" />
         <PolarRadiusAxis

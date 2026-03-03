@@ -3,6 +3,7 @@ import {
   BacklogHealthChart,
   CategoryVelocityChart,
   ChartCard,
+  HourlyProductivityChart,
   OverdueDistributionChart,
   ProductivityChart,
   StatsOverview,
@@ -89,6 +90,16 @@ export default function Stats() {
           height="h-90 md:h-125"
         >
           <TimeSpentChart />
+        </ChartCard>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <ChartCard
+          title="Hourly Productivity"
+          subtitle="See when you are most productive"
+          width="lg:col-span-12"
+          height="h-90 md:h-125"
+        >
+          <HourlyProductivityChart />
         </ChartCard>
       </div>
     </div>

@@ -80,6 +80,11 @@ export interface CategoryVelocityData {
   score: number;
 }
 
+export interface HourlyProductivityData {
+  hour: number;
+  count: number;
+}
+
 export interface StatsResult {
   productivity: ProductivityData[];
   timeSpent: TimeSpentData[];
@@ -87,6 +92,7 @@ export interface StatsResult {
   categoryVolume: CategoryVolumeData[];
   overdueDistribution: OverdueDistributionData[];
   categoryVelocity: CategoryVelocityData[];
+  hourlyProductivity: HourlyProductivityData[];
 }
 export const statsService = {
   getStats: async (): Promise<StatsResult> => {

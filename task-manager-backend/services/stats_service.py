@@ -141,6 +141,32 @@ def _get_category_velocity(cursor, user_id):
     ]
 
 
+def _get_hourly_productivity(cursor, user_id):
+    cursor.execute(
+        """
+        SELECT HOUR(completed_at) as hour, COUNT(*) as count
+        FROM tasks
+        WHERE is_completed = 1 AND user_id = %s
+        GROUP BY hour
+        ORDER BY hour;
+        """,
+        (user_id,),
+    )
+
+    raw_data = cursor.fetchall()
+
+    hour_lookup = {row["hour"]: row["count"] for row in raw_data}
+
+    hourly_productivity = []
+
+    for i in range(24):
+        if i not in hour_lookup:
+            hour_lookup[i] = 0
+        hourly_productivity.append({"hour": i, "count": hour_lookup[i]})
+
+    return hourly_productivity
+
+
 def get_all_dashboard_stats(user_id):
     conn = None
     cursor = None
@@ -155,6 +181,7 @@ def get_all_dashboard_stats(user_id):
             "categoryVolume": _get_category_volume(cursor, user_id),
             "overdueDistribution": _get_overdue_distribution(cursor, user_id),
             "categoryVelocity": _get_category_velocity(cursor, user_id),
+            "hourlyProductivity": _get_hourly_productivity(cursor, user_id),
         }
     except Exception as err:
         print(f"Database error: {err}")

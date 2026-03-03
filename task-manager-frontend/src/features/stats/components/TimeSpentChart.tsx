@@ -43,7 +43,7 @@ export default function TimeSpentChart() {
         <BarChart
           data={chartData}
           layout="vertical"
-          margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
+          margin={{ top: 0, right: 10, bottom: 0, left: -30 }}
         >
           <CartesianGrid strokeDasharray="3 3" horizontal={false} />
           <XAxis
