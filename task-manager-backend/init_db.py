@@ -75,15 +75,6 @@ def initialise_database():
         cursor.execute(daily_briefs_table)
 
         try:
-            print("Applying schema migrations...")
-            cursor.execute("UPDATE tasks SET due_date = NOW() WHERE due_date IS NULL")
-            cursor.execute(
-                "ALTER TABLE tasks MODIFY COLUMN due_date TIMESTAMP NOT NULL"
-            )
-        except mysql.connector.Error as err:
-            print(f"Migration note: {err}")
-
-        try:
             cursor.execute(fulltext_index)
         except Exception:
             pass

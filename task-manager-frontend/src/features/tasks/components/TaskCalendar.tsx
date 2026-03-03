@@ -59,14 +59,21 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
 
   const events = useMemo(() => {
     if (!isMobile) {
-      return allTasks.map((task) => ({
-        id: task.id,
-        title: task.title,
-        start: new Date(task.dueDate),
-        end: new Date(task.dueDate),
-        allDay: true,
-        resource: task,
-      }));
+      return allTasks.map((task) => {
+        const endDate = new Date(task.dueDate);
+        const startDate = new Date(
+          endDate.getTime() - task.estimatedTime * 60000,
+        );
+
+        return {
+          id: task.id,
+          title: task.title,
+          start: startDate,
+          end: endDate,
+          allDay: false,
+          resource: task,
+        };
+      });
     }
 
     // On Mobile: Group tasks by date so we only have one "Event Row" per day
