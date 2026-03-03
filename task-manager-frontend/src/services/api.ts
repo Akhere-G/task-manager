@@ -75,7 +75,7 @@ export interface OverdueDistributionData {
   count: number;
 }
 
-export interface CategoryVelocityData {
+export interface DeadlineProximityData {
   category: string;
   score: number;
 }
@@ -91,7 +91,7 @@ export interface StatsResult {
   backlogHealth: BacklogHealthData[];
   categoryVolume: CategoryVolumeData[];
   overdueDistribution: OverdueDistributionData[];
-  categoryVelocity: CategoryVelocityData[];
+  deadlineProximity: DeadlineProximityData[];
   hourlyProductivity: HourlyProductivityData[];
 }
 export const statsService = {

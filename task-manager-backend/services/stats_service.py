@@ -124,7 +124,7 @@ def _get_overdue_distribution(cursor, user_id):
     return cursor.fetchall()
 
 
-def _get_category_velocity(cursor, user_id):
+def _get_deadline_proximity(cursor, user_id):
     cursor.execute(
         """
         SELECT category, AVG(DATEDIFF(due_date, CURRENT_TIMESTAMP)) as score
@@ -180,7 +180,7 @@ def get_all_dashboard_stats(user_id):
             "backlogHealth": _get_backlog_health(cursor, user_id),
             "categoryVolume": _get_category_volume(cursor, user_id),
             "overdueDistribution": _get_overdue_distribution(cursor, user_id),
-            "categoryVelocity": _get_category_velocity(cursor, user_id),
+            "deadlineProximity": _get_deadline_proximity(cursor, user_id),
             "hourlyProductivity": _get_hourly_productivity(cursor, user_id),
         }
     except Exception as err:

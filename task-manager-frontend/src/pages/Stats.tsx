@@ -1,7 +1,7 @@
 import {
   ActivityHeatMap,
   BacklogHealthChart,
-  CategoryVelocityChart,
+  DeadlineProximityChart,
   ChartCard,
   HourlyProductivityChart,
   OverdueDistributionChart,
@@ -54,12 +54,12 @@ export default function Stats() {
       {/* Row 2: Category Velocity (Large > 50%) & Overdue (Small) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard
-          title="Category Velocity"
-          subtitle="Average time until due dates per category."
+          title="Deadline Proximity"
+          subtitle="Average time until deadlines per category."
           width="lg:col-span-7" // 58% (Over 50%)
           height="h-96"
         >
-          <CategoryVelocityChart />
+          <DeadlineProximityChart />
         </ChartCard>
 
         <ChartCard

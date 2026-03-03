@@ -9,14 +9,14 @@ import {
 } from "recharts";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import useGetStats from "../hooks/useGetStats";
-import type { CategoryVelocityData } from "../../../services/api";
+import type { DeadlineProximityData } from "../../../services/api";
 
-export default function CategoryVelocityChart() {
+export default function DeadlineProximityChart() {
   const {
-    data: categoryVelocity,
+    data: deadlineProximity,
     isLoading,
     isError,
-  } = useGetStats<CategoryVelocityData[]>((data) => data.categoryVelocity);
+  } = useGetStats<DeadlineProximityData[]>((data) => data.deadlineProximity);
 
   const getBarColor = (score: number) => {
     const positiveColors = [
@@ -50,7 +50,7 @@ export default function CategoryVelocityChart() {
   if (isError)
     return <ErrorState error={isError ? "Could not load data." : ""} />;
 
-  const chartData = categoryVelocity?.map((d) => ({
+  const chartData = deadlineProximity?.map((d) => ({
     ...d,
     fill: getBarColor(d.score),
   }));

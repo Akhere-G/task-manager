@@ -7,5 +7,5 @@ export { default as ActivityHeatMap } from "./ActivityHeatMap";
 export { default as StatsOverview } from "./StatsOverview";
 export { default as StatusByCategoryChart } from "./StatusByCategoryChart";
 export { default as OverdueDistributionChart } from "./OverdueDistributionChart";
-export { default as CategoryVelocityChart } from "./CategoryVelocityChart";
+export { default as DeadlineProximityChart } from "./DeadlineProximityChart.tsx";
 export { default as HourlyProductivityChart } from "./HourlyProductivityChart.tsx";
