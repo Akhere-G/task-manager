@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
@@ -71,10 +72,7 @@ function TaskCard({
     `}
     >
       <header
-        className={`
-        p-4 flex justify-between items-center
-        ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}
-      `}
+        className={`p-4 flex justify-between items-center ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}`}
       >
         <h3
           className={`flex gap-2 font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}
@@ -96,7 +94,7 @@ function TaskCard({
             <AlertCircle className="w-4 h-4 text-failure animate-pulse" />
           )}
         </div>
-        <p className="text-sm text-text-main leading-relaxed">
+        <p className="text-sm text-text-main leading-relaxed m-0">
           {formattedDescription}
         </p>
         {isLongDesc && (
@@ -113,13 +111,13 @@ function TaskCard({
         )}
       </div>
 
-      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate  rounded-b-md flex justify-between items-center">
-        <div className="flex items-center gap-2 text-text-sub">
+      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate items-end rounded-b-md flex justify-between gap-0.5 flex-col xl:flex-row">
+        <div className="flex items-center gap-2 text-text-sub tracking-wide pr-1.25">
           <Clock className="w-4 h-4" />
           <time
             className={`text-xs font-medium ${isOverdue ? "text-failure font-bold" : ""}`}
           >
-            {new Date(dueDate).toLocaleDateString("en-GB")}
+            {format(new Date(dueDate), "do LLL, yy p")}
           </time>
         </div>
 

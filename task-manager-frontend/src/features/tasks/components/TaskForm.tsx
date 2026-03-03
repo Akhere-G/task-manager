@@ -5,8 +5,8 @@ import {
 } from "../../../features/tasks/types";
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
-import { formatDate } from "../utils";
 import { validateTask, type TaskData } from "../../../utils/validators";
+import { format, set } from "date-fns";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
   general: string;
@@ -28,7 +28,15 @@ export default function TaskForm({
     title: "",
     category: "",
     description: "",
-    dueDate: "",
+    dueDate: format(
+      set(new Date(), {
+        hours: 23,
+        minutes: 59,
+        seconds: 0,
+        milliseconds: 0,
+      }),
+      "yyyy-MM-dd HH:mm",
+    ),
     estimatedTime: 0,
   });
 
@@ -64,7 +72,7 @@ export default function TaskForm({
     if (initialData)
       setFormState({
         ...initialData,
-        dueDate: formatDate(initialData.dueDate),
+        dueDate: format(initialData.dueDate, "yyyy-MM-dd HH:mm"),
       });
   }, [initialData]);
 
@@ -175,7 +183,7 @@ export default function TaskForm({
       <FormInput
         label="Due Date"
         name="dueDate"
-        type="date"
+        type="datetime-local"
         value={formState.dueDate}
         handleChange={handleChange}
         errorMessage={errorMessages.dueDate}

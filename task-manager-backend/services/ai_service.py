@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 from datetime import date
 from google import genai
 from groq import Groq
@@ -132,17 +133,17 @@ def generate_daily_brief(user_id):
 
 
 def parse_task_with_ai(user_input):
-    today = date.today().strftime("%Y-%m-%d")
+    now = datetime.datetime.now()
+    today_str = now.strftime("%Y-%m-%d")
 
     prompt = f"""
-    Current Date: {today}
+    Current Date and Time: {now.strftime("%Y-%m-%d %H:%M:%S")}
     Extract task details from: "{user_input}"
-    
-    Return ONLY a JSON object:
+    Return ONLY a JSON object, with no other comments with these keys:
     - title: (string)
     - description: (string or null)
     - category: (MUST be one of: {", ".join(allowed_categories)})
-    - dueDate: (ISO date string YYYY-MM-DD, assume today is {today})
+    - dueDate: Use YYYY-MM-DD HH:MM:SS. If no time mentioned, use {today_str} 23:59:59.
     - estimatedTime: (integer in minutes, default 30)
     """
 
@@ -153,13 +154,15 @@ def parse_task_with_ai(user_input):
         parsed_data = json.loads(clean_json)
         if parsed_data.get("category") not in allowed_categories:
             parsed_data["category"] = "general"
+        if not parsed_data.get("dueDate"):
+            parsed_data["dueDate"] = datetime.now().strftime("%Y-%m-%d 23:59:59")
         return parsed_data
     except Exception:
         return {
             "title": user_input[:50],
             "description": user_input,
             "category": "general",
-            "dueDate": today,
+            "dueDate": f"{today_str} 23:59:59",
             "estimatedTime": 30,
         }
 
@@ -178,7 +181,7 @@ def decompose_task(title, description, category, due_date, estimated_time):
     - title: (string)
     - description: (string or null)
     - category: (MUST be one of: {", ".join(allowed_categories)})
-    - dueDate: (ISO date string YYYY-MM-DD, assume today is {today})
+    - dueDate: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is {today}. If no time mentioned, default to end of day 23:59:59)
     - estimatedTime: (integer in minutes, default 30)
     """
     try:

@@ -62,8 +62,7 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
     if (!dueDate) {
       errors.dueDate = "Due date is mandatory.";
     } else {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(dueDate) || isNaN(Date.parse(dueDate))) {
+      if (isNaN(Date.parse(dueDate))) {
         errors.dueDate = "Invalid date format.";
       }
     }

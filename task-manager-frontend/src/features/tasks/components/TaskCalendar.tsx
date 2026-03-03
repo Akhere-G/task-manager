@@ -94,12 +94,17 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     isSameDay(new Date(t.dueDate), currentDate),
   );
 
-  const onEventDrop = async ({
-    event,
-    start,
-  }: EventInteractionArgs<object>) => {
-    const formattedDate = format(new Date(start as Date), "yyyy-MM-dd");
-    const taskId = (event as Task).id;
+  const onEventDrop = async ({ event, start }: EventInteractionArgs<Event>) => {
+    const newDate = new Date(start as Date);
+    const task = event.resource as Task;
+    const originalDate = new Date(task.dueDate);
+
+    newDate.setHours(originalDate.getHours());
+    newDate.setMinutes(originalDate.getMinutes());
+    newDate.setSeconds(originalDate.getSeconds());
+
+    const formattedDate = format(newDate, "yyyy-MM-dd HH:mm:ss");
+    const taskId = task.id;
     const previousTasks = [...allTasks];
 
     setAllTasks((prev) =>
@@ -224,13 +229,15 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
 
         <div className="grid gap-2">
           {tasksForSelectedDay.length > 0 ? (
-            tasksForSelectedDay.map((task) => (
-              <div
-                key={task.id}
-                className="flex items-center justify-between p-4 bg-surface border border-border-light rounded-2xl shadow-sm active:bg-surface-muted transition-colors"
-                onClick={() => setSelectedTask(task)}
-              >
-                <div className="flex items-center gap-4 ">
+            tasksForSelectedDay.map((task) => {
+              const isOverdue = new Date(task.dueDate) < new Date();
+
+              return (
+                <div
+                  key={task.id}
+                  className="flex items-center justify-between p-4 gap-2 bg-surface border border-border-light rounded-2xl shadow-sm active:bg-surface-muted transition-colors"
+                  onClick={() => setSelectedTask(task)}
+                >
                   <button
                     onClick={() => {
                       setIsCompleted(task.id, !task.isCompleted);
@@ -242,14 +249,21 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
                       <Circle size={24} className="text-slate-300" />
                     )}
                   </button>
-                  <span
-                    className={`text-base font-semibold truncate ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
-                  >
-                    {task.title}
-                  </span>
+                  <p className="flex justify-between w-full flex-1">
+                    <span
+                      className={`text-base font-semibold truncate ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
+                    >
+                      {task.title}
+                    </span>
+                    <span
+                      className={isOverdue ? "text-failure" : "text-text-sub"}
+                    >
+                      {format(new Date(task.dueDate), "p")}
+                    </span>
+                  </p>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="py-10 text-center border-2 border-dashed border-slate-100 rounded-3xl bg-surface">
               <p className="text-text-sub text-sm italic">No tasks today.</p>

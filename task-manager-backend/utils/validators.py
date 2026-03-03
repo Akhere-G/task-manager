@@ -34,13 +34,20 @@ def validate_task(data, is_update=False):
 
     if "dueDate" in data or not is_update:
         due_date = data.get("dueDate")
-        if not due_date:
-            errors["dueDate"] = "Due date is mandatory."
-        else:
-            try:
-                datetime.strptime(str(due_date), "%Y-%m-%d")
-            except (ValueError, TypeError):
-                errors["dueDate"] = "Invalid date format. Please use YYYY-MM-DD."
+        try:
+            # Handle the 'Z' suffix if coming from JavaScript's toISOString()
+            clean_ts = str(due_date).replace("Z", "")
+
+            # Check for the two most common formats
+            if "T" in clean_ts:
+                datetime.strptime(clean_ts, "%Y-%m-%dT%H:%M")
+            else:
+                datetime.strptime(clean_ts, "%Y-%m-%d %H:%M")
+
+        except (ValueError, TypeError):
+            errors["dueDate"] = (
+                "Invalid timestamp. Use YYYY-MM-DD HH:MM:SS or ISO format."
+            )
 
     if "estimatedTime" in data or not is_update:
         est = data.get("estimatedTime")

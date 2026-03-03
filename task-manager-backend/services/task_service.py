@@ -43,7 +43,7 @@ def get_all_tasks(
 
         if due_date:
             if due_date == "today":
-                base_filters += " AND due_date = %s"
+                base_filters += " AND DATE(due_date) = %s"
                 params.append(today)
             if due_date == "this_week":
                 base_filters += (

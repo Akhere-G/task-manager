@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { aiService } from "../../../services/api";
 import type { CreateTaskInput } from "../../../features/tasks/types";
+import { format } from "date-fns";
 
 interface AiAddTaskFormProps {
   onParsed: (data: CreateTaskInput) => void;
@@ -18,6 +19,7 @@ export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
     setIsProcessing(true);
     try {
       const parsedTask = await aiService.parseTask(input);
+      parsedTask.dueDate = format(parsedTask.dueDate, "yyyy-MM-dd HH:mm");
       onParsed(parsedTask);
       setInput("");
     } catch (err) {

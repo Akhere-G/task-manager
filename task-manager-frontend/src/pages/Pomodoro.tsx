@@ -6,6 +6,7 @@ import { Clock, Pause, Play } from "lucide-react";
 import { useState } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useTaskContext } from "../context/TaskContext";
+import { format } from "date-fns";
 
 const POMODORO_DURATION = 25 * 60;
 
@@ -73,8 +74,8 @@ export default function Pomodoro() {
           Boost focus and complete long tasks easier.
         </p>
       </header>
-      <div className="flex gap-6 flex-col md:flex-row">
-        <div className="card overflow-hidden flex-1/2 p-0 flex flex-col gap-2">
+      <div className="flex gap-6 flex-col lg:flex-row">
+        <div className="card overflow-hidden lg:flex-1/2 p-0 flex flex-col gap-2">
           <header className="p-4 bg-brand text-white">
             <h2 className="text-2xl">{title}</h2>
           </header>
@@ -90,12 +91,12 @@ export default function Pomodoro() {
               <time
                 className={`text-xs font-medium ${isOverdue ? "text-failure font-bold" : ""}`}
               >
-                {new Date(dueDate).toLocaleDateString("en-GB")}
+                {format(new Date(dueDate), "do LLL, yy p")}
               </time>
             </div>
           </footer>
         </div>
-        <div className="card flex-1/2 flex flex-col gap-4">
+        <div className="card lg:flex-1/2 flex flex-col gap-4">
           <h2 className="text-2xl">Start Pomodoro Mode</h2>
           <div className="flex items-center flex-col justify-center h-max">
             <CountdownCircleTimer
@@ -145,7 +146,7 @@ export default function Pomodoro() {
             </div>
             <button
               onClick={handleSessionComplete}
-              className="text-xs font-bold text-accent mt-4 hover:underline"
+              className="btn-primary mt-4"
             >
               I&apos;ve finished early!
             </button>

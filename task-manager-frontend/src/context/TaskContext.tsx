@@ -79,7 +79,7 @@ export default function TaskContextProvider({
       title: newTask.title.trim(),
       description: newTask.description?.trim(),
       category: newTask.category,
-      dueDate: newTask.dueDate,
+      dueDate: newTask.dueDate, // check
       estimatedTime: newTask.estimatedTime,
     };
 

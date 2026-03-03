@@ -7,6 +7,7 @@ import TaskForm from "../features/tasks/components/TaskForm";
 import { AiAddTaskForm } from "../features/ai/components";
 import { BulkAddForm } from "../features/tasks/components";
 import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
+import { format } from "date-fns";
 
 export default function AddTask() {
   const navigate = useNavigate();
@@ -14,7 +15,11 @@ export default function AddTask() {
   const [aiSuggestion, setAiSuggestion] = useState<CreateTaskInput>();
 
   async function handleCreate(newTask: CreateTaskInput) {
-    await taskService.create(newTask);
+    const formattedTask = {
+      ...newTask,
+      dueDate: format(newTask.dueDate, "yyyy-MM-dd HH:mm"),
+    };
+    await taskService.create(formattedTask);
     invalidateTaskKeys();
     navigate("/");
   }
