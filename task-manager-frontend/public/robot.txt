@@ -1,0 +1,16 @@
+User-agent: *
+
+# Public Pages
+Allow: /about
+Allow: /contact
+Allow: /login
+Allow: /register
+
+# Private App Routes (Disallow these)
+Disallow: /calendar
+Disallow: /stats
+Disallow: /addtasks
+Disallow: /pomodoro/
+Disallow: /breakdown/
+
+Sitemap: https://task-flow-ai.up.railway.app/sitemap.xml
