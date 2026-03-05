@@ -35,7 +35,7 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
     duration: "",
     isCompleted: "false",
     dueDate: "",
-    sortBy: "due_date",
+    sortBy: "start_at",
     order: "asc",
   });
 
@@ -116,7 +116,7 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
       duration: "",
       isCompleted: "false",
       dueDate: "",
-      sortBy: "due_date",
+      sortBy: "start_at",
       order: "asc",
     });
   };

@@ -23,11 +23,10 @@ export const dueDateOptions = [
 ];
 
 export const sortByOptions = [
-  { name: "Due Date", value: "due_date" },
+  { name: "Start Date", value: "start_at" },
   { name: "Created At", value: "created_at" },
   { name: "Title", value: "title" },
   { name: "Duration", value: "duration" },
-  { name: "", value: "" },
 ];
 
 export const isAscOptions = [
