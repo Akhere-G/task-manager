@@ -172,31 +172,30 @@ def _get_turnaround_time(cursor, user_id):
         """
         SELECT DATEDIFF(completed_at, created_at) as days_taken, COUNT(*) as count
         FROM tasks
-        WHERE is_completed = true AND created_at <= completed_at AND user_id = %s
+        WHERE is_completed = true 
+            AND completed_at IS NOT NULL 
+            AND created_at <= completed_at 
+            AND user_id = %s
         GROUP BY days_taken
-        ORDER BY days_taken
+        ORDER BY days_taken ASC
         LIMIT 50;
         """,
         (user_id,),
     )
 
     raw_data = cursor.fetchall()
+    if not raw_data:
+        return []
 
     days_lookup = {d["days_taken"]: d["count"] for d in raw_data}
 
-    max_days_taken = 0
+    max_days = raw_data[-1]["days_taken"]
 
-    for d in raw_data:
-        if d["days_taken"] > max_days_taken:
-            max_days_taken = d["days_taken"]
+    formatted_data = [
+        {"days_taken": i, "count": days_lookup.get(i, 0)} for i in range(max_days + 1)
+    ]
 
-    data = []
-    for i in range(max_days_taken):
-        if i not in days_lookup:
-            days_lookup[i] = 0
-        data.append({"days_taken": days_lookup[i], "count": i})
-
-    return data
+    return formatted_data
 
 
 def get_all_dashboard_stats(user_id):
