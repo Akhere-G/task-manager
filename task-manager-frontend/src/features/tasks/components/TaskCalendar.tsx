@@ -207,11 +207,20 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           onSelectEvent={(event: Event) =>
             !isMobile && setSelectedTask(event.resource as Task)
           }
-          dayPropGetter={(date) => ({
-            className: isSameDay(date, currentDate)
-              ? "!bg-brand/5 !border-brand/30 border-2 rounded-lg"
-              : "",
-          })}
+          dayPropGetter={(date) => {
+            const isSelected = isSameDay(date, currentDate);
+            const isCurrentMonth = date.getMonth() === currentDate.getMonth();
+
+            return {
+              className: `transition-colors cursor-pointer ${
+                isSelected ? "!bg-brand/25" : "hover:!bg-surface-muted"
+              } ${
+                !isCurrentMonth
+                  ? "bg-slate-50/50 opacity-40 grayscale-[0.5]"
+                  : "bg-surface"
+              }`,
+            };
+          }}
           components={{
             toolbar: CustomToolbar,
             event: ({ title, event }) => {

@@ -17,7 +17,7 @@ export default function HourlyProductivityChart() {
   );
   const breakpoint = useBreakpoint();
   const isSmallScreen = ["xs", "sm", "md"].includes(breakpoint);
-  console.log("smal", isSmallScreen);
+
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState error="Could not load data" />;
 

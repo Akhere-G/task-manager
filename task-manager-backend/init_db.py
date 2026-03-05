@@ -13,7 +13,7 @@ def initialise_database():
             password=os.getenv("DB_PASSWORD"),
             port=int(os.getenv("DB_PORT", 3306)),
         )
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
 
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
         cursor.execute(f"USE {db_name}")
@@ -74,48 +74,6 @@ def initialise_database():
         cursor.execute(tasks_table)
         cursor.execute(daily_briefs_table)
 
-        cursor.execute("SHOW COLUMNS FROM tasks")
-        columns = [col["Field"] for col in cursor.fetchall()]
-
-        if "due_date" in columns:
-            print("Detected old schema. Migrating data to start_at and end_at...")
-
-            # Ensure new columns exist (in case they weren't added by the CREATE TABLE IF NOT EXISTS)
-            if "start_at" not in columns:
-                cursor.execute(
-                    "ALTER TABLE tasks ADD COLUMN start_at TIMESTAMP NULL AFTER description"
-                )
-            if "end_at" not in columns:
-                cursor.execute(
-                    "ALTER TABLE tasks ADD COLUMN end_at TIMESTAMP NULL AFTER start_at"
-                )
-
-            # Transfer data: end_at = due_date, start_at = due_date - estimated_time (default 30m)
-            migration_query = """
-            UPDATE tasks 
-            SET 
-                end_at = due_date,
-                start_at = DATE_SUB(due_date, INTERVAL COALESCE(estimated_time, 30) MINUTE)
-            WHERE end_at IS NULL;
-            """
-            cursor.execute(migration_query)
-
-            # Now set them to NOT NULL and cleanup old columns
-            cursor.execute(
-                "ALTER TABLE tasks MODIFY COLUMN start_at TIMESTAMP NOT NULL"
-            )
-            cursor.execute("ALTER TABLE tasks MODIFY COLUMN end_at TIMESTAMP NOT NULL")
-            cursor.execute("ALTER TABLE tasks DROP COLUMN due_date")
-            if "estimated_time" in columns:
-                cursor.execute("ALTER TABLE tasks DROP COLUMN estimated_time")
-            print("Migration successful.")
-
-        else:
-            # If it's a fresh install, just ensure they are NOT NULL
-            cursor.execute(
-                "ALTER TABLE tasks MODIFY COLUMN start_at TIMESTAMP NOT NULL"
-            )
-            cursor.execute("ALTER TABLE tasks MODIFY COLUMN end_at TIMESTAMP NOT NULL")
         try:
             cursor.execute(fulltext_index)
         except Exception:
