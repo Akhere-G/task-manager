@@ -28,7 +28,15 @@ export default function TaskForm({
     title: "",
     category: "",
     description: "",
-    dueDate: format(
+    startAt: format(
+      set(new Date(), {
+        minutes: 0,
+        seconds: 0,
+        milliseconds: 0,
+      }),
+      "yyyy-MM-dd HH:mm",
+    ),
+    endAt: format(
       set(new Date(), {
         hours: 23,
         minutes: 59,
@@ -37,15 +45,14 @@ export default function TaskForm({
       }),
       "yyyy-MM-dd HH:mm",
     ),
-    estimatedTime: 0,
   });
 
   const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
     title: "",
     category: "",
     description: "",
-    dueDate: "",
-    estimatedTime: "",
+    startAt: "",
+    endAt: "",
     general: "",
   });
 
@@ -53,15 +60,16 @@ export default function TaskForm({
     title: false,
     category: false,
     description: false,
-    dueDate: false,
-    estimatedTime: false,
+    startAt: false,
+    endAt: false,
   });
 
   const defaultErrorMessages = {
     title: "",
     category: "",
     description: "",
-    dueDate: "",
+    startAt: "",
+    endAt: "",
     estimatedTime: "",
     general: "",
   };
@@ -72,7 +80,8 @@ export default function TaskForm({
     if (initialData)
       setFormState({
         ...initialData,
-        dueDate: format(initialData.dueDate, "yyyy-MM-dd HH:mm"),
+        startAt: format(initialData.startAt, "yyyy-MM-dd HH:mm"),
+        endAt: format(initialData.endAt, "yyyy-MM-dd HH:mm"),
       });
   }, [initialData]);
 
@@ -109,8 +118,8 @@ export default function TaskForm({
       title: true,
       category: true,
       description: true,
-      dueDate: true,
-      estimatedTime: true,
+      startAt: true,
+      endAt: true,
     });
 
     if (
@@ -124,7 +133,6 @@ export default function TaskForm({
       setIsloading(true);
       await submitAction({
         ...formState,
-        estimatedTime: Number(formState.estimatedTime),
       });
     } catch (err) {
       console.error(err);
@@ -181,23 +189,23 @@ export default function TaskForm({
         textarea
       />
       <FormInput
-        label="Due Date"
-        name="dueDate"
+        label="Start At"
+        name="startAt"
         type="datetime-local"
-        value={formState.dueDate}
+        value={formState.startAt}
         handleChange={handleChange}
-        errorMessage={errorMessages.dueDate}
-        touched={touched.dueDate}
+        errorMessage={errorMessages.startAt}
+        touched={touched.startAt}
         handleBlur={handleBlur}
       />
       <FormInput
-        label="Estimated Time"
-        name="estimatedTime"
-        type="number"
-        value={formState.estimatedTime}
+        label="End At"
+        name="endAt"
+        type="datetime-local"
+        value={formState.endAt}
         handleChange={handleChange}
-        errorMessage={errorMessages.estimatedTime}
-        touched={touched.estimatedTime}
+        errorMessage={errorMessages.endAt}
+        touched={touched.endAt}
         handleBlur={handleBlur}
       />
       <footer className="flex gap-4 justify-end">

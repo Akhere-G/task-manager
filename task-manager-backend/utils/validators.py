@@ -32,35 +32,31 @@ def validate_task(data, is_update=False):
         elif len(title) > 255:
             errors["title"] = "Title must be under 255 characters."
 
-    if "dueDate" in data or not is_update:
-        due_date = data.get("dueDate")
-        try:
-            # Handle the 'Z' suffix if coming from JavaScript's toISOString()
-            clean_ts = str(due_date).replace("Z", "")
-
-            # Check for the two most common formats
-            if "T" in clean_ts:
-                datetime.strptime(clean_ts, "%Y-%m-%dT%H:%M")
-            else:
-                datetime.strptime(clean_ts, "%Y-%m-%d %H:%M")
-
-        except (ValueError, TypeError):
-            errors["dueDate"] = (
-                "Invalid timestamp. Use YYYY-MM-DD HH:MM:SS or ISO format."
-            )
-
-    if "estimatedTime" in data or not is_update:
-        est = data.get("estimatedTime")
-        if est in [None, ""]:
-            errors["estimatedTime"] = "Estimated time is mandatory."
+    if "startAt" in data or not is_update:
+        start_at = data.get("startAt")
+        if start_at is None:
+            errors["startAt"] = "Start At is mandatory."
         else:
             try:
-                if int(est) < 1:
-                    errors["estimatedTime"] = (
-                        "Estimated time must be at least 1 minute."
-                    )
+                clean_start = str(start_at).replace("Z", "").replace("T", " ")
+
+                dt_start = datetime.strptime(clean_start[:16], "%Y-%m-%d %H:%M")
             except (ValueError, TypeError):
-                errors["estimatedTime"] = "Estimated time must be a number."
+                errors["startAt"] = "Invalid format. Use YYYY-MM-DD HH:MM."
+
+    if "endAt" in data or not is_update:
+        end_val = data.get("endAt")
+        if end_val is None:
+            errors["endAt"] = "End At is mandatory."
+        else:
+            try:
+                clean_end = str(end_val).replace("Z", "").replace("T", " ")
+                dt_end = datetime.strptime(clean_end[:16], "%Y-%m-%d %H:%M")
+            except (ValueError, TypeError):
+                errors["endAt"] = "Invalid format. Use YYYY-MM-DD HH:MM."
+    if dt_start and dt_end:
+        if dt_end <= dt_start:
+            errors["endAt"] = "End time must be after the start time."
 
     if "isCompleted" in data:
         is_comp = data.get("isCompleted")

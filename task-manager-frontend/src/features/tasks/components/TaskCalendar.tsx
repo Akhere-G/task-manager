@@ -8,7 +8,14 @@ import {
 import withDragAndDrop, {
   type EventInteractionArgs,
 } from "react-big-calendar/lib/addons/dragAndDrop";
-import { format, parse, startOfWeek, getDay, isSameDay } from "date-fns";
+import {
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  isSameDay,
+  addMilliseconds,
+} from "date-fns";
 import { enGB } from "date-fns/locale/en-GB";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -60,10 +67,8 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
   const events = useMemo(() => {
     if (!isMobile) {
       return allTasks.map((task) => {
-        const endDate = new Date(task.dueDate);
-        const startDate = new Date(
-          endDate.getTime() - task.estimatedTime * 60000,
-        );
+        const startDate = new Date(task.startAt);
+        const endDate = new Date(task.endAt);
 
         return {
           id: task.id,
@@ -79,7 +84,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     // On Mobile: Group tasks by date so we only have one "Event Row" per day
     const uniqueDayLookup: Record<string, number> = {};
     allTasks.forEach((task) => {
-      const date = format(new Date(task.dueDate), "yyyy-MM-dd");
+      const date = format(new Date(task.startAt), "yyyy-MM-dd");
       if (uniqueDayLookup[date]) {
         uniqueDayLookup[date] += 1;
       } else {
@@ -98,28 +103,42 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
   }, [allTasks, isMobile]);
 
   const tasksForSelectedDay = allTasks.filter((t) =>
-    isSameDay(new Date(t.dueDate), currentDate),
+    isSameDay(new Date(t.startAt), currentDate),
   );
 
   const onEventDrop = async ({ event, start }: EventInteractionArgs<Event>) => {
-    const newDate = new Date(start as Date);
+    const newStart = new Date(start as Date);
     const task = event.resource as Task;
-    const originalDate = new Date(task.dueDate);
+    const originalStart = new Date(task.startAt);
+    const originalEnd = new Date(task.endAt);
 
-    newDate.setHours(originalDate.getHours());
-    newDate.setMinutes(originalDate.getMinutes());
-    newDate.setSeconds(originalDate.getSeconds());
+    newStart.setHours(originalStart.getHours());
+    newStart.setMinutes(originalStart.getMinutes());
+    newStart.setSeconds(originalStart.getSeconds());
 
-    const formattedDate = format(newDate, "yyyy-MM-dd HH:mm:ss");
+    const newEnd = addMilliseconds(
+      newStart,
+      originalEnd.getTime() - originalStart.getTime(),
+    );
+
+    const formattedStart = format(newStart, "yyyy-MM-dd HH:mm:ss");
+    const formattedEnd = format(newEnd, "yyyy-MM-dd HH:mm:ss");
     const taskId = task.id;
     const previousTasks = [...allTasks];
 
     setAllTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, dueDate: formattedDate } : t)),
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, startAt: formattedStart, endAt: formattedEnd }
+          : t,
+      ),
     );
 
     try {
-      await updateTask(taskId, { dueDate: formattedDate });
+      await updateTask(taskId, {
+        startAt: formattedStart,
+        endAt: formattedEnd,
+      });
     } catch (err) {
       console.error("Failed to update task date", err);
       setAllTasks(previousTasks);
@@ -238,7 +257,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           {tasksForSelectedDay.length > 0 ? (
             tasksForSelectedDay.map((task) => {
               const isOverdue =
-                !task.isCompleted && new Date(task.dueDate) < new Date();
+                !task.isCompleted && new Date(task.endAt) < new Date();
 
               return (
                 <div
@@ -266,7 +285,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
                     <span
                       className={`text-sm text-nowrap ${isOverdue ? "text-failure" : "text-text-sub"}`}
                     >
-                      {format(new Date(task.dueDate), "p")}
+                      {format(new Date(task.startAt), "p")}
                     </span>
                   </p>
                 </div>

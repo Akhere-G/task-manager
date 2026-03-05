@@ -79,8 +79,8 @@ export default function TaskContextProvider({
       title: newTask.title.trim(),
       description: newTask.description?.trim(),
       category: newTask.category,
-      dueDate: newTask.dueDate, // check
-      estimatedTime: newTask.estimatedTime,
+      startAt: newTask.startAt,
+      endAt: newTask.endAt,
     };
 
     const patchData: Partial<Task> = Object.fromEntries(

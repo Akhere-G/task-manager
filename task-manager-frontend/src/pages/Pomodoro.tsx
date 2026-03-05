@@ -6,7 +6,7 @@ import { Clock, Pause, Play } from "lucide-react";
 import { useState } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useTaskContext } from "../context/TaskContext";
-import { format } from "date-fns";
+import { format, isSameDay, isSameMonth, isSameYear } from "date-fns";
 
 const POMODORO_DURATION = 25 * 60;
 
@@ -37,26 +37,38 @@ export default function Pomodoro() {
 
   if (!task) return <EmptyState searchMessage={`This task doesn't exist`} />;
 
-  const {
-    id,
-    title,
-    category,
-    description,
-    isCompleted,
-    dueDate,
-    estimatedTime,
-  } = task;
+  const { id, title, category, description, isCompleted, startAt, endAt } =
+    task;
 
   if (isCompleted) {
     navigate(-1);
     return <></>;
   }
-  const isOverdue = !isCompleted && new Date(dueDate) < new Date();
+  const isOverdue = !isCompleted && new Date(endAt) < new Date();
 
   const formatStr = (str: string) =>
     (str[0].toUpperCase() + str.slice(1)).replace("-", " ");
 
-  const totalExpectedSessions = Math.ceil(estimatedTime / 25);
+  const endDate = new Date(endAt);
+  const startDate = new Date(startAt);
+  const duration = (endDate.getTime() - startDate.getTime()) / 60000;
+
+  const sameDay = isSameDay(endDate, startDate);
+  const sameMonth = isSameMonth(endDate, startDate);
+  const sameYear = isSameYear(endDate, startDate);
+  let dateStr = "";
+
+  if (sameDay) {
+    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "p")}`;
+  } else if (sameMonth) {
+    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do p")}`;
+  } else if (sameYear) {
+    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do LLL, p")}`;
+  } else {
+    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do LLL, yy p")}`;
+  }
+
+  const totalExpectedSessions = Math.ceil(duration / 25);
 
   const handleSessionComplete = () => {
     setIsPlaying(false);
@@ -76,8 +88,13 @@ export default function Pomodoro() {
       </header>
       <div className="flex gap-6 flex-col lg:flex-row">
         <div className="card overflow-hidden lg:flex-1/2 p-0 flex flex-col gap-2">
-          <header className="p-4 bg-brand text-white">
-            <h2 className="text-2xl">{title}</h2>
+          <header className="p-4 flex justify-between items-center bg-brand text-white">
+            <h2 className="flex gap-2 font-semibold truncate text-text-inverse ">
+              <span className="truncate">{title}</span>
+            </h2>
+            <span className="text-xs font-mono shrink-0 bg-white/20 px-2 py-0.5 rounded">
+              {duration}m
+            </span>
           </header>
           <div className="px-4 pb-4">
             <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
@@ -91,7 +108,7 @@ export default function Pomodoro() {
               <time
                 className={`text-xs font-medium ${isOverdue ? "text-failure font-bold" : ""}`}
               >
-                {format(new Date(dueDate), "do LLL, yy p")}
+                {dateStr}
               </time>
             </div>
           </footer>

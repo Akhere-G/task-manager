@@ -3,8 +3,8 @@ import type { Task } from "../features/tasks/types";
 export interface TaskData {
   title: string;
   description: string | null;
-  dueDate: string;
-  estimatedTime: number | string;
+  startAt: string;
+  endAt: string;
   category: string;
   isCompleted?: boolean;
   completedAt?: string | null;
@@ -57,28 +57,34 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
     }
   }
 
-  if ("dueDate" in data || !isUpdate) {
-    const dueDate = data.dueDate;
-    if (!dueDate) {
-      errors.dueDate = "Due date is mandatory.";
+  if ("starAt" in data || !isUpdate) {
+    const startAt = data.startAt;
+    if (!startAt) {
+      errors.startAt = "Start At is mandatory.";
     } else {
-      if (isNaN(Date.parse(dueDate))) {
-        errors.dueDate = "Invalid date format.";
+      if (isNaN(Date.parse(startAt))) {
+        errors.startAt = "Invalid date format for Start At.";
       }
     }
   }
 
-  if ("estimatedTime" in data || !isUpdate) {
-    const est = data.estimatedTime;
-    if (est === null || est === undefined || est === "") {
-      errors.estimatedTime = "Estimated time is mandatory.";
+  if ("endAt" in data || !isUpdate) {
+    const endAt = data.endAt;
+    if (!endAt) {
+      errors.endAt = "End At is mandatory.";
     } else {
-      const numEst = Number(est);
-      if (isNaN(numEst)) {
-        errors.estimatedTime = "Estimated time must be a number.";
-      } else if (numEst < 1) {
-        errors.estimatedTime = "Estimated time must be at least 1 minute.";
+      if (isNaN(Date.parse(endAt))) {
+        errors.endAt = "Invalid date format for End At.";
       }
+    }
+  }
+
+  if (data.startAt && data.endAt) {
+    const end = Date.parse(data.endAt);
+    const start = Date.parse(data.startAt);
+
+    if (end <= start) {
+      errors.endAt = "End At must be after start at.";
     }
   }
 

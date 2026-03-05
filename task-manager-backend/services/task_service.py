@@ -43,36 +43,40 @@ def get_all_tasks(
 
         if due_date:
             if due_date == "today":
-                base_filters += " AND DATE(due_date) = %s"
+                base_filters += " AND DATE(end_at) = %s"
                 params.append(today)
             if due_date == "this_week":
                 base_filters += (
-                    " AND due_date BETWEEN %s AND DATE_ADD(%s, INTERVAL 7 DAY)"
+                    " AND end_at BETWEEN %s AND DATE_ADD(%s, INTERVAL 7 DAY)"
                 )
                 params.extend([today, today])
             if due_date == "this_month":
                 base_filters += (
-                    " AND due_date BETWEEN %s AND DATE_ADD(%s, INTERVAL 30 DAY)"
+                    " AND end_at BETWEEN %s AND DATE_ADD(%s, INTERVAL 30 DAY)"
                 )
                 params.extend([today, today])
             if due_date == "overdue":
-                base_filters += " AND due_date < %s AND is_completed = 0"
+                base_filters += " AND end_at < %s AND is_completed = 0"
                 params.append(today)
 
         if task_duration:
             if task_duration == "short_tasks":
-                base_filters += " AND estimated_time <= %s"
+                base_filters += " AND TIMESTAMPDIFF(MINUTE, start_at, end_at) <= %s"
                 params.append(SHORT_TASK_THRESHOLD)
             elif task_duration == "long_tasks":
-                base_filters += " AND estimated_time > %s"
+                base_filters += " AND TIMESTAMPDIFF(MINUTE, start_at, end_at) > %s"
                 params.append(SHORT_TASK_THRESHOLD)
 
         count_query = f"SELECT COUNT(*) as total FROM tasks{base_filters}"
         cursor.execute(count_query, params)
         total_count = cursor.fetchone()["total"]
 
-        SORTABLE_FIELDS = ["created_at", "title", "due_date", "estimated_time"]
+        SORTABLE_FIELDS = ["created_at", "title", "start_at", "duration"]
         sort_by_field = sort_by if sort_by in SORTABLE_FIELDS else "created_at"
+
+        if sort_by_field == "duration":
+            sort_by_field = "TIMESTAMPDIFF(MINUTE, start_at, end_at)"
+
         order_value = "ASC" if order == "asc" else "DESC"
 
         data_query = (
@@ -133,15 +137,15 @@ def get_task(user_id, task_id):
             conn.close()
 
 
-def create_tasks(user_id, title, description, category, due_date, estimated_time):
+def create_tasks(user_id, title, description, category, start_at, end_at):
     conn = None
     cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO tasks (title, description, category, due_date, estimated_time, user_id) VALUES (%s, %s, %s, %s, %s, %s);",
-            (title, description, category, due_date, estimated_time, user_id),
+            "INSERT INTO tasks (title, description, category, start_at, end_at, user_id) VALUES (%s, %s, %s, %s, %s, %s);",
+            (title, description, category, start_at, end_at, user_id),
         )
         conn.commit()
         new_id = cursor.lastrowid
@@ -164,23 +168,23 @@ def create_tasks_from_list(user_id, tasks):
         cursor = conn.cursor()
 
         sql = """
-      INSERT INTO tasks (
-        title, description, category, due_date, 
-        estimated_time, user_id, is_completed, completed_at
-      )
-      VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    """
+            INSERT INTO tasks (
+                title, description, category, start_at, end_at, 
+                user_id, is_completed, completed_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
 
         data = [
             (
-                t["title"],
-                t["description"],
-                t["category"],
-                t["dueDate"],
-                t["estimatedTime"],
+                t.get("title"),
+                t.get("description"),
+                t.get("category", "General"),
+                t.get("startAt"),
+                t.get("endAt"),
                 user_id,
-                t["isCompleted"],
-                t["completedAt"],
+                1 if t.get("isCompleted") else 0,
+                t.get("completedAt"),
             )
             for t in tasks
         ]
@@ -207,8 +211,8 @@ def update_task(
     title=None,
     description=None,
     category=None,
-    due_date=None,
-    estimated_time=None,
+    start_at=None,
+    end_at=None,
     is_completed=None,
     completed_at=None,
     has_completed_at=False,
@@ -230,8 +234,8 @@ def update_task(
         updated_title = title if title else task["title"]
         updated_desc = description if description else task["description"]
         updated_cat = category if category else task["category"]
-        updated_due = due_date if due_date else task["due_date"]
-        updated_time = estimated_time if estimated_time else task["estimated_time"]
+        updated_start = start_at if start_at else task["start_at"]
+        updated_end = end_at if end_at else task["end_at"]
         updated_status = (
             is_completed if is_completed is not None else task["is_completed"]
         )
@@ -242,15 +246,15 @@ def update_task(
         cursor.execute(
             """
           UPDATE tasks 
-          SET title = %s, description = %s, category = %s, due_date = %s, estimated_time = %s, is_completed = %s, completed_at = %s
+          SET title = %s, description = %s, category = %s, start_at = %s, end_at = %s, is_completed = %s, completed_at = %s
           WHERE id = %s and user_id = %s
       """,
             (
                 updated_title,
                 updated_desc,
                 updated_cat,
-                updated_due,
-                updated_time,
+                updated_start,
+                updated_end,
                 int(updated_status),
                 updated_completed_at,
                 id,
@@ -265,8 +269,8 @@ def update_task(
             "title": updated_title,
             "description": updated_desc,
             "category": updated_cat,
-            "due_date": updated_due,
-            "estimated_time": updated_time,
+            "start_at": updated_start,
+            "end_at": updated_end,
             "is_completed": True if updated_status == 1 else False,
             "created_at": task.get("created_at"),
             "completed_at": updated_completed_at,

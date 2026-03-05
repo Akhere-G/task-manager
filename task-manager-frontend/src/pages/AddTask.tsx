@@ -17,7 +17,8 @@ export default function AddTask() {
   async function handleCreate(newTask: CreateTaskInput) {
     const formattedTask = {
       ...newTask,
-      dueDate: format(newTask.dueDate, "yyyy-MM-dd HH:mm"),
+      startAt: format(newTask.startAt, "yyyy-MM-dd HH:mm"),
+      endAt: format(newTask.endAt, "yyyy-MM-dd HH:mm"),
     };
     await taskService.create(formattedTask);
     invalidateTaskKeys();

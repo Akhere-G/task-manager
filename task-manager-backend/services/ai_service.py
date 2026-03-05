@@ -87,10 +87,17 @@ def generate_daily_brief(user_id):
             ]
         )
 
-        total_mins_today = sum(t.get("estimated_time", 0) for t in today_tasks)
+        total_mins_today = 0
+        for t in today_tasks:
+            start = t["start_at"]
+            end = t["end_at"]
+            if start and end:
+                delta = end - start
+                total_mins_today += int(delta.total_seconds() / 60)
+
         task_list_str = "\n".join(
             [
-                f"- {t['title']} ({t['category']}, {t['estimated_time']}m)"
+                f"- {t['title']} ({t['category']}, {t['start_at']} - {t['end_at']})"
                 for t in today_tasks
             ]
         )
@@ -143,8 +150,8 @@ def parse_task_with_ai(user_input):
     - title: (string)
     - description: (string or null)
     - category: (MUST be one of: {", ".join(allowed_categories)})
-    - dueDate: Use YYYY-MM-DD HH:MM:SS. If no time mentioned, use {today_str} 23:59:59.
-    - estimatedTime: (integer in minutes, default 30)
+    - startAt: Use YYYY-MM-DD HH:MM:SS. If no time mentioned, use {today_str} 00:00.
+    - endAt: Use YYYY-MM-DD HH:MM:SS. If no time mentioned, use {today_str} 23:59.
     """
 
     raw_json = get_generated_text(prompt)
@@ -154,25 +161,25 @@ def parse_task_with_ai(user_input):
         parsed_data = json.loads(clean_json)
         if parsed_data.get("category") not in allowed_categories:
             parsed_data["category"] = "general"
-        if not parsed_data.get("dueDate"):
-            parsed_data["dueDate"] = datetime.now().strftime("%Y-%m-%d 23:59:59")
+        if not parsed_data.get("startAt"):
+            parsed_data["startAt"] = datetime.now().strftime("%Y-%m-%d 23:59:59")
+        if not parsed_data.get("endAt"):
+            parsed_data["endAt"] = datetime.now().strftime("%Y-%m-%d 23:59:59")
         return parsed_data
     except Exception:
         return {
             "title": user_input[:50],
             "description": user_input,
             "category": "general",
-            "dueDate": f"{today_str} 23:59:59",
-            "estimatedTime": 30,
+            "startAt": f"{today_str} 00:00",
+            "endAt": f"{today_str} 23:59",
         }
 
 
-def decompose_task(title, description, category, due_date, estimated_time):
+def decompose_task(title, description, category, start_at, end_at):
     today = date.today().strftime("%Y-%m-%d")
 
-    task_details = (
-        f"- {title} ({category}, {description}, {estimated_time}m, {due_date})"
-    )
+    task_details = f"- {title} ({category}, {description}, {start_at} to {end_at})"
 
     prompt = f"""
     Decompose this task into 3-7 substasks that will help the user complete the task.
@@ -181,8 +188,8 @@ def decompose_task(title, description, category, due_date, estimated_time):
     - title: (string)
     - description: (string or null)
     - category: (MUST be one of: {", ".join(allowed_categories)})
-    - dueDate: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is {today}. If no time mentioned, default to end of day 23:59:59)
-    - estimatedTime: (integer in minutes, default 30)
+    - startAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is {today}. If no time mentioned, default to end of day 00:00)
+    - endAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, If no due date mentioned, default to end of day 23:59)
     """
     try:
         raw_json = get_generated_text(prompt)
@@ -201,5 +208,5 @@ def decompose_task(title, description, category, due_date, estimated_time):
         if not isinstance(tasks, list):
             return []
         return tasks
-    except Exception as err:
+    except Exception:
         return []

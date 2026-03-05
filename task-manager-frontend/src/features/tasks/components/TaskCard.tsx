@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, isSameDay, isSameMonth, isSameYear } from "date-fns";
 
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
@@ -39,19 +39,12 @@ function TaskCard({
   showDecompose = true,
   ...task
 }: TaskCardProps) {
-  const {
-    id,
-    title,
-    category,
-    description,
-    isCompleted,
-    dueDate,
-    estimatedTime,
-  } = task;
+  const { id, title, category, description, isCompleted, startAt, endAt } =
+    task;
   const [showMore, setShowMore] = useState(false);
   const navigate = useNavigate();
 
-  const isOverdue = !isCompleted && new Date(dueDate) < new Date();
+  const isOverdue = !isCompleted && new Date(endAt) < new Date();
 
   const desc = description || "";
   const maxDescriptionLength = 100;
@@ -59,6 +52,26 @@ function TaskCard({
   const formattedDescription =
     isLongDesc && !showMore ? desc.substring(0, 100) + "..." : desc;
   const ShowMoreIcon = showMore ? ChevronUp : ChevronDown;
+
+  const endDate = new Date(endAt);
+  const startDate = new Date(startAt);
+  const duration = (endDate.getTime() - startDate.getTime()) / 60000;
+
+  const sameDay = isSameDay(endDate, startDate);
+  const sameMonth = isSameMonth(endDate, startDate);
+  const sameYear = isSameYear(endDate, startDate);
+
+  let dateStr = "";
+
+  if (sameDay) {
+    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "p")}`;
+  } else if (sameMonth) {
+    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do p")}`;
+  } else if (sameYear) {
+    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do LLL, p")}`;
+  } else {
+    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do LLL, yy p")}`;
+  }
 
   return (
     <article
@@ -81,7 +94,7 @@ function TaskCard({
           <span className="truncate">{title}</span>
         </h3>
         <span className="text-xs font-mono shrink-0 bg-white/20 px-2 py-0.5 rounded">
-          {estimatedTime}m
+          {duration}m
         </span>
       </header>
 
@@ -117,7 +130,7 @@ function TaskCard({
           <time
             className={`text-xs font-medium ${isOverdue ? "text-failure font-bold" : ""}`}
           >
-            {format(new Date(dueDate), "do LLL, yy p")}
+            {dateStr}
           </time>
         </div>
 

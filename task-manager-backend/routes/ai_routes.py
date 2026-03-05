@@ -43,12 +43,11 @@ def decompose_task_route():
     title = data.get("title", "")
     description = data.get("description", "")
     category = data.get("category", "")
-    due_date = data.get("dueDate", "")
+    start_at = data.get("start_at", "")
+    end_at = data.get("end_at", "")
     estimated_time = data.get("estimatedTime", "")
 
-    decomposed_tasks = decompose_task(
-        title, description, category, due_date, estimated_time
-    )
+    decomposed_tasks = decompose_task(title, description, category, start_at, end_at)
 
     if len(decomposed_tasks) == 0:
         return jsonify({"error": "Could not decommpose task "}), 400

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 def _get_productivity_trend(cursor, user_id):
     cursor.execute(
         """
-        SELECT DATE(completed_at) as completed_at_date, COUNT(*) as completed_tasks, SUM(estimated_time) as time_spent
+        SELECT DATE(completed_at) as completed_at_date, COUNT(*) as completed_tasks, SUM(TIMESTAMPDIFF(MINUTE, start_at, end_at)) as time_spent
         FROM tasks
         WHERE user_id = %s AND is_completed = 1 AND completed_at >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)
         GROUP BY completed_at_date;
@@ -40,7 +40,7 @@ def _get_productivity_trend(cursor, user_id):
 def _get_time_spent(cursor, user_id):
     cursor.execute(
         """
-        SELECT category, SUM(estimated_time) as time_spent
+        SELECT category, SUM(TIMESTAMPDIFF(MINUTE, start_at, end_at)) as time_spent
         FROM tasks
         WHERE user_id = %s AND is_completed = 1
         GROUP BY category
@@ -60,7 +60,7 @@ def _get_backlog_health(cursor, user_id):
         SELECT 
             CASE 
                 WHEN is_completed = 1 THEN 'Completed'
-                WHEN due_date < CURRENT_TIMESTAMP AND is_completed = 0 THEN 'Overdue'
+                WHEN end_at < CURRENT_TIMESTAMP AND is_completed = 0 THEN 'Overdue'
                 ELSE 'Pending'
             END as status,
             COUNT(*) as count
@@ -79,8 +79,8 @@ def _get_category_volume(cursor, user_id):
         SELECT 
             category, 
             SUM(is_completed = 1) AS completed, 
-            SUM(is_completed = 0 AND due_date < CURRENT_TIMESTAMP) AS overdue,
-            SUM(is_completed = 0 AND due_date >= CURRENT_TIMESTAMP) AS pending
+            SUM(is_completed = 0 AND end_at < CURRENT_TIMESTAMP) AS overdue,
+            SUM(is_completed = 0 AND end_at >= CURRENT_TIMESTAMP) AS pending
         FROM tasks
         WHERE user_id = %s
         GROUP BY category
@@ -107,17 +107,17 @@ def _get_overdue_distribution(cursor, user_id):
         """
         SELECT 
             CASE 
-                WHEN DATEDIFF(CURRENT_TIMESTAMP, due_date) <= 3 THEN "< 3 Days"
-                WHEN DATEDIFF(CURRENT_TIMESTAMP, due_date) <= 7 THEN "1 Week"
-                WHEN DATEDIFF(CURRENT_TIMESTAMP, due_date) <= 30 THEN "1 Month"
-                WHEN DATEDIFF(CURRENT_TIMESTAMP, due_date) <= 90 THEN "3 Months"
+                WHEN DATEDIFF(CURRENT_TIMESTAMP, end_at) <= 3 THEN "< 3 Days"
+                WHEN DATEDIFF(CURRENT_TIMESTAMP, end_at) <= 7 THEN "1 Week"
+                WHEN DATEDIFF(CURRENT_TIMESTAMP, end_at) <= 30 THEN "1 Month"
+                WHEN DATEDIFF(CURRENT_TIMESTAMP, end_at) <= 90 THEN "3 Months"
                 ELSE "+3 Months"
             END as days_overdue,
             COUNT(*) as count
         FROM tasks
-        WHERE user_id = %s AND is_completed = 0 AND due_date < CURRENT_TIMESTAMP 
+        WHERE user_id = %s AND is_completed = 0 AND end_at < CURRENT_TIMESTAMP 
         GROUP BY days_overdue
-        ORDER BY MIN(DATEDIFF(CURRENT_TIMESTAMP, due_date)) ASC;
+        ORDER BY MIN(DATEDIFF(CURRENT_TIMESTAMP, end_at)) ASC;
     """,
         (user_id,),
     )
@@ -127,7 +127,7 @@ def _get_overdue_distribution(cursor, user_id):
 def _get_deadline_proximity(cursor, user_id):
     cursor.execute(
         """
-        SELECT category, AVG(DATEDIFF(due_date, CURRENT_TIMESTAMP)) as score
+        SELECT category, AVG(DATEDIFF(end_at, CURRENT_TIMESTAMP)) as score
         FROM tasks
         WHERE user_id = %s AND is_completed = 0 
         GROUP BY category

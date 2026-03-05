@@ -23,19 +23,13 @@ export default function BulkAddForm() {
   const triggerUpload = () => fileInputRef.current?.click();
 
   const downloadTemplate = (withIsCompleted: boolean = false) => {
-    const headers = [
-      "Title",
-      "Category",
-      "Description",
-      "Due Date",
-      "Estimated Time",
-    ];
+    const headers = ["Title", "Category", "Description", "Start At", "End At"];
     const sampleData = [
       "Prepare Report",
       "work",
       "Weekly sync prep",
-      "2026-03-01",
-      "60",
+      "2026-03-01 10:00",
+      "2026-03-01 14:00",
     ];
 
     if (withIsCompleted) {
@@ -76,20 +70,20 @@ export default function BulkAddForm() {
             .trim()
             .toLowerCase(),
           description: getDescription(task),
-          dueDate:
-            task["Due Date"] ||
-            task["Due date"] ||
-            task["due date"] ||
-            task.dueDate ||
-            task.due_date ||
+          startAt:
+            task["Start At"] ||
+            task["Start at"] ||
+            task["start at"] ||
+            task.startAt ||
+            task.start_at ||
             "",
-          estimatedTime: Number(
-            task["Estimated Time"] ||
-              task["Estimated time"] ||
-              task["estimated time"] ||
-              task.estimatedTime ||
-              task.estimated_time,
-          ),
+          endAt:
+            task["End At"] ||
+            task["End at"] ||
+            task["end at"] ||
+            task.endAt ||
+            task.end_at ||
+            "",
           isCompleted: [
             task["Is Completed"],
             task["Is completed"],
@@ -140,46 +134,47 @@ export default function BulkAddForm() {
   };
 
   return (
-    <div className="flex gap-4 items-start md:items-baseline flex-col md:flex-row">
-      <input
-        onChange={handleChange}
-        className="hidden"
-        type="file"
-        accept=".csv"
-        ref={fileInputRef}
-      />
-      <button
-        className="btn-primary"
-        onClick={triggerUpload}
-        disabled={isUploading}
-      >
-        {isUploading ? "Uploading..." : "Upload CSV"}
-      </button>
-      <button
-        type="button"
-        onClick={() => downloadTemplate()}
-        className="text-sm cursor-pointer text-accent underline underline-offset-4 hover:text-accent/80"
-      >
-        Download Simple Template
-      </button>
-      <p>or</p>
-      <div className="flex flex-col items-baseline lg:flex-row lg:gap-2 flex-wrap">
-        <p>if you&apos;re exporting from another app</p>
+    <>
+      <div className="flex gap-4 items-start md:items-baseline flex-col md:flex-row">
+        <input
+          onChange={handleChange}
+          className="hidden"
+          type="file"
+          accept=".csv"
+          ref={fileInputRef}
+        />
+        <button
+          className="btn-primary"
+          onClick={triggerUpload}
+          disabled={isUploading}
+        >
+          {isUploading ? "Uploading..." : "Upload CSV"}
+        </button>
         <button
           type="button"
-          onClick={() => downloadTemplate(true)}
+          onClick={() => downloadTemplate()}
           className="text-sm cursor-pointer text-accent underline underline-offset-4 hover:text-accent/80"
         >
-          download Advanced Template
+          Download Simple Template
         </button>
+        <p>or</p>
+        <div className="flex flex-col items-baseline lg:flex-row lg:gap-2 flex-wrap">
+          <p>if you&apos;re exporting from another app</p>
+          <button
+            type="button"
+            onClick={() => downloadTemplate(true)}
+            className="text-sm cursor-pointer text-accent underline underline-offset-4 hover:text-accent/80"
+          >
+            download Advanced Template
+          </button>
+        </div>
       </div>
-
       {errorMessage && (
         <div className="whitespace-pre-wrap w-full text-failure bg-failure/10 p-3 rounded-md border-l-failure border-l-4 text-sm mt-2">
           <p className="font-bold mb-1">Upload Failed:</p>
           {errorMessage}
         </div>
       )}
-    </div>
+    </>
   );
 }

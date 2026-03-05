@@ -4,8 +4,8 @@ export interface Task {
   description: string | null;
   category: string;
   isCompleted: boolean;
-  dueDate: string;
-  estimatedTime: number;
+  startAt: string;
+  endAt: string;
   createdAt: string;
   completedAt: string | null;
 }

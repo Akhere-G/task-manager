@@ -73,17 +73,15 @@ def add_task():
     if errors:
         return jsonify({"errors": errors}), 400
 
-    title = str(data.get("title", "")).strip()
+    title = data.get("title").strip() if "title" in data else None
     description = (
-        str(data.get("description")).strip() if "description" in data else None
+        str(data.get("description")).strip() if data.get("description") else None
     )
     category = str(data.get("category", "General")).strip()
-    due_date = data.get("dueDate")
-    estimated_time = data.get("estimatedTime")
+    start_at = data.get("startAt")
+    end_at = data.get("endAt")
 
-    task_id = create_tasks(
-        user_id, title, description, category, due_date, estimated_time
-    )
+    task_id = create_tasks(user_id, title, description, category, start_at, end_at)
 
     return jsonify(
         {
@@ -92,8 +90,8 @@ def add_task():
             "description": description,
             "category": category,
             "isCompleted": False,
-            "estimatedTime": estimated_time,
-            "dueDate": due_date,
+            "startAt": start_at,
+            "endAt": end_at,
             "completedAt": None,
         }
     ), 201
@@ -143,11 +141,11 @@ def edit_task(task_id):
 
     title = str(data.get("title", "")).strip()
     description = (
-        str(data.get("description")).strip() if "description" in data else None
+        str(data.get("description")).strip() if data.get("description") else None
     )
     category = str(data.get("category", "")).strip()
-    due_date = data.get("dueDate")
-    estimated_time = data.get("estimatedTime")
+    start_at = data.get("startAt")
+    end_at = data.get("endAt")
     is_completed = data.get("isCompleted")
     completed_at = data.get("completedAt")
 
@@ -157,9 +155,9 @@ def edit_task(task_id):
         title=title,
         category=category,
         description=description,
-        estimated_time=estimated_time,
         is_completed=is_completed,
-        due_date=due_date,
+        start_at=start_at,
+        end_at=end_at,
         completed_at=completed_at,
         has_completed_at="completedAt" in data,
     )
