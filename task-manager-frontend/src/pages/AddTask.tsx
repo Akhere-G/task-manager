@@ -29,7 +29,6 @@ export default function AddTask() {
 
   const startAt = state?.currentDate ?? null;
 
-  console.log(state, startAt);
   return (
     <div className="flex flex-col gap-6">
       <section className="card flex flex-col  gap-4 border-2">

@@ -9,3 +9,4 @@ export { default as StatusByCategoryChart } from "./StatusByCategoryChart";
 export { default as OverdueDistributionChart } from "./OverdueDistributionChart";
 export { default as DeadlineProximityChart } from "./DeadlineProximityChart.tsx";
 export { default as HourlyProductivityChart } from "./HourlyProductivityChart.tsx";
+export { default as TurnaroundChart } from "./TurnaroundChart.tsx";

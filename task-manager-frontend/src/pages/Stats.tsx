@@ -9,6 +9,7 @@ import {
   StatsOverview,
   StatusByCategoryChart,
   TimeSpentChart,
+  TurnaroundChart,
 } from "../features/stats/components";
 
 export default function Stats() {
@@ -34,7 +35,7 @@ export default function Stats() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard
           title="Task Status"
-          subtitle="Current completion progress"
+          subtitle="Current completion progress."
           width="lg:col-span-4" // 33%
           height="h-96"
         >
@@ -43,7 +44,7 @@ export default function Stats() {
 
         <ChartCard
           title="Productivity"
-          subtitle="Tasks completed daily"
+          subtitle="Tasks completed daily."
           width="lg:col-span-8" // 66% (Over 50%)
           height="h-96"
         >
@@ -64,7 +65,7 @@ export default function Stats() {
 
         <ChartCard
           title="Overdue Task Distribution"
-          subtitle="How overdue your tasks are"
+          subtitle="How overdue your tasks are."
           width="lg:col-span-5" // 41%
           height="h-96"
         >
@@ -85,7 +86,7 @@ export default function Stats() {
 
         <ChartCard
           title="Time spent"
-          subtitle="Total time spent per category"
+          subtitle="Total time spent per category."
           width="lg:col-span-7" // 58% (Over 50%)
           height="h-90 md:h-125"
         >
@@ -94,8 +95,18 @@ export default function Stats() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard
+          title="Turnaround"
+          subtitle="Days taken to complete tasks."
+          width="lg:col-span-12" // 66% (Over 50%)
+          height="h-96"
+        >
+          <TurnaroundChart />
+        </ChartCard>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <ChartCard
           title="Hourly Productivity"
-          subtitle="See when you are most productive"
+          subtitle="See when you are most productive."
           width="lg:col-span-12"
           height="h-90 md:h-125"
         >

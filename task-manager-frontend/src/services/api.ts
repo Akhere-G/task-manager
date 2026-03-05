@@ -85,6 +85,10 @@ export interface HourlyProductivityData {
   count: number;
 }
 
+export interface Turnaround {
+  count: number;
+  daysTaken: number;
+}
 export interface StatsResult {
   productivity: ProductivityData[];
   timeSpent: TimeSpentData[];
@@ -93,6 +97,7 @@ export interface StatsResult {
   overdueDistribution: OverdueDistributionData[];
   deadlineProximity: DeadlineProximityData[];
   hourlyProductivity: HourlyProductivityData[];
+  turnaround: Turnaround[];
 }
 export const statsService = {
   getStats: async (): Promise<StatsResult> => {
