@@ -167,6 +167,38 @@ def _get_hourly_productivity(cursor, user_id):
     return hourly_productivity
 
 
+def _get_turnaround_time(cursor, user_id):
+    cursor.execute(
+        """
+        SELECT DATEDIFF(completed_at, created_at) as days_taken, COUNT(*) as count
+        FROM tasks
+        WHERE is_completed = true AND created_at <= completed_at AND user_id = %s
+        GROUP BY days_taken
+        ORDER BY days_taken
+        LIMIT 50;
+        """,
+        (user_id,),
+    )
+
+    raw_data = cursor.fetchall()
+
+    days_lookup = {d["days_taken"]: d["count"] for d in raw_data}
+
+    max_days_taken = 0
+
+    for d in raw_data:
+        if d["days_taken"] > max_days_taken:
+            max_days_taken = d["days_taken"]
+
+    data = []
+    for i in range(max_days_taken):
+        if i not in days_lookup:
+            days_lookup[i] = 0
+        data.append({"days_taken": days_lookup[i], "count": i})
+
+    return data
+
+
 def get_all_dashboard_stats(user_id):
     conn = None
     cursor = None
@@ -182,6 +214,7 @@ def get_all_dashboard_stats(user_id):
             "overdueDistribution": _get_overdue_distribution(cursor, user_id),
             "deadlineProximity": _get_deadline_proximity(cursor, user_id),
             "hourlyProductivity": _get_hourly_productivity(cursor, user_id),
+            "turnaround": _get_turnaround_time(cursor, user_id),
         }
     except Exception as err:
         print(f"Database error: {err}")
