@@ -1,5 +1,5 @@
 export interface FormInputprops {
-  label: string;
+  label?: string;
   name: string;
   type?: string;
   value: string | number;
@@ -35,12 +35,14 @@ export default function FormInput({
 }: FormInputprops) {
   return (
     <div className={"group flex flex-col text-text-main " + formClassNames}>
-      <label
-        htmlFor={name}
-        className="group-focus-within:text-accent text-sm font-bold text-text-main mb-2"
-      >
-        {label}
-      </label>
+      {label && (
+        <label
+          htmlFor={name}
+          className="group-focus-within:text-accent text-sm font-bold text-text-main mb-2"
+        >
+          {label}
+        </label>
+      )}
       {!options && !textarea && (
         <input
           id={name}

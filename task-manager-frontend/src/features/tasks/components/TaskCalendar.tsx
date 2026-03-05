@@ -4,6 +4,7 @@ import {
   dateFnsLocalizer,
   Views,
   type Event,
+  type View,
 } from "react-big-calendar";
 import withDragAndDrop, {
   type EventInteractionArgs,
@@ -15,6 +16,9 @@ import {
   getDay,
   isSameDay,
   addMilliseconds,
+  endOfWeek,
+  isSameMonth,
+  isSameYear,
 } from "date-fns";
 import { enGB } from "date-fns/locale/en-GB";
 
@@ -22,7 +26,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
 import TaskCard from "./TaskCard";
-import { Popup } from "../../../components/ui";
+import { FormInput, Popup } from "../../../components/ui";
 import {
   ChevronLeft,
   ChevronRight,
@@ -51,6 +55,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     useTaskContext();
 
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [view, setView] = useState<View>(Views.MONTH);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [allTasks, setAllTasks] = useState<Task[]>(tasks);
   const [isMobile, setIsMobile] = useState(false);
@@ -76,7 +81,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
 
         return {
           id: task.id,
-          title: task.title,
+          title: task.title || "(No Title)",
           start: startDate,
           end: endDate,
           allDay: false,
@@ -167,7 +172,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
         endAt: format(end, "yyyy-MM-dd HH:mm"),
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
       setAllTasks(prev);
     }
   }
@@ -175,41 +180,77 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
   const CustomToolbar = () => {
     const goToBack = () => {
       const m = new Date(currentDate);
-      m.setMonth(m.getMonth() - 1);
+      if (view === Views.MONTH) {
+        m.setMonth(m.getMonth() - 1);
+      } else if (view === Views.WEEK) {
+        m.setDate(m.getDate() - 7);
+      } else {
+        m.setDate(m.getDate() - 1);
+      }
       setCurrentDate(m);
     };
     const goToNext = () => {
       const m = new Date(currentDate);
-      m.setMonth(m.getMonth() + 1);
+      if (view === Views.MONTH) {
+        m.setMonth(m.getMonth() + 1);
+      } else if (view === Views.WEEK) {
+        m.setDate(m.getDate() + 7);
+      } else {
+        m.setDate(m.getDate() + 1);
+      }
       setCurrentDate(m);
     };
+    let dateStr = format(currentDate, "MMMM yyyy");
+
+    if (view === Views.WEEK) {
+      const startWeek = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const endWeek = endOfWeek(currentDate, { weekStartsOn: 1 });
+      const sameMonth = isSameMonth(endWeek, startWeek);
+      const sameYear = isSameYear(endWeek, startWeek);
+      let formatStr = "do";
+      if (!sameMonth) formatStr += " MMM";
+      if (!sameYear) formatStr += " yyyy";
+      dateStr = `${format(startWeek, formatStr)} - ${format(endWeek, "do MMM yyyy")}`;
+    }
+    if (view === Views.DAY) {
+      dateStr = format(currentDate, "do MMM yyyy");
+    }
+
     return (
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <CalendarIcon className="text-brand" size={20} />
           <h2 className="text-lg md:text-2xl font-bold text-text-main">
-            {format(currentDate, "MMMM yyyy")}
+            {dateStr}
           </h2>
         </div>
-        <div className="flex items-center bg-surface-muted p-1 rounded-lg border border-border-light shadow-sm">
-          <button
-            onClick={goToBack}
-            className="p-1.5 hover:bg-surface rounded-md transition-colors"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <button
-            onClick={() => setCurrentDate(new Date())}
-            className="px-3 py-1 text-xs font-semibold border-x border-border-light"
-          >
-            Today
-          </button>
-          <button
-            onClick={goToNext}
-            className="p-1.5 hover:bg-surface rounded-md transition-colors"
-          >
-            <ChevronRight size={18} />
-          </button>
+
+        <div className="flex gap-4 items ">
+          <FormInput
+            value={view}
+            handleChange={(e) => setView(e.target.value as View)}
+            name="view"
+            options={[
+              { value: Views.MONTH, name: "Month" },
+              { value: Views.WEEK, name: "Week" },
+              { value: Views.DAY, name: "Day" },
+            ]}
+          />
+
+          <div className="flex h-11.5  bg-brand px-1 rounded-lg border border-border-light shadow-sm text-text-inverse">
+            <button onClick={goToBack} className="btn-primary">
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={() => setCurrentDate(new Date())}
+              className="btn-primary rounded-none  border-x"
+            >
+              Today
+            </button>
+            <button onClick={goToNext} className="btn-primary">
+              <ChevronRight size={18} />
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -227,8 +268,8 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           onSelectSlot={({ start }) => setCurrentDate(start as Date)}
           selectable
           messages={{ showMore: () => isMobile }}
-          view={Views.MONTH}
-          views={[Views.MONTH]}
+          view={view}
+          views={[Views.MONTH, Views.WEEK, Views.DAY]}
           onEventDrop={onEventDrop}
           onEventResize={onEventResize}
           onSelectEvent={(event: Event) =>
@@ -268,7 +309,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           }}
           components={{
             toolbar: CustomToolbar,
-            event: ({ title, event }) => {
+            event: ({ title = "", event }) => {
               if (isMobile) {
                 const count = Math.min(9, (event as Event).resource);
                 return (
