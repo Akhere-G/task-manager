@@ -111,7 +111,7 @@ export default function TasksHeader({
         )}
         <button
           type="button"
-          className="self-end mb-1 btn-primary"
+          className="self-end mb-1 btn-primary h-10"
           onClick={resetFilters}
         >
           Reset Filters
