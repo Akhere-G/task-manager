@@ -13,7 +13,7 @@ def initialise_database():
             password=os.getenv("DB_PASSWORD"),
             port=int(os.getenv("DB_PORT", 3306)),
         )
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
         cursor.execute(f"USE {db_name}")
