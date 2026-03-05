@@ -230,7 +230,6 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           view={Views.MONTH}
           views={[Views.MONTH]}
           onEventDrop={onEventDrop}
-          // Disabled on mobile so dots aren't clickable
           onEventResize={onEventResize}
           onSelectEvent={(event: Event) =>
             !isMobile && setSelectedTask(event.resource as Task)
