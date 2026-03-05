@@ -149,6 +149,29 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     }
   };
 
+  function onEventResize(e: EventInteractionArgs<object>) {
+    const { start, end, event: task } = e as EventInteractionArgs<Task>;
+
+    const startAt = format(start, "yyyy-MM-dd HH:mm");
+    const endAt = format(end, "yyyy-MM-dd HH:mm");
+
+    const prev = allTasks;
+
+    setAllTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? { ...t, startAt, endAt } : t)),
+    );
+
+    try {
+      updateTask(task.id, {
+        startAt: format(start, "yyyy-MM-dd HH:mm"),
+        endAt: format(end, "yyyy-MM-dd HH:mm"),
+      });
+    } catch (err) {
+      console.log(err);
+      setAllTasks(prev);
+    }
+  }
+
   const CustomToolbar = () => {
     const goToBack = () => {
       const m = new Date(currentDate);
@@ -208,6 +231,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           views={[Views.MONTH]}
           onEventDrop={onEventDrop}
           // Disabled on mobile so dots aren't clickable
+          onEventResize={onEventResize}
           onSelectEvent={(event: Event) =>
             !isMobile && setSelectedTask(event.resource as Task)
           }
