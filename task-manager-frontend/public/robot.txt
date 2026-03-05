@@ -9,7 +9,7 @@ Allow: /register
 # Private App Routes (Disallow these)
 Disallow: /calendar
 Disallow: /stats
-Disallow: /addtasks
+Disallow: /addtask
 Disallow: /pomodoro/
 Disallow: /breakdown/
 

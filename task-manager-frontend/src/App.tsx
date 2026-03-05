@@ -20,7 +20,7 @@ function App() {
 
   const protectedRoutes = [
     { title: "Tasks", path: "/" },
-    { title: "Add Task", path: "/addtasks" },
+    { title: "Add Task", path: "/addtask" },
     { title: "Calendar", path: "/calendar" },
     { title: "Stats", path: "/stats" },
   ];
@@ -61,7 +61,7 @@ function App() {
             }
           />
           <Route
-            path="/addtasks"
+            path="/addtask"
             element={
               <ProtectedRoute redirect={!isAuthenticated}>
                 <AddTask />

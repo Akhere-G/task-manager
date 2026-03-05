@@ -31,7 +31,8 @@ def validate_task(data, is_update=False):
             errors["title"] = "Title is mandatory."
         elif len(title) > 255:
             errors["title"] = "Title must be under 255 characters."
-
+    dt_start = None
+    dt_end = None
     if "startAt" in data or not is_update:
         start_at = data.get("startAt")
         if start_at is None:

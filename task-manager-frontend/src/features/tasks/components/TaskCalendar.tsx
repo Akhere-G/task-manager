@@ -29,9 +29,11 @@ import {
   Calendar as CalendarIcon,
   CheckCircle2,
   Circle,
+  Plus,
 } from "lucide-react";
 import { useTaskContext } from "../../../context/TaskContext";
 import type { Task } from "../types";
+import { useNavigate } from "react-router-dom";
 
 const locales = { "en-GB": enGB };
 const localizer = dateFnsLocalizer({
@@ -52,6 +54,8 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [allTasks, setAllTasks] = useState<Task[]>(tasks);
   const [isMobile, setIsMobile] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     setAllTasks(tasks);
@@ -209,16 +213,34 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           }
           dayPropGetter={(date) => {
             const isSelected = isSameDay(date, currentDate);
+            const isToday = isSameDay(date, new Date());
             const isCurrentMonth = date.getMonth() === currentDate.getMonth();
 
+            const classes = [
+              "transition-all",
+              "duration-200",
+              "cursor-pointer",
+              "relative",
+            ];
+
+            if (!isCurrentMonth) {
+              classes.push("bg-slate-50/40", "opacity-40", "grayscale-[0.5]");
+            } else {
+              classes.push("bg-surface");
+            }
+
+            if (isSelected) {
+              classes.push("!bg-brand/20");
+            } else {
+              classes.push("hover:bg-brand/20");
+            }
+
+            if (isToday) {
+              classes.push("!font-bold");
+            }
+
             return {
-              className: `transition-colors cursor-pointer ${
-                isSelected ? "!bg-brand/25" : "hover:!bg-surface-muted"
-              } ${
-                !isCurrentMonth
-                  ? "bg-slate-50/50 opacity-40 grayscale-[0.5]"
-                  : "bg-surface"
-              }`,
+              className: classes.join(" "),
             };
           }}
           components={{
@@ -255,7 +277,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
       <div className="md:hidden space-y-4">
         <div className="flex items-center justify-between border-b border-border-light pb-2 px-1">
           <p className="text-sm font-bold text-text-sub uppercase tracking-widest">
-            {format(currentDate, "do MMMM")}
+            {format(currentDate, "E do MMMM")}
           </p>
           <span className="text-xs font-medium text-brand bg-brand/10 px-2 py-0.5 rounded-full">
             {tasksForSelectedDay.length} Tasks
@@ -275,8 +297,9 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
                   onClick={() => setSelectedTask(task)}
                 >
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
                       setIsCompleted(task.id, !task.isCompleted);
+                      e.stopPropagation();
                     }}
                   >
                     {task.isCompleted ? (
@@ -302,11 +325,20 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
             })
           ) : (
             <div className="py-10 text-center border-2 border-dashed border-slate-100 rounded-3xl bg-surface">
-              <p className="text-text-sub text-sm italic">No tasks today.</p>
+              <p className="text-text-sub text-sm italic">
+                No tasks on {format(currentDate, "PPPP")}.
+              </p>
             </div>
           )}
         </div>
       </div>
+
+      <button
+        className="z-1 fixed bottom-5 right-5 btn-primary rounded-full w-10 h-10 flex items-center justify-center shadow-xl"
+        onClick={() => navigate("/addtask", { state: { currentDate } })}
+      >
+        <Plus />
+      </button>
 
       {selectedTask && (
         <Popup

@@ -16,7 +16,7 @@ interface TaskFormProps {
   confirmButtonText?: string;
   submitAction: (task: CreateTaskInput) => Promise<void>;
   close?: () => void;
-  initialData?: CreateTaskInput;
+  initialData?: Partial<CreateTaskInput>;
 }
 export default function TaskForm({
   submitAction,
@@ -78,10 +78,32 @@ export default function TaskForm({
 
   useEffect(() => {
     if (initialData)
-      setFormState({
-        ...initialData,
-        startAt: format(initialData.startAt, "yyyy-MM-dd HH:mm"),
-        endAt: format(initialData.endAt, "yyyy-MM-dd HH:mm"),
+      setFormState((prev) => {
+        let startAt;
+        if (initialData.startAt) {
+          startAt = format(initialData.startAt, "yyyy-MM-dd HH:mm");
+        } else {
+          startAt = prev.startAt;
+        }
+
+        let endAt;
+        if (initialData.endAt) {
+          endAt = format(initialData.endAt, "yyyy-MM-dd HH:mm");
+        } else if (initialData.startAt) {
+          endAt = format(
+            set(startAt, {
+              hours: 23,
+              minutes: 59,
+              seconds: 0,
+              milliseconds: 0,
+            }),
+            "yyyy-MM-dd HH:mm",
+          );
+        } else {
+          endAt = prev.endAt;
+        }
+
+        return { ...prev, ...initialData, startAt, endAt };
       });
   }, [initialData]);
 

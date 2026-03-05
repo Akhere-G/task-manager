@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { taskService } from "../services/api";
 import type { CreateTaskInput } from "../features/tasks/types";
@@ -25,6 +25,11 @@ export default function AddTask() {
     navigate("/");
   }
 
+  const { state } = useLocation();
+
+  const startAt = state?.currentDate ?? null;
+
+  console.log(state, startAt);
   return (
     <div className="flex flex-col gap-6">
       <section className="card flex flex-col  gap-4 border-2">
@@ -53,7 +58,7 @@ export default function AddTask() {
         <TaskForm
           key={aiSuggestion ? JSON.stringify(aiSuggestion) : "manual"}
           submitAction={handleCreate}
-          initialData={aiSuggestion}
+          initialData={startAt ? { ...aiSuggestion, startAt } : aiSuggestion}
         />
       </section>
 

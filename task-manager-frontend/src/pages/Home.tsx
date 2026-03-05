@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import {
   EmptyState,
   LoadingState,
@@ -8,6 +9,7 @@ import { DailyBrief } from "../features/ai/components";
 import { TasksHeader, TaskList } from "../features/tasks/components";
 import TaskPopups from "../features/tasks/components/TaskPopups";
 import { useTasks } from "../features/tasks/hooks/useTasks";
+import { useNavigate } from "react-router-dom";
 
 const PER_PAGE = 10;
 
@@ -24,6 +26,8 @@ export default function Home() {
     resetFilters,
     updateFilters,
   } = useTasks({ perPage: PER_PAGE });
+
+  const navigate = useNavigate();
 
   const tasks = data?.tasks || null;
 
@@ -70,6 +74,12 @@ export default function Home() {
         <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate />
       )}
 
+      <button
+        className="z-1 fixed bottom-5 right-5 btn-primary rounded-full w-10 h-10 flex items-center justify-center shadow-xl "
+        onClick={() => navigate("/addtask")}
+      >
+        <Plus />
+      </button>
       {tasks && <TaskPopups />}
     </section>
   );

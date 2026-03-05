@@ -104,7 +104,7 @@ export default function BulkAddForm() {
 
         if (hasErrors) {
           const taskErrorMessages = allErrors
-            .map((err, i) => `Row ${i + 2}: ${Object.values(err).join(", ")}`)
+            .map((err, i) => `Row ${i + 2}: ${Object.values(err).join(" ")}`)
             .filter((m) => !m.endsWith(": "))
             .join("\n");
 
