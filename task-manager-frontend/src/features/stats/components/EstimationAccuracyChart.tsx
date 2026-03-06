@@ -9,7 +9,6 @@ import {
   Tooltip,
   ReferenceLine,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { format, fromUnixTime } from "date-fns";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
@@ -72,8 +71,6 @@ export default function EstimationAccuracyChart() {
           />
           <ZAxis type="number" range={[60, 60]} />
 
-          <Legend verticalAlign="top" height={36} />
-
           <ReferenceLine
             segment={[
               { x: domainMin, y: domainMin },
@@ -96,7 +93,6 @@ export default function EstimationAccuracyChart() {
             itemStyle={{ color: "var(--text-text-main)" }}
             content={(args) => {
               if (!args?.payload?.[0]?.payload) return;
-              console.log(args);
               const { title, varianceMinutes } = args.payload[0].payload;
               const absMins = Math.abs(varianceMinutes);
               const status = varianceMinutes >= 0 ? "early" : "late";
