@@ -175,6 +175,8 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     } catch (err) {
       console.error(err);
       setAllTasks(prev);
+    } finally {
+      setDraggedEvent(null);
     }
   }
 
