@@ -11,7 +11,12 @@ import {
   Login,
   DecomposeTask,
 } from "./pages";
-import { Footer, Header, ProtectedRoute } from "./components/layout";
+import {
+  ErrorBoundary,
+  Footer,
+  Header,
+  ProtectedRoute,
+} from "./components/layout";
 import { useAuthContext } from "./context/AuthContext";
 
 function App() {
@@ -51,79 +56,81 @@ function App() {
         isAuthenticated={isAuthenticated}
       />
       <main className="grow max-w-7xl mx-auto w-full px-3 py-3 md:px-12 md:py-12">
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute redirect={!isAuthenticated}>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/addtask"
-            element={
-              <ProtectedRoute redirect={!isAuthenticated}>
-                <AddTask />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/calendar"
-            element={
-              <ProtectedRoute redirect={!isAuthenticated}>
-                <CalendarView />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/stats"
-            element={
-              <ProtectedRoute redirect={!isAuthenticated}>
-                <Stats />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/pomodoro/:taskId"
-            element={
-              <ProtectedRoute redirect={!isAuthenticated}>
-                <Pomodoro />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/breakdown/:taskId"
-            element={
-              <ProtectedRoute redirect={!isAuthenticated}>
-                <DecomposeTask />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route
-            path="/register"
-            element={
-              <ProtectedRoute redirect={isAuthenticated} redirectTo="/">
-                <Register />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <ProtectedRoute redirect={isAuthenticated} redirectTo="/">
-                <Login />
-              </ProtectedRoute>
-            }
-          />
+        <ErrorBoundary onRetry={() => window.location.reload()}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute redirect={!isAuthenticated}>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/addtask"
+              element={
+                <ProtectedRoute redirect={!isAuthenticated}>
+                  <AddTask />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute redirect={!isAuthenticated}>
+                  <CalendarView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/stats"
+              element={
+                <ProtectedRoute redirect={!isAuthenticated}>
+                  <Stats />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pomodoro/:taskId"
+              element={
+                <ProtectedRoute redirect={!isAuthenticated}>
+                  <Pomodoro />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/breakdown/:taskId"
+              element={
+                <ProtectedRoute redirect={!isAuthenticated}>
+                  <DecomposeTask />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route
+              path="/register"
+              element={
+                <ProtectedRoute redirect={isAuthenticated} redirectTo="/">
+                  <Register />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <ProtectedRoute redirect={isAuthenticated} redirectTo="/">
+                  <Login />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="*"
-            element={<div className="text-center py-20">Page Not Found</div>}
-          />
-        </Routes>
+            <Route
+              path="*"
+              element={<div className="text-center py-20">Page Not Found</div>}
+            />
+          </Routes>
+        </ErrorBoundary>
       </main>
       <Footer />
     </div>
