@@ -121,10 +121,6 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     const originalStart = new Date(task.startAt);
     const originalEnd = new Date(task.endAt);
 
-    newStart.setHours(originalStart.getHours());
-    newStart.setMinutes(originalStart.getMinutes());
-    newStart.setSeconds(originalStart.getSeconds());
-
     const newEnd = addMilliseconds(
       newStart,
       originalEnd.getTime() - originalStart.getTime(),
