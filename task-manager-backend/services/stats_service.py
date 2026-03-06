@@ -198,6 +198,30 @@ def _get_turnaround_time(cursor, user_id):
     return formatted_data
 
 
+def _get_estimation_accuracy(cursor, user_id):
+    cursor.execute(
+        """
+        SELECT 
+            id,
+            title,
+            category,
+            UNIX_TIMESTAMP(end_at) as estimated_at,
+            UNIX_TIMESTAMP(completed_at) as completed_at,
+            TIMESTAMPDIFF(MINUTE, completed_at, end_at) as variance_minutes
+        FROM tasks
+        WHERE user_id = %s 
+            AND is_completed = 1 
+            AND completed_at > DATE_SUB(NOW(), INTERVAL 30 DAY)
+        ORDER BY completed_at ASC;
+        """,
+        (user_id,),
+    )
+
+    data = cursor.fetchall()
+
+    return data
+
+
 def get_all_dashboard_stats(user_id):
     conn = None
     cursor = None
@@ -214,6 +238,7 @@ def get_all_dashboard_stats(user_id):
             "deadlineProximity": _get_deadline_proximity(cursor, user_id),
             "hourlyProductivity": _get_hourly_productivity(cursor, user_id),
             "turnaround": _get_turnaround_time(cursor, user_id),
+            "estimationAccuracy": _get_estimation_accuracy(cursor, user_id),
         }
     except Exception as err:
         print(f"Database error: {err}")

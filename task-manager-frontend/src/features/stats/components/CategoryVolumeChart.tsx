@@ -56,7 +56,7 @@ export default function CategoryVolumeChart() {
           <Tooltip
             contentStyle={{
               backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-surface-muted)",
+              borderColor: "var(--color-border-light)",
               borderRadius: "12px",
               color: "var(--color-text-main)",
               boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",

@@ -47,7 +47,6 @@ export default function ProductivityChart() {
           data={chartData}
           margin={{ top: 0, right: 10, bottom: 0, left: -30 }}
         >
-          {/* Grid lines using your surface-muted variable */}
           <CartesianGrid
             strokeDasharray="3 3"
             vertical={false}
@@ -79,7 +78,7 @@ export default function ProductivityChart() {
           <Tooltip
             contentStyle={{
               backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-surface-muted)",
+              borderColor: "var(--color-border-light)",
               borderRadius: "12px",
               color: "var(--color-text-main)",
               boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",

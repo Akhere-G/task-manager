@@ -89,6 +89,15 @@ export interface Turnaround {
   count: number;
   daysTaken: number;
 }
+
+export interface EstimationAccuracy {
+  id: number;
+  title: string;
+  category: string;
+  estimatedAt: number;
+  completedAt: number;
+  varianceMinutes: number;
+}
 export interface StatsResult {
   productivity: ProductivityData[];
   timeSpent: TimeSpentData[];
@@ -98,6 +107,7 @@ export interface StatsResult {
   deadlineProximity: DeadlineProximityData[];
   hourlyProductivity: HourlyProductivityData[];
   turnaround: Turnaround[];
+  estimationAccuracy: EstimationAccuracy[];
 }
 export const statsService = {
   getStats: async (): Promise<StatsResult> => {

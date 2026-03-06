@@ -41,7 +41,7 @@ export default function TurnaroundChart() {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={turnaround}
-          margin={{ left: -30, top: 20, right: 10, bottom: 0 }}
+          margin={{ left: -30, top: 20, right: 0, bottom: -10 }}
         >
           <CartesianGrid
             vertical={false}
