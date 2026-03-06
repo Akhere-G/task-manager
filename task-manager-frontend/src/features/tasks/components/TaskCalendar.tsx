@@ -7,6 +7,7 @@ import {
   type View,
 } from "react-big-calendar";
 import withDragAndDrop, {
+  type DragFromOutsideItemArgs,
   type EventInteractionArgs,
 } from "react-big-calendar/lib/addons/dragAndDrop";
 import {
@@ -52,6 +53,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [allTasks, setAllTasks] = useState<Task[]>(tasks);
   const [isMobile, setIsMobile] = useState(false);
+  const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
 
   const navigate = useNavigate();
 
@@ -142,6 +144,40 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     }
   };
 
+  function onDropFromOutside(day: DragFromOutsideItemArgs) {
+    if (!draggedEvent) return;
+    const oldStartDate = new Date(draggedEvent.startAt);
+    const oldEndDate = new Date(draggedEvent.endAt);
+
+    const newStartDate = new Date(day.start);
+    newStartDate.setHours(oldStartDate.getHours());
+    newStartDate.setMinutes(oldStartDate.getMinutes());
+
+    const newEndDate = new Date(day.end);
+    newEndDate.setHours(oldEndDate.getHours());
+    newEndDate.setMinutes(oldEndDate.getMinutes());
+
+    const prev = allTasks;
+    try {
+      const startAt = format(newStartDate, "yyyy-MM-dd HH:mm");
+      const endAt = format(newEndDate, "yyyy-MM-dd HH:mm");
+
+      setAllTasks((prev) =>
+        prev.map((t) =>
+          t.id === draggedEvent.id ? { ...t, startAt, endAt } : t,
+        ),
+      );
+
+      updateTask(draggedEvent.id, {
+        startAt,
+        endAt,
+      });
+    } catch (err) {
+      console.error(err);
+      setAllTasks(prev);
+    }
+  }
+
   function onEventResize(e: EventInteractionArgs<object>) {
     const { start, end, event: task } = e as EventInteractionArgs<Task>;
 
@@ -172,14 +208,17 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           localizer={localizer}
           events={events}
           date={currentDate}
-          onNavigate={(date) => setCurrentDate(date as Date)}
-          onDrillDown={(date) => setCurrentDate(date)}
+          onDrillDown={(date) => {
+            setCurrentDate(date);
+            setView(Views.DAY);
+          }}
           onSelectSlot={({ start }) => setCurrentDate(start as Date)}
           selectable
           messages={{ showMore: () => isMobile }}
           view={view}
           views={[Views.MONTH, Views.WEEK, Views.DAY]}
           onEventDrop={onEventDrop}
+          onDropFromOutside={onDropFromOutside}
           onEventResize={onEventResize}
           onSelectEvent={(event: Event) => {
             if (!isMobile || view !== Views.MONTH)
@@ -265,6 +304,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
             currentDate={currentDate}
             setSelectedTask={setSelectedTask}
             setIsCompleted={setIsCompleted}
+            setDraggedEvent={setDraggedEvent}
           />
         </div>
       </div>

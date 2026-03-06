@@ -7,6 +7,7 @@ interface CalendarTaskList {
   currentDate: Date;
   setSelectedTask: (task: Task) => void;
   setIsCompleted: (taskId: number, isComplete: boolean) => void;
+  setDraggedEvent: (task: Task | null) => void;
 }
 
 export default function CalendarTaskList({
@@ -14,6 +15,7 @@ export default function CalendarTaskList({
   currentDate,
   setSelectedTask,
   setIsCompleted,
+  setDraggedEvent,
 }: CalendarTaskList) {
   if (tasks.length === 0) {
     return (
@@ -35,6 +37,9 @@ export default function CalendarTaskList({
             key={task.id}
             className="flex items-center justify-between p-4 gap-2 bg-surface border border-border-light rounded-2xl shadow-sm active:bg-surface-muted transition-colors"
             onClick={() => setSelectedTask(task)}
+            draggable
+            onDragStart={() => setDraggedEvent(task)}
+            onDragEnd={() => setDraggedEvent(null)}
           >
             <button
               onClick={(e) => {
