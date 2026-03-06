@@ -16,9 +16,6 @@ import {
   getDay,
   isSameDay,
   addMilliseconds,
-  endOfWeek,
-  isSameMonth,
-  isSameYear,
 } from "date-fns";
 import { enGB } from "date-fns/locale/en-GB";
 
@@ -26,18 +23,14 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
 import TaskCard from "./TaskCard";
-import { FormInput, Popup } from "../../../components/ui";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Calendar as CalendarIcon,
-  CheckCircle2,
-  Circle,
-  Plus,
-} from "lucide-react";
+import { Popup } from "../../../components/ui";
+import { Plus } from "lucide-react";
 import { useTaskContext } from "../../../context/TaskContext";
 import type { Task } from "../types";
 import { useNavigate } from "react-router-dom";
+import CalendarTaskList from "./TaskCalendarList";
+import EventCard from "./EventCard";
+import CustomToolbar from "./CustomToolbar";
 
 const locales = { "en-GB": enGB };
 const localizer = dateFnsLocalizer({
@@ -74,7 +67,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
   }, []);
 
   const events = useMemo(() => {
-    if (!isMobile) {
+    if (!isMobile || view !== Views.MONTH) {
       return allTasks.map((task) => {
         const startDate = new Date(task.startAt);
         const endDate = new Date(task.endAt);
@@ -90,7 +83,6 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
       });
     }
 
-    // On Mobile: Group tasks by date so we only have one "Event Row" per day
     const uniqueDayLookup: Record<string, number> = {};
     allTasks.forEach((task) => {
       const date = format(new Date(task.startAt), "yyyy-MM-dd");
@@ -103,13 +95,13 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
 
     return Object.entries(uniqueDayLookup).map(([dayStr, count]) => ({
       id: dayStr,
-      title: "", // Title not needed for dots
+      title: "",
       start: new Date(dayStr),
       end: new Date(dayStr),
       allDay: true,
       resource: count,
     }));
-  }, [allTasks, isMobile]);
+  }, [allTasks, isMobile, view]);
 
   const tasksForSelectedDay = allTasks.filter((t) =>
     isSameDay(new Date(t.startAt), currentDate),
@@ -173,88 +165,9 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     }
   }
 
-  const CustomToolbar = () => {
-    const goToBack = () => {
-      const m = new Date(currentDate);
-      if (view === Views.MONTH) {
-        m.setMonth(m.getMonth() - 1);
-      } else if (view === Views.WEEK) {
-        m.setDate(m.getDate() - 7);
-      } else {
-        m.setDate(m.getDate() - 1);
-      }
-      setCurrentDate(m);
-    };
-    const goToNext = () => {
-      const m = new Date(currentDate);
-      if (view === Views.MONTH) {
-        m.setMonth(m.getMonth() + 1);
-      } else if (view === Views.WEEK) {
-        m.setDate(m.getDate() + 7);
-      } else {
-        m.setDate(m.getDate() + 1);
-      }
-      setCurrentDate(m);
-    };
-    let dateStr = format(currentDate, "MMMM yyyy");
-
-    if (view === Views.WEEK) {
-      const startWeek = startOfWeek(currentDate, { weekStartsOn: 1 });
-      const endWeek = endOfWeek(currentDate, { weekStartsOn: 1 });
-      const sameMonth = isSameMonth(endWeek, startWeek);
-      const sameYear = isSameYear(endWeek, startWeek);
-      let formatStr = "do";
-      if (!sameMonth) formatStr += " MMM";
-      if (!sameYear) formatStr += " yyyy";
-      dateStr = `${format(startWeek, formatStr)} - ${format(endWeek, "do MMM yyyy")}`;
-    }
-    if (view === Views.DAY) {
-      dateStr = format(currentDate, "do MMM yyyy");
-    }
-
-    return (
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="text-brand" size={20} />
-          <h2 className="text-lg md:text-2xl font-bold text-text-main">
-            {dateStr}
-          </h2>
-        </div>
-
-        <div className="flex gap-4 items ">
-          <FormInput
-            value={view}
-            handleChange={(e) => setView(e.target.value as View)}
-            name="view"
-            options={[
-              { value: Views.MONTH, name: "Month" },
-              { value: Views.WEEK, name: "Week" },
-              { value: Views.DAY, name: "Day" },
-            ]}
-          />
-
-          <div className="flex h-11.5  bg-brand px-1 rounded-lg border border-border-light shadow-sm text-text-inverse">
-            <button onClick={goToBack} className="btn-primary">
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              onClick={() => setCurrentDate(new Date())}
-              className="btn-primary rounded-none  border-x"
-            >
-              Today
-            </button>
-            <button onClick={goToNext} className="btn-primary">
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6">
-      <div className="card p-2 md:p-6 bg-surface shadow-xl border-border-light h-112.5 md:h-200">
+      <div className="card h-112.5 md:h-200">
         <DnDCalendar
           localizer={localizer}
           events={events}
@@ -268,9 +181,10 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           views={[Views.MONTH, Views.WEEK, Views.DAY]}
           onEventDrop={onEventDrop}
           onEventResize={onEventResize}
-          onSelectEvent={(event: Event) =>
-            !isMobile && setSelectedTask(event.resource as Task)
-          }
+          onSelectEvent={(event: Event) => {
+            if (!isMobile || view !== Views.MONTH)
+              setSelectedTask(event.resource as Task);
+          }}
           dayPropGetter={(date) => {
             const isSelected = isSameDay(date, currentDate);
             const isToday = isSameDay(date, new Date());
@@ -304,32 +218,33 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
             };
           }}
           components={{
-            toolbar: CustomToolbar,
-            event: ({ title = "", event }) => {
-              if (isMobile) {
-                const count = Math.min(9, (event as Event).resource);
-                return (
-                  <div className="flex justify-center gap-0.5 mt-1 flex-wrap">
-                    {new Array(count).fill(1).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-1.5 h-1.5 rounded-full bg-brand`}
-                      />
-                    ))}
-                  </div>
-                );
-              }
-              return <span className="text-xs truncate">{title}</span>;
-            },
+            toolbar: () => (
+              <CustomToolbar
+                currentDate={currentDate}
+                setCurrentDate={setCurrentDate}
+                view={view}
+                setView={setView}
+                isMobile={isMobile}
+              />
+            ),
+            event: ({ title, event }) => (
+              <EventCard
+                title={title}
+                event={event}
+                isMobile={isMobile}
+                view={view}
+              />
+            ),
           }}
           eventPropGetter={(event: Event) => ({
-            className: isMobile
-              ? "!bg-transparent !border-none !shadow-none !pointer-events-none"
-              : `!border-none !shadow-sm !rounded-md !px-2 !py-1 !text-xs !font-medium transition-all ${
-                  (event.resource as Task).isCompleted
-                    ? "!bg-slate-200 !text-slate-500 !line-through"
-                    : "!bg-brand !text-white"
-                }`,
+            className:
+              isMobile && view === Views.MONTH
+                ? "!bg-transparent !border-none !shadow-none !pointer-events-none"
+                : `!border-none !shadow-sm !rounded-md !px-2 !py-1 !text-xs !font-medium transition-all ${
+                    (event.resource as Task).isCompleted
+                      ? "!bg-slate-200 !text-slate-500 !line-through"
+                      : "!bg-brand !text-white"
+                  }`,
           })}
         />
       </div>
@@ -345,56 +260,17 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
         </div>
 
         <div className="grid gap-2">
-          {tasksForSelectedDay.length > 0 ? (
-            tasksForSelectedDay.map((task) => {
-              const isOverdue =
-                !task.isCompleted && new Date(task.endAt) < new Date();
-
-              return (
-                <div
-                  key={task.id}
-                  className="flex items-center justify-between p-4 gap-2 bg-surface border border-border-light rounded-2xl shadow-sm active:bg-surface-muted transition-colors"
-                  onClick={() => setSelectedTask(task)}
-                >
-                  <button
-                    onClick={(e) => {
-                      setIsCompleted(task.id, !task.isCompleted);
-                      e.stopPropagation();
-                    }}
-                  >
-                    {task.isCompleted ? (
-                      <CheckCircle2 size={24} className="text-brand" />
-                    ) : (
-                      <Circle size={24} className="text-slate-300" />
-                    )}
-                  </button>
-                  <p className="flex justify-between flex-1 ">
-                    <span
-                      className={`font-semibold truncate text-sm text-wrap ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
-                    >
-                      {task.title}
-                    </span>
-                    <span
-                      className={`text-sm text-nowrap ${isOverdue ? "text-failure" : "text-text-sub"}`}
-                    >
-                      {format(new Date(task.startAt), "p")}
-                    </span>
-                  </p>
-                </div>
-              );
-            })
-          ) : (
-            <div className="py-10 text-center border-2 border-dashed border-slate-100 rounded-3xl bg-surface">
-              <p className="text-text-sub text-sm italic">
-                No tasks on {format(currentDate, "PPPP")}.
-              </p>
-            </div>
-          )}
+          <CalendarTaskList
+            tasks={tasksForSelectedDay}
+            currentDate={currentDate}
+            setSelectedTask={setSelectedTask}
+            setIsCompleted={setIsCompleted}
+          />
         </div>
       </div>
 
       <button
-        className="z-1 fixed bottom-5 right-5 btn-primary rounded-full w-10 h-10 flex items-center justify-center shadow-xl"
+        className="z-4 fixed bottom-5 right-5 btn-primary rounded-full w-10 h-10 flex items-center justify-center shadow-xl"
         onClick={() => navigate("/addtask", { state: { currentDate } })}
       >
         <Plus />
