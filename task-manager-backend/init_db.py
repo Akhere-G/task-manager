@@ -69,6 +69,12 @@ def initialise_database():
             END IF;
         END;
         """
+        alter_description_nullable = "ALTER TABLE tasks MODIFY description TEXT NULL;"
+
+        try:
+            cursor.execute(alter_description_nullable)
+        except Exception as e:
+            print(f"Alter table note: {e}")
 
         cursor.execute(users_table)
         cursor.execute(tasks_table)
