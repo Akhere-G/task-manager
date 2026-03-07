@@ -243,6 +243,50 @@ def _get_week_overview(cursor, user_id):
     return cursor.fetchall()
 
 
+def _get_distribution_trend(cursor, user_id):
+    categories = [
+        "work",
+        "home",
+        "chores",
+        "life-admin",
+        "health",
+        "self-care",
+        "social",
+        "hobbies",
+        "learning",
+        "finance",
+        "general",
+    ]
+
+    query = """
+        SELECT DATE(completed_at) as date, category, COUNT(*) as count
+        FROM tasks
+        WHERE user_id = %s AND is_completed = 1 
+        AND completed_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+        GROUP BY date, category
+    """
+    cursor.execute(query, (user_id,))
+    rows = cursor.fetchall()
+
+    # Pre-fill map for the last 7 days
+    results = {}
+    for i in range(7):
+        day = (datetime.now() - timedelta(days=i)).date().isoformat()
+        results[day] = {cat: 0 for cat in categories}
+        results[day]["date"] = day
+
+    # Fill map using dictionary keys
+    for row in rows:
+        day_str = str(row["date"])
+        cat = row["category"]
+        count = row["count"]
+
+        if day_str in results and cat in results[day_str]:
+            results[day_str][cat] = count
+
+    return sorted(results.values(), key=lambda x: x["date"])
+
+
 def get_all_dashboard_stats(user_id):
     conn = None
     cursor = None
@@ -261,6 +305,7 @@ def get_all_dashboard_stats(user_id):
             "turnaround": _get_turnaround_time(cursor, user_id),
             "estimationAccuracy": _get_estimation_accuracy(cursor, user_id),
             "weekOverview": _get_week_overview(cursor, user_id),
+            "distributionTrend": _get_distribution_trend(cursor, user_id),
         }
     except Exception as err:
         print(f"Database error: {err}")
