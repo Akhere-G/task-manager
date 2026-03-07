@@ -55,7 +55,7 @@ export default function ProductivityChart() {
 
           <XAxis
             dataKey="date"
-            tick={{ fill: "var(--color-text-sub)", fontSize: "12px" }}
+            tick={{ fill: "var(--color-text-main)", fontSize: "12px" }}
             axisLine={{ stroke: "var(--color-surface-muted)" }}
             tickLine={false}
             tickFormatter={(str) => {
@@ -70,7 +70,7 @@ export default function ProductivityChart() {
 
           <YAxis
             allowDecimals={false}
-            tick={{ fill: "var(--color-text-sub)", fontSize: "12px" }}
+            tick={{ fill: "var(--color-text-main)", fontSize: "12px" }}
             axisLine={false}
             tickLine={false}
           />
