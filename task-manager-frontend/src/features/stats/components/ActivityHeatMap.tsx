@@ -54,7 +54,7 @@ export default function ActivityHeatmap() {
         }}
         tooltipDataAttrs={(value: HeatmapValueType) => ({
           "data-tooltip-id": "heatmap-tooltip",
-          "data-tooltip-content": `${value.count} tasks on ${new Date(value.date).toLocaleDateString("en-GB")}`,
+          "data-tooltip-content": `${value.count} tasks completed on ${new Date(value.date).toLocaleDateString("en-GB")}`,
         })}
       />
       <Tooltip id="heatmap-tooltip" />
