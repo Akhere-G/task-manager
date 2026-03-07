@@ -32,6 +32,7 @@ import { useNavigate } from "react-router-dom";
 import CalendarTaskList from "./TaskCalendarList";
 import EventCard from "./EventCard";
 import CustomToolbar from "./CustomToolbar";
+import { useBreakpoint } from "../../../hooks/useBreakpoint";
 
 const locales = { "en-GB": enGB };
 const localizer = dateFnsLocalizer({
@@ -52,21 +53,15 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
   const [view, setView] = useState<View>(Views.MONTH);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [allTasks, setAllTasks] = useState<Task[]>(tasks);
-  const [isMobile, setIsMobile] = useState(false);
   const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
 
   const navigate = useNavigate();
+  const breakpoint = useBreakpoint();
 
+  const isMobile = ["xs", "sm"].includes(breakpoint);
   useEffect(() => {
     setAllTasks(tasks);
   }, [tasks]);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   const events = useMemo(() => {
     if (!isMobile || view !== Views.MONTH) {
@@ -212,8 +207,9 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           date={currentDate}
           onDrillDown={(date) => {
             setCurrentDate(date);
-            setView(Views.DAY);
+            if (!isMobile) setView(Views.DAY);
           }}
+          onNavigate={(date) => setCurrentDate(date)}
           onSelectSlot={({ start }) => setCurrentDate(start as Date)}
           selectable
           messages={{ showMore: () => isMobile }}
@@ -239,19 +235,19 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
             ];
 
             if (!isCurrentMonth) {
-              classes.push("bg-slate-50/40", "opacity-40", "grayscale-[0.5]");
+              classes.push("bg-surface-muted!", "brightness-120");
             } else {
               classes.push("bg-surface");
             }
 
             if (isSelected) {
-              classes.push("!bg-brand/20");
+              classes.push("bg-brand/20! dark:!bg-brand/50 ");
             } else {
-              classes.push("hover:bg-brand/20");
+              classes.push("hover:bg-brand/20 ");
             }
 
             if (isToday) {
-              classes.push("!font-bold");
+              classes.push("!font-bold", "bg-blue-200! dark:bg-blue-600/50!");
             }
 
             return {

@@ -28,6 +28,7 @@
   --color-disabled-bg: var(--color-slate-200);
   --color-disabled-text: var(--color-slate-400);
 }
+@variant dark (&:where(.dark, .dark *));
 
 @layer base {
   .dark {
