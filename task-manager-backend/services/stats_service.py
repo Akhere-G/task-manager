@@ -222,6 +222,27 @@ def _get_estimation_accuracy(cursor, user_id):
     return data
 
 
+def _get_week_overview(cursor, user_id):
+    cursor.execute(
+        """
+            SELECT 
+                DATE(end_at) AS date, 
+                SUM(TIMESTAMPDIFF(HOUR, start_at, end_at)) AS total_hours,
+                COUNT(*) AS count
+            FROM tasks
+            WHERE 
+                user_id = %s 
+                AND is_completed = 0 
+                AND end_at >= CURDATE() 
+                AND end_at < DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY date
+            ORDER BY date ASC;
+                """,
+        (user_id,),
+    )
+    return cursor.fetchall()
+
+
 def get_all_dashboard_stats(user_id):
     conn = None
     cursor = None
@@ -239,6 +260,7 @@ def get_all_dashboard_stats(user_id):
             "hourlyProductivity": _get_hourly_productivity(cursor, user_id),
             "turnaround": _get_turnaround_time(cursor, user_id),
             "estimationAccuracy": _get_estimation_accuracy(cursor, user_id),
+            "weekOverview": _get_week_overview(cursor, user_id),
         }
     except Exception as err:
         print(f"Database error: {err}")
