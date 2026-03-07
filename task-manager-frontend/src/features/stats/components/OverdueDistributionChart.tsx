@@ -39,6 +39,7 @@ export default function OverdueDistributionChart() {
   const chartData = overdueDistribution?.map((d, i) => ({
     ...d,
     fill: colors[i],
+    tooltipLabel: d.daysOverdue,
     daysOverdue: formatDaysOverdue(d.daysOverdue),
   }));
 
@@ -61,18 +62,24 @@ export default function OverdueDistributionChart() {
         <YAxis type="number" dataKey="count" />
         <Bar dataKey="count" />
         <Tooltip
-          contentStyle={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-light)",
-            borderRadius: "12px",
-            color: "var(--color-text-main)",
-            boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-          }}
-          cursor={{ fill: "transparent" }}
-          labelFormatter={(str) => `${str} overdue`}
-          formatter={(str) => [str, "Tasks"]}
-          itemStyle={{
-            color: "var(--color-text-main)",
+          cursor={{ fill: "var(--color-surface-muted)", opacity: 0.5 }}
+          content={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              const { tooltipLabel, fill, count } = payload[0].payload;
+              return (
+                <div className="card border border-text-main flex flex-col gap-1">
+                  <p className="text-sm text-text-main flex items-center gap-1">
+                    <span
+                      className="w-2 h-2 rounded-full mr-1"
+                      style={{ background: fill }}
+                    />
+                    <span className="font-bold">{count}</span> Tasks are{" "}
+                    <span className="lowercase">{tooltipLabel}</span> overdue
+                  </p>
+                </div>
+              );
+            }
+            return null;
           }}
         />
       </BarChart>

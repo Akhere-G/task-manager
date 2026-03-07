@@ -44,27 +44,19 @@ export default function BacklogHealthChart() {
             nameKey="status"
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-border-light)",
-              borderRadius: "12px",
-              color: "var(--color-text-main)",
-              boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-            }}
-            itemStyle={{
-              color: "var(--color-text-main)",
-            }}
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
-                console.log(payload);
                 const { status, percent, fill } = payload[0].payload;
-
                 return (
-                  <div className="bg-surface border border-border-light p-3 rounded-xl shadow-lg">
-                    <p className="font-medium text-sm" style={{ color: fill }}>
+                  <div className="card border border-text-main">
+                    <div className="font-medium text-sm flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ background: fill }}
+                      />
                       {status.charAt(0).toUpperCase() + status.slice(1)}:{" "}
                       {percent}%
-                    </p>
+                    </div>
                   </div>
                 );
               }

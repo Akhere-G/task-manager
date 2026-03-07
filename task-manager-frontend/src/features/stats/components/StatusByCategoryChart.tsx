@@ -15,6 +15,7 @@ import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { statusColors } from "../constants";
 import useGetStats from "../hooks/useGetStats";
 import type { CategoryVolumeData } from "../../../services/api";
+import { categoryColours } from "../../tasks/constants";
 
 export default function CategoryVolumeChart() {
   const breakpoint = useBreakpoint();
@@ -24,7 +25,7 @@ export default function CategoryVolumeChart() {
     isError,
   } = useGetStats<CategoryVolumeData[]>((data) => data.categoryVolume);
 
-  const [activeSeries, setActiveSeries] = useState({
+  const [activeSeries, setActiveSeries] = useState<Record<string, boolean>>({
     completed: true,
     pending: false,
     overdue: false,
@@ -34,8 +35,7 @@ export default function CategoryVolumeChart() {
   const handleLegendClick = ({ dataKey }: LegendPayload) => {
     setActiveSeries((prev) => ({
       ...prev,
-      [dataKey as keyof typeof activeSeries]:
-        !prev[dataKey as keyof typeof activeSeries],
+      [dataKey as string]: !prev[dataKey as string],
     }));
   };
 
@@ -131,28 +131,41 @@ export default function CategoryVolumeChart() {
         />
 
         <Tooltip
-          contentStyle={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-light)",
-            borderRadius: "12px",
-            color: "var(--color-text-main)",
-          }}
-          formatter={(value, name, props) => {
-            // eslint-disable-next-line react/prop-types
-            const dataKey = props.dataKey as keyof typeof activeSeries;
-            if (!activeSeries[dataKey]) return [null, null];
-
-            const formattedName = String(name).replaceAll("-", " ");
-            return [
-              value,
-              formattedName.charAt(0).toUpperCase() + formattedName.slice(1),
-            ];
-          }}
-          labelFormatter={(value) => {
-            const formattedName = String(value).replaceAll("-", " ");
-            return (
-              formattedName.charAt(0).toUpperCase() + formattedName.slice(1)
-            );
+          content={({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+              label = String(label);
+              return (
+                <div className="card border border-text-main">
+                  <p className="font-semibold text-text-main mb-2 flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full "
+                      style={{ background: categoryColours[label || ""] }}
+                    />
+                    {label.charAt(0).toUpperCase() + label.slice(1)}
+                  </p>
+                  <div className="space-y-1">
+                    {payload
+                      .filter((entry) => activeSeries[entry.name.toLowerCase()])
+                      .map((entry) => (
+                        <div
+                          key={entry.name}
+                          className="flex items-center gap-2"
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ background: entry.stroke }}
+                          />
+                          <span className="text-sm text-text-main">
+                            {entry.name}:{" "}
+                            <span className="font-bold">{entry.value}</span>
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              );
+            }
+            return null;
           }}
         />
 
@@ -162,7 +175,7 @@ export default function CategoryVolumeChart() {
           formatter={(value: string, { dataKey }: LegendPayload) => (
             <span
               className={`
-                ${statusColors[dataKey as string]} ${activeSeries[dataKey as keyof typeof activeSeries] ? "" : "opacity-70 text-text-sub"}`}
+                ${statusColors[dataKey as string]} ${activeSeries[dataKey as string] ? "" : "opacity-70 text-text-sub"}`}
             >
               {value}
             </span>

@@ -57,21 +57,23 @@ export default function HourlyProductivityChart() {
           activeBar={{ style: { filter: "brightness(120%)" } }}
         />
         <Tooltip
-          contentStyle={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-light)",
-            borderRadius: "12px",
-            color: "var(--color-text-main)",
-            boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-          }}
-          labelFormatter={(value) => {
-            const suffix = value >= 12 ? "pm" : "am";
-            const hour = value === 12 ? 12 : value % 12;
-            return `Hour: ${hour} ${suffix}`;
-          }}
-          cursor={{ fill: "transparent" }}
-          itemStyle={{
-            color: "var(--color-text-main)",
+          cursor={{ fill: "var(--color-surface-muted)", opacity: 0.5 }}
+          content={({ active, payload, label: title }) => {
+            const label = Number(title);
+            if (active && payload && payload.length) {
+              const count = payload[0].value;
+              const suffix = label >= 12 ? "pm" : "am";
+              const hour = label === 0 ? 12 : label > 12 ? label - 12 : label;
+              return (
+                <p className="card border border-text-main bg-surface p-3 rounded-xl shadow-lg">
+                  <span className="font-semibold text-text-main mb-1">
+                    {count}{" "}
+                  </span>
+                  task{count !== 1 && "s"} completed at {hour} {suffix}
+                </p>
+              );
+            }
+            return null;
           }}
         />
       </BarChart>

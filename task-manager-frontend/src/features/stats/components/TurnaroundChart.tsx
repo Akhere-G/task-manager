@@ -61,16 +61,26 @@ export default function TurnaroundChart() {
             tickCount={4}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-border-light)",
-              borderRadius: "12px",
-              color: "var(--color-text-main)",
-              boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+            cursor={{
+              stroke: chartColor,
+              strokeWidth: 1,
+              strokeDasharray: "4 4",
             }}
-            labelFormatter={(days) => `${days} days takens to complete`}
-            formatter={(count) => [count, "Tasks"]}
-            cursor={{ stroke: chartColor, strokeWidth: 1 }}
+            content={({ active, payload, label }) => {
+              if (active && payload && payload.length) {
+                const count = payload[0].value;
+                return (
+                  <div className="card border border-text-main">
+                    <p className="font-semibold text-text-main mb-1">
+                      <span className="font-bold"> {count} </span>
+                      task{count !== 1 && "s"} took {label} day
+                      {Number(label) !== 1 && "s"} to complete
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            }}
           />
           <ReferenceLine
             x={turnaroundAverage}

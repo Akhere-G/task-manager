@@ -52,7 +52,7 @@ export default function WeekOverviewChart() {
         <YAxis
           yAxisId="left"
           orientation="left"
-          stroke="var(--color-accent)"
+          stroke="var(--color-blue-500)"
           tick={{ fill: "var(--color-text-main)", fontSize: 12 }}
         />
         <YAxis
@@ -63,12 +63,36 @@ export default function WeekOverviewChart() {
         />
 
         <Tooltip
-          contentStyle={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-light)",
-            borderRadius: "8px",
+          content={({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="card border border-text-main">
+                  <p className="font-semibold text-text-main mb-2">
+                    {formatDate(new Date(label as string), "EEE do MMM")}
+                  </p>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-400" />
+                      <span className="text-sm text-text-main">
+                        Hours:{" "}
+                        <span className="font-bold">{payload[0].value}</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-brand" />
+                      <span className="text-sm text-text-main">
+                        Tasks:{" "}
+                        <span className="font-bold">
+                          {payload[1]?.value ?? 0}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return null;
           }}
-          labelFormatter={(value) => formatDate(value, "EEE do MMM")}
         />
 
         <Legend verticalAlign="top" height={36} />
@@ -89,7 +113,7 @@ export default function WeekOverviewChart() {
           name="Tasks"
           fill="var(--color-brand)"
           radius={[4, 4, 0, 0]}
-          barSize={30}
+          barSize="8%"
         />
       </ComposedChart>
     </ResponsiveContainer>

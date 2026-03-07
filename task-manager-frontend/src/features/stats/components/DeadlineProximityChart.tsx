@@ -10,6 +10,8 @@ import {
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import useGetStats from "../hooks/useGetStats";
 import type { DeadlineProximityData } from "../../../services/api";
+import { capitalise } from "../../../utils/formators";
+import { categoryColours } from "../../tasks/constants";
 
 export default function DeadlineProximityChart() {
   const {
@@ -74,27 +76,30 @@ export default function DeadlineProximityChart() {
         <YAxis type="number" dataKey="score" />
         <Bar dataKey="score" />
         <Tooltip
-          contentStyle={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-light)",
-            borderRadius: "12px",
-            color: "var(--color-text-main)",
-            boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-          }}
-          cursor={{ fill: "transparent" }}
-          formatter={(value) => {
-            return [
-              Math.abs(Math.round(value as number)),
-              (value as number) >= 0
-                ? "Avg days ahead of due date"
-                : "Avg days behind due date",
-            ];
-          }}
-          labelFormatter={(str) =>
-            (str[0].toUpperCase() + str.slice(1)).replace("-", " ")
-          }
-          itemStyle={{
-            color: "var(--color-text-main)",
+          cursor={{ fill: "var(--color-surface-muted)", opacity: 0.5 }}
+          content={({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+              const val = payload[0].value as number;
+              const isAhead = val >= 0;
+              return (
+                <div className="card border border-text-main">
+                  <p className="font-semibold text-text-main mb-1 flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ background: categoryColours[label || ""] }}
+                    />
+                    {capitalise(String(label)).replace("-", " ")}
+                  </p>
+                  <p className="text-sm text-text-main">
+                    {isAhead ? "Ahead by " : "Behind by "}
+                    <span className="font-bold">
+                      {Math.abs(Math.round(val))} days
+                    </span>
+                  </p>
+                </div>
+              );
+            }
+            return null;
           }}
         />
       </BarChart>

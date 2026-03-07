@@ -11,6 +11,7 @@ import {
 import { categoryColours } from "../../tasks/constants";
 import useGetStats from "../hooks/useGetStats";
 import type { TimeSpentData } from "../../../services/api";
+import { capitalise } from "../../../utils/formators";
 
 export default function TimeSpentChart() {
   const {
@@ -30,6 +31,7 @@ export default function TimeSpentChart() {
 
   const chartData = timeSpent?.map((data) => ({
     ...data,
+    hours: Math.round(data.timeSpent / 60),
     fill: categoryColours[data.category] || categoryColours["General"],
   }));
 
@@ -63,26 +65,31 @@ export default function TimeSpentChart() {
             }}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-border-light)",
-              borderRadius: "12px",
-              color: "var(--color-text-main)",
-              boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-            }}
-            itemStyle={{
-              color: "var(--color-text-main)",
-            }}
-            cursor={{ fill: "transparent" }}
-            labelFormatter={(value) => {
-              if (typeof value !== "string") return;
-              const formatted = value.replace("-", " ");
-              return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+            cursor={{ fill: "var(--color-surface-muted)", opacity: 0.5 }}
+            content={({ active, payload, label }) => {
+              if (active && payload && payload.length) {
+                const time = payload[0].value;
+                return (
+                  <div className="card border border-text-main">
+                    <p className="font-semibold text-text-main mb-2 flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ background: payload[0].payload.fill }}
+                      />
+                      {capitalise(String(label)).replace("-", " ")}
+                    </p>
+                    <p className="text-sm text-text-main">
+                      Hours spent: <span className="font-bold">{time}</span>
+                    </p>
+                  </div>
+                );
+              }
+              return null;
             }}
           />
           <Bar
-            name="Minutes Spent"
-            dataKey="timeSpent"
+            name="Hours Spent"
+            dataKey="hours"
             radius={[0, 4, 4, 0]}
             activeBar={{ style: { filter: "brightness(120%)" } }}
           />

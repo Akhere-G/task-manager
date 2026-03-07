@@ -99,13 +99,13 @@ export default function EstimationAccuracyChart() {
 
               const time =
                 absMins >= 1440
-                  ? `${(absMins / 1440).toFixed(1)} days`
+                  ? `${(absMins / 1440).toFixed()} days`
                   : absMins >= 60
-                    ? `${(absMins / 60).toFixed(1)} hours`
-                    : `${absMins.toFixed(0)} mins`;
+                    ? `${(absMins / 60).toFixed()} hours`
+                    : `${absMins.toFixed()} mins`;
 
               return (
-                <p className="card bg-surface rounded-xl border text-text-main border-light">{`${title}: ${time} ${status} `}</p>
+                <p className="card border border-text-main">{`${title} was completed ${time} ${status} `}</p>
               );
             }}
           />

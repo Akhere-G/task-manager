@@ -76,24 +76,32 @@ export default function ProductivityChart() {
           />
 
           <Tooltip
-            contentStyle={{
-              backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-border-light)",
-              borderRadius: "12px",
-              color: "var(--color-text-main)",
-              boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-            }}
-            labelStyle={{
-              color: "var(--color-text-main)",
-              marginBottom: "4px",
-            }}
-            labelFormatter={(str) => {
-              const date = new Date(str);
-              return date.toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              });
+            content={({ active, payload, label }) => {
+              if (active && payload && payload.length) {
+                const taskData = payload.find((p) => p.dataKey === "tasks");
+
+                return (
+                  <div className="card border border-text-main">
+                    <p className="font-semibold text-text-main mb-2">
+                      {new Date(label as string).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-brand" />
+                      <span className="text-sm text-text-main">
+                        Tasks completed:{" "}
+                        <span className="font-bold">
+                          {taskData?.value ?? 0}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
             }}
           />
 

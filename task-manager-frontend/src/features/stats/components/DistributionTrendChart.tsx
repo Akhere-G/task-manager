@@ -77,12 +77,6 @@ export default function DistributionTrendChart() {
         />
         <YAxis tick={{ fill: "var(--color-text-main)", fontSize: 12 }} />
         <Tooltip
-          contentStyle={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-light)",
-            borderRadius: "8px",
-          }}
-          labelFormatter={(value) => formatDate(new Date(value), "EEE do MMM")}
           content={({ payload, label = "" }) => {
             if (!payload?.[0]?.payload) return;
             const data = payload[0].payload;
@@ -100,11 +94,12 @@ export default function DistributionTrendChart() {
               .sort((a, b) => b.value - a.value);
 
             return (
-              <div className="bg-surface p-4 rounded-xl border border-border-light shadow-lg">
+              <div className="card border border-text-main">
                 <p className="font-semibold text-text-main mb-2">
                   {formatDate(new Date(label), "EEE do MMM")}
                 </p>
                 <div className="space-y-1">
+                  {sortedItems.length === 0 && <p>No tasks completed.</p>}
                   {sortedItems.map((item) => (
                     <div key={item.name} className="flex items-center gap-2">
                       <span

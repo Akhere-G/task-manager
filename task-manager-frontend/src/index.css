@@ -107,6 +107,9 @@
   width: 100%;
 }
 
+#heatmap-tooltip {
+  @apply border border-text-main shadow-sm bg-surface p-2 md:p-4 rounded-md text-text-main
+}
 .recharts-pie-sector:hover {
   filter: brightness(1.2);
   transition: filter 0.2s ease;
