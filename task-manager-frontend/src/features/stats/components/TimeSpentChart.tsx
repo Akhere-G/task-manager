@@ -70,6 +70,9 @@ export default function TimeSpentChart() {
               color: "var(--color-text-main)",
               boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
             }}
+            itemStyle={{
+              color: "var(--color-text-main)",
+            }}
             cursor={{ fill: "transparent" }}
             labelFormatter={(value) => {
               if (typeof value !== "string") return;
