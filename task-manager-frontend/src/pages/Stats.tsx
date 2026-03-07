@@ -11,6 +11,7 @@ import {
   TimeSpentChart,
   TurnaroundChart,
   EstimationAccuracyChart,
+  WeekOverviewChart,
 } from "../features/stats/components";
 
 export default function Stats() {
@@ -55,6 +56,16 @@ export default function Stats() {
       </div>
       <h2 className="text-2xl border-b mt-4">Planning & Deadlines</h2>
 
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <ChartCard
+          title="Upcoming Deadlines"
+          subtitle="Workload over the next week."
+          width="lg:col-span-12"
+          height="h-96"
+        >
+          <WeekOverviewChart />
+        </ChartCard>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard
           title="Deadline Proximity"

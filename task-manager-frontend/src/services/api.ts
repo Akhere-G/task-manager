@@ -98,6 +98,12 @@ export interface EstimationAccuracy {
   completedAt: number;
   varianceMinutes: number;
 }
+
+export interface WeekOverviewData {
+  date: string;
+  count: number;
+}
+
 export interface StatsResult {
   productivity: ProductivityData[];
   timeSpent: TimeSpentData[];
@@ -108,6 +114,7 @@ export interface StatsResult {
   hourlyProductivity: HourlyProductivityData[];
   turnaround: Turnaround[];
   estimationAccuracy: EstimationAccuracy[];
+  weekOverview: WeekOverviewData[];
 }
 export const statsService = {
   getStats: async (): Promise<StatsResult> => {
