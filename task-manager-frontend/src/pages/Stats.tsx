@@ -12,6 +12,7 @@ import {
   TurnaroundChart,
   EstimationAccuracyChart,
   WeekOverviewChart,
+  DistributionTrendChart,
 } from "../features/stats/components";
 
 export default function Stats() {
@@ -104,6 +105,16 @@ export default function Stats() {
           height="h-90 md:h-125"
         >
           <TimeSpentChart />
+        </ChartCard>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <ChartCard
+          title="Weekly Flow"
+          subtitle="A breakdown of completed tasks by category over the last seven days."
+          width="lg:col-span-12"
+          height="h-96"
+        >
+          <DistributionTrendChart />
         </ChartCard>
       </div>
       <h2 className="text-2xl border-b mt-4">Trends & Insights</h2>

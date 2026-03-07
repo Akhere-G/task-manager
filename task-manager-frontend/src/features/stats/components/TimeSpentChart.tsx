@@ -80,7 +80,6 @@ export default function TimeSpentChart() {
           <Bar
             name="Minutes Spent"
             dataKey="timeSpent"
-            fill="#6366f1"
             radius={[0, 4, 4, 0]}
             activeBar={{ style: { filter: "brightness(120%)" } }}
           />

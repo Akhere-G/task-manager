@@ -12,3 +12,4 @@ export { default as HourlyProductivityChart } from "./HourlyProductivityChart.ts
 export { default as TurnaroundChart } from "./TurnaroundChart.tsx";
 export { default as EstimationAccuracyChart } from "./EstimationAccuracyChart.tsx";
 export { default as WeekOverviewChart } from "./WeekOverviewChart.tsx";
+export { default as DistributionTrendChart } from "./DistributionTrendChart.tsx";

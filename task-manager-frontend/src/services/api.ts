@@ -104,6 +104,21 @@ export interface WeekOverviewData {
   count: number;
 }
 
+export interface DistributionTrendData {
+  date: string;
+  chores: number;
+  finance: number;
+  general: number;
+  health: number;
+  hobbies: number;
+  home: number;
+  learning: number;
+  "life-adim": number;
+  "self-care": number;
+  social: number;
+  work: number;
+}
+
 export interface StatsResult {
   productivity: ProductivityData[];
   timeSpent: TimeSpentData[];
@@ -115,6 +130,7 @@ export interface StatsResult {
   turnaround: Turnaround[];
   estimationAccuracy: EstimationAccuracy[];
   weekOverview: WeekOverviewData[];
+  distributionTrend: DistributionTrendData[];
 }
 export const statsService = {
   getStats: async (): Promise<StatsResult> => {
