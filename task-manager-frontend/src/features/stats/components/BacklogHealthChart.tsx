@@ -11,9 +11,11 @@ export default function BacklogHealthChart() {
     isError,
   } = useGetStats<BacklogHealthData[]>((data) => data.backlogHealth);
 
+  const total = backlogHealth?.reduce((acc, curr) => acc + curr.count, 0) || 1;
   const chartData = backlogHealth?.map((entry) => ({
     ...entry,
     fill: statusColors[entry.status.toLowerCase()] || "#cbd5e1",
+    percent: Math.round((entry.count * 100) / total),
   }));
 
   if (isLoading)
@@ -38,7 +40,7 @@ export default function BacklogHealthChart() {
             cy="50%"
             innerRadius="60%"
             outerRadius="80%"
-            dataKey="count"
+            dataKey="percent"
             nameKey="status"
           />
           <Tooltip
@@ -51,6 +53,22 @@ export default function BacklogHealthChart() {
             }}
             itemStyle={{
               color: "var(--color-text-main)",
+            }}
+            content={({ active, payload }) => {
+              if (active && payload && payload.length) {
+                console.log(payload);
+                const { status, percent, fill } = payload[0].payload;
+
+                return (
+                  <div className="bg-surface border border-border-light p-3 rounded-xl shadow-lg">
+                    <p className="font-medium text-sm" style={{ color: fill }}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}:{" "}
+                      {percent}%
+                    </p>
+                  </div>
+                );
+              }
+              return null;
             }}
           />
           <Legend verticalAlign="bottom" height={36} />
