@@ -29,7 +29,7 @@ export default function EstimationAccuracyChart() {
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState error="Could not load accuracy data." />;
   if (!accuracyData || !accuracyData.length)
-    return <EmptyState searchMessage="No data." />;
+    return <EmptyState searchMessage="No tasked completed recently." />;
 
   const allTasks = accuracyData.map((d) => ({
     ...d,

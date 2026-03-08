@@ -41,6 +41,7 @@ export default function DistributionTrendChart() {
   const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
   const breakpoint = useBreakpoint();
   const isMobile = ["xs", "sm"].includes(breakpoint);
+  const isSmallDesktop = breakpoint === "md";
 
   const handleLegendClick = (o: LegendPayload) => {
     const dataKey = o.dataKey as string;
@@ -51,16 +52,28 @@ export default function DistributionTrendChart() {
     );
   };
 
+  console.log(data);
+
+  const hasNoData =
+    data?.every((d) =>
+      Object.values({ ...d, date: 0 }).every((v) => v === 0),
+    ) ?? false;
+
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState error="Could not load data." />;
-  if (!data || data.length === 0)
+  if (!data || data.length === 0 || hasNoData)
     return <EmptyState searchMessage="No tasks completed recently." />;
 
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart
         data={data}
-        margin={{ top: 0, right: 0, left: -30, bottom: 0 }}
+        margin={{
+          top: 0,
+          right: 5,
+          left: isMobile || isSmallDesktop ? -15 : -30,
+          bottom: 0,
+        }}
       >
         <CartesianGrid
           strokeDasharray="3 3"
@@ -119,7 +132,6 @@ export default function DistributionTrendChart() {
 
         <Legend
           verticalAlign="top"
-          height={36}
           onClick={handleLegendClick}
           wrapperStyle={{ cursor: "pointer" }}
           formatter={(value: DataKey<string>, entry: LegendPayload) => (

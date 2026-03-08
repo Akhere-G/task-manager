@@ -35,7 +35,7 @@ export default function WeekOverviewChart() {
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart
         data={weekOverview}
-        margin={{ top: 0, right: -40, left: -30, bottom: 0 }}
+        margin={{ top: 0, right: -40, left: -0, bottom: 0 }}
       >
         <CartesianGrid
           strokeDasharray="3 3"
