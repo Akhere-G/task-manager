@@ -1,11 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useState } from "react";
+import type {
+  LoginUserInput,
+  RegisterUserInput,
+  User,
+} from "../features/auth/types";
+import { authService } from "../services/api";
 
 interface AuthContextType {
-  token: string | null;
-  login: (newToken: string) => void;
-  logout: () => void;
+  register: (userData: RegisterUserInput) => Promise<void>;
+  login: (userDate: LoginUserInput) => Promise<void>;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
+  user: User | null;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -15,37 +23,53 @@ export default function AuthContextProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem("token"),
-  );
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-
-    if (savedToken) {
-      setToken(savedToken);
-    }
+    const checkSession = async () => {
+      try {
+        const response = await authService.checkSession();
+        setUser(response.user);
+        setIsAuthenticated(true);
+      } catch (err) {
+        console.error(err);
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkSession();
   }, []);
 
-  const login = (newToken: string) => {
-    setToken(newToken);
-    localStorage.setItem("token", newToken);
+  const register = async (userData: RegisterUserInput) => {
+    const { user } = await authService.register(userData);
+    setUser(user);
+    setIsAuthenticated(true);
   };
 
-  const logout = () => {
-    setToken(null);
-    localStorage.removeItem("token");
+  const login = async ({ email, password }: LoginUserInput) => {
+    const { user } = await authService.login({ email, password });
+    setUser(user);
+    setIsAuthenticated(true);
+  };
+
+  const logout = async () => {
+    await authService.logout();
+    setUser(null);
+    setIsAuthenticated(false);
     queryClient.clear();
-    window.location.href = "/login";
   };
 
   return (
     <AuthContext.Provider
-      value={{ token, login, logout, isAuthenticated: !!token }}
+      value={{ login, logout, register, user, isAuthenticated, isLoading }}
     >
-      {children}
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 }

@@ -2,9 +2,9 @@ import { useState } from "react";
 import { FormInput } from "../components/ui";
 import axios from "axios";
 import type { LoginUserInput } from "../features/auth/types";
-import { authService } from "../services/api";
 import { useAuthContext } from "../context/AuthContext";
 import { validateUser, type UserData } from "../utils/validators";
+import { Link } from "react-router-dom";
 
 type ErrorMesageType = { [P in keyof LoginUserInput]: string } & {
   general: string;
@@ -76,8 +76,7 @@ export default function Login() {
     try {
       setIsloading(true);
 
-      const { token } = await authService.login(formData);
-      login(token);
+      await login(formData);
     } catch (err) {
       console.error(err);
       if (!axios.isAxiosError(err)) {
@@ -87,7 +86,6 @@ export default function Login() {
         setErrorMessages({
           ...defaultErrorMessages,
           ...errors,
-          general: err.response?.data?.error ?? "",
         });
       } else {
         setErrorMessages({
@@ -134,6 +132,13 @@ export default function Login() {
             touched={touched.password}
             handleBlur={handleBlur}
           />
+          <Link
+            className="text-accent underline text-sm -mt-3"
+            to="/login/request-password-reset"
+            state={{ email: formData.email }}
+          >
+            Forgot Password?
+          </Link>
           <button
             className={
               isLoading

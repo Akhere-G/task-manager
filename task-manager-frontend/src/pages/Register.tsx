@@ -2,7 +2,6 @@ import { useState } from "react";
 import { FormInput } from "../components/ui";
 import axios from "axios";
 import type { RegisterUserInput } from "../features/auth/types";
-import { authService } from "../services/api";
 import { useAuthContext } from "../context/AuthContext";
 import { validateUser, type UserData } from "../utils/validators";
 
@@ -35,7 +34,7 @@ export default function Register() {
   });
   const [isLoading, setIsloading] = useState(false);
 
-  const { login } = useAuthContext();
+  const { register } = useAuthContext();
 
   const validateForm = (data: UserData) => {
     setErrorMessages({ ...defaultErrorMessages, ...validateUser(data, true) });
@@ -88,8 +87,7 @@ export default function Register() {
 
     try {
       setIsloading(true);
-      const { token } = await authService.register(formData);
-      login(token);
+      await register(formData);
     } catch (err) {
       console.error(err);
       if (!axios.isAxiosError(err)) {
