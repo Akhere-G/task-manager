@@ -46,17 +46,6 @@ def initialise_database():
 
         fulltext_index = "CREATE FULLTEXT INDEX IF NOT EXISTS idx_tasks_search ON tasks(title, description);"
 
-        daily_briefs_table = """
-        CREATE TABLE IF NOT EXISTS daily_briefs (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NOT NULL,
-            brief_text TEXT NOT NULL,
-            generated_date DATE NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY unique_user_day (user_id, generated_date),
-            CONSTRAINT fk_brief_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        );
-        """
         trigger = """
         CREATE TRIGGER IF NOT EXISTS tr_ensure_completion_timestamp
         BEFORE UPDATE ON tasks
@@ -69,16 +58,44 @@ def initialise_database():
             END IF;
         END;
         """
-        alter_description_nullable = "ALTER TABLE tasks MODIFY description TEXT NULL;"
 
-        try:
-            cursor.execute(alter_description_nullable)
-        except Exception as e:
-            print(f"Alter table note: {e}")
+        daily_briefs_table = """
+        CREATE TABLE IF NOT EXISTS daily_briefs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            brief_text TEXT NOT NULL,
+            generated_date DATE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_user_day (user_id, generated_date),
+            CONSTRAINT fk_brief_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        """
+
+        password_resets = """
+        CREATE TABLE IF NOT EXISTS password_resets (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            token VARCHAR(255) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        """
+
+        refresh_tokens_table = """
+        CREATE TABLE IF NOT EXISTS refresh_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            token VARCHAR(255) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        """
 
         cursor.execute(users_table)
         cursor.execute(tasks_table)
         cursor.execute(daily_briefs_table)
+        cursor.execute(password_resets)
+        cursor.execute(refresh_tokens_table)
 
         try:
             cursor.execute(fulltext_index)
