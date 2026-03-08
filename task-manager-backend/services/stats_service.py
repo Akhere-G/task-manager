@@ -227,7 +227,7 @@ def _get_week_overview(cursor, user_id):
         """
             SELECT 
                 DATE(end_at) AS date, 
-                SUM(TIMESTAMPDIFF(HOUR, start_at, end_at)) AS total_hours,
+                SUM(TIMESTAMPDIFF(MINUTE, start_at, end_at)) AS total_minutes,
                 COUNT(*) AS count
             FROM tasks
             WHERE 
@@ -240,7 +240,20 @@ def _get_week_overview(cursor, user_id):
                 """,
         (user_id,),
     )
-    return cursor.fetchall()
+
+    raw_data = cursor.fetchall()
+
+    data = [
+        {
+            "date": d["date"],
+            "totalMinutes": d["total_minutes"],
+            "total_hours": "{:10.2f}".format(d["total_minutes"] / 60),
+            "count": d["count"],
+        }
+        for d in raw_data
+    ]
+
+    return data
 
 
 def _get_distribution_trend(cursor, user_id):
