@@ -205,3 +205,17 @@ def validate_user(data, is_registering=False):
         errors["confirmPassword"] = "Passwords do not match."
 
     return errors
+
+
+def validate_password(password):
+    if not password:
+        return "Password is required."
+
+    password_spec = "Password must be at between 8 and 50 characters and contain letters and numbers. "
+    if password:
+        if (
+            len(password) < 8
+            or len(password) > 50
+            or not (re.search(r"[A-Za-z]", password) and re.search(r"[0-9]", password))
+        ):
+            return password_spec
