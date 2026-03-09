@@ -40,8 +40,14 @@ export default function Popup({
 
   if (sleek) {
     return (
-      <div className="fixed w-screen h-screen z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center">
-        <section className=" w-4/5 md:max-w-2xl relative p-0">
+      <div
+        onClick={close}
+        className="fixed w-screen h-screen z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center"
+      >
+        <section
+          onClick={(e) => e.stopPropagation()}
+          className="w-10/11 md:max-w-2xl relative p-0 "
+        >
           <button
             className="text-xl position absolute -top-4 -right-4 btn-secondary rounded-full w-10 h-10 z-1 shadow-sm"
             aria-label="close"
@@ -55,8 +61,14 @@ export default function Popup({
     );
   }
   return (
-    <div className="fixed w-screen h-screen z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center">
-      <section className="card p-0 w-9/10 md:w-4/5 md:max-w-2xl max-h-9/10 overflow-y-scroll">
+    <div
+      onClick={close}
+      className="fixed w-screen h-screen z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center"
+    >
+      <section
+        onClick={(e) => e.stopPropagation()}
+        className="card p-0 w-9/10 md:w-4/5 md:max-w-2xl max-h-9/10 overflow-y-scroll"
+      >
         <header className="bg-accent p-4 text-text-inverse flex justify-between items-center">
           <h1>{title}</h1>
           <button className="text-xl" aria-label="close" onClick={close}>
