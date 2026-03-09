@@ -5,7 +5,7 @@ import { useGetDailyBrief } from "../hooks";
 
 const DailyBrief = () => {
   const { data: brief, isLoading, isError, refetch } = useGetDailyBrief();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   if (isLoading)
     return <div className="w-full h-32 bg-surface animate-pulse rounded-xl" />;
@@ -68,7 +68,7 @@ const DailyBrief = () => {
             </div>
           </div>
 
-          <div className="text-text-main prose prose-slate prose-sm max-w-none prose-p:text-text-main">
+          <div className="[&>p]:text-sm [&>p]:mb-4 [&>p]:tracking-tighter">
             <ReactMarkdown>{brief}</ReactMarkdown>
           </div>
         </div>
