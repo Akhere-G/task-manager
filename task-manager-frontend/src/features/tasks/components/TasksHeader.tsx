@@ -46,7 +46,7 @@ export default function TasksHeader({
   const formClassNames = "grow lg:grow-[0.9] max-w-80";
   return (
     <div
-      className={`card flex justify-between items-center sm:items-start flex-col gap-5 ${openFilters ? "lg:flex-row" : "md:flex-row"}`}
+      className={`card flex justify-between items-center sm:items-start  gap-2 ${openFilters ? "lg:flex-row" : "md:flex-row"}`}
     >
       <header className="grow-[0.9] shrink-0 w-full max-w-52 flex flex-col items-center sm:items-start">
         <h1 className="text-3xl font-bold text-text-main transition-colors">
@@ -128,7 +128,7 @@ export default function TasksHeader({
         </form>
       )}
       <button
-        className="md:m-0 sm:mx-auto"
+        className=""
         title="Show filters"
         aria-label="Show filters"
         onClick={() => setOpenFilters(!openFilters)}

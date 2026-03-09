@@ -10,14 +10,13 @@ import axios from "axios";
 import type { TaskError } from "../utils/validators";
 import { ErrorState, LoadingState, Popup } from "../components/ui";
 import { TaskForm } from "../features/tasks/components";
-import { useTaskContext } from "../context/TaskContext";
+import { PopupModes, useTaskContext } from "../context/TaskContext";
 
 export default function DecomposeTask() {
   const [idCount, setIdCount] = useState(0);
   const { taskId } = useParams();
   const navigate = useNavigate();
   const invalidateTaskKeys = useInvalidateTaskKeys();
-
   const {
     data: parentTask,
     isLoading: loadingParent,
@@ -30,7 +29,7 @@ export default function DecomposeTask() {
   const [bulkAddErrors, setBulkAddErrors] = useState("");
   const [decomposeError, setDecomposeErrors] = useState("");
 
-  const { selectedEditTask, closeEditPopup } = useTaskContext();
+  const { selectedTask, closePopup, popupMode } = useTaskContext();
 
   async function handleDecompose() {
     if (!parentTask) return;
@@ -58,17 +57,18 @@ export default function DecomposeTask() {
     }
   }
 
-  const handleDeleteStaged = (index: number) => {
-    setStagedTasks((prev) => prev.filter((_, i) => i !== index));
+  const handleDeleteStaged = (id: number) => {
+    setStagedTasks((prev) => prev.filter((task) => task.id !== id));
   };
 
   const handleEdit = async (updatedTask: CreateTaskInput) => {
-    const id = selectedEditTask?.id;
-    const updated = stagedTasks.map((task, i) =>
-      i === id ? { ...task, ...updatedTask } : task,
+    const id = selectedTask?.id;
+    const updated = stagedTasks.map((task) =>
+      task.id === id ? { ...task, ...updatedTask } : task,
     );
+
     setStagedTasks(updated);
-    closeEditPopup();
+    closePopup();
   };
 
   const handleAdd = () => {
@@ -223,17 +223,17 @@ export default function DecomposeTask() {
         isSubmitting={isSubmitting}
         length={stagedTasks.length}
       />
-      {selectedEditTask && (
+      {popupMode === PopupModes.Edit && selectedTask && (
         <Popup
-          title={`Edit task '${selectedEditTask.title}'?`}
-          close={closeEditPopup}
+          title={`Edit task '${selectedTask.title}'?`}
+          close={closePopup}
           showCloseButton={false}
         >
           <TaskForm
             confirmButtonText="Edit Task"
-            initialData={selectedEditTask}
+            initialData={selectedTask}
             submitAction={handleEdit}
-            close={closeEditPopup}
+            close={closePopup}
           />
         </Popup>
       )}
@@ -254,22 +254,22 @@ function TaskList({
 }: TaskListProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      {stagedTasks.map((task, index) => (
+      {stagedTasks.map((task, i) => (
         <div
           className="relative"
-          key={task.title}
+          key={task.id}
           draggable
           onDragStart={(e) => {
-            e.dataTransfer.setData("task", index.toString());
+            e.dataTransfer.setData("task", i.toString());
           }}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
-            const id = Number(e.dataTransfer.getData("task"));
+            const j = Number(e.dataTransfer.getData("task"));
             const tasks = [...stagedTasks];
 
-            const temp = tasks[index];
-            tasks[index] = tasks[id];
-            tasks[id] = temp;
+            const temp = tasks[i];
+            tasks[i] = tasks[j];
+            tasks[j] = temp;
             setStagedTasks(tasks);
           }}
         >

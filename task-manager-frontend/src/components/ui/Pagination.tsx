@@ -34,7 +34,7 @@ export default function Pagination({
   const hasNext = currentPage < totalPages;
 
   return (
-    <div className="flex gap-2 items-center justify-center py-4 flex-col md:flex-row">
+    <div className="flex gap-2 items-center justify-center flex-col md:flex-row">
       <div className="flex gap-1">
         <button
           onClick={() => goToPage(currentPage - 1)}
@@ -69,7 +69,9 @@ export default function Pagination({
         </button>
       </div>
 
-      <span className="text-sm text-text-sub ml-4">Pages: {totalPages}</span>
+      <span className="text-sm text-text-sub ml-4 hidden md:block">
+        Pages: {totalPages}
+      </span>
     </div>
   );
 }

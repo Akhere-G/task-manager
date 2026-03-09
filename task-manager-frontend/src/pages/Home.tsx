@@ -50,7 +50,7 @@ export default function Home() {
   }
 
   return (
-    <section className="flex flex-col gap-6 min-h-full">
+    <section className="flex flex-col gap-3 min-h-full">
       <TasksHeader
         filters={filters}
         resetFilters={resetFilters}
@@ -80,7 +80,7 @@ export default function Home() {
       >
         <Plus />
       </button>
-      {tasks && <TaskPopups />}
+      <TaskPopups />
     </section>
   );
 }

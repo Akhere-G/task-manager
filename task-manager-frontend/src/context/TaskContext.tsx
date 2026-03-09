@@ -14,19 +14,25 @@ export interface TaskFilters {
 }
 
 export interface TaskContextType {
-  selectedEditTask: Task | null;
-  selectedDeleteTask: Task | null;
-  handleConfirmDelete: (task: Task) => void;
-  closeDeletePopup: () => void;
   handleDelete: (id: number) => Promise<void>;
-  handleConfirmEdit: (task: Task) => void;
-  closeEditPopup: () => void;
   handleEdit: (newTask: CreateTaskInput) => Promise<void>;
   updateTask: (id: number, newTaskData: Partial<Task>) => Promise<void>;
   setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>;
+  openPopup: (task: Task, mode: PopupMode) => void;
+  closePopup: () => void;
+  selectedTask: Task | null;
+  popupMode: PopupMode;
 }
 
 const TaskContext = createContext<TaskContextType | null>(null);
+export const PopupModes = {
+  Edit: "Edit",
+  Delete: "Delete",
+  View: "View",
+  Closed: "Closed",
+} as const;
+
+export type PopupMode = keyof typeof PopupModes;
 
 export default function TaskContextProvider({
   children,
@@ -35,20 +41,14 @@ export default function TaskContextProvider({
 }) {
   const queryClient = useQueryClient();
 
-  const [selectedEditTask, setSelectedEditTask] = useState<Task | null>(null);
-  const [selectedDeleteTask, setSelectedDeleteTask] = useState<Task | null>(
-    null,
-  );
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [popupMode, setPopupMode] = useState<PopupMode>(PopupModes.Closed);
 
   const queryKeysAffectedByMutations = ["tasks", ...statsQueryKeys];
   const invalidateKeys = () =>
     queryKeysAffectedByMutations.forEach((key) =>
       queryClient.invalidateQueries({ queryKey: [key] }),
     );
-
-  const handleConfirmDelete = (task: Task) => setSelectedDeleteTask(task);
-
-  const closeDeletePopup = () => setSelectedDeleteTask(null);
 
   async function handleDelete(id: number) {
     try {
@@ -59,9 +59,15 @@ export default function TaskContextProvider({
     }
   }
 
-  const handleConfirmEdit = (task: Task) => setSelectedEditTask(task);
+  const openPopup = (task: Task, mode: PopupMode) => {
+    setSelectedTask(task);
+    setPopupMode(mode);
+  };
 
-  const closeEditPopup = () => setSelectedEditTask(null);
+  const closePopup = () => {
+    setPopupMode(PopupModes.Closed);
+    setSelectedTask(null);
+  };
 
   async function updateTask(id: number, newTaskData: Partial<Task>) {
     try {
@@ -74,7 +80,7 @@ export default function TaskContextProvider({
   }
 
   async function handleEdit(newTask: CreateTaskInput) {
-    if (!selectedEditTask) return;
+    if (!selectedTask) return;
     const rawData = {
       title: newTask.title.trim(),
       description: newTask.description?.trim(),
@@ -88,8 +94,8 @@ export default function TaskContextProvider({
     );
 
     try {
-      await updateTask(selectedEditTask.id, patchData);
-      setSelectedEditTask(null);
+      await updateTask(selectedTask.id, patchData);
+      closePopup();
     } catch (err) {
       console.error("Update failed:", err);
       throw err;
@@ -110,16 +116,14 @@ export default function TaskContextProvider({
   }
 
   const value = {
-    selectedEditTask,
-    selectedDeleteTask,
-    handleConfirmEdit,
-    handleConfirmDelete,
     handleEdit,
     handleDelete,
-    closeEditPopup,
-    closeDeletePopup,
     setIsCompleted,
     updateTask,
+    selectedTask,
+    openPopup,
+    closePopup,
+    popupMode,
   };
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;

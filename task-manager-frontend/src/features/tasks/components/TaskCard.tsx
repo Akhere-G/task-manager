@@ -11,7 +11,7 @@ import {
   Play,
   Sparkles,
 } from "lucide-react";
-import { useTaskContext } from "../../../context/TaskContext";
+import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
 import { format, isSameDay, isSameMonth, isSameYear } from "date-fns";
 
@@ -212,7 +212,7 @@ function TaskCard({
 
 interface TaskCardConnectedProps extends Task {
   titleIcon?: React.ReactNode;
-  setIsCompleted?: (id: number, isComplete: boolean) => void;
+  setIsCompleted?: (id: number, isCompleted: boolean) => void;
   onDelete?: (task: Task) => void;
   onEdit?: (task: Task) => void;
   showDelete?: boolean;
@@ -222,14 +222,13 @@ interface TaskCardConnectedProps extends Task {
   showDecompose?: boolean;
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps) {
-  const { setIsCompleted, handleConfirmDelete, handleConfirmEdit } =
-    useTaskContext();
+  const { setIsCompleted, openPopup } = useTaskContext();
 
   return (
     <TaskCard
       setIsCompleted={setIsCompleted}
-      onDelete={handleConfirmDelete}
-      onEdit={handleConfirmEdit}
+      onDelete={(task) => openPopup(task, PopupModes.Delete)}
+      onEdit={(task) => openPopup(task, PopupModes.Edit)}
       {...props}
     />
   );

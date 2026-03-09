@@ -65,14 +65,12 @@ export default function WeekOverviewChart() {
         <Tooltip
           content={({ active, payload, label }) => {
             if (active && payload && payload.length) {
-              console.log(payload);
               const tasks = payload[1]?.value ?? 0;
               const totalHours = payload[0]?.value ?? 0;
 
               const hours = Math.floor(totalHours);
               const minutes = ((totalHours - hours) * 60).toFixed();
               const valueStr = `${hours}hr ${minutes}min`;
-              console.log({ value: tasks, hours, minutes });
               return (
                 <div className="card border border-text-main">
                   <p className="font-semibold text-text-main mb-2">

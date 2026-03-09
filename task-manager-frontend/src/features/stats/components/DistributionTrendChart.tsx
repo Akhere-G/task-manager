@@ -52,8 +52,6 @@ export default function DistributionTrendChart() {
     );
   };
 
-  console.log(data);
-
   const hasNoData =
     data?.every((d) =>
       Object.values({ ...d, date: 0 }).every((v) => v === 0),

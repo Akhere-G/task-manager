@@ -16,10 +16,8 @@ import { enGB } from "date-fns/locale/en-GB";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
-import TaskCard from "./TaskCard";
-import { Popup } from "../../../components/ui";
 import { Plus } from "lucide-react";
-import { useTaskContext } from "../../../context/TaskContext";
+import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import type { Task } from "../types";
 import { useNavigate } from "react-router-dom";
 import CalendarTaskList from "./TaskCalendarList";
@@ -39,12 +37,11 @@ const localizer = dateFnsLocalizer({
 const DnDCalendar = withDragAndDrop(Calendar);
 
 export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
-  const { updateTask, handleConfirmDelete, handleConfirmEdit, setIsCompleted } =
-    useTaskContext();
+  const { openPopup, updateTask, setIsCompleted } = useTaskContext();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<View>(Views.MONTH);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
   const [allTasks, setAllTasks] = useState<Task[]>(tasks);
   const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
 
@@ -211,7 +208,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           onEventResize={onEventResize}
           onSelectEvent={(event: Event) => {
             if (!isMobile || view !== Views.MONTH)
-              setSelectedTask(event.resource as Task);
+              openPopup(event.resource as Task, PopupModes.View);
           }}
           dayPropGetter={(date) => {
             const isSelected = isSameDay(date, currentDate);
@@ -291,7 +288,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
           <CalendarTaskList
             tasks={tasksForSelectedDay}
             currentDate={currentDate}
-            setSelectedTask={setSelectedTask}
+            setSelectedTask={(task: Task) => openPopup(task, PopupModes.View)}
             setIsCompleted={setIsCompleted}
             setDraggedEvent={setDraggedEvent}
           />
@@ -304,31 +301,6 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
       >
         <Plus />
       </button>
-
-      {selectedTask && (
-        <Popup
-          title=""
-          close={() => setSelectedTask(null)}
-          showCloseButton={false}
-          sleek
-        >
-          <TaskCard
-            {...selectedTask}
-            onDelete={(task) => {
-              handleConfirmDelete(task);
-              setSelectedTask(null);
-            }}
-            onEdit={(task) => {
-              handleConfirmEdit(task);
-              setSelectedTask(null);
-            }}
-            setIsCompleted={(id, completed) => {
-              setIsCompleted(id, completed);
-              setSelectedTask(null);
-            }}
-          />
-        </Popup>
-      )}
     </div>
   );
 }
