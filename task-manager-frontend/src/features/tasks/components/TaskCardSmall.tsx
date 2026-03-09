@@ -18,7 +18,7 @@ export function TaskCardSmall({
   return (
     <div
       key={task.id}
-      className="flex items-center justify-between p-4 gap-2 bg-surface border border-border-light rounded-2xl shadow-sm active:bg-surface-muted transition-colors"
+      className="flex items-center gap-2 px-2 py-4 bg-surface border border-border-light rounded-2xl shadow-sm active:bg-surface-muted transition-colors"
       onClick={() => setSelectedTask(task)}
       draggable={Boolean(setDraggedEvent)}
       onDragStart={() => setDraggedEvent?.(task)}
@@ -31,21 +31,28 @@ export function TaskCardSmall({
         }}
       >
         {task.isCompleted ? (
-          <CheckCircle2 size={24} className="text-brand" />
+          <CheckCircle2 size={16} className="text-brand" />
         ) : (
-          <Circle size={24} className="text-slate-300" />
+          <Circle size={16} className="text-slate-300" />
         )}
       </button>
-      <p className="flex justify-between flex-1 ">
-        <span
-          className={`font-semibold truncate text-sm text-wrap ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
-        >
-          {task.title}
+      <p className="flex justify-between flex-1 overflow-hidden">
+        <span className="flex flex-col gap truncate">
+          <span
+            className={`font-semibold truncate text-ellipsis whitespace-nowrap text-nowrap over text-[12px] pr-1 ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
+          >
+            {task.title}
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-accent text-nowrap">
+            {task.category?.replace("-", " ")}
+          </span>
         </span>
+
         <span
-          className={`text-sm text-nowrap ${isOverdue ? "text-failure" : "text-text-sub"}`}
+          className={`text-[12px] text-nowrap ${isOverdue ? "text-failure" : "text-text-sub"}`}
         >
-          {format(new Date(task.startAt), "p")}
+          {format(new Date(task.startAt), "HH:mm")} -{" "}
+          {format(new Date(task.endAt), "HH:mm")}
         </span>
       </p>
     </div>
