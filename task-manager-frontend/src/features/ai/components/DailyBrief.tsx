@@ -8,7 +8,14 @@ const DailyBrief = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   if (isLoading)
-    return <div className="w-full h-32 bg-surface animate-pulse rounded-xl" />;
+    return (
+      <div
+        className="flex items-center justify-center bg-surface dark:bg-surface-muted border border-slate-200 shadow-sm text-slate-500 w-12 h-12 rounded-full
+        "
+      >
+        <Sparkles size={24} fill="currentColor" />
+      </div>
+    );
   if (isError)
     return <div className="text-red-500">Error loading brief...</div>;
   if (!brief) return null;

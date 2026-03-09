@@ -58,13 +58,12 @@ export default function Home() {
         updateFilters={updateFilters}
       />
 
-      <div className="flex justify-center gap-4 flex-wrap">
-        <DailyBrief />
-
-        {tasks && tasks.length > 0 && (
+      {tasks && tasks.length > 0 && (
+        <div className="flex justify-center gap-4 flex-wrap">
+          <DailyBrief />
           <Pagination {...pageDetails} setPage={setPage} />
-        )}
-      </div>
+        </div>
+      )}
 
       <section
         className={`transition-opacity duration-200 ${isStale ? "opacity-75" : "opacity-100"}`}
