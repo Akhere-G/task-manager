@@ -14,7 +14,7 @@ const DailyBrief = () => {
   if (!brief) return null;
 
   return (
-    <div className="relative antialiase">
+    <div className="relative antialiase overflow-clip">
       <button
         onClick={() => setIsOpen(true)}
         className={`
@@ -33,7 +33,7 @@ const DailyBrief = () => {
 
       <div
         className={`
-          bg-white border border-slate-200 shadow-sm overflow-hidden
+          bg-white border border-slate-200 shadow-sm 
           transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
           ${
             isOpen
