@@ -49,7 +49,9 @@ const DailyBrief = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 text-accent">
               <Sparkles size={20} fill="currentColor" />
-              <h2 className="font-semibold text-text-primary">Daily Brief</h2>
+              <h2 className="font-semibold text-text-primary text-xl">
+                Daily Brief
+              </h2>
             </div>
 
             <div className="flex gap-2">
@@ -68,8 +70,12 @@ const DailyBrief = () => {
             </div>
           </div>
 
-          <div className="[&>p]:text-sm [&>p]:mb-4 [&>p]:tracking-tighter">
-            <ReactMarkdown>{brief}</ReactMarkdown>
+          <div className="[&>p]:text-sm [&>p]:mb-4 [&>p:last-child]:mb-0 [&>p]:tracking-tighter [&>h2]:text-accent [&>h2]:text-lg">
+            <ReactMarkdown
+              allowedElements={["h1", "h2", "h3", "h4", "p", "strong"]}
+            >
+              {brief}
+            </ReactMarkdown>
           </div>
         </div>
       </div>
