@@ -10,14 +10,7 @@ import withDragAndDrop, {
   type DragFromOutsideItemArgs,
   type EventInteractionArgs,
 } from "react-big-calendar/lib/addons/dragAndDrop";
-import {
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  isSameDay,
-  addMilliseconds,
-} from "date-fns";
+import { format, parse, startOfWeek, getDay, isSameDay } from "date-fns";
 import { enGB } from "date-fns/locale/en-GB";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -104,16 +97,14 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
     isSameDay(new Date(t.startAt), currentDate),
   );
 
-  const onEventDrop = async ({ event, start }: EventInteractionArgs<Event>) => {
+  const onEventDrop = async ({
+    event,
+    start,
+    end,
+  }: EventInteractionArgs<Event>) => {
     const newStart = new Date(start as Date);
+    const newEnd = new Date(end as Date);
     const task = event.resource as Task;
-    const originalStart = new Date(task.startAt);
-    const originalEnd = new Date(task.endAt);
-
-    const newEnd = addMilliseconds(
-      newStart,
-      originalEnd.getTime() - originalStart.getTime(),
-    );
 
     const formattedStart = format(newStart, "yyyy-MM-dd HH:mm:ss");
     const formattedEnd = format(newEnd, "yyyy-MM-dd HH:mm:ss");
