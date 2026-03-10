@@ -80,10 +80,7 @@ export default function Popup({
           className={`gap-4 flex justify-end ${(showCloseButton || handleConfirm) && "p-4"}`}
         >
           {showCloseButton && (
-            <button
-              className="px-4 py-2 rounded-md font-medium hover:bg-surface-muted transition-colors "
-              onClick={close}
-            >
+            <button className="btn-secondary" onClick={close}>
               Cancel
             </button>
           )}
