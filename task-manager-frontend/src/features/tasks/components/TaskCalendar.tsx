@@ -10,7 +10,14 @@ import withDragAndDrop, {
   type DragFromOutsideItemArgs,
   type EventInteractionArgs,
 } from "react-big-calendar/lib/addons/dragAndDrop";
-import { format, parse, startOfWeek, getDay, isSameDay } from "date-fns";
+import {
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  isSameDay,
+  addMilliseconds,
+} from "date-fns";
 import { enGB } from "date-fns/locale/en-GB";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -129,21 +136,22 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
 
   function onDropFromOutside(day: DragFromOutsideItemArgs) {
     if (!draggedEvent) return;
-    const oldStartDate = new Date(draggedEvent.startAt);
-    const oldEndDate = new Date(draggedEvent.endAt);
+    const startAt = new Date(draggedEvent.startAt);
+    const endAt = new Date(draggedEvent.endAt);
 
-    const newStartDate = new Date(day.start);
-    newStartDate.setHours(oldStartDate.getHours());
-    newStartDate.setMinutes(oldStartDate.getMinutes());
+    const newStartAt = new Date(day.start);
+    newStartAt.setHours(startAt.getHours());
+    newStartAt.setMinutes(startAt.getMinutes());
 
-    const newEndDate = new Date(day.end);
-    newEndDate.setHours(oldEndDate.getHours());
-    newEndDate.setMinutes(oldEndDate.getMinutes());
+    const newEndAt = addMilliseconds(
+      newStartAt,
+      endAt.getTime() - startAt.getTime(),
+    );
 
     const prev = allTasks;
     try {
-      const startAt = format(newStartDate, "yyyy-MM-dd HH:mm");
-      const endAt = format(newEndDate, "yyyy-MM-dd HH:mm");
+      const startAt = format(newStartAt, "yyyy-MM-dd HH:mm");
+      const endAt = format(newEndAt, "yyyy-MM-dd HH:mm");
 
       setAllTasks((prev) =>
         prev.map((t) =>
