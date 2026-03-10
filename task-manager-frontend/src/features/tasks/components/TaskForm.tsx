@@ -6,10 +6,24 @@ import {
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
 import { validateTask, type TaskData } from "../../../utils/validators";
-import { format, set } from "date-fns";
+import { addHours, addMilliseconds, format } from "date-fns";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
   general: string;
+};
+
+const getDefaultTimes = () => {
+  const startDate = new Date();
+  startDate.setHours(startDate.getHours() + 1);
+  startDate.setMinutes(0);
+  startDate.setSeconds(0);
+
+  const endDate = new Date(startDate);
+  endDate.setHours(startDate.getHours() + 1);
+
+  const startAt = format(startDate, "yyyy-MM-dd HH:mm");
+  const endAt = format(endDate, "yyyy-MM-dd HH:mm");
+  return { startAt, endAt };
 };
 
 interface TaskFormProps {
@@ -28,23 +42,7 @@ export default function TaskForm({
     title: "",
     category: "",
     description: "",
-    startAt: format(
-      set(new Date(), {
-        minutes: 0,
-        seconds: 0,
-        milliseconds: 0,
-      }),
-      "yyyy-MM-dd HH:mm",
-    ),
-    endAt: format(
-      set(new Date(), {
-        hours: 23,
-        minutes: 59,
-        seconds: 0,
-        milliseconds: 0,
-      }),
-      "yyyy-MM-dd HH:mm",
-    ),
+    ...getDefaultTimes(),
   });
 
   const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
@@ -90,15 +88,7 @@ export default function TaskForm({
         if (initialData.endAt) {
           endAt = format(initialData.endAt, "yyyy-MM-dd HH:mm");
         } else if (initialData.startAt) {
-          endAt = format(
-            set(startAt, {
-              hours: 23,
-              minutes: 59,
-              seconds: 0,
-              milliseconds: 0,
-            }),
-            "yyyy-MM-dd HH:mm",
-          );
+          endAt = format(addHours(startAt, 1), "yyyy-MM-dd HH:mm");
         } else {
           endAt = prev.endAt;
         }
@@ -121,6 +111,26 @@ export default function TaskForm({
   ) {
     const { name, value } = e.target;
     const newFormState = { ...formState, [name]: value };
+    setFormState(newFormState);
+    validateForm(newFormState);
+  }
+
+  function handleChangeStartAt(
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) {
+    const { value: newStartDate } = e.target;
+    const startDate = new Date(formState.startAt);
+    const endDate = new Date(formState.endAt);
+    const duration = endDate.getTime() - startDate.getTime();
+    const newEndDate = addMilliseconds(new Date(newStartDate), duration);
+
+    const newFormState = {
+      ...formState,
+      startAt: newStartDate,
+      endAt: format(newEndDate, "yyyy-MM-dd HH:mm"),
+    };
     setFormState(newFormState);
     validateForm(newFormState);
   }
@@ -215,7 +225,7 @@ export default function TaskForm({
         name="startAt"
         type="datetime-local"
         value={formState.startAt}
-        handleChange={handleChange}
+        handleChange={handleChangeStartAt}
         errorMessage={errorMessages.startAt}
         touched={touched.startAt}
         handleBlur={handleBlur}
