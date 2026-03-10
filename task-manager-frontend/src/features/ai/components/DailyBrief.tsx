@@ -77,7 +77,7 @@ const DailyBrief = () => {
             </div>
           </div>
           <div
-            className={`${isOpen ? "h-full" : "max-h-0 overflow-clip"} [&>p]:text-sm [&>p]:mb-4 [&>p:last-child]:mb-0 [&>p]:tracking-tighter [&>h2]:text-accent [&>h2]:text-lg`}
+            className={`${isOpen ? "h-full" : "max-h-0 overflow-clip"} daily-brief `}
           >
             <ReactMarkdown
               allowedElements={["h1", "h2", "h3", "h4", "p", "strong"]}
