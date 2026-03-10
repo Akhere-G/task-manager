@@ -1,6 +1,5 @@
 import { CheckCircle2, Circle } from "lucide-react";
 import type { Task } from "../types";
-import { format } from "date-fns";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { formatDateRange } from "../utils";
 
