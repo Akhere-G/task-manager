@@ -123,8 +123,13 @@ export default function TaskForm({
     const { value: newStartDate } = e.target;
     const startDate = new Date(formState.startAt);
     const endDate = new Date(formState.endAt);
-    const duration = endDate.getTime() - startDate.getTime();
-    const newEndDate = addMilliseconds(new Date(newStartDate), duration);
+    let newEndDate = new Date(formState.endAt);
+
+    if (newStartDate && formState.startAt) {
+      const duration = endDate.getTime() - startDate.getTime();
+      if (duration > 0)
+        newEndDate = addMilliseconds(new Date(newStartDate), duration);
+    }
 
     const newFormState = {
       ...formState,
