@@ -6,7 +6,7 @@ import { Clock, Pause, Play } from "lucide-react";
 import { useState } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useTaskContext } from "../context/TaskContext";
-import { format, isSameDay, isSameMonth, isSameYear } from "date-fns";
+import { formatDateRange } from "../features/tasks/utils";
 
 const POMODORO_DURATION = 25 * 60;
 
@@ -53,20 +53,7 @@ export default function Pomodoro() {
   const startDate = new Date(startAt);
   const duration = (endDate.getTime() - startDate.getTime()) / 60000;
 
-  const sameDay = isSameDay(endDate, startDate);
-  const sameMonth = isSameMonth(endDate, startDate);
-  const sameYear = isSameYear(endDate, startDate);
-  let dateStr = "";
-
-  if (sameDay) {
-    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "p")}`;
-  } else if (sameMonth) {
-    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do p")}`;
-  } else if (sameYear) {
-    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do LLL, p")}`;
-  } else {
-    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do LLL, yy p")}`;
-  }
+  const dateStr = formatDateRange(startAt, endAt);
 
   const totalExpectedSessions = Math.ceil(duration / 25);
 

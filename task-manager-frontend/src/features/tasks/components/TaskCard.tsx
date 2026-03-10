@@ -25,6 +25,7 @@ interface TaskCardProps extends Task {
   showPomodoro?: boolean;
   showSetIsComplete?: boolean;
   showDecompose?: boolean;
+  fullDescription?: boolean;
 }
 
 function TaskCard({
@@ -37,6 +38,7 @@ function TaskCard({
   showPomodoro = true,
   showSetIsComplete = true,
   showDecompose = true,
+  fullDescription = false,
   ...task
 }: TaskCardProps) {
   const { id, title, category, description, isCompleted, startAt, endAt } =
@@ -50,12 +52,17 @@ function TaskCard({
   const maxDescriptionLength = 100;
   const isLongDesc = desc.length > maxDescriptionLength;
   const formattedDescription =
-    isLongDesc && !showMore ? desc.substring(0, 100) + "..." : desc;
+    isLongDesc && !showMore && !fullDescription
+      ? desc.substring(0, 100) + "..."
+      : desc;
   const ShowMoreIcon = showMore ? ChevronUp : ChevronDown;
 
   const endDate = new Date(endAt);
   const startDate = new Date(startAt);
-  const duration = (endDate.getTime() - startDate.getTime()) / 60000;
+  const duration = (
+    (endDate.getTime() - startDate.getTime()) /
+    60000
+  ).toFixed();
 
   const dateStr = formatDateRange(startAt, endAt);
 
@@ -96,7 +103,7 @@ function TaskCard({
         <p className="text-sm text-text-main leading-relaxed m-0">
           {formattedDescription}
         </p>
-        {isLongDesc && (
+        {isLongDesc && !fullDescription && (
           <button
             aria-label={showMore ? "Show More" : "Show Less"}
             className="p-1.5 rounded-md hover:bg-surface-muted transition-colors group cursor-pointer self-end"
@@ -206,6 +213,7 @@ interface TaskCardConnectedProps extends Task {
   showPomodoro?: boolean;
   showSetIsComplete?: boolean;
   showDecompose?: boolean;
+  fullDescription?: boolean;
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps) {
   const { setIsCompleted, openPopup } = useTaskContext();

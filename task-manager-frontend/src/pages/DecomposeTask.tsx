@@ -149,6 +149,7 @@ export default function DecomposeTask() {
               showEdit={false}
               showPomodoro={false}
               showDecompose={false}
+              fullDescription
             />
           )}
         </div>
