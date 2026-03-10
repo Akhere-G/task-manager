@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
-import { format, isSameDay, isSameMonth, isSameYear } from "date-fns";
+import { formatDateRange } from "../utils";
 
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
@@ -57,21 +57,7 @@ function TaskCard({
   const startDate = new Date(startAt);
   const duration = (endDate.getTime() - startDate.getTime()) / 60000;
 
-  const sameDay = isSameDay(endDate, startDate);
-  const sameMonth = isSameMonth(endDate, startDate);
-  const sameYear = isSameYear(endDate, startDate);
-
-  let dateStr = "";
-
-  if (sameDay) {
-    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "p")}`;
-  } else if (sameMonth) {
-    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do p")}`;
-  } else if (sameYear) {
-    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do LLL, p")}`;
-  } else {
-    dateStr = `${format(new Date(startAt), "do LLL, yy p")} - ${format(new Date(endAt), "do LLL, yy p")}`;
-  }
+  const dateStr = formatDateRange(startAt, endAt);
 
   return (
     <article

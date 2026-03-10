@@ -2,6 +2,7 @@ import { CheckCircle2, Circle } from "lucide-react";
 import type { Task } from "../types";
 import { format } from "date-fns";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
+import { formatDateRange } from "../utils";
 
 interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
@@ -51,8 +52,7 @@ export function TaskCardSmall({
         <span
           className={`text-[12px] text-nowrap ${isOverdue ? "text-failure" : "text-text-sub"}`}
         >
-          {format(new Date(task.startAt), "HH:mm")} -{" "}
-          {format(new Date(task.endAt), "HH:mm")}
+          {formatDateRange(task.startAt, task.endAt)}
         </span>
       </p>
     </div>
