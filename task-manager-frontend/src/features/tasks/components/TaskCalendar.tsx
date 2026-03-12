@@ -231,7 +231,7 @@ export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
             ];
 
             if (!isCurrentMonth) {
-              classes.push("bg-surface-muted!", "brightness-120");
+              classes.push("bg-surface-muted!");
             } else {
               classes.push("bg-surface");
             }
