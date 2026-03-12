@@ -10,6 +10,8 @@ import {
   Register,
   Login,
   DecomposeTask,
+  RequestPasswordReset,
+  ResetPassword,
 } from "./pages";
 import {
   ErrorBoundary,
@@ -121,6 +123,22 @@ function App() {
               element={
                 <ProtectedRoute redirect={isAuthenticated} redirectTo="/">
                   <Login />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/login/request-password-reset"
+              element={
+                <ProtectedRoute redirect={isAuthenticated} redirectTo="/">
+                  <RequestPasswordReset />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <ProtectedRoute redirect={isAuthenticated} redirectTo="/">
+                  <ResetPassword />
                 </ProtectedRoute>
               }
             />

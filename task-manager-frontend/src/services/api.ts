@@ -1,9 +1,15 @@
 import axios from "axios";
 import type { CreateTaskInput, Task } from "../features/tasks/types";
-import type { LoginUserInput, RegisterUserInput } from "../features/auth/types";
+import type {
+  LoginUserInput,
+  RegisterUserInput,
+  User,
+} from "../features/auth/types";
+import Cookies from "js-cookie";
 
-const api = axios.create({
+const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8080/api",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -23,27 +29,27 @@ interface DeleteTaskResult {
 export const taskService = {
   getAll: async (params?: URLSearchParams): Promise<GetTaskResult> => {
     const url = "/tasks" + (params ? `?${params.toString()}` : "");
-    const response = await api.get(url);
+    const response = await apiClient.get(url);
     return response.data;
   },
   getById: async (id: number): Promise<Task> => {
-    const response = await api.get(`tasks/${id}`);
+    const response = await apiClient.get(`tasks/${id}`);
     return response.data;
   },
   create: async (taskData: CreateTaskInput) => {
-    const response = await api.post("/tasks", taskData);
+    const response = await apiClient.post("/tasks", taskData);
     return response.data;
   },
   createAll: async (tasksData: CreateTaskInput[]) => {
-    const response = await api.post("/tasks/bulk", tasksData);
+    const response = await apiClient.post("/tasks/bulk", tasksData);
     return response.data;
   },
   update: async (id: number, taskData: Partial<Task>): Promise<Task> => {
-    const response = await api.patch(`/tasks/${id}`, taskData);
+    const response = await apiClient.patch(`/tasks/${id}`, taskData);
     return response.data;
   },
   delete: async (id: number): Promise<DeleteTaskResult> => {
-    const response = await api.delete(`/tasks/${id}`);
+    const response = await apiClient.delete(`/tasks/${id}`);
     return response.data;
   },
 };
@@ -134,7 +140,7 @@ export interface StatsResult {
 }
 export const statsService = {
   getStats: async (): Promise<StatsResult> => {
-    const response = await api.get("/stats/dashboard");
+    const response = await apiClient.get("/stats/dashboard");
     return response.data;
   },
 };
@@ -148,23 +154,42 @@ export interface ContactEnquiry {
 
 export const contactService = {
   sendEnquiry: async (enquiryData: ContactEnquiry) => {
-    const response = await api.post("/contact", enquiryData);
+    const response = await apiClient.post("/contact", enquiryData);
     return response.data;
   },
 };
 
 interface AuthResult {
-  token: string;
+  user: User;
+  message: string;
 }
 
 export const authService = {
   register: async (newUserData: RegisterUserInput): Promise<AuthResult> => {
-    const response = await api.post("/auth/register", newUserData);
+    const response = await apiClient.post("/auth/register", newUserData);
     return response.data;
   },
   login: async (userData: LoginUserInput): Promise<AuthResult> => {
-    const response = await api.post("/auth/login", userData);
+    const response = await apiClient.post("/auth/login", userData);
     return response.data;
+  },
+  logout: async (): Promise<void> => {
+    await apiClient.post("/auth/logout");
+  },
+  checkSession: async (): Promise<AuthResult> => {
+    const response = await apiClient.get("/auth/me");
+    return response.data;
+  },
+  requestPasswordReset: async (email: string): Promise<void> => {
+    await apiClient.post("/auth/request-password-reset", {
+      email,
+    });
+  },
+  resetPassword: async (token: string, password: string): Promise<void> => {
+    await apiClient.post("/auth/reset-password", {
+      token,
+      password,
+    });
   },
 };
 
@@ -178,41 +203,49 @@ export interface DecomposeTaskResult {
 
 export const aiService = {
   getDailyBrief: async (): Promise<DailyBrief> => {
-    const response = await api.get("/ai/daily-brief");
+    const response = await apiClient.get("/ai/daily-brief");
     return response.data;
   },
   parseTask: async (text: string): Promise<CreateTaskInput> => {
-    const response = await api.post("/ai/parse-task", { text });
+    const response = await apiClient.post("/ai/parse-task", { text });
     return response.data;
   },
   decomposeTask: async (
     task: CreateTaskInput,
   ): Promise<DecomposeTaskResult> => {
-    const response = await api.post("ai/decompose", task);
+    const response = await apiClient.post("ai/decompose", task);
     return response.data;
   },
 };
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
+apiClient.interceptors.request.use((config) => {
+  const csrfToken = Cookies.get("csrf_access_token");
 
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
+  config.headers["X-CSRF-TOKEN"] = csrfToken;
 
-api.interceptors.response.use(
+  return config;
+});
+
+apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.reload();
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response.status === 401 && !originalRequest._retry) {
+      if (originalRequest.url.includes("/auth/refresh")) {
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+        return Promise.reject(error);
+      }
+      originalRequest._retry = true;
+
+      await apiClient.post("/auth/refresh");
+
+      return apiClient(originalRequest);
     }
     return Promise.reject(error);
   },
 );
-export default api;
+
+export default apiClient;
