@@ -218,13 +218,21 @@ export const aiService = {
   },
 };
 
-apiClient.interceptors.request.use((config) => {
-  const csrfToken = Cookies.get("csrf_access_token");
+apiClient.interceptors.request.use(
+  (config) => {
+    const csrfToken = Cookies.get("csrf_access_token");
 
-  config.headers["X-CSRF-TOKEN"] = csrfToken;
+    if (csrfToken) {
+      config.headers = config.headers || {};
+      config.headers["X-CSRF-TOKEN"] = csrfToken;
+    }
 
-  return config;
-});
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -233,7 +241,7 @@ apiClient.interceptors.response.use(
 
     if (error.response.status === 401 && !originalRequest._retry) {
       if (originalRequest.url.includes("/auth/refresh")) {
-        if (window.location.pathname !== "/login") {
+        if (!["/login", "/register"].includes(window.location.pathname)) {
           window.location.href = "/login";
         }
         return Promise.reject(error);
