@@ -223,8 +223,9 @@ apiClient.interceptors.request.use(
     const csrfToken = Cookies.get("csrf_access_token");
 
     if (csrfToken) {
-      config.headers = config.headers || {};
-      config.headers["X-CSRF-TOKEN"] = csrfToken;
+      config.headers.set("X-CSRF-TOKEN", csrfToken);
+    } else {
+      console.warn("CSRF cookie not found ");
     }
 
     return config;

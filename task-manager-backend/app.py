@@ -23,9 +23,11 @@ app.config["JWT_REFRESH_COOKIE_NAME"] = "refresh_token"
 app.config["JWT_REFRESH_COOKIE_PATH"] = "/"
 app.config["JWT_COOKIE_SECURE"] = os.getenv("JWT_COOKIE_SECURE") == "True"
 app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
+
 app.config["JWT_COOKIE_CSRF_PROTECT"] = True
 app.config["JWT_ACCESS_CSRF_COOKIE_HTTPONLY"] = False
 app.config["JWT_ACCESS_CSRF_COOKIE_NAME"] = "csrf_access_token"
+app.config["JWT_ACCESS_CSRF_HEADER_NAME"] = "X-CSRF-TOKEN"
 app.config["JWT_COOKIE_DOMAIN"] = os.getenv("FRONTEND_DOMAIN")
 
 if app.config["JWT_COOKIE_SECURE"]:
@@ -42,6 +44,7 @@ CORS(
             "origins": [frontend_url, "http://localhost:5173"],
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization", "X-CSRF-TOKEN"],
+            "expose_headers": ["X-CSRF-TOKEN"],
         }
     },
     supports_credentials=True,
