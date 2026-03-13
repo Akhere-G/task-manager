@@ -9,7 +9,7 @@ export const taskDurationOptions = [
 ];
 
 export const completedTasksOptions = [
-  { name: "All", value: "" },
+  { name: "All", value: "all" },
   { name: "Completed", value: "true" },
   { name: "Pending", value: "false" },
 ];
