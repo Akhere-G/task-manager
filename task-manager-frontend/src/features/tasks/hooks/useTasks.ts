@@ -2,6 +2,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { formatDate } from "../utils";
 import { taskService } from "../../../services/api";
 import { useDeferredValue, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export interface TaskFilters {
   search: string;
@@ -22,128 +23,162 @@ export interface PageDetails {
 interface UseTasksProps {
   perPage: number | null;
 }
+/*
+const defaultFilters = {
+  search: "",
+  category: "",
+  duration: "",
+  isCompleted: "false",
+  dueDate: "",
+  sortBy: "start_at",
+  order: "asc",
+};
+*/
+
+const apiParamMap: Record<string, string> = {
+  search: "q",
+  category: "category",
+  duration: "duration",
+  isCompleted: "is_completed",
+  dueDate: "due_date",
+  sortBy: "sort_by",
+  order: "order",
+};
 
 export const useTasks = ({ perPage }: UseTasksProps) => {
-  const [pageDetails, setPageDetails] = useState<PageDetails>({
-    currentPage: 1,
-    totalItems: 0,
-    totalPages: 0,
-  });
-  const [filters, setFilters] = useState<TaskFilters>({
-    search: "",
-    category: "",
-    duration: "",
-    isCompleted: "false",
-    dueDate: "",
-    sortBy: "start_at",
-    order: "asc",
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const deferredSearch = useDeferredValue(filters.search);
+  const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
+  const deferredSearch = useDeferredValue(searchInput);
+
+  const currentPage = Number(searchParams.get("page")) || 1;
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchParams.get("q") !== deferredSearch) {
+        if (deferredSearch) {
+          searchParams.set("q", deferredSearch);
+        } else {
+          searchParams.delete("q");
+        }
+        searchParams.set("page", "1");
+        setSearchParams(searchParams, { replace: true });
+      }
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [deferredSearch]);
+
+  const filters = {
+    search: searchInput,
+    category: searchParams.get("category") || "",
+    duration: searchParams.get("duration") || "",
+    isCompleted: searchParams.get("is_completed") || "false",
+    dueDate: searchParams.get("due_date") || "",
+    sortBy: searchParams.get("sort_by") || "start_at",
+    order: searchParams.get("order") || "asc",
+  };
 
   const result = useQuery({
     queryKey: [
       "tasks",
-      {
-        ...filters,
-        search: deferredSearch,
-        page: pageDetails.currentPage,
-        perPage,
-      },
+      { ...filters, search: deferredSearch, page: currentPage, perPage },
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
 
-      const apiParamMap: Record<string, string> = {
-        search: "q",
-        category: "category",
-        duration: "task_duration",
-        isCompleted: "is_completed",
-        dueDate: "due_date",
-        sortBy: "sort_by",
-        order: "order",
-      };
-
       Object.entries(filters).forEach(([key, value]) => {
         const apiKey = apiParamMap[key];
-        if (apiKey && value !== undefined && value !== "") {
-          params.set(apiKey, String(value));
+        if (value) {
+          if (key === "search") {
+            params.set(apiKey, String(deferredSearch));
+          } else {
+            params.set(apiKey, String(value));
+          }
         }
       });
 
-      if (filters.dueDate) {
-        params.set("today", formatDate());
-      }
-
+      if (filters.dueDate) params.set("today", formatDate());
       if (perPage) {
-        params.set("page", String(pageDetails.currentPage));
+        params.set("page", String(currentPage));
         params.set("limit", String(perPage));
       }
 
-      return await taskService.getAll(params);
+      const result = await taskService.getAll(params);
+      if (result.currentPage > result.totalPages) {
+        result.currentPage = result.totalPages;
+        params.set("page", String(result.currentPage));
+        setSearchParams(params);
+      }
+
+      return result;
     },
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5,
   });
-
-  useEffect(() => {
-    const { data } = result;
-    if (data) {
-      setPageDetails((prev) => ({
-        totalPages: data.totalPages,
-        totalItems: data.totalTasks,
-        currentPage:
-          data.totalPages < prev.currentPage && data.totalPages > 0
-            ? data.totalPages
-            : prev.currentPage, // if deleting a task on a page with one task, go to previous page
-      }));
-    }
-  }, [result.data?.totalPages, result.data?.totalTasks]);
 
   const updateFilters = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >,
   ) => {
-    setPageDetails((prev) => ({ ...prev, currentPage: 1 }));
-    setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    if (name === "search") {
+      setSearchInput(value);
+    } else {
+      const apiKey = apiParamMap[name];
+      if (value) {
+        searchParams.set(apiKey, value);
+      } else {
+        searchParams.delete(apiKey);
+      }
+    }
+    searchParams.set("page", "1");
+    setSearchParams(searchParams);
   };
 
   const resetFilters = () => {
-    setFilters({
-      search: "",
-      category: "",
-      duration: "",
-      isCompleted: "false",
-      dueDate: "",
-      sortBy: "start_at",
-      order: "asc",
-    });
+    setSearchInput("");
+
+    const params = new URLSearchParams();
+    params.set("q", "");
+    params.set("category", "");
+    params.set("duration", "");
+    params.set("is_completed", "false");
+    params.set("due_date", "");
+    params.set("sort_by", "start_at");
+    params.set("order", "asc");
+    params.set("page", "1");
+
+    setSearchParams(params);
   };
 
   const setPage = (page: number) => {
-    setPageDetails((prev) => ({ ...prev, currentPage: page }));
+    searchParams.set("page", String(page));
+    setSearchParams(searchParams);
   };
 
-  const isStale = result.isFetching || filters.search !== deferredSearch;
+  const isStale = result.isFetching || searchInput !== deferredSearch;
 
   const isSearching =
-    !!filters.search.trim() ||
+    !!searchInput.trim() ||
     !!filters.category ||
     !!filters.duration ||
-    filters.isCompleted !== "false" ||
+    (filters.isCompleted !== "" && filters.isCompleted !== "false") ||
     !!filters.dueDate;
+
+  const totalPages = result.data?.totalPages || 0;
+  const totalItems = result.data?.totalTasks || 0;
 
   return {
     ...result,
-    error: result.error ? "Could not get tasks." : "",
-    pageDetails,
-    setPageDetails,
+    resetFilters,
+    pageDetails: { currentPage, totalPages, totalItems },
     filters,
     setPage,
+    updateFilters,
     isStale,
     isSearching,
-    updateFilters,
-    resetFilters,
+    error: result.error ? "Could not get tasks" : "",
   };
 };

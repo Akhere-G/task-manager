@@ -6,7 +6,7 @@ def get_all_tasks(
     user_id,
     category=None,
     search=None,
-    task_duration=None,
+    duration=None,
     is_completed=None,
     due_date=None,
     today=None,
@@ -59,11 +59,11 @@ def get_all_tasks(
                 base_filters += " AND end_at < %s AND is_completed = 0"
                 params.append(today)
 
-        if task_duration:
-            if task_duration == "short_tasks":
+        if duration:
+            if duration == "short_tasks":
                 base_filters += " AND TIMESTAMPDIFF(MINUTE, start_at, end_at) <= %s"
                 params.append(SHORT_TASK_THRESHOLD)
-            elif task_duration == "long_tasks":
+            elif duration == "long_tasks":
                 base_filters += " AND TIMESTAMPDIFF(MINUTE, start_at, end_at) > %s"
                 params.append(SHORT_TASK_THRESHOLD)
 

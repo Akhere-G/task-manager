@@ -21,7 +21,7 @@ def list_tasks():
     user_id = get_jwt_identity()
     category = request.args.get("category")
     search = request.args.get("q")
-    task_duration = request.args.get("task_duration")
+    duration = request.args.get("duration")
     is_completed = request.args.get("is_completed")
     due_date = request.args.get("due_date")
     today = request.args.get("today")
@@ -34,7 +34,7 @@ def list_tasks():
         user_id,
         category,
         search,
-        task_duration,
+        duration,
         is_completed,
         due_date,
         today,
