@@ -5,7 +5,6 @@ import type {
   RegisterUserInput,
   User,
 } from "../features/auth/types";
-import Cookies from "js-cookie";
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8080/api",
@@ -217,23 +216,6 @@ export const aiService = {
     return response.data;
   },
 };
-
-apiClient.interceptors.request.use(
-  (config) => {
-    const csrfToken = Cookies.get("csrf_access_token");
-
-    if (csrfToken) {
-      config.headers.set("X-CSRF-TOKEN", csrfToken);
-    } else {
-      console.warn("CSRF cookie not found ");
-    }
-
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
 
 apiClient.interceptors.response.use(
   (response) => response,
