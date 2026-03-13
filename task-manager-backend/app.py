@@ -24,6 +24,7 @@ app.config["JWT_REFRESH_COOKIE_PATH"] = "/"
 app.config["JWT_COOKIE_SECURE"] = os.getenv("JWT_COOKIE_SECURE") == "True"
 app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
 
+app.config["JWT_COOKIE_CSRF_PROTECT"] = False
 app.config["JWT_COOKIE_DOMAIN"] = os.getenv("FRONTEND_DOMAIN")
 
 if app.config["JWT_COOKIE_SECURE"]:
