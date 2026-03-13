@@ -26,7 +26,7 @@ app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
 app.config["JWT_COOKIE_CSRF_PROTECT"] = True
 app.config["JWT_ACCESS_CSRF_COOKIE_HTTPONLY"] = False
 app.config["JWT_ACCESS_CSRF_COOKIE_NAME"] = "csrf_access_token"
-app.config["JWT_COOKIE_DOMAIN"] = frontend_url
+app.config["JWT_COOKIE_DOMAIN"] = os.getenv("FRONTEND_DOMAIN")
 
 if app.config["JWT_COOKIE_SECURE"]:
     app.config["JWT_COOKIE_SAMESITE"] = "None"
