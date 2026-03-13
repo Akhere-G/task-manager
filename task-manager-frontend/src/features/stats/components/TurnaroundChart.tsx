@@ -94,6 +94,7 @@ export default function TurnaroundChart() {
               fontWeight: "bold",
             }}
           />
+
           <Area
             type="monotone"
             dataKey="count"
