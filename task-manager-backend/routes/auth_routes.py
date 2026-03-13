@@ -19,7 +19,6 @@ from flask_jwt_extended import (
     unset_jwt_cookies,
     get_jwt_identity,
     jwt_required,
-    get_csrf_token,
 )
 from mailersend import MailerSendClient, EmailBuilder
 from utils.validators import validate_password
@@ -44,15 +43,6 @@ def set_access_cookies(response, access_token):
         "access_token_cookie",
         access_token,
         httponly=True,
-        secure=os.getenv("JWT_COOKIE_SECURE") == "True",
-        samesite="None" if os.getenv("JWT_COOKIE_SECURE") == "True" else "Lax",
-        path="/",
-    )
-    csrf_token = get_csrf_token(access_token)
-    response.set_cookie(
-        "csrf_access_token",
-        csrf_token,
-        httponly=False,
         secure=os.getenv("JWT_COOKIE_SECURE") == "True",
         samesite="None" if os.getenv("JWT_COOKIE_SECURE") == "True" else "Lax",
         path="/",
