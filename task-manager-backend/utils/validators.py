@@ -101,6 +101,36 @@ def validate_task(data, is_update=False):
                 f"Invalid category. Must be one of: {', '.join(VALID_CATEGORIES)}."
             )
 
+    if data.get("isRepeating"):
+        is_repeating = data.get("isRepeating")
+        if not isinstance(is_repeating, bool):
+            errors["isRepeating"] = "isRepeating must be a boolean (true/false)."
+        if not data.get("repeatBy"):
+            errors["repeatBy"] = "Repeat By is required for repeating tasks."
+    else:
+        data["repeatBy"] = None
+        data["repeatUntil"] = None
+
+    if data.get("repeatBy"):
+        pattern = data.get("repeatBy")
+        if pattern not in ["daily", "weekly", "monthly", "yearly"]:
+            errors["repeatBy"] = "Repeat must be daily, weekly, monthly or yearly."
+
+    if data.get("repeatUntil"):
+        repeat_until = data.get("repeatUntil")
+
+        try:
+            # Handle the 'Z' suffix if coming from JavaScript's toISOString()
+            clean_ts = str(repeat_until).replace("Z", "")
+
+            # Check for the two most common formats
+            if "T" in clean_ts:
+                datetime.strptime(clean_ts, "%Y-%m-%d")
+            else:
+                datetime.strptime(clean_ts, "%Y-%m-%d")
+
+        except (ValueError, TypeError):
+            errors["repeatUntil"] = "Repeat Until is an invalid date."
     return errors
 
 

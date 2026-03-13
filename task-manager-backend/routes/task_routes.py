@@ -3,7 +3,7 @@ from utils.formatters import format_json_response
 from utils.validators import validate_task, validate_task_list
 from services.task_service import (
     get_all_tasks,
-    create_tasks,
+    create_task,
     update_task,
     delete_task,
     create_tasks_from_list,
@@ -73,28 +73,10 @@ def add_task():
     if errors:
         return jsonify({"errors": errors}), 400
 
-    title = data.get("title").strip() if "title" in data else None
-    description = (
-        str(data.get("description")).strip() if data.get("description") else None
-    )
-    category = str(data.get("category", "General")).strip()
-    start_at = data.get("startAt")
-    end_at = data.get("endAt")
+    task_id = create_task(user_id, data)
 
-    task_id = create_tasks(user_id, title, description, category, start_at, end_at)
-
-    return jsonify(
-        {
-            "id": task_id,
-            "title": title,
-            "description": description,
-            "category": category,
-            "isCompleted": False,
-            "startAt": start_at,
-            "endAt": end_at,
-            "completedAt": None,
-        }
-    ), 201
+    data["id"] = task_id
+    return jsonify(format_json_response(data)), 201
 
 
 @task_bp.route("/api/tasks/bulk", methods=["POST"])
