@@ -98,7 +98,8 @@ def get_all_tasks(
 
         for task in tasks:
             task["is_completed"] = True if task["is_completed"] == 1 else False
-        # 4. Return both the tasks and pagination info
+            task["is_repeating"] = True if task["is_repeating"] == 1 else False
+
         return {
             "tasks": tasks,
             "total_tasks": total_count,
@@ -125,6 +126,8 @@ def get_task(user_id, task_id):
         sql = "SELECT * FROM tasks WHERE user_id = %s AND id = %s"
         cursor.execute(sql, (user_id, task_id))
         task = cursor.fetchone()
+        task["is_completed"] = True if task["is_completed"] == 1 else False
+        task["is_repeating"] = True if task["is_repeating"] == 1 else False
 
         return task
 
@@ -137,15 +140,38 @@ def get_task(user_id, task_id):
             conn.close()
 
 
-def create_tasks(user_id, title, description, category, start_at, end_at):
+def create_task(user_id, data):
     conn = None
     cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+
+        title = data.get("title").strip() if "title" in data else None
+        description = (
+            str(data.get("description")).strip() if data.get("description") else None
+        )
+        category = str(data.get("category", "General")).strip()
+        start_at = data.get("startAt")
+        end_at = data.get("endAt")
+
+        is_repeating = data.get("isRepeating")
+        repeat_by = data.get("repeatBy")
+        repeat_until = data.get("repeatUntil")
+
         cursor.execute(
-            "INSERT INTO tasks (title, description, category, start_at, end_at, user_id) VALUES (%s, %s, %s, %s, %s, %s);",
-            (title, description, category, start_at, end_at, user_id),
+            "INSERT INTO tasks (title, description, category, start_at, end_at, is_repeating, repeat_by, repeat_until, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);",
+            (
+                title,
+                description,
+                category,
+                start_at,
+                end_at,
+                is_repeating,
+                repeat_by,
+                repeat_until,
+                user_id,
+            ),
         )
         conn.commit()
         new_id = cursor.lastrowid

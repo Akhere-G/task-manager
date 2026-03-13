@@ -26,6 +26,14 @@ const getDefaultTimes = () => {
   return { startAt, endAt };
 };
 
+const repeatByOptions = [
+  { name: "None", value: "" },
+  { name: "Daily", value: "daily" },
+  { name: "Weekly", value: "weekly" },
+  { name: "Monthly", value: "monthly" },
+  { name: "Yearly", value: "yearly" },
+];
+
 interface TaskFormProps {
   confirmButtonText?: string;
   submitAction: (task: CreateTaskInput) => Promise<void>;
@@ -43,6 +51,9 @@ export default function TaskForm({
     category: "",
     description: "",
     ...getDefaultTimes(),
+    isRepeating: false,
+    repeatBy: null,
+    repeatUntil: null,
   });
 
   const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
@@ -52,6 +63,9 @@ export default function TaskForm({
     startAt: "",
     endAt: "",
     general: "",
+    isRepeating: "",
+    repeatBy: "",
+    repeatUntil: "",
   });
 
   const [touched, setTouched] = useState({
@@ -60,6 +74,8 @@ export default function TaskForm({
     description: false,
     startAt: false,
     endAt: false,
+    repeatBy: false,
+    repeatUntil: false,
   });
 
   const defaultErrorMessages = {
@@ -70,6 +86,9 @@ export default function TaskForm({
     endAt: "",
     estimatedTime: "",
     general: "",
+    isRepeating: "",
+    repeatBy: "",
+    repeatUntil: "",
   };
 
   const [isLoading, setIsloading] = useState(false);
@@ -111,6 +130,14 @@ export default function TaskForm({
   ) {
     const { name, value } = e.target;
     const newFormState = { ...formState, [name]: value };
+    setFormState(newFormState);
+    validateForm(newFormState);
+  }
+
+  function handleCheck({
+    target: { name, checked },
+  }: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
+    const newFormState = { ...formState, [name]: checked };
     setFormState(newFormState);
     validateForm(newFormState);
   }
@@ -157,6 +184,8 @@ export default function TaskForm({
       description: true,
       startAt: true,
       endAt: true,
+      repeatBy: true,
+      repeatUntil: true,
     });
 
     if (
@@ -168,8 +197,10 @@ export default function TaskForm({
 
     try {
       setIsloading(true);
+
       await submitAction({
         ...formState,
+        isRepeating: formState.isRepeating,
       });
     } catch (err) {
       console.error(err);
@@ -245,6 +276,38 @@ export default function TaskForm({
         touched={touched.endAt}
         handleBlur={handleBlur}
       />
+      <div className="flex gap-2 items-baseline">
+        <input
+          name="isRepeating"
+          type="checkbox"
+          checked={formState.isRepeating || false}
+          onChange={handleCheck}
+        />
+        <p>Repeating?</p>
+      </div>
+      {Boolean(formState.isRepeating) && (
+        <>
+          <FormInput
+            name="repeatBy"
+            label="Repeat By"
+            value={formState.repeatBy || ""}
+            handleChange={handleChange}
+            errorMessage={errorMessages.repeatBy}
+            touched={touched.repeatBy}
+            options={repeatByOptions}
+          />
+          <FormInput
+            name="repeatUntil"
+            label="Repeat Until"
+            value={formState.repeatUntil || ""}
+            handleChange={handleChange}
+            handleBlur={handleBlur}
+            errorMessage={errorMessages.repeatUntil}
+            touched={touched.repeatUntil}
+            type="date"
+          />
+        </>
+      )}
       <footer className="flex gap-4 justify-end">
         {close && (
           <button

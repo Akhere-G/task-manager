@@ -1,4 +1,4 @@
-import type { Task } from "../features/tasks/types";
+import type { RepeatFrequency, Task } from "../features/tasks/types";
 
 export interface TaskData {
   title: string;
@@ -8,6 +8,9 @@ export interface TaskData {
   category: string;
   isCompleted?: boolean;
   completedAt?: string | null;
+  repeatUntil?: string | null;
+  isRepeating?: boolean | null;
+  repeatBy?: RepeatFrequency | null;
 }
 
 export interface ContactData {
@@ -117,6 +120,30 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
     } else if (!VALID_CATEGORIES.includes(cat)) {
       errors.category = `Invalid category. Must be one of: ${VALID_CATEGORIES.join(", ")}.`;
     }
+  }
+
+  if (data.isRepeating) {
+    const isRepeating = data.isRepeating;
+    if (typeof isRepeating !== "boolean") {
+      errors["isRepeating"] = "isRepeating must be a boolean (true/false).";
+    }
+    if (!("repeatBy" in data)) {
+      errors["repeatBy"] = "Repeat By is required for repeating tasks.";
+    }
+  }
+  if ("repeatBy" in data && typeof data.repeatBy === "string") {
+    const repeatBy = data.repeatBy;
+    if (!["daily", "weekly", "monthly", "yearly"].includes(repeatBy)) {
+      errors["repeatBy"] =
+        "Repeat should must only be daily, weekly, monthly or yearly.";
+    }
+  }
+  if (
+    "repeatUntil" in data &&
+    typeof data.repeatUntil === "string" &&
+    isNaN(Date.parse(data.repeatUntil))
+  ) {
+    errors["repeatUntil"] = "Invalid timestamp. Use YYYY-MM-DD format.";
   }
 
   return errors;

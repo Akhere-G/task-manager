@@ -15,6 +15,10 @@ CREATE TABLE IF NOT EXISTS tasks (
     end_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
+    is_repeating BOOLEAN DEFAULT FALSE,
+    repeat_by ENUM ("daily", "weekly", "monthly", "yearly"),
+    repeat_until DATE,
+    series_id INT,
     user_id INT NOT NULL,
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

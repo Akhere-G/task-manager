@@ -1,3 +1,4 @@
+export type RepeatFrequency = "daily" | "weekly" | "monthly" | "yearly";
 export interface Task {
   id: number;
   title: string;
@@ -8,6 +9,9 @@ export interface Task {
   endAt: string;
   createdAt: string;
   completedAt: string | null;
+  isRepeating: boolean | null;
+  repeatBy: RepeatFrequency | null;
+  repeatUntil: string | null;
 }
 
 export type CreateTaskInput = Omit<

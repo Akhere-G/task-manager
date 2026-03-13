@@ -90,12 +90,27 @@ def initialise_database():
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
         """
+        recurring_task_migration = """
+        ALTER TABLE tasks
+        ADD COLUMN is_repeating BOOLEAN DEFAULT FALSE;
+        ALTER TABLE tasks
+        ADD COLUMN repeat_by ENUM ("daily", "weekly", "monthly","yearly");
+        ALTER TABLE tasks
+        ADD COLUMN repeat_until DATE;
+        ALTER TABLE tasks
+        ADD COLUMN series_id INT;
+        """
 
         cursor.execute(users_table)
         cursor.execute(tasks_table)
         cursor.execute(daily_briefs_table)
         cursor.execute(password_resets)
         cursor.execute(refresh_tokens_table)
+
+        try:
+            cursor.execute(recurring_task_migration)
+        except Exception:
+            pass
 
         try:
             cursor.execute(fulltext_index)
