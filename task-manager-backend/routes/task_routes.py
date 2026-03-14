@@ -75,7 +75,7 @@ def add_task():
     user_id = get_jwt_identity()
     data = request.json
 
-    if "repeatBy" in data:
+    if data.get("repeatBy"):
         data["isRepeating"] = True
 
     errors = validate_task(data)
@@ -109,7 +109,7 @@ def add_task_list():
 
         task["isCompleted"] = is_comp
 
-        if "repeatBy" in task:
+        if data.get("repeatBy"):
             task["isRepeating"] = True
 
     errors, has_errors = validate_task_list(data)
