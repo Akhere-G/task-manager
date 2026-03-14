@@ -204,7 +204,7 @@ export default function TaskCalendar({
 
   return (
     <div className="space-y-6">
-      <div className="card h-112.5 md:h-200">
+      <div className="card h-112.5 md:h-225">
         <DnDCalendar
           localizer={localizer}
           events={events}
@@ -216,7 +216,7 @@ export default function TaskCalendar({
           onNavigate={(date) => setCurrentDate(date)}
           onSelectSlot={({ start }) => setCurrentDate(start as Date)}
           selectable
-          messages={{ showMore: () => isMobile }}
+          popup={true}
           view={view}
           views={[Views.MONTH, Views.WEEK, Views.DAY]}
           onEventDrop={onEventDrop}
@@ -281,7 +281,7 @@ export default function TaskCalendar({
             className:
               isMobile && view === Views.MONTH
                 ? "!bg-transparent !border-none !shadow-none !pointer-events-none"
-                : `!border-none !shadow-sm !rounded-md !px-2 !py-1 !text-xs !font-medium transition-all ${
+                : `!border-none !shadow-sm !rounded-md !px-1 !py-1 !text-xs !font-medium transition-all ${
                     (event.resource as Task).isCompleted
                       ? "!bg-slate-200 !text-slate-500 !line-through"
                       : "!bg-brand !text-white"
