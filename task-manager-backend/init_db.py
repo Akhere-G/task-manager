@@ -44,7 +44,7 @@ def initialise_database():
         );
         """
 
-        fulltext_index = "CREATE FULLTEXT INDEX IF NOT EXISTS idx_tasks_search ON tasks(title, description);"
+        fulltext_index = "ALTER TABLE tasks ADD FULLTEXT INDEX idx_tasks_search (title, description);"
 
         trigger = """
         CREATE TRIGGER IF NOT EXISTS tr_ensure_completion_timestamp
