@@ -1,10 +1,10 @@
 from db import get_db_connection
-from datetime import date, timedelta, datetime
+from datetime import timedelta, datetime
 from dateutil.relativedelta import relativedelta
 
 
 def _build_task_filters(
-    user_id, category, search, is_completed, due_date, duration, today
+    user_id, category, search, is_completed, start_date, end_date, duration
 ):
     """Helper to build query strings and parameters dynamically."""
     params = [user_id]
@@ -22,19 +22,9 @@ def _build_task_filters(
         filters.append("is_completed = %s")
         params.append(1 if str(is_completed).lower() == "true" else 0)
 
-    # Date range filters
-    if due_date:
-        if due_date == "today":
-            filters.append("DATE(end_at) = %s")
-            params.append(today)
-        elif due_date in ["this_week", "this_month"]:
-            days = 7 if due_date == "this_week" else 30
-            filters.append(f"end_at BETWEEN %s AND DATE_ADD(%s, INTERVAL {days} DAY)")
-            params.extend([today, today])
-        elif due_date == "overdue":
-            filters.append("end_at < %s AND is_completed = 0")
-            params.append(today)
-
+    if start_date and end_date:
+        filters.append("DATE(end_at) BETWEEN %s AND %s")
+        params.extend([start_date, end_date])
     # Duration filters
     if duration in ["short_tasks", "long_tasks"]:
         op = "<=" if duration == "short_tasks" else ">"
@@ -49,8 +39,8 @@ def get_all_tasks(
     search=None,
     duration=None,
     is_completed=None,
-    due_date=None,
-    today=None,
+    start_date=None,
+    end_date=None,
     sort_by=None,
     order=None,
     limit=None,
@@ -61,9 +51,8 @@ def get_all_tasks(
     conn = None
     cursor = None
     try:
-        today = today or date.today()
         base_filters, params = _build_task_filters(
-            user_id, category, search, is_completed, due_date, duration, today
+            user_id, category, search, is_completed, start_date, end_date, duration
         )
 
         conn = get_db_connection()

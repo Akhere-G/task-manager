@@ -1,8 +1,9 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { formatDate } from "../utils";
+import { calculateDateRange } from "../utils";
 import { taskService } from "../../../services/api";
 import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { format } from "date-fns";
 
 export interface TaskFilters {
   search: string;
@@ -43,6 +44,8 @@ const apiParamMap: Record<string, string> = {
   dueDate: "due_date",
   sortBy: "sort_by",
   order: "order",
+  startDate: "start_date",
+  endDate: "end_date",
 };
 
 export const useTasks = ({ perPage }: UseTasksProps) => {
@@ -77,6 +80,8 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
     dueDate: searchParams.get("due_date") || "",
     sortBy: searchParams.get("sort_by") || "start_at",
     order: searchParams.get("order") || "asc",
+    startDate: searchParams.get("start_date") || "",
+    endDate: searchParams.get("end_date") || "",
   };
 
   const result = useQuery({
@@ -98,7 +103,6 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
         }
       });
 
-      if (filters.dueDate) params.set("today", formatDate());
       if (perPage) {
         params.set("page", String(currentPage));
         params.set("limit", String(perPage));
@@ -123,7 +127,20 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
     >,
   ) => {
     const { name, value } = e.target;
-    if (name === "search") {
+
+    if (name === "dueDate") {
+      ["due_date", "start_date", "end_date"].forEach((param) =>
+        searchParams.delete(param),
+      );
+
+      if (value) {
+        const { start, end } = calculateDateRange(value);
+        searchParams.set("due_date", value);
+        searchParams.set("start_date", format(start, "yyyy-MM-dd"));
+        searchParams.set("end_date", format(end, "yyyy-MM-dd"));
+        if (value === "overdue") searchParams.set("is_completed", "false");
+      }
+    } else if (name === "search") {
       setSearchInput(value);
     } else {
       const apiKey = apiParamMap[name];
