@@ -44,8 +44,6 @@ const apiParamMap: Record<string, string> = {
   dueDate: "due_date",
   sortBy: "sort_by",
   order: "order",
-  startDate: "start_date",
-  endDate: "end_date",
 };
 
 export const useTasks = ({ perPage }: UseTasksProps) => {
@@ -84,6 +82,15 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
     endDate: searchParams.get("end_date") || "",
   };
 
+  function addDateParams(searchParams: URLSearchParams, value: string) {
+    if (value) {
+      const { start, end } = calculateDateRange(value);
+      searchParams.set("start_date", format(start, "yyyy-MM-dd"));
+      searchParams.set("end_date", format(end, "yyyy-MM-dd"));
+      if (value === "overdue") searchParams.set("is_completed", "false");
+    }
+  }
+
   const result = useQuery({
     queryKey: [
       "tasks",
@@ -103,6 +110,8 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
         }
       });
 
+      addDateParams(params, filters.dueDate);
+
       if (perPage) {
         params.set("page", String(currentPage));
         params.set("limit", String(perPage));
@@ -121,26 +130,8 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
     staleTime: 1000 * 60 * 5,
   });
 
-  const updateFilters = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
-    const { name, value } = e.target;
-
-    if (name === "dueDate") {
-      ["due_date", "start_date", "end_date"].forEach((param) =>
-        searchParams.delete(param),
-      );
-
-      if (value) {
-        const { start, end } = calculateDateRange(value);
-        searchParams.set("due_date", value);
-        searchParams.set("start_date", format(start, "yyyy-MM-dd"));
-        searchParams.set("end_date", format(end, "yyyy-MM-dd"));
-        if (value === "overdue") searchParams.set("is_completed", "false");
-      }
-    } else if (name === "search") {
+  const updateFilters = (name: string, value: string) => {
+    if (name === "search") {
       setSearchInput(value);
     } else {
       const apiKey = apiParamMap[name];

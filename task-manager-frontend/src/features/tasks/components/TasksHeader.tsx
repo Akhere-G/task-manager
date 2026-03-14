@@ -21,11 +21,7 @@ interface TaskFilters {
 }
 interface TasksHeaderProps {
   filters: TaskFilters;
-  updateFilters: (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => void;
+  updateFilters: (name: string, value: string) => void;
   resetFilters: () => void;
   totalTasks: number;
   sortable?: boolean;
@@ -42,6 +38,14 @@ export default function TasksHeader({
 }: TasksHeaderProps) {
   const [openFilters, setOpenFilters] = useState(false);
 
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    updateFilters(name, value);
+  };
   const ButtonIcon = openFilters ? ChevronUp : ChevronDown;
   const formClassNames = "grow lg:grow-[0.9] max-w-80";
   return (
@@ -65,18 +69,21 @@ export default function TasksHeader({
       </div>
 
       {openFilters && (
-        <form className="flex gap-4 items-baseline flex-row flex-wrap">
+        <form
+          className="flex gap-4 items-baseline flex-row flex-wrap"
+          onSubmit={(e) => e.preventDefault()}
+        >
           <FormInput
             name="search"
             value={filters.search}
-            handleChange={updateFilters}
+            handleChange={handleChange}
             label="Search"
             formClassNames={formClassNames}
           />
           <FormInput
             name="category"
             value={filters.category}
-            handleChange={updateFilters}
+            handleChange={handleChange}
             label="Category"
             options={categoryOptions}
             formClassNames={formClassNames}
@@ -84,7 +91,7 @@ export default function TasksHeader({
           <FormInput
             name="duration"
             value={filters.duration}
-            handleChange={updateFilters}
+            handleChange={handleChange}
             label="Duration"
             options={taskDurationOptions}
             formClassNames={formClassNames}
@@ -92,7 +99,7 @@ export default function TasksHeader({
           <FormInput
             name="isCompleted"
             value={filters.isCompleted}
-            handleChange={updateFilters}
+            handleChange={handleChange}
             label="Is Complete"
             options={completedTasksOptions}
             formClassNames={formClassNames}
@@ -101,7 +108,7 @@ export default function TasksHeader({
             <FormInput
               name="dueDate"
               value={filters.dueDate}
-              handleChange={updateFilters}
+              handleChange={handleChange}
               label="Due Date"
               options={dueDateOptions}
               formClassNames={formClassNames}
@@ -112,7 +119,7 @@ export default function TasksHeader({
               <FormInput
                 name="sortBy"
                 value={filters.sortBy}
-                handleChange={updateFilters}
+                handleChange={handleChange}
                 label="Sort By"
                 options={sortByOptions}
                 formClassNames={formClassNames}
@@ -120,7 +127,7 @@ export default function TasksHeader({
               <FormInput
                 name="order"
                 value={filters.order}
-                handleChange={updateFilters}
+                handleChange={handleChange}
                 label="Order"
                 options={isAscOptions}
                 formClassNames={formClassNames}
