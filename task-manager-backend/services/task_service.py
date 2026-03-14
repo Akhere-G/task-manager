@@ -232,6 +232,12 @@ def create_task(user_id, data):
         )
         new_id = cursor.lastrowid
 
+        cursor.execute(
+            """ 
+            UPDATE tasks SET series_id = id where id = %s;
+            """,
+            (new_id,),
+        )
         conn.commit()
 
         return new_id
@@ -279,10 +285,20 @@ def create_tasks_from_list(user_id, tasks):
             for t in tasks
         ]
 
-        cursor.executemany(sql, data)
-        conn.commit()
+        start_id = cursor.lastrowid
+        count = cursor.rowcount
 
-        return cursor.rowcount
+        cursor.execute(
+            """
+            UPDATE tasks 
+            SET series_id = id 
+            WHERE id BETWEEN %s AND %s
+        """,
+            (start_id, start_id + count - 1),
+        )
+
+        conn.commit()
+        return count
 
     except Exception as err:
         if conn:

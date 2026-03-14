@@ -59,6 +59,12 @@ def initialise_database():
         END;
         """
 
+        series_id_migration = """
+        UPDATE tasks 
+        SET series_id = id 
+        WHERE series_id IS NULL;     
+        """
+
         daily_briefs_table = """
         CREATE TABLE IF NOT EXISTS daily_briefs (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -106,6 +112,11 @@ def initialise_database():
         cursor.execute(daily_briefs_table)
         cursor.execute(password_resets)
         cursor.execute(refresh_tokens_table)
+
+        try:
+            cursor.execute(series_id_migration)
+        except Exception:
+            pass
 
         try:
             cursor.execute(recurring_task_migration)
