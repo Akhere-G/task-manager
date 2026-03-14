@@ -3,6 +3,46 @@ from datetime import date, timedelta, datetime
 from dateutil.relativedelta import relativedelta
 
 
+def _build_task_filters(
+    user_id, category, search, is_completed, due_date, duration, today
+):
+    """Helper to build query strings and parameters dynamically."""
+    params = [user_id]
+    filters = ["user_id = %s"]
+
+    if category and category != "all":
+        filters.append("category = %s")
+        params.append(category)
+
+    if search:
+        filters.append("MATCH(title, description) AGAINST(%s IN BOOLEAN MODE)")
+        params.append(f"{search}*")
+
+    if is_completed is not None and is_completed != "all":
+        filters.append("is_completed = %s")
+        params.append(1 if str(is_completed).lower() == "true" else 0)
+
+    # Date range filters
+    if due_date:
+        if due_date == "today":
+            filters.append("DATE(end_at) = %s")
+            params.append(today)
+        elif due_date in ["this_week", "this_month"]:
+            days = 7 if due_date == "this_week" else 30
+            filters.append(f"end_at BETWEEN %s AND DATE_ADD(%s, INTERVAL {days} DAY)")
+            params.extend([today, today])
+        elif due_date == "overdue":
+            filters.append("end_at < %s AND is_completed = 0")
+            params.append(today)
+
+    # Duration filters
+    if duration in ["short_tasks", "long_tasks"]:
+        op = "<=" if duration == "short_tasks" else ">"
+        filters.append(f"TIMESTAMPDIFF(MINUTE, start_at, end_at) {op} 30")
+
+    return " WHERE " + " AND ".join(filters), params
+
+
 def get_all_tasks(
     user_id,
     category=None,
@@ -15,105 +55,84 @@ def get_all_tasks(
     order=None,
     limit=None,
     page=None,
+    project_repeating=False,
 ):
+
     conn = None
     cursor = None
     try:
-        SHORT_TASK_THRESHOLD = 30
-        if today is None:
-            today = date.today()
+        today = today or date.today()
+        base_filters, params = _build_task_filters(
+            user_id, category, search, is_completed, due_date, duration, today
+        )
 
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        params = [user_id]
-        base_filters = " WHERE user_id = %s"
-
-        if category and category != "all":
-            base_filters += " AND category = %s"
-            params.append(category)
-
-        if search:
-            base_filters += " AND MATCH(title, description) AGAINST(%s IN BOOLEAN MODE)"
-            params.append(f"{search}*")
-
-        if is_completed is not None and is_completed != "all":
-            is_completed_val = 1 if str(is_completed).lower() == "true" else 0
-            base_filters += " AND is_completed = %s"
-            params.append(is_completed_val)
-
-        if due_date:
-            if due_date == "today":
-                base_filters += " AND DATE(end_at) = %s"
-                params.append(today)
-            if due_date == "this_week":
-                base_filters += (
-                    " AND end_at BETWEEN %s AND DATE_ADD(%s, INTERVAL 7 DAY)"
-                )
-                params.extend([today, today])
-            if due_date == "this_month":
-                base_filters += (
-                    " AND end_at BETWEEN %s AND DATE_ADD(%s, INTERVAL 30 DAY)"
-                )
-                params.extend([today, today])
-            if due_date == "overdue":
-                base_filters += " AND end_at < %s AND is_completed = 0"
-                params.append(today)
-
-        if duration:
-            if duration == "short_tasks":
-                base_filters += " AND TIMESTAMPDIFF(MINUTE, start_at, end_at) <= %s"
-                params.append(SHORT_TASK_THRESHOLD)
-            elif duration == "long_tasks":
-                base_filters += " AND TIMESTAMPDIFF(MINUTE, start_at, end_at) > %s"
-                params.append(SHORT_TASK_THRESHOLD)
-
-        count_query = f"SELECT COUNT(*) as total FROM tasks{base_filters}"
-        cursor.execute(count_query, params)
+        # Execute Count
+        cursor.execute(f"SELECT COUNT(*) as total FROM tasks {base_filters}", params)
         total_count = cursor.fetchone()["total"]
 
-        SORTABLE_FIELDS = ["created_at", "title", "start_at", "duration"]
-        sort_by_field = sort_by if sort_by in SORTABLE_FIELDS else "created_at"
+        # Sort Logic
+        sort_map = {
+            "created_at": "created_at",
+            "title": "title",
+            "start_at": "start_at",
+            "duration": "TIMESTAMPDIFF(MINUTE, start_at, end_at)",
+        }
+        sort_by_field = sort_map.get(sort_by, "created_at")
+        order_dir = "ASC" if order == "asc" else "DESC"
 
-        if sort_by_field == "duration":
-            sort_by_field = "TIMESTAMPDIFF(MINUTE, start_at, end_at)"
-
-        order_value = "ASC" if order == "asc" else "DESC"
-
-        data_query = (
-            f"SELECT * FROM tasks{base_filters} ORDER BY {sort_by_field} {order_value}"
-        )
-        if page is not None and limit is not None:
-            page = max(int(page), 1)
-            limit = max(int(limit), 1)
-            offset = limit * (page - 1)
-            data_query += " LIMIT %s OFFSET %s"
-            params.extend([limit, offset])
+        # Paginate
+        if page is not None:
+            page = int(page)
+            if page < 1:
+                page = 1
         else:
             page = 1
-            offset = 0
+
+        # Handle the limit
+        if limit is not None:
+            limit = int(limit)
+            if limit < 1:
+                limit = 1
+        else:
+            # Fallback to total_count, or at least 1 if empty
             limit = total_count if total_count > 0 else 1
+        offset = limit * (page - 1)
 
-        cursor.execute(data_query, params)
-        tasks = cursor.fetchall()
+        query = f"SELECT * FROM tasks {base_filters} ORDER BY {sort_by_field} {order_dir} LIMIT %s OFFSET %s"
+        cursor.execute(query, params + [limit, offset])
 
-        for task in tasks:
-            task["is_completed"] = True if task["is_completed"] == 1 else False
-            task["is_repeating"] = True if task["is_repeating"] == 1 else False
+        tasks = [
+            {
+                **t,
+                "is_completed": bool(t["is_completed"]),
+                "is_repeating": bool(t["is_repeating"]),
+            }
+            for t in cursor.fetchall()
+        ]
+
+        if project_repeating:
+            tasks = with_repeating(tasks)
 
         return {
             "tasks": tasks,
             "total_tasks": total_count,
-            "total_pages": (total_count + int(limit) - 1) // int(limit),
-            "current_page": int(page),
+            "total_pages": (total_count + limit - 1) // limit,
+            "current_page": page,
         }
-    except Exception as err:
-        raise err
     finally:
         if cursor:
             cursor.close()
-        if conn and conn.is_connected():
+        if conn:
             conn.close()
+
+
+def with_repeating(tasks):
+    tasks_with_repeating = []
+
+    return tasks_with_repeating
 
 
 def get_task(user_id, task_id):
