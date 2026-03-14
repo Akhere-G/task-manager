@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Play,
   Sparkles,
+  Repeat,
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
@@ -91,7 +92,7 @@ function TaskCard({
         </span>
       </header>
 
-      <div className="p-4 grow space-y-2 flex flex-col">
+      <div className="p-4 pb-0 grow space-y-2 flex flex-col">
         <div className="flex justify-between items-start">
           <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
             {category?.replace("-", " ")}
@@ -115,9 +116,17 @@ function TaskCard({
             />
           </button>
         )}
+        {task.isRepeating && (
+          <div className="flex gap-2 items-center justify-end text-sm text-text-sub ">
+            <Repeat className="w-4 h-4" />
+            <p className="uppercase tracking-widest text-[12px]">
+              {task.repeatBy}
+            </p>
+          </div>
+        )}
       </div>
 
-      <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate items-end rounded-b-md flex justify-between gap-0.5 flex-col xl:flex-row">
+      <footer className="p-4 pt-2 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate items-end rounded-b-md flex justify-between gap-0.5 flex-col xl:flex-row">
         <div className="flex items-center gap-2 text-text-sub tracking-wide pr-1.25">
           <Clock className="w-4 h-4" />
           <time

@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, Repeat } from "lucide-react";
 import type { Task } from "../types";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { formatDateRange } from "../utils";
@@ -39,8 +39,9 @@ export function TaskCardSmall({
       <p className="flex justify-between flex-1 overflow-hidden">
         <span className="flex flex-col gap truncate">
           <span
-            className={`font-semibold truncate text-ellipsis whitespace-nowrap text-nowrap over text-[12px] pr-1 ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
+            className={`flex items-center font-semibold truncate text-ellipsis whitespace-nowrap text-nowrap over text-[12px] pr-1 ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
           >
+            {task.isRepeating && <Repeat className="w-3 h-3 mr-2" />}
             {task.title}
           </span>
           <span className="text-[10px] font-bold uppercase tracking-widest text-accent text-nowrap">
