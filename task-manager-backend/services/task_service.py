@@ -142,13 +142,6 @@ def get_all_tasks(
             conn.close()
 
 
-"""
-print("\n")
-print("isRepeating", updated_data["is_repeating"])
-print("\n")
-"""
-
-
 def with_repeating(
     tasks,
     view_start,
@@ -162,16 +155,6 @@ def with_repeating(
     if not params:
         params = [user_id]
 
-    print("\n")
-    print("\n")
-    print("\n")
-    print("\n")
-    print(base_filters)
-    print(params)
-    print("\n")
-    print("\n")
-    print("\n")
-    print("\n")
     cursor.execute(
         f"""
         SELECT * FROM tasks 
