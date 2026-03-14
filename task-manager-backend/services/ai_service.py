@@ -1,7 +1,7 @@
 import os
 import json
-import datetime
-from datetime import date
+from datetime import datetime, date
+
 from google import genai
 from groq import Groq
 from db import get_db_connection
@@ -41,7 +41,7 @@ def get_generated_text(prompt):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a pragmatic and grounded productivity coach. Who uses British English",
+                    "content": "You are an encouraging, positive and grounded productivity coach. Who uses British English",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -57,6 +57,7 @@ def generate_daily_brief(user_id):
     cursor = None
     try:
         today = date.today()
+        today_str = today.strftime("%Y-%m-%d")
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
@@ -69,7 +70,12 @@ def generate_daily_brief(user_id):
             return existing["brief_text"]
 
         today_data = get_all_tasks(
-            user_id=user_id, due_date="today", is_completed=False
+            start_date=today_str,
+            end_date=today_str,
+            current_date=today_str,
+            user_id=user_id,
+            is_completed=False,
+            project_repeating=True,
         )
         today_tasks = today_data.get("tasks", [])
         stats = get_all_dashboard_stats(user_id)
@@ -103,7 +109,7 @@ def generate_daily_brief(user_id):
         )
 
         prompt = f"""
-        Persona: Pragmatic and grounded productivity coach.
+        Persona: Encouraging, positive and grounded productivity coach.
         Date: {today.strftime("%A, %d %B")}
         Recent Productivity: {total_completed_week} completed this week. Avg {avg_daily_completion:.1f}/day.
         Current Volume: 
@@ -129,7 +135,8 @@ def generate_daily_brief(user_id):
 
         return generated_text
 
-    except Exception:
+    except Exception as err:
+        print(err)
         return "I've had a bit of a wobble fetching your brief. Looking at your list though, you've got this. Onwards!"
 
     finally:
@@ -140,7 +147,7 @@ def generate_daily_brief(user_id):
 
 
 def parse_task_with_ai(user_input):
-    now = datetime.datetime.now()
+    now = datetime.now()
     today_str = now.strftime("%Y-%m-%d")
 
     prompt = f"""
@@ -148,10 +155,13 @@ def parse_task_with_ai(user_input):
     Extract task details from: "{user_input}"
     Return ONLY a JSON object, with no other comments with these keys:
     - title: (string)
-    - description: (string or null)
+    - description: (string or null), put any extra information here
     - category: (MUST be one of: {", ".join(allowed_categories)})
-    - startAt: Use YYYY-MM-DD HH:MM:SS. If no time mentioned, use {today_str} 00:00.
-    - endAt: Use YYYY-MM-DD HH:MM:SS. If no time mentioned, use {today_str} 23:59.
+    - startAt: Datetime (MUST be present), use YYYY-MM-DD HH:MM. Should be set to any date time mention. If no time mentioned, use {today_str} 00:00.
+    - endAt: Datetime use YYYY-MM-DD HH:MM (MUST be present). Should be after startAt but on the same day. If no time mentioned, if a duration was mentioned, add that to the start date and set this to that. Otherwise set to an hour after start at.
+    - isRepeating: boolean. True if task is daily/every day, weekly, monthly, yearly or repeated
+    - repeatBy: ENUM ("daily", "weekly", "monthly", "yearly") or null. For repeating tasks: Identify the frequency mentioned.
+    - repeatUntil DATE or Null. use YYYY-MM-DD. For repeating tasks: Identify the end date mentioned.
     """
 
     raw_json = get_generated_text(prompt)

@@ -27,9 +27,9 @@ export default function AddTask() {
 
   const { state } = useLocation();
 
-  let startAt = state?.currentDate ? new Date(state?.currentDate) : new Date();
+  let startAt = state?.currentDate ? new Date(state?.currentDate) : null;
 
-  startAt = setHours(startAt, new Date().getHours() + 1);
+  if (startAt) startAt = setHours(startAt, new Date().getHours() + 1);
 
   return (
     <div className="flex flex-col gap-6">

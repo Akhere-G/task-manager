@@ -21,6 +21,10 @@ export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
       const parsedTask = await aiService.parseTask(input);
       parsedTask.startAt = format(parsedTask.startAt, "yyyy-MM-dd HH:mm");
       parsedTask.endAt = format(parsedTask.endAt, "yyyy-MM-dd HH:mm");
+      parsedTask.repeatUntil = parsedTask.repeatUntil
+        ? format(parsedTask.repeatUntil, "yyyy-MM-dd")
+        : null;
+
       onParsed(parsedTask);
       setInput("");
     } catch (err) {
