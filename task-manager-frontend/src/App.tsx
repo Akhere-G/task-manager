@@ -28,7 +28,10 @@ function App() {
   const protectedRoutes = [
     { title: "Tasks", path: "/" },
     { title: "Add Task", path: "/addtask" },
-    { title: "Calendar", path: "/calendar" },
+    {
+      title: "Calendar",
+      path: "/calendar?due_date=calendar_view",
+    },
     { title: "Stats", path: "/stats" },
   ];
 

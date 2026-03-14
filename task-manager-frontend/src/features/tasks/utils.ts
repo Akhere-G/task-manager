@@ -44,7 +44,7 @@ export const formatDateRange = (startAt: string, endAt: string) => {
   return dateStr;
 };
 
-export const calculateDateRange = (type: string) => {
+export const calculateDateRange = (type: string, currentDate: string) => {
   const now = new Date();
   const start = startOfDay(now);
   const end = endOfDay(now);
@@ -61,8 +61,8 @@ export const calculateDateRange = (type: string) => {
       return { start, end: addDays(end, 30) };
     case "calendar_view":
       return {
-        start: subDays(startOfMonth(start), 6),
-        end: addDays(endOfMonth(end), 6),
+        start: subDays(startOfMonth(currentDate), 6),
+        end: addDays(endOfMonth(currentDate), 6),
       };
     case "overdue":
       return { start: new Date(2000, 0, 1), end: start };
