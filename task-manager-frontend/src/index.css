@@ -94,6 +94,32 @@
   .card {
     @apply shadow-sm bg-surface p-2 md:p-4 rounded-md
   }
+
+  .rbc-show-more {
+    @apply  text-accent! font-semibold! text-xs! bg-transparent! hover:underline! decoration-accent!;
+  }
+
+  .rbc-overlay {
+    @apply bg-surface! border! border-slate-200! shadow-xl! rounded-lg! p-2! z-50! min-w-fit! w-[30%]!;
+  }
+
+  .rbc-overlay-header {
+    @apply text-text-sub! text-sm! font-bold! border-b! border-slate-100! dark:border-slate-800! mb-2! mt-0!  uppercase! tracking-tight!;
+  }
+
+  .rbc-overlay .rbc-event {
+    @apply mb-2! last:mb-0!;
+  }
+
+  /* 5. Month View specific tweaks */
+  .rbc-month-view, .rbc-time-view {
+    @apply   rounded-md! overflow-hidden;
+  }
+
+
+  .rbc-header {
+    @apply py-2! text-text-sub font-bold! text-xs! uppercase;
+  }
 }
 
 .react-calendar-heatmap .color-empty { fill: #ebedf0; }
