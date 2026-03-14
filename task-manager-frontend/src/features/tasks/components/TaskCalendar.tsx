@@ -216,7 +216,7 @@ export default function TaskCalendar({
           onNavigate={(date) => setCurrentDate(date)}
           onSelectSlot={({ start }) => setCurrentDate(start as Date)}
           selectable
-          popup={true}
+          popup={!isMobile}
           view={view}
           views={[Views.MONTH, Views.WEEK, Views.DAY]}
           onEventDrop={onEventDrop}
