@@ -3,6 +3,8 @@ import { EmptyState, ErrorState, LoadingState } from "../components/ui";
 import { TaskCalendar, TasksHeader } from "../features/tasks/components";
 import TaskPopups from "../features/tasks/components/TaskPopups";
 import { useTasks } from "../features/tasks/hooks/useTasks";
+import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const defaultFilters = {
   search: "",
@@ -24,6 +26,8 @@ export default function CalendarView() {
     resetFilters,
     updateFilters,
   } = useTasks({ perPage: null, projectRepeating: true, defaultFilters });
+
+  const navigate = useNavigate();
 
   const tasks = data?.tasks ?? [];
 
@@ -66,6 +70,14 @@ export default function CalendarView() {
       <section className={`transition-opacity duration-200`}>
         {MainContent}
       </section>
+      <button
+        className="z-4 fixed bottom-5 right-5 btn-primary rounded-full w-10 h-10 flex items-center justify-center shadow-xl"
+        onClick={() =>
+          navigate("/addtask", { state: { currentDate: filters.currentDate } })
+        }
+      >
+        <Plus />
+      </button>
       <TaskPopups />
     </section>
   );

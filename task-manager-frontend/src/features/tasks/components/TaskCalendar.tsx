@@ -23,10 +23,8 @@ import { enGB } from "date-fns/locale/en-GB";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
-import { Plus } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import type { Task } from "../types";
-import { useNavigate } from "react-router-dom";
 import CalendarTaskList from "./TaskCalendarList";
 import EventCard from "./EventCard";
 import CustomToolbar from "./CustomToolbar";
@@ -60,7 +58,6 @@ export default function TaskCalendar({
   const [allTasks, setAllTasks] = useState<Task[]>(tasks);
   const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
 
-  const navigate = useNavigate();
   const breakpoint = useBreakpoint();
 
   const isMobile = ["xs", "sm"].includes(breakpoint);
@@ -313,13 +310,6 @@ export default function TaskCalendar({
           />
         </div>
       </div>
-
-      <button
-        className="z-4 fixed bottom-5 right-5 btn-primary rounded-full w-10 h-10 flex items-center justify-center shadow-xl"
-        onClick={() => navigate("/addtask", { state: { currentDate } })}
-      >
-        <Plus />
-      </button>
     </div>
   );
 }

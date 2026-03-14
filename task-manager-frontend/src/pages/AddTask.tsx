@@ -7,7 +7,7 @@ import TaskForm from "../features/tasks/components/TaskForm";
 import { AiAddTaskForm } from "../features/ai/components";
 import { BulkAddForm } from "../features/tasks/components";
 import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
-import { format } from "date-fns";
+import { format, setHours } from "date-fns";
 
 export default function AddTask() {
   const navigate = useNavigate();
@@ -27,7 +27,9 @@ export default function AddTask() {
 
   const { state } = useLocation();
 
-  const startAt = state?.currentDate ?? null;
+  let startAt = state?.currentDate ? new Date(state?.currentDate) : new Date();
+
+  startAt = setHours(startAt, new Date().getHours() + 1);
 
   return (
     <div className="flex flex-col gap-6">
@@ -57,7 +59,14 @@ export default function AddTask() {
         <TaskForm
           key={aiSuggestion ? JSON.stringify(aiSuggestion) : "manual"}
           submitAction={handleCreate}
-          initialData={startAt ? { ...aiSuggestion, startAt } : aiSuggestion}
+          initialData={
+            startAt
+              ? {
+                  ...aiSuggestion,
+                  startAt: format(startAt, "yyyy MM dd HH:mm"),
+                }
+              : aiSuggestion
+          }
         />
       </section>
 
