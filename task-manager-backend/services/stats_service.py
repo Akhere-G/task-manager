@@ -1,5 +1,6 @@
 from db import get_db_connection
 from datetime import datetime, timedelta
+from services.task_service import with_repeating
 
 
 def _get_productivity_trend(cursor, user_id):
@@ -222,38 +223,72 @@ def _get_estimation_accuracy(cursor, user_id):
     return data
 
 
+"""
+SELECT 
+    DATE(end_at) AS date, 
+    SUM(TIMESTAMPDIFF(MINUTE, start_at, end_at)) AS total_minutes,
+    COUNT(*) AS count
+FROM tasks
+WHERE 
+    user_id = %s 
+    AND is_completed = 0 
+    AND end_at >= CURDATE() 
+    AND end_at < DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+GROUP BY date
+ORDER BY date ASC;
+"""
+
+
 def _get_week_overview(cursor, user_id):
+    # 1. Define the 7-day window
+    view_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    view_end = view_start + timedelta(days=7)
+
+    # 2. Fetch primary tasks
     cursor.execute(
         """
-            SELECT 
-                DATE(end_at) AS date, 
-                SUM(TIMESTAMPDIFF(MINUTE, start_at, end_at)) AS total_minutes,
-                COUNT(*) AS count
-            FROM tasks
-            WHERE 
-                user_id = %s 
-                AND is_completed = 0 
-                AND end_at >= CURDATE() 
-                AND end_at < DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-            GROUP BY date
-            ORDER BY date ASC;
-                """,
-        (user_id,),
+        SELECT * FROM tasks
+        WHERE user_id = %s 
+        AND is_completed = 0 
+        AND end_at >= %s 
+        AND end_at < %s
+        ORDER BY end_at ASC;
+        """,
+        (user_id, view_start, view_end),
     )
-
     raw_data = cursor.fetchall()
 
-    data = [
-        {
-            "date": d["date"],
-            "totalMinutes": d["total_minutes"],
-            "total_hours": "{:10.2f}".format(d["total_minutes"] / 60),
-            "count": d["count"],
-        }
-        for d in raw_data
-    ]
+    # 3. Use the updated with_repeating signature
+    tasks = with_repeating(raw_data, view_start, view_end, user_id, cursor)
 
-    return data
+    date_lookup = {}
+
+    for task in tasks:
+        # Assuming end_at is already a datetime object from your DB cursor
+        index = task["end_at"].date()
+
+        # Calculate duration in minutes
+        duration = (task["end_at"] - task["start_at"]).total_seconds() / 60.0
+
+        if index in date_lookup:
+            date_lookup[index]["count"] += 1
+            date_lookup[index]["total_minutes"] += duration
+        else:
+            date_lookup[index] = {
+                "count": 1,
+                "total_minutes": duration,
+            }
+
+    # 4. Generate the final list
+    return [
+        {
+            "date": d.strftime("%Y-%m-%d"),
+            "totalMinutes": date_lookup[d]["total_minutes"],
+            "total_hours": "{:.2f}".format(date_lookup[d]["total_minutes"] / 60),
+            "count": date_lookup[d]["count"],
+        }
+        for d in sorted(date_lookup.keys())
+    ]
 
 
 def _get_distribution_trend(cursor, user_id):
