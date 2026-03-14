@@ -120,7 +120,8 @@ export default function TaskCalendar({
 
     const formattedStart = format(newStart, "yyyy-MM-dd HH:mm:ss");
     const formattedEnd = format(newEnd, "yyyy-MM-dd HH:mm:ss");
-    const taskId = task.id;
+    const taskId = task.isGhost ? task.seriesId : task.id;
+
     const previousTasks = [...allTasks];
 
     setAllTasks((prev) =>
@@ -161,13 +162,15 @@ export default function TaskCalendar({
       const startAt = format(newStartAt, "yyyy-MM-dd HH:mm");
       const endAt = format(newEndAt, "yyyy-MM-dd HH:mm");
 
+      const taskId = draggedEvent.isGhost
+        ? draggedEvent.seriesId
+        : draggedEvent.id;
+
       setAllTasks((prev) =>
-        prev.map((t) =>
-          t.id === draggedEvent.id ? { ...t, startAt, endAt } : t,
-        ),
+        prev.map((t) => (t.id === taskId ? { ...t, startAt, endAt } : t)),
       );
 
-      updateTask(draggedEvent.id, {
+      updateTask(taskId, {
         startAt,
         endAt,
       });

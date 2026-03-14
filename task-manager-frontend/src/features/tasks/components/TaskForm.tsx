@@ -205,6 +205,7 @@ export default function TaskForm({
 
       await submitAction({
         ...formState,
+        repeatUntil: formState.repeatUntil || null,
       });
     } catch (err) {
       console.error(err);

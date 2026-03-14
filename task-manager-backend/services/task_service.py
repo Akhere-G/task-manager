@@ -4,12 +4,6 @@ from dateutil.relativedelta import relativedelta
 import calendar
 
 
-def ensure_datetime(value):
-    if isinstance(value, date) and not isinstance(value, datetime):
-        return datetime.combine(value, datetime.min.time())
-    return value
-
-
 def _build_task_filters(
     user_id, category, search, is_completed, start_date, end_date, duration
 ):
@@ -115,11 +109,13 @@ def get_all_tasks(
             ) - timedelta(days=6)
 
             _, last_day = calendar.monthrange(ref_date.year, ref_date.month)
+
             view_end = ref_date.replace(
                 day=last_day, hour=23, minute=59, second=59
             ) + timedelta(days=6)
 
             tasks = with_repeating(tasks, view_start, view_end, user_id, cursor)
+
             total_count = len(tasks)
 
         tasks = [
@@ -145,32 +141,42 @@ def get_all_tasks(
 
 
 def with_repeating(tasks, view_start, view_end, user_id, cursor):
-    # Fetch repeating tasks
     cursor.execute(
         """
         SELECT * FROM tasks 
-        WHERE user_id = %s AND is_repeating = 1 AND repeat_until > %s
+        WHERE user_id = %s AND is_repeating = 1;
     """,
-        (user_id, view_start),
+        (user_id,),
     )
-
     repeating_tasks = cursor.fetchall()
 
     for task in repeating_tasks:
-        instance_start = ensure_datetime(task["start_at"])
-        instance_end = ensure_datetime(task["end_at"])
-        repeat_until = ensure_datetime(task.get("repeat_until"))
+        # Start checking from the original task date
+        instance_start = task["start_at"]
+        instance_end = task["end_at"]
+        repeat_until = task.get("repeat_until")
 
-        # Advance to the first occurrence within or after view_start
-        while instance_start < view_start and (
-            not repeat_until or instance_start <= repeat_until
-        ):
+        if repeat_until and isinstance(repeat_until, date):
+            repeat_until = datetime.combine(repeat_until, datetime.max.time())
+        if not repeat_until:
+            repeat_until = view_end
+
+        # Advance instance until it hits or passes the start of the view
+        while instance_start < view_start:
             instance_start = update_date(instance_start, task["repeat_by"])
             instance_end = update_date(instance_end, task["repeat_by"])
 
+            # Stop if we passed the repeat_until limit
+            if repeat_until and instance_start >= repeat_until:
+                break
+
+        # Now generate all instances that fall within the view_end
         instance_start = update_date(instance_start, task["repeat_by"])
         instance_end = update_date(instance_end, task["repeat_by"])
+
         while instance_start <= view_end:
+            # Check the repeat_until limit again
+
             if repeat_until and instance_start > repeat_until:
                 break
 
@@ -185,6 +191,7 @@ def with_repeating(tasks, view_start, view_end, user_id, cursor):
             )
             tasks.append(ghost_task)
 
+            # Next iteration
             instance_start = update_date(instance_start, task["repeat_by"])
             instance_end = update_date(instance_end, task["repeat_by"])
 
@@ -438,7 +445,7 @@ def update_date(old_date, repeat_by):
         return old_date + relativedelta(months=1)
     if repeat_by == "yearly":
         return old_date + relativedelta(years=1)
-    return old_date
+    return old_date + timedelta(days=1)
 
 
 def delete_task(user_id, task_id):
