@@ -42,6 +42,8 @@ export default function DecomposeTask() {
         isCompleted: false,
         createdAt: "",
         completedAt: null,
+        seriesId: id,
+        isGhost: false,
       }));
       setStagedTasks(formattedTasks);
       setIdCount(formattedTasks.length);
@@ -86,6 +88,8 @@ export default function DecomposeTask() {
           createdAt: "",
           isCompleted: false,
           completedAt: null,
+          isGhost: false,
+          seriesId: idCount + 1,
         },
       ]);
     setIdCount((prev) => prev + 1);

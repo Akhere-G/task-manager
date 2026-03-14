@@ -22,7 +22,7 @@ export default function AddTask() {
     };
     await taskService.create(formattedTask);
     invalidateTaskKeys();
-    navigate("/");
+    navigate(-1);
   }
 
   const { state } = useLocation();

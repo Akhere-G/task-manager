@@ -135,7 +135,7 @@ export default function BulkAddForm() {
         try {
           await taskService.createAll(newTasks);
           invalidateTaskKeys();
-          navigate("/");
+          navigate(-1);
         } catch (err: unknown) {
           if (axios.isAxiosError(err)) {
             setErrorMessage(
