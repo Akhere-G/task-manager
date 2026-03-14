@@ -196,9 +196,9 @@ def create_tasks_from_list(user_id, tasks):
         sql = """
             INSERT INTO tasks (
                 title, description, category, start_at, end_at, 
-                user_id, is_completed, completed_at
+                user_id, is_completed, completed_at, is_repeating, repeat_by, repeat_until
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
         data = [
@@ -211,6 +211,9 @@ def create_tasks_from_list(user_id, tasks):
                 user_id,
                 1 if t.get("isCompleted") else 0,
                 t.get("completedAt"),
+                1 if t.get("repeatBy") else 0,
+                t.get("repeatBy"),
+                t.get("repeatUntil"),
             )
             for t in tasks
         ]
@@ -271,10 +274,10 @@ def update_task(
 
         cursor.execute(
             """
-          UPDATE tasks 
-          SET title = %s, description = %s, category = %s, start_at = %s, end_at = %s, is_completed = %s, completed_at = %s
-          WHERE id = %s and user_id = %s
-      """,
+            UPDATE tasks 
+            SET title = %s, description = %s, category = %s, start_at = %s, end_at = %s, is_completed = %s, completed_at = %s
+            WHERE id = %s and user_id = %s
+            """,
             (
                 updated_title,
                 updated_desc,

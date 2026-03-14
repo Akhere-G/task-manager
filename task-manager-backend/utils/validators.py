@@ -107,9 +107,6 @@ def validate_task(data, is_update=False):
             errors["isRepeating"] = "isRepeating must be a boolean (true/false)."
         if not data.get("repeatBy"):
             errors["repeatBy"] = "Repeat By is required for repeating tasks."
-    else:
-        data["repeatBy"] = None
-        data["repeatUntil"] = None
 
     if data.get("repeatBy"):
         pattern = data.get("repeatBy")
