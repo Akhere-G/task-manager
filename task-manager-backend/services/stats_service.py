@@ -3,56 +3,50 @@ from datetime import datetime, timedelta
 from services.task_service import with_repeating
 
 
-def _get_productivity_trend(cursor, user_id):
-    cursor.execute(
-        """
-        SELECT DATE(completed_at) as completed_at_date, COUNT(*) as completed_tasks, SUM(TIMESTAMPDIFF(MINUTE, start_at, end_at)) as time_spent
-        FROM tasks
-        WHERE user_id = %s AND is_completed = 1 AND completed_at >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)
-        GROUP BY completed_at_date;
-    """,
-        (user_id,),
-    )
+def _get_productivity_trend(tasks):
+    trend_map = {}
+    today = datetime.now().date()
 
-    raw_data = cursor.fetchall()
-    counts_lookup = {
-        row["completed_at_date"].isoformat(): {
-            "completed_tasks": row["completed_tasks"],
-            "time_spent": int(row["time_spent"] or 0),
-        }
-        for row in raw_data
-    }
+    for i in range(366):
+        target_date = (today - timedelta(days=i)).isoformat()
+        trend_map[target_date] = {"tasks": 0, "time_spent": 0}
 
-    trend_data = []
-    for i in range(365, -1, -1):
-        target_date = (datetime.now() - timedelta(days=i)).date()
-        date_str = target_date.isoformat()
-        entry = counts_lookup.get(date_str, {"completed_tasks": 0, "time_spent": 0})
-        trend_data.append(
-            {
-                "date": date_str,
-                "tasks": entry["completed_tasks"],
-                "time_spent": entry["time_spent"],
-            }
-        )
-    return trend_data
+    for t in tasks:
+        if t["is_completed"] and t.get("completed_at"):
+            c_date = t["completed_at"].date().isoformat()
 
+            if c_date in trend_map:
+                duration = 0
+                duration = (t["end_at"] - t["start_at"]).total_seconds() / 60.0
 
-def _get_time_spent(cursor, user_id):
-    cursor.execute(
-        """
-        SELECT category, SUM(TIMESTAMPDIFF(MINUTE, start_at, end_at)) as time_spent
-        FROM tasks
-        WHERE user_id = %s AND is_completed = 1
-        GROUP BY category
-        ORDER BY time_spent DESC;
-    """,
-        (user_id,),
-    )
+                trend_map[c_date]["tasks"] += 1
+                trend_map[c_date]["time_spent"] += int(duration)
+
     return [
-        {"category": d["category"], "time_spent": int(d["time_spent"] or 0)}
-        for d in cursor.fetchall()
+        {
+            "date": date_str,
+            "tasks": trend_map[date_str]["tasks"],
+            "time_spent": trend_map[date_str]["time_spent"],
+        }
+        for date_str in sorted(trend_map.keys())
     ]
+
+
+def _get_time_spent(tasks):
+    time_map = {}
+
+    for t in tasks:
+        if t["is_completed"]:
+            cat = t["category"]
+            duration = (t["end_at"] - t["start_at"]).total_seconds() / 60.0
+
+            if cat not in time_map:
+                time_map[cat] = 0
+            time_map[cat] += int(duration)
+
+    result = [{"category": cat, "time_spent": time} for cat, time in time_map.items()]
+
+    return sorted(result, key=lambda x: x["time_spent"], reverse=True)
 
 
 def _get_backlog_health(tasks):
@@ -164,59 +158,50 @@ def _get_hourly_productivity(tasks):
     return [{"hour": i, "count": hour_lookup[i]} for i in range(24)]
 
 
-def _get_turnaround_time(cursor, user_id):
-    cursor.execute(
-        """
-        SELECT DATEDIFF(completed_at, created_at) as days_taken, COUNT(*) as count
-        FROM tasks
-        WHERE is_completed = true 
-            AND completed_at IS NOT NULL 
-            AND created_at <= completed_at 
-            AND user_id = %s
-        GROUP BY days_taken
-        ORDER BY days_taken ASC
-        LIMIT 50;
-        """,
-        (user_id,),
-    )
+def _get_turnaround_time(tasks):
+    days_lookup = {}
+    max_days = 0
 
-    raw_data = cursor.fetchall()
-    if not raw_data:
-        return []
+    for t in tasks:
+        if t["is_completed"] and t.get("completed_at") and t.get("created_at"):
+            diff = (t["completed_at"].date() - t["created_at"].date()).days
 
-    days_lookup = {d["days_taken"]: d["count"] for d in raw_data}
+            if diff >= 0:
+                days_lookup[diff] = days_lookup.get(diff, 0) + 1
+                if diff > max_days:
+                    max_days = diff
 
-    max_days = raw_data[-1]["days_taken"]
-
-    formatted_data = [
-        {"days_taken": i, "count": days_lookup.get(i, 0)} for i in range(max_days + 1)
+    return [
+        {"days_taken": i, "count": days_lookup.get(i, 0)}
+        for i in range(min(max_days + 1, 51))
     ]
 
-    return formatted_data
 
+def _get_estimation_accuracy(tasks):
+    threshold_date = datetime.now() - timedelta(days=30)
 
-def _get_estimation_accuracy(cursor, user_id):
-    cursor.execute(
-        """
-        SELECT 
-            id,
-            title,
-            category,
-            UNIX_TIMESTAMP(end_at) as estimated_at,
-            UNIX_TIMESTAMP(completed_at) as completed_at,
-            TIMESTAMPDIFF(MINUTE, completed_at, end_at) as variance_minutes
-        FROM tasks
-        WHERE user_id = %s 
-            AND is_completed = 1 
-            AND completed_at > DATE_SUB(NOW(), INTERVAL 30 DAY)
-        ORDER BY completed_at ASC;
-        """,
-        (user_id,),
-    )
+    accuracy_data = []
+    for t in tasks:
+        if (
+            t["is_completed"]
+            and t.get("completed_at")
+            and t.get("completed_at") > threshold_date
+        ):
+            # Calculate variance in minutes: end_at - completed_at
+            variance = (t["end_at"] - t["completed_at"]).total_seconds() / 60.0
 
-    data = cursor.fetchall()
+            accuracy_data.append(
+                {
+                    "id": t["id"],
+                    "title": t["title"],
+                    "category": t["category"],
+                    "estimated_at": int(t["end_at"].timestamp()),
+                    "completed_at": int(t["completed_at"].timestamp()),
+                    "variance_minutes": int(variance),
+                }
+            )
 
-    return data
+    return sorted(accuracy_data, key=lambda x: x["completed_at"])
 
 
 def _get_week_overview(tasks):
@@ -255,7 +240,7 @@ def _get_week_overview(tasks):
     ]
 
 
-def _get_distribution_trend(cursor, user_id):
+def _get_distribution_trend(tasks):
     categories = [
         "work",
         "home",
@@ -270,31 +255,21 @@ def _get_distribution_trend(cursor, user_id):
         "general",
     ]
 
-    query = """
-        SELECT DATE(completed_at) as date, category, COUNT(*) as count
-        FROM tasks
-        WHERE user_id = %s AND is_completed = 1 
-        AND completed_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-        GROUP BY date, category
-    """
-    cursor.execute(query, (user_id,))
-    rows = cursor.fetchall()
-
-    # Pre-fill map for the last 7 days
+    today = datetime.now().date()
     results = {}
+
     for i in range(7):
-        day = (datetime.now() - timedelta(days=i)).date().isoformat()
+        day = (today - timedelta(days=i)).isoformat()
         results[day] = {cat: 0 for cat in categories}
         results[day]["date"] = day
 
-    # Fill map using dictionary keys
-    for row in rows:
-        day_str = str(row["date"])
-        cat = row["category"]
-        count = row["count"]
+    for t in tasks:
+        if t["is_completed"] and t.get("completed_at"):
+            day_str = t["completed_at"].date().isoformat()
+            cat = t.get("category") or "general"
 
-        if day_str in results and cat in results[day_str]:
-            results[day_str][cat] = count
+            if day_str in results and cat in results[day_str]:
+                results[day_str][cat] += 1
 
     return sorted(results.values(), key=lambda x: x["date"])
 
@@ -314,17 +289,17 @@ def get_all_dashboard_stats(user_id):
         tasks = with_repeating(all_raw_tasks, view_start, view_end, user_id, cursor)
 
         return {
-            "productivity": _get_productivity_trend(cursor, user_id),
-            "timeSpent": _get_time_spent(cursor, user_id),
+            "productivity": _get_productivity_trend(tasks),
+            "timeSpent": _get_time_spent(tasks),
             "backlogHealth": _get_backlog_health(tasks),
             "categoryVolume": _get_category_volume(tasks),
             "overdueDistribution": _get_overdue_distribution(tasks),
             "deadlineProximity": _get_deadline_proximity(tasks),
             "hourlyProductivity": _get_hourly_productivity(tasks),
-            "turnaround": _get_turnaround_time(cursor, user_id),
-            "estimationAccuracy": _get_estimation_accuracy(cursor, user_id),
+            "turnaround": _get_turnaround_time(tasks),
+            "estimationAccuracy": _get_estimation_accuracy(tasks),
             "weekOverview": _get_week_overview(tasks),
-            "distributionTrend": _get_distribution_trend(cursor, user_id),
+            "distributionTrend": _get_distribution_trend(tasks),
         }
     finally:
         if cursor:
