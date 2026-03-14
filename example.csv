@@ -1,3 +1,6 @@
-Title,Category,Description,startAt,endAt
-"Restored Vintage Turntable",hobbies,"Sourced original capacitors and a new drive belt for a 1970s Marantz deck. Requires steady hand for soldering.","2025-07-10 09:00:00","2025-07-10 14:00:00"
-"Night Photography Soho",hobbies,"Long exposure session focusing on light trails and neon signs near Piccadilly Circus. Used a tripod and ND filters.","2025-07-15 21:00:00","2025-07-16 00:00:00"
+title,description,category,is_completed,start_at,end_at,completed_at,is_repeating,repeat_by,repeat_until
+Morning Yoga,Daily stretch routine,Health,0,2026-03-14 07:00:00,2026-03-14 07:30:00,,1,daily,2026-06-14
+Project Review,Review Q1 goals,Work,1,2026-03-13 10:00:00,2026-03-13 11:30:00,2026-03-13 11:45:00,0,,
+Weekly Groceries,Buy fruit and veg,Home,0,2026-03-15 12:00:00,2026-03-15 13:00:00,,1,weekly,2026-12-31
+Monthly Rent,Pay landlord,Finance,0,2026-04-01 09:00:00,2026-04-01 09:15:00,,1,monthly,2027-03-14
+Dentist Appt,Checkup,Health,0,2026-03-20 14:00:00,2026-03-20 15:00:00,,0,,

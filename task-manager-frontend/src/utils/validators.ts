@@ -1,4 +1,4 @@
-import type { RepeatFrequency, Task } from "../features/tasks/types";
+import type { Task } from "../features/tasks/types";
 
 export interface TaskData {
   title: string;
@@ -10,7 +10,7 @@ export interface TaskData {
   completedAt?: string | null;
   repeatUntil?: string | null;
   isRepeating?: boolean | null;
-  repeatBy?: RepeatFrequency | null;
+  repeatBy?: string | null;
 }
 
 export interface ContactData {

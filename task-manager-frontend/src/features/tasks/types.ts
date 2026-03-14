@@ -9,9 +9,9 @@ export interface Task {
   endAt: string;
   createdAt: string;
   completedAt: string | null;
-  isRepeating: boolean | null;
-  repeatBy: RepeatFrequency | null;
-  repeatUntil: string | null;
+  isRepeating?: boolean | null;
+  repeatBy?: string | null;
+  repeatUntil?: string | null;
 }
 
 export type CreateTaskInput = Omit<

@@ -64,41 +64,60 @@ export default function BulkAddForm() {
 
         const trueValues = ["1", "true", "True", "TRUE", 1, true];
 
-        const newTasks = rawTasks.map((task) => ({
-          title: (task.Title || task.title || "").trim(),
-          category: (task.Category || task.category || "general")
-            .trim()
-            .toLowerCase(),
-          description: getDescription(task),
-          startAt:
-            task["Start At"] ||
-            task["Start at"] ||
-            task["start at"] ||
-            task.startAt ||
-            task.start_at ||
-            "",
-          endAt:
-            task["End At"] ||
-            task["End at"] ||
-            task["end at"] ||
-            task.endAt ||
-            task.end_at ||
-            "",
-          isCompleted: [
-            task["Is Completed"],
-            task["Is completed"],
-            task["is completed"],
-            task.isCompleted,
-            task.is_completed,
-          ].some((t) => trueValues.includes(t)),
-          completedAt:
-            task["Completed At"] ||
-            task["Completed at"] ||
-            task["completed at"] ||
-            task.completedAt ||
-            task.completed_at ||
-            null,
-        }));
+        const newTasks = rawTasks
+          .map((task) => ({
+            title: (task.Title || task.title || "").trim(),
+            category: (task.Category || task.category || "general")
+              .trim()
+              .toLowerCase(),
+            description: getDescription(task),
+            startAt:
+              task["Start At"] ||
+              task["Start at"] ||
+              task["start at"] ||
+              task.startAt ||
+              task.start_at ||
+              "",
+            endAt:
+              task["End At"] ||
+              task["End at"] ||
+              task["end at"] ||
+              task.endAt ||
+              task.end_at ||
+              "",
+            isCompleted: [
+              task["Is Completed"],
+              task["Is completed"],
+              task["is completed"],
+              task.isCompleted,
+              task.is_completed,
+            ].some((t) => trueValues.includes(t)),
+            completedAt:
+              task["Completed At"] ||
+              task["Completed at"] ||
+              task["completed at"] ||
+              task.completedAt ||
+              task.completed_at ||
+              null,
+            repeatBy:
+              task["Repeat By"] ||
+              task["Repeat by"] ||
+              task["repeat by"] ||
+              task.repeatBy ||
+              task.repeat_by ||
+              null,
+            repeatUntil:
+              task["Repeat Until"] ||
+              task["Repeat until"] ||
+              task["repeat until"] ||
+              task.repeatUntil ||
+              task.repeat_until ||
+              null,
+          }))
+          .map((task) => ({
+            ...task,
+            isRepeating: !!task.repeatBy,
+          }));
 
         const { hasErrors, allErrors } = validateTaskList(newTasks);
 
