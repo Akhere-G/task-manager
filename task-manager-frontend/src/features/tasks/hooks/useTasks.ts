@@ -23,9 +23,18 @@ export interface PageDetails {
 
 interface UseTasksProps {
   perPage: number | null;
+  defaultFilters?: {
+    search: string;
+    category: string;
+    duration: string;
+    isCompleted: string;
+    dueDate: string;
+    sortBy: string;
+    order: string;
+  };
 }
-/*
-const defaultFilters = {
+
+const DEFAULT_FILTERS = {
   search: "",
   category: "",
   duration: "",
@@ -34,7 +43,6 @@ const defaultFilters = {
   sortBy: "start_at",
   order: "asc",
 };
-*/
 
 const apiParamMap: Record<string, string> = {
   search: "q",
@@ -44,9 +52,13 @@ const apiParamMap: Record<string, string> = {
   dueDate: "due_date",
   sortBy: "sort_by",
   order: "order",
+  currentDate: "current_date",
 };
 
-export const useTasks = ({ perPage }: UseTasksProps) => {
+export const useTasks = ({
+  perPage,
+  defaultFilters = DEFAULT_FILTERS,
+}: UseTasksProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
@@ -80,11 +92,17 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
     order: searchParams.get("order") || "asc",
     startDate: searchParams.get("start_date") || "",
     endDate: searchParams.get("end_date") || "",
+    currentDate:
+      searchParams.get("current_date") || format(new Date(), "yyyy-MM-dd"),
   };
 
-  function addDateParams(searchParams: URLSearchParams, value: string) {
+  function addDateParams(
+    searchParams: URLSearchParams,
+    value: string,
+    currentDate: string,
+  ) {
     if (value) {
-      const { start, end } = calculateDateRange(value);
+      const { start, end } = calculateDateRange(value, currentDate);
       searchParams.set("start_date", format(start, "yyyy-MM-dd"));
       searchParams.set("end_date", format(end, "yyyy-MM-dd"));
       if (value === "overdue") searchParams.set("is_completed", "false");
@@ -101,7 +119,7 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
 
       Object.entries(filters).forEach(([key, value]) => {
         const apiKey = apiParamMap[key];
-        if (value) {
+        if (apiKey && value) {
           if (key === "search") {
             params.set(apiKey, String(deferredSearch));
           } else {
@@ -110,7 +128,7 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
         }
       });
 
-      addDateParams(params, filters.dueDate);
+      addDateParams(params, filters.dueDate, filters.currentDate);
 
       if (perPage) {
         params.set("page", String(currentPage));
@@ -135,7 +153,7 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
       setSearchInput(value);
     } else {
       const apiKey = apiParamMap[name];
-      if (value) {
+      if (apiKey && value) {
         searchParams.set(apiKey, value);
       } else {
         searchParams.delete(apiKey);
@@ -149,15 +167,13 @@ export const useTasks = ({ perPage }: UseTasksProps) => {
     setSearchInput("");
 
     const params = new URLSearchParams();
-    params.set("q", "");
-    params.set("category", "");
-    params.set("duration", "");
-    params.set("is_completed", "false");
-    params.set("due_date", "");
-    params.set("sort_by", "start_at");
-    params.set("order", "asc");
-    params.set("page", "1");
 
+    Object.entries(defaultFilters).forEach(([key, value]) => {
+      const apiKey = apiParamMap[key];
+      if (apiKey && value) {
+        params.set(apiKey, String(value));
+      }
+    });
     setSearchParams(params);
   };
 

@@ -1,7 +1,18 @@
+import { format } from "date-fns";
 import { EmptyState, ErrorState, LoadingState } from "../components/ui";
 import { TaskCalendar, TasksHeader } from "../features/tasks/components";
 import TaskPopups from "../features/tasks/components/TaskPopups";
 import { useTasks } from "../features/tasks/hooks/useTasks";
+
+const defaultFilters = {
+  search: "",
+  category: "",
+  duration: "",
+  isCompleted: "false",
+  dueDate: "calendar_view",
+  sortBy: "start_at",
+  order: "asc",
+};
 
 export default function CalendarView() {
   const {
@@ -12,7 +23,7 @@ export default function CalendarView() {
     filters,
     resetFilters,
     updateFilters,
-  } = useTasks({ perPage: null });
+  } = useTasks({ perPage: null, defaultFilters });
 
   const tasks = data?.tasks ?? [];
 
@@ -30,8 +41,16 @@ export default function CalendarView() {
     MainContent = <ErrorState error={error} />;
   } else if (isLoading) {
     MainContent = <LoadingState loadMessage="Getting tasks..." />;
-  } else if (tasks && tasks.length > 0) {
-    MainContent = <TaskCalendar tasks={data?.tasks ?? []} />;
+  } else if (tasks) {
+    MainContent = (
+      <TaskCalendar
+        tasks={data?.tasks ?? []}
+        currentDate={new Date(filters.currentDate)}
+        setCurrentDate={(newDate: Date) => {
+          updateFilters("currentDate", format(newDate, "yyyy-MM-dd"));
+        }}
+      />
+    );
   }
 
   return (

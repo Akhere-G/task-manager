@@ -43,10 +43,18 @@ const localizer = dateFnsLocalizer({
 
 const DnDCalendar = withDragAndDrop(Calendar);
 
-export default function TaskCalendar({ tasks }: { tasks: Task[] }) {
+interface TaskCalendarProps {
+  tasks: Task[];
+  currentDate: Date;
+  setCurrentDate: (newDate: Date) => void;
+}
+export default function TaskCalendar({
+  tasks,
+  currentDate,
+  setCurrentDate,
+}: TaskCalendarProps) {
   const { openPopup, updateTask, setIsCompleted } = useTaskContext();
 
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<View>(Views.MONTH);
 
   const [allTasks, setAllTasks] = useState<Task[]>(tasks);
