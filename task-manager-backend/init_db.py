@@ -114,23 +114,29 @@ def initialise_database():
         cursor.execute(refresh_tokens_table)
 
         try:
+            cursor.execute(fulltext_index)
+        except Exception as err:
+            print(f"Error: Could not complete full text {err}")
+            pass
+
+        try:
             cursor.execute(series_id_migration)
-        except Exception:
+        except Exception as err:
+            print(f"Error: Could not complete series id migration {err}")
             pass
 
         try:
             cursor.execute(recurring_task_migration)
-        except Exception:
-            pass
-
-        try:
-            cursor.execute(fulltext_index)
-        except Exception:
+        except Exception as err:
+            print(f"Error: Could not complete recurring migration {err}")
             pass
 
         try:
             cursor.execute(trigger)
-        except Exception:
+        except Exception as err:
+            print(
+                f"Error: Could not complete ensure completion time stamp trigger migration {err}"
+            )
             pass
 
         conn.commit()
