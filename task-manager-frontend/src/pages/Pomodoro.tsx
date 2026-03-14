@@ -6,7 +6,7 @@ import { Clock, Pause, Play, Repeat } from "lucide-react";
 import { useState } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useTaskContext } from "../context/TaskContext";
-import { formatDateRange } from "../features/tasks/utils";
+import { formatDateRange, formatDateRelative } from "../features/tasks/utils";
 
 const POMODORO_DURATION = 25 * 60;
 
@@ -47,6 +47,7 @@ export default function Pomodoro() {
     endAt,
     isRepeating,
     repeatBy,
+    repeatUntil,
   } = task;
 
   if (isCompleted) {
@@ -103,6 +104,9 @@ export default function Pomodoro() {
               <Repeat className="w-4 h-4" />
               <p className="uppercase tracking-widest text-[12px] pr-4">
                 {repeatBy}
+                {repeatUntil && (
+                  <span> until {formatDateRelative(repeatUntil)}</span>
+                )}
               </p>
             </div>
           )}
