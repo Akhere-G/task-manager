@@ -23,8 +23,8 @@ def list_tasks():
     search = request.args.get("q")
     duration = request.args.get("duration")
     is_completed = request.args.get("is_completed")
-    due_date = request.args.get("due_date")
-    today = request.args.get("today")
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
     sort_by = request.args.get("sort_by")
     order = request.args.get("order")
     page = request.args.get("page")
@@ -36,8 +36,8 @@ def list_tasks():
         search,
         duration,
         is_completed,
-        due_date,
-        today,
+        start_date,
+        end_date,
         sort_by,
         order,
         limit,
@@ -69,8 +69,8 @@ def add_task():
     user_id = get_jwt_identity()
     data = request.json
 
-    if "repeat_by" in data:
-        data["is_repeating"] = True
+    if "repeatBy" in data:
+        data["isRepeating"] = True
 
     errors = validate_task(data)
 
@@ -103,8 +103,8 @@ def add_task_list():
 
         task["isCompleted"] = is_comp
 
-        if "repeat_by" in task:
-            task["is_repeating"] = True
+        if "repeatBy" in task:
+            task["isRepeating"] = True
 
     errors, has_errors = validate_task_list(data)
 
@@ -125,8 +125,8 @@ def edit_task(task_id):
     data = request.json
     errors = validate_task(data, True)
 
-    if "repeat_by" in data:
-        data["is_repeating"] = True
+    if "repeatBy" in data:
+        data["isRepeating"] = True
 
     if errors:
         return jsonify({"errors": errors}), 400

@@ -1,4 +1,14 @@
-import { format, isSameDay, isSameYear } from "date-fns";
+import {
+  format,
+  isSameDay,
+  isSameYear,
+  startOfMonth,
+  endOfMonth,
+  addDays,
+  subDays,
+  startOfDay,
+  endOfDay,
+} from "date-fns";
 
 export const formatDate = (dateStr?: string) => {
   const date = dateStr ? new Date(dateStr) : new Date();
@@ -32,4 +42,31 @@ export const formatDateRange = (startAt: string, endAt: string) => {
   }
 
   return dateStr;
+};
+
+export const calculateDateRange = (type: string) => {
+  const now = new Date();
+  const start = startOfDay(now);
+  const end = endOfDay(now);
+
+  switch (type) {
+    case "today":
+      return { start, end };
+    case "this_week":
+      return {
+        start,
+        end: addDays(end, 6),
+      };
+    case "this_month":
+      return { start, end: addDays(end, 30) };
+    case "calendar_view":
+      return {
+        start: subDays(startOfMonth(start), 6),
+        end: addDays(endOfMonth(end), 6),
+      };
+    case "overdue":
+      return { start: new Date(2000, 0, 1), end: start };
+    default:
+      return { start, end };
+  }
 };
