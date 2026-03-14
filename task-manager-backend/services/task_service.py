@@ -148,36 +148,30 @@ def create_task(user_id, data):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        title = data.get("title").strip() if "title" in data else None
-        description = (
-            str(data.get("description")).strip() if data.get("description") else None
-        )
-        category = str(data.get("category", "General")).strip()
-        start_at = data.get("startAt")
-        end_at = data.get("endAt")
-
-        is_repeating = data.get("isRepeating")
-        repeat_by = data.get("repeatBy")
-        repeat_until = data.get("repeatUntil")
-
         cursor.execute(
-            "INSERT INTO tasks (title, description, category, start_at, end_at, is_repeating, repeat_by, repeat_until, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);",
+            """INSERT INTO tasks (title, description, category, start_at, end_at, 
+               is_repeating, repeat_by, repeat_until, user_id) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
             (
-                title,
-                description,
-                category,
-                start_at,
-                end_at,
-                is_repeating,
-                repeat_by,
-                repeat_until,
+                data.get("title", "").strip(),
+                (data.get("description").strip() if data.get("description") else None),
+                str(data.get("category", "General")).strip(),
+                data.get("startAt"),
+                data.get("endAt"),
+                1 if data.get("isRepeating") else 0,
+                data.get("repeatBy"),
+                data.get("repeatUntil"),
                 user_id,
             ),
         )
-        conn.commit()
         new_id = cursor.lastrowid
+
+        conn.commit()
+
         return new_id
     except Exception as err:
+        if conn:
+            conn.rollback()
         raise err
     finally:
         if cursor:
