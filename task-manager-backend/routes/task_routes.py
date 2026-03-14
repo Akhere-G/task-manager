@@ -109,7 +109,7 @@ def add_task_list():
 
         task["isCompleted"] = is_comp
 
-        if data.get("repeatBy"):
+        if task.get("repeatBy"):
             task["isRepeating"] = True
 
     errors, has_errors = validate_task_list(data)
