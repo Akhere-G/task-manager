@@ -55,117 +55,113 @@ def _get_time_spent(cursor, user_id):
     ]
 
 
-def _get_backlog_health(cursor, user_id):
-    cursor.execute(
-        """
-        SELECT 
-            CASE 
-                WHEN is_completed = 1 THEN 'Completed'
-                WHEN end_at < CURRENT_TIMESTAMP AND is_completed = 0 THEN 'Overdue'
-                ELSE 'Pending'
-            END as status,
-            COUNT(*) as count
-        FROM tasks
-        WHERE user_id = %s
-        GROUP BY status;
-    """,
-        (user_id,),
-    )
-    return cursor.fetchall()
+def _get_backlog_health(tasks):
+    counts = {"Completed": 0, "Overdue": 0, "Pending": 0}
+    now = datetime.now()
+
+    for task in tasks:
+        if task["is_completed"]:
+            counts["Completed"] += 1
+        elif task["end_at"] < now:
+            counts["Overdue"] += 1
+        else:
+            counts["Pending"] += 1
+
+    return [{"status": k, "count": v} for k, v in counts.items()]
 
 
-def _get_category_volume(cursor, user_id):
-    cursor.execute(
-        """
-        SELECT 
-            category, 
-            SUM(is_completed = 1) AS completed, 
-            SUM(is_completed = 0 AND end_at < CURRENT_TIMESTAMP) AS overdue,
-            SUM(is_completed = 0 AND end_at >= CURRENT_TIMESTAMP) AS pending
-        FROM tasks
-        WHERE user_id = %s
-        GROUP BY category
-        ORDER BY category DESC;
-    """,
-        (user_id,),
-    )
-    return [
+def _get_category_volume(tasks):
+    volume_map = {}
+    now = datetime.now()
+
+    for t in tasks:
+        cat = t["category"] or "General"
+        if cat not in volume_map:
+            volume_map[cat] = {"completed": 0, "overdue": 0, "pending": 0}
+
+        if t["is_completed"]:
+            volume_map[cat]["completed"] += 1
+        elif t["end_at"] < now:
+            volume_map[cat]["overdue"] += 1
+        else:
+            volume_map[cat]["pending"] += 1
+
+    result = [
         {
-            "category": r["category"],
-            "pending": int(r["pending"] or 0),
-            "completed": int(r["completed"] or 0),
-            "overdue": int(r["overdue"] or 0),
-            "total": int(r["pending"] or 0)
-            + int(r["completed"] or 0)
-            + int(r["overdue"] or 0),
+            "category": cat,
+            "pending": data["pending"],
+            "completed": data["completed"],
+            "overdue": data["overdue"],
+            "total": data["pending"] + data["completed"] + data["overdue"],
         }
-        for r in cursor.fetchall()
+        for cat, data in volume_map.items()
     ]
 
-
-def _get_overdue_distribution(cursor, user_id):
-    cursor.execute(
-        """
-        SELECT 
-            CASE 
-                WHEN DATEDIFF(CURRENT_TIMESTAMP, end_at) <= 3 THEN "< 3 Days"
-                WHEN DATEDIFF(CURRENT_TIMESTAMP, end_at) <= 7 THEN "1 Week"
-                WHEN DATEDIFF(CURRENT_TIMESTAMP, end_at) <= 30 THEN "1 Month"
-                WHEN DATEDIFF(CURRENT_TIMESTAMP, end_at) <= 90 THEN "3 Months"
-                ELSE "+3 Months"
-            END as days_overdue,
-            COUNT(*) as count
-        FROM tasks
-        WHERE user_id = %s AND is_completed = 0 AND end_at < CURRENT_TIMESTAMP 
-        GROUP BY days_overdue
-        ORDER BY MIN(DATEDIFF(CURRENT_TIMESTAMP, end_at)) ASC;
-    """,
-        (user_id,),
-    )
-    return cursor.fetchall()
+    return sorted(result, key=lambda x: x["category"], reverse=True)
 
 
-def _get_deadline_proximity(cursor, user_id):
-    cursor.execute(
-        """
-        SELECT category, AVG(DATEDIFF(end_at, CURRENT_TIMESTAMP)) as score
-        FROM tasks
-        WHERE user_id = %s AND is_completed = 0 
-        GROUP BY category
-        ORDER BY score DESC;
-    """,
-        (user_id,),
-    )
-    return [
-        {"category": r["category"], "score": float(r["score"] or 0)}
-        for r in cursor.fetchall()
+def _get_overdue_distribution(tasks):
+    distribution = {
+        "< 3 Days": 0,
+        "1 Week": 0,
+        "1 Month": 0,
+        "3 Months": 0,
+        "+3 Months": 0,
+    }
+
+    now = datetime.now()
+    for t in tasks:
+        # Only process overdue tasks that are not completed
+        if not t["is_completed"] and t["end_at"] < now:
+            days_diff = (now - t["end_at"]).days
+            if days_diff <= 3:
+                distribution["< 3 Days"] += 1
+            elif days_diff <= 7:
+                distribution["1 Week"] += 1
+            elif days_diff <= 30:
+                distribution["1 Month"] += 1
+            elif days_diff <= 90:
+                distribution["3 Months"] += 1
+            else:
+                distribution["+3 Months"] += 1
+
+    return [{"days_overdue": k, "count": v} for k, v in distribution.items() if v > 0]
+
+
+def _get_deadline_proximity(tasks):
+    cat_data = {}
+    now = datetime.now()
+
+    for t in tasks:
+        # Only consider pending tasks for deadline proximity
+        if t["is_completed"]:
+            continue
+
+        cat = t["category"] or "General"
+        if cat not in cat_data:
+            cat_data[cat] = []
+
+        diff = (t["end_at"] - now).total_seconds() / 86400.0
+        cat_data[cat].append(diff)
+
+    results = [
+        {"category": cat, "score": float(sum(diffs) / len(diffs))}
+        for cat, diffs in cat_data.items()
     ]
 
+    return sorted(results, key=lambda x: x["score"], reverse=True)
 
-def _get_hourly_productivity(cursor, user_id):
-    cursor.execute(
-        """
-        SELECT HOUR(completed_at) as hour, COUNT(*) as count
-        FROM tasks
-        WHERE is_completed = 1 AND user_id = %s
-        GROUP BY hour
-        ORDER BY hour;
-        """,
-        (user_id,),
-    )
 
-    raw_data = cursor.fetchall()
+def _get_hourly_productivity(tasks):
+    hour_lookup = {i: 0 for i in range(24)}
 
-    hour_lookup = {row["hour"]: row["count"] for row in raw_data}
+    for t in tasks:
+        if t["is_completed"] and t.get("completed_at"):
+            # Ensure completed_at is a datetime object
+            hour = t["completed_at"].hour
+            hour_lookup[hour] += 1
 
-    hourly_productivity = []
-
-    for i in range(24):
-        if i not in hour_lookup:
-            hour_lookup[i] = 0
-        hourly_productivity.append({"hour": i, "count": hour_lookup[i]})
-
-    return hourly_productivity
+    return [{"hour": i, "count": hour_lookup[i]} for i in range(24)]
 
 
 def _get_turnaround_time(cursor, user_id):
@@ -223,63 +219,31 @@ def _get_estimation_accuracy(cursor, user_id):
     return data
 
 
-"""
-SELECT 
-    DATE(end_at) AS date, 
-    SUM(TIMESTAMPDIFF(MINUTE, start_at, end_at)) AS total_minutes,
-    COUNT(*) AS count
-FROM tasks
-WHERE 
-    user_id = %s 
-    AND is_completed = 0 
-    AND end_at >= CURDATE() 
-    AND end_at < DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-GROUP BY date
-ORDER BY date ASC;
-"""
+def _get_week_overview(tasks):
+    date_lookup = {}
 
-
-def _get_week_overview(cursor, user_id):
-    # 1. Define the 7-day window
     view_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     view_end = view_start + timedelta(days=7)
 
-    # 2. Fetch primary tasks
-    cursor.execute(
-        """
-        SELECT * FROM tasks
-        WHERE user_id = %s 
-        AND is_completed = 0 
-        AND end_at >= %s 
-        AND end_at < %s
-        ORDER BY end_at ASC;
-        """,
-        (user_id, view_start, view_end),
-    )
-    raw_data = cursor.fetchall()
-
-    # 3. Use the updated with_repeating signature
-    tasks = with_repeating(raw_data, view_start, view_end, user_id, cursor)
-
-    date_lookup = {}
-
     for task in tasks:
-        # Assuming end_at is already a datetime object from your DB cursor
-        index = task["end_at"].date()
+        # Only include pending tasks for the upcoming week overview
+        if task["is_completed"]:
+            continue
 
-        # Calculate duration in minutes
-        duration = (task["end_at"] - task["start_at"]).total_seconds() / 60.0
+        task_end = task["end_at"]
+        if view_start <= task_end < view_end:
+            index = task_end.date()
+            duration = (task_end - (task["start_at"])).total_seconds() / 60.0
 
-        if index in date_lookup:
-            date_lookup[index]["count"] += 1
-            date_lookup[index]["total_minutes"] += duration
-        else:
-            date_lookup[index] = {
-                "count": 1,
-                "total_minutes": duration,
-            }
+            if index in date_lookup:
+                date_lookup[index]["count"] += 1
+                date_lookup[index]["total_minutes"] += duration
+            else:
+                date_lookup[index] = {
+                    "count": 1,
+                    "total_minutes": duration,
+                }
 
-    # 4. Generate the final list
     return [
         {
             "date": d.strftime("%Y-%m-%d"),
@@ -342,22 +306,26 @@ def get_all_dashboard_stats(user_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
+        cursor.execute("SELECT * FROM tasks WHERE user_id = %s", (user_id,))
+        all_raw_tasks = cursor.fetchall()
+
+        view_start = datetime.now()
+        view_end = view_start + timedelta(days=30)
+        tasks = with_repeating(all_raw_tasks, view_start, view_end, user_id, cursor)
+
         return {
             "productivity": _get_productivity_trend(cursor, user_id),
             "timeSpent": _get_time_spent(cursor, user_id),
-            "backlogHealth": _get_backlog_health(cursor, user_id),
-            "categoryVolume": _get_category_volume(cursor, user_id),
-            "overdueDistribution": _get_overdue_distribution(cursor, user_id),
-            "deadlineProximity": _get_deadline_proximity(cursor, user_id),
-            "hourlyProductivity": _get_hourly_productivity(cursor, user_id),
+            "backlogHealth": _get_backlog_health(tasks),
+            "categoryVolume": _get_category_volume(tasks),
+            "overdueDistribution": _get_overdue_distribution(tasks),
+            "deadlineProximity": _get_deadline_proximity(tasks),
+            "hourlyProductivity": _get_hourly_productivity(tasks),
             "turnaround": _get_turnaround_time(cursor, user_id),
             "estimationAccuracy": _get_estimation_accuracy(cursor, user_id),
-            "weekOverview": _get_week_overview(cursor, user_id),
+            "weekOverview": _get_week_overview(tasks),
             "distributionTrend": _get_distribution_trend(cursor, user_id),
         }
-    except Exception as err:
-        print(f"Database error: {err}")
-        raise err
     finally:
         if cursor:
             cursor.close()

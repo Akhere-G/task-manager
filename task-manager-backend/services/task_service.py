@@ -114,7 +114,9 @@ def get_all_tasks(
                 day=last_day, hour=23, minute=59, second=59
             ) + timedelta(days=6)
 
-            tasks = with_repeating(tasks, view_start, view_end, user_id, cursor)
+            tasks = with_repeating(
+                tasks, view_start, view_end, user_id, cursor, base_filters, params
+            )
 
             total_count = len(tasks)
 
@@ -140,13 +142,44 @@ def get_all_tasks(
             conn.close()
 
 
-def with_repeating(tasks, view_start, view_end, user_id, cursor):
+"""
+print("\n")
+print("isRepeating", updated_data["is_repeating"])
+print("\n")
+"""
+
+
+def with_repeating(
+    tasks,
+    view_start,
+    view_end,
+    user_id,
+    cursor,
+    base_filters="WHERE user_id = %s",
+    params=None,
+):
+
+    if not params:
+        params = [user_id]
+
+    print("\n")
+    print("\n")
+    print("\n")
+    print("\n")
+    print(base_filters)
+    print(params)
+    print("\n")
+    print("\n")
+    print("\n")
+    print("\n")
     cursor.execute(
-        """
+        f"""
         SELECT * FROM tasks 
-        WHERE user_id = %s AND is_repeating = 1;
+        {base_filters}
+        AND is_repeating = 1
+        AND (repeat_until IS NULL OR repeat_until >= %s);
     """,
-        (user_id,),
+        params + [view_start],
     )
     repeating_tasks = cursor.fetchall()
 
