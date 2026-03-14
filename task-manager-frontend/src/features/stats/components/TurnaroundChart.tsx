@@ -1,12 +1,12 @@
 import {
-  Area,
-  AreaChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
   ReferenceLine,
   CartesianGrid,
+  BarChart,
+  Bar,
 } from "recharts";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import type { Turnaround } from "../../../services/api";
@@ -31,15 +31,16 @@ export default function TurnaroundChart() {
     turnaround.reduce((acc, curr) => acc + curr.count * curr.daysTaken, 0) /
     (total || 1);
 
-  const chartColor =
-    turnaroundAverage <= WARNING_THRESHOLD
-      ? "var(--color-success)"
-      : "var(--color-failure)";
+  const hasGoodTurnaround = turnaroundAverage <= WARNING_THRESHOLD;
+  const chartColor = hasGoodTurnaround
+    ? "var(--color-success)"
+    : "var(--color-failure)";
 
+  console.log(chartColor);
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
+        <BarChart
           data={turnaround}
           margin={{ left: -30, top: 20, right: 0, bottom: -10 }}
         >
@@ -65,6 +66,7 @@ export default function TurnaroundChart() {
               stroke: chartColor,
               strokeWidth: 1,
               strokeDasharray: "4 4",
+              fill: hasGoodTurnaround ? "#8f82" : "#f882",
             }}
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
@@ -95,7 +97,7 @@ export default function TurnaroundChart() {
             }}
           />
 
-          <Area
+          <Bar
             type="monotone"
             dataKey="count"
             stroke={chartColor}
@@ -104,7 +106,7 @@ export default function TurnaroundChart() {
             fillOpacity={0.15}
             animationDuration={1500}
           />
-        </AreaChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
