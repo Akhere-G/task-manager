@@ -7,6 +7,9 @@ import {
   Split,
   BrainCircuit,
   LayoutList,
+  RefreshCw,
+  Activity,
+  Clock,
 } from "lucide-react";
 
 export default function AboutPage() {
@@ -16,6 +19,12 @@ export default function AboutPage() {
       title: "Flexible Views",
       description:
         "Switch between a clean list and a full calendar. Use smart filters and sorting to see exactly what needs your attention right now.",
+    },
+    {
+      icon: <RefreshCw className="text-brand" size={28} />, // You'll need to import RefreshCw from lucide-react
+      title: "Seamless Habits",
+      description:
+        "Set tasks to repeat daily, weekly, or monthly. Our system projects 'ghost tasks' into your future calendar so you can plan for upcoming commitments.",
     },
     {
       icon: <BrainCircuit className="text-brand" size={28} />,
@@ -35,17 +44,30 @@ export default function AboutPage() {
       description:
         "Add tasks instantly by typing naturally with our AI assistant, or upload a CSV file to move an entire project's worth of tasks in one go.",
     },
-    {
-      icon: <BarChart3 className="text-brand" size={28} />,
-      title: "Insightful Stats",
-      description:
-        "Track your progress with easy-to-read charts. Monitor your backlog, spot your busiest days, and see exactly where your time is going.",
-    },
+
     {
       icon: <Timer className="text-brand" size={28} />,
       title: "Pomodoro Timer",
       description:
         "Boost your focus using timed work intervals. Every session you complete is automatically logged against your tasks for accurate time-tracking.",
+    },
+    {
+      icon: <Activity className="text-brand" size={28} />,
+      title: "Performance Summary",
+      description:
+        "See your progress with a year-long activity map. Monitor your 'Backlog Health' and daily productivity to stay on top of your work.",
+    },
+    {
+      icon: <Clock className="text-brand" size={28} />,
+      title: "Planning & Deadlines",
+      description:
+        "Look at the week ahead to see upcoming deadlines. Our charts show you exactly how close your due dates are and which tasks are overdue.",
+    },
+    {
+      icon: <BarChart3 className="text-brand" size={28} />,
+      title: "Workload Insights",
+      description:
+        "Understand where your time goes. See a breakdown of time spent on different categories, like work, health, or hobbies, over the last seven days.",
     },
   ];
 
