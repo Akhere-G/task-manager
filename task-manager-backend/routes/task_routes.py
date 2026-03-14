@@ -25,10 +25,14 @@ def list_tasks():
     is_completed = request.args.get("is_completed")
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
+    current_date = request.args.get("current_date")
     sort_by = request.args.get("sort_by")
     order = request.args.get("order")
     page = request.args.get("page")
     limit = request.args.get("limit")
+    project_repeating = (
+        True if request.args.get("project_repeating") == "true" else False
+    )
 
     raw_tasks = get_all_tasks(
         user_id,
@@ -38,10 +42,12 @@ def list_tasks():
         is_completed,
         start_date,
         end_date,
+        current_date,
         sort_by,
         order,
         limit,
         page,
+        project_repeating,
     )
     return jsonify(format_json_response(raw_tasks))
 

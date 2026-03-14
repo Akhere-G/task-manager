@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
-import { formatDateRange } from "../utils";
+import { formatDateRange, formatDateRelative } from "../utils";
 
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
@@ -42,8 +42,20 @@ function TaskCard({
   fullDescription = false,
   ...task
 }: TaskCardProps) {
-  const { id, title, category, description, isCompleted, startAt, endAt } =
-    task;
+  const {
+    id,
+    seriesId,
+    isGhost,
+    title,
+    category,
+    description,
+    isCompleted,
+    startAt,
+    endAt,
+    isRepeating,
+    repeatBy,
+    repeatUntil,
+  } = task;
   const [showMore, setShowMore] = useState(false);
   const navigate = useNavigate();
 
@@ -116,11 +128,14 @@ function TaskCard({
             />
           </button>
         )}
-        {task.isRepeating && (
-          <div className="flex gap-2 items-center justify-end text-sm text-text-sub ">
+        {isRepeating && (
+          <div className="flex gap-2 items-center justify-end text-xs text-text-sub ">
             <Repeat className="w-4 h-4" />
-            <p className="uppercase tracking-widest text-[12px]">
-              {task.repeatBy}
+            <p className="uppercase tracking-wide ">
+              {repeatBy}
+              {repeatUntil && (
+                <span> until {formatDateRelative(repeatUntil)}</span>
+              )}
             </p>
           </div>
         )}
@@ -139,7 +154,9 @@ function TaskCard({
         <div className="flex gap-1">
           {showDelete && (
             <button
-              onClick={() => onDelete(task)}
+              onClick={() =>
+                onDelete(isGhost ? { ...task, id: seriesId } : task)
+              }
               title="Delete Task"
               aria-label={`Delete task: ${title}`}
               className="p-1.5 rounded-md hover:bg-failure/10 transition-colors group cursor-pointer"
@@ -153,7 +170,7 @@ function TaskCard({
 
           {showEdit && (
             <button
-              onClick={() => onEdit(task)}
+              onClick={() => onEdit(isGhost ? { ...task, id: seriesId } : task)}
               title="Edit Task"
               aria-label={`Edit task: ${title}`}
               className="p-1.5 rounded-md hover:bg-info/10 transition-colors group cursor-pointer"
@@ -164,9 +181,9 @@ function TaskCard({
               />
             </button>
           )}
-          {!task.isCompleted && showPomodoro && (
+          {!isCompleted && showPomodoro && (
             <button
-              onClick={() => navigate(`/pomodoro/${task.id}`)}
+              onClick={() => navigate(`/pomodoro/${isGhost ? seriesId : id}`)}
               title="Start Task"
               aria-label={`Start task: ${title}`}
               className="p-1.5 rounded-md hover:bg-success/10 transition-colors group cursor-pointer"
@@ -179,7 +196,9 @@ function TaskCard({
           )}
           {showSetIsComplete && (
             <button
-              onClick={() => setIsCompleted(id, !isCompleted)}
+              onClick={() =>
+                setIsCompleted(isGhost ? seriesId : id, !isCompleted)
+              }
               title={isCompleted ? "Mark as pending" : "Mark as complete"}
               aria-label={
                 isCompleted ? "Mark task as pending" : "Mark task as complete"
@@ -193,9 +212,9 @@ function TaskCard({
               />
             </button>
           )}
-          {!task.isCompleted && showDecompose && (
+          {!isCompleted && showDecompose && (
             <button
-              onClick={() => navigate(`/breakdown/${task.id}`)}
+              onClick={() => navigate(`/breakdown/${isGhost ? seriesId : id}`)}
               title="Break down Task"
               aria-label={`Break down task: ${title}`}
               className="p-1.5 rounded-md hover:bg-brand/10 transition-colors group cursor-pointer"

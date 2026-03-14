@@ -23,7 +23,7 @@ export default function CalendarView() {
     filters,
     resetFilters,
     updateFilters,
-  } = useTasks({ perPage: null, defaultFilters });
+  } = useTasks({ perPage: null, projectRepeating: true, defaultFilters });
 
   const tasks = data?.tasks ?? [];
 

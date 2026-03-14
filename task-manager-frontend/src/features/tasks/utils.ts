@@ -70,3 +70,14 @@ export const calculateDateRange = (type: string, currentDate: string) => {
       return { start, end };
   }
 };
+
+export const formatDateRelative = (date = "") => {
+  const dateVal = new Date(date);
+  const today = new Date();
+  const sameDay = isSameDay(dateVal, today);
+  const sameYear = isSameYear(dateVal, today);
+
+  if (sameDay) return format(dateVal, "p");
+  if (sameYear) return format(dateVal, "dd MMM");
+  return format(dateVal, "dd MMM yyyy");
+};
