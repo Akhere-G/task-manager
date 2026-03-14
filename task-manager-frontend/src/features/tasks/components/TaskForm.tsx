@@ -137,7 +137,12 @@ export default function TaskForm({
   function handleCheck({
     target: { name, checked },
   }: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
-    const newFormState = { ...formState, [name]: checked };
+    const newFormState = {
+      ...formState,
+      [name]: checked,
+      repeatBy: checked ? formState.repeatBy : null,
+      repeatUntil: checked ? formState.repeatUntil : null,
+    };
     setFormState(newFormState);
     validateForm(newFormState);
   }
@@ -200,7 +205,6 @@ export default function TaskForm({
 
       await submitAction({
         ...formState,
-        isRepeating: formState.isRepeating,
       });
     } catch (err) {
       console.error(err);

@@ -68,6 +68,10 @@ def fetch_task(task_id):
 def add_task():
     user_id = get_jwt_identity()
     data = request.json
+
+    if "repeat_by" in data:
+        data["is_repeating"] = True
+
     errors = validate_task(data)
 
     if errors:
@@ -99,6 +103,9 @@ def add_task_list():
 
         task["isCompleted"] = is_comp
 
+        if "repeat_by" in task:
+            task["is_repeating"] = True
+
     errors, has_errors = validate_task_list(data)
 
     if has_errors:
@@ -118,31 +125,13 @@ def edit_task(task_id):
     data = request.json
     errors = validate_task(data, True)
 
+    if "repeat_by" in data:
+        data["is_repeating"] = True
+
     if errors:
         return jsonify({"errors": errors}), 400
 
-    title = str(data.get("title", "")).strip()
-    description = (
-        str(data.get("description")).strip() if data.get("description") else None
-    )
-    category = str(data.get("category", "")).strip()
-    start_at = data.get("startAt")
-    end_at = data.get("endAt")
-    is_completed = data.get("isCompleted")
-    completed_at = data.get("completedAt")
-
-    updated_result = update_task(
-        user_id,
-        task_id,
-        title=title,
-        category=category,
-        description=description,
-        is_completed=is_completed,
-        start_at=start_at,
-        end_at=end_at,
-        completed_at=completed_at,
-        has_completed_at="completedAt" in data,
-    )
+    updated_result = update_task(user_id, task_id, data)
 
     if updated_result is None:
         return jsonify({"error": f"No task with the id {task_id} exists."}), 404

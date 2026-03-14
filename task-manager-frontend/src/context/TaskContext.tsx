@@ -82,6 +82,7 @@ export default function TaskContextProvider({
   async function handleEdit(newTask: CreateTaskInput) {
     if (!selectedTask) return;
     const rawData = {
+      ...newTask,
       title: newTask.title.trim(),
       description: newTask.description?.trim(),
       category: newTask.category,

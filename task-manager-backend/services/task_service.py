@@ -234,26 +234,28 @@ def create_tasks_from_list(user_id, tasks):
             conn.close()
 
 
-def update_task(
-    user_id,
-    id,
-    title=None,
-    description=None,
-    category=None,
-    start_at=None,
-    end_at=None,
-    is_completed=None,
-    completed_at=None,
-    has_completed_at=False,
-):
+def update_task(user_id, task_id, data):
     conn = None
     cursor = None
     try:
+        title = str(data.get("title", "")).strip()
+        description = (
+            str(data.get("description")).strip() if data.get("description") else None
+        )
+        category = str(data.get("category", "")).strip()
+        start_at = data.get("startAt")
+        end_at = data.get("endAt")
+        is_completed = data.get("isCompleted")
+        completed_at = data.get("completedAt")
+        is_repeating = data.get("isRepeating")
+        repeat_by = data.get("repeatBy")
+        repeat_until = data.get("repeatUntil")
+
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute(
-            "SELECT * FROM tasks WHERE id = %s and user_id = %s", (id, user_id)
+            "SELECT * FROM tasks WHERE id = %s and user_id = %s", (task_id, user_id)
         )
         task = cursor.fetchone()
 
@@ -269,13 +271,21 @@ def update_task(
             is_completed if is_completed is not None else task["is_completed"]
         )
         updated_completed_at = (
-            completed_at if has_completed_at else task["completed_at"]
+            completed_at if "completedAt" in data else task["completed_at"]
+        )
+        updated_is_repeating = (
+            is_repeating if "isRepeating" in data else task["is_repeating"]
+        )
+        updated_repeat_by = repeat_by if "repeatBy" in data else task["repeat_by"]
+        updated_repeat_until = (
+            repeat_until if "repeatUntil" in data else task["repeat_until"]
         )
 
         cursor.execute(
             """
             UPDATE tasks 
-            SET title = %s, description = %s, category = %s, start_at = %s, end_at = %s, is_completed = %s, completed_at = %s
+            SET title = %s, description = %s, category = %s, start_at = %s, end_at = %s, is_completed = %s, completed_at = %s,
+            is_repeating = %s, repeat_by = %s, repeat_until = %s
             WHERE id = %s and user_id = %s
             """,
             (
@@ -286,7 +296,10 @@ def update_task(
                 updated_end,
                 int(updated_status),
                 updated_completed_at,
-                id,
+                int(updated_is_repeating),
+                updated_repeat_by,
+                updated_repeat_until,
+                task_id,
                 user_id,
             ),
         )
@@ -294,13 +307,16 @@ def update_task(
         conn.commit()
 
         return {
-            "id": id,
+            "id": task_id,
             "title": updated_title,
             "description": updated_desc,
             "category": updated_cat,
             "start_at": updated_start,
             "end_at": updated_end,
             "is_completed": True if updated_status == 1 else False,
+            "is_repeating": True if updated_is_repeating == 1 else False,
+            "repeat_by": updated_repeat_by,
+            "repeat_until": "updated_repeat_until",
             "created_at": task.get("created_at"),
             "completed_at": updated_completed_at,
         }

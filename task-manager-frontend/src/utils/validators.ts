@@ -138,12 +138,13 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
         "Repeat should must only be daily, weekly, monthly or yearly.";
     }
   }
+
   if (
-    "repeatUntil" in data &&
+    Boolean(data.repeatUntil?.trim()) &&
     typeof data.repeatUntil === "string" &&
     isNaN(Date.parse(data.repeatUntil))
   ) {
-    errors["repeatUntil"] = "Invalid timestamp. Use YYYY-MM-DD format.";
+    errors["repeatUntil"] = "Invalid timestamp......";
   }
 
   return errors;
