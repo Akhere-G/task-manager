@@ -12,11 +12,13 @@ export interface Task {
   isRepeating?: boolean | null;
   repeatBy?: string | null;
   repeatUntil?: string | null;
+  isGhost: boolean;
+  seriesId: number;
 }
 
 export type CreateTaskInput = Omit<
   Task,
-  "id" | "createdAt" | "isCompleted" | "completedAt"
+  "id" | "createdAt" | "isCompleted" | "completedAt" | "isGhost" | "seriesId"
 >;
 type Option = { name: string; value: string };
 

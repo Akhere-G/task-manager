@@ -93,9 +93,6 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
 
   if ("isCompleted" in data) {
     const isComp = data.isCompleted;
-    if (typeof isComp !== "boolean") {
-      errors.isCompleted = "Completion status must be a boolean.";
-    }
 
     if (isComp && !data.completedAt) {
       errors.isCompleted = "Must provide completed at date if completing task.";
@@ -123,10 +120,6 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
   }
 
   if (data.isRepeating) {
-    const isRepeating = data.isRepeating;
-    if (typeof isRepeating !== "boolean") {
-      errors["isRepeating"] = "isRepeating must be a boolean (true/false).";
-    }
     if (!("repeatBy" in data)) {
       errors["repeatBy"] = "Repeat By is required for repeating tasks.";
     }

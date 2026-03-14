@@ -32,6 +32,7 @@ interface UseTasksProps {
     sortBy: string;
     order: string;
   };
+  projectRepeating?: boolean;
 }
 
 const DEFAULT_FILTERS = {
@@ -58,6 +59,7 @@ const apiParamMap: Record<string, string> = {
 export const useTasks = ({
   perPage,
   defaultFilters = DEFAULT_FILTERS,
+  projectRepeating = false,
 }: UseTasksProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -116,6 +118,7 @@ export const useTasks = ({
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
+      params.set("project_repeating", String(projectRepeating));
 
       Object.entries(filters).forEach(([key, value]) => {
         const apiKey = apiParamMap[key];
