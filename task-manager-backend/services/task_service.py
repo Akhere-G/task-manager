@@ -284,9 +284,15 @@ def update_task(user_id, task_id, data):
                 user_id,
             ),
         )
+        repeat_until_val = updated_data["repeat_until"]
+
+        if isinstance(repeat_until_val, str):
+            repeat_until_val = datetime.strptime(
+                updated_data["repeat_until"], "%Y-%m-%d"
+            ).date()
+
         is_within_limit = (
-            not updated_data["repeat_until"]
-            or updated_data["repeat_until"] > datetime.now().date()
+            not repeat_until_val or repeat_until_val > datetime.now().date()
         )
 
         if (
