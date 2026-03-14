@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import useGetTask from "../features/tasks/hooks/useGetTask";
 import { EmptyState, ErrorState, LoadingState, Popup } from "../components/ui";
 import { isAxiosError } from "axios";
-import { Clock, Pause, Play } from "lucide-react";
+import { Clock, Pause, Play, Repeat } from "lucide-react";
 import { useState } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { useTaskContext } from "../context/TaskContext";
@@ -37,8 +37,17 @@ export default function Pomodoro() {
 
   if (!task) return <EmptyState searchMessage={`This task doesn't exist`} />;
 
-  const { id, title, category, description, isCompleted, startAt, endAt } =
-    task;
+  const {
+    id,
+    title,
+    category,
+    description,
+    isCompleted,
+    startAt,
+    endAt,
+    isRepeating,
+    repeatBy,
+  } = task;
 
   if (isCompleted) {
     navigate(-1);
@@ -89,6 +98,14 @@ export default function Pomodoro() {
             </span>
             <p>{description}</p>
           </div>
+          {isRepeating && (
+            <div className="flex gap-2 items-center justify-end text-sm text-text-sub ">
+              <Repeat className="w-4 h-4" />
+              <p className="uppercase tracking-widest text-[12px] pr-4">
+                {repeatBy}
+              </p>
+            </div>
+          )}
           <footer className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate  rounded-b-md flex justify-between items-center">
             <div className="flex items-center gap-2 text-text-sub">
               <Clock className="w-4 h-4" />
