@@ -37,32 +37,143 @@
 
   /* --- 1. Emerald Forest Theme --- */
   .theme-emerald {
+    --color-canvas: var(--color-emerald-50); 
+    --color-surface: var(--color-white); 
+    --color-surface-muted: var(--color-emerald-100);
     --color-brand: var(--color-emerald-600);
     --color-accent: var(--color-teal-500);
   }
 
   /* --- 2. Rose Gold Theme --- */
   .theme-rose {
+    --color-canvas: var(--color-rose-50); 
+    --color-surface: var(--color-white); 
+    --color-surface-muted: var(--color-rose-100);
     --color-brand: var(--color-rose-500);
     --color-accent: var(--color-pink-400);
   }
 
   /* --- 3. Ocean Blue Theme --- */
   .theme-ocean {
+    --color-canvas: var(--color-blue-50); 
+    --color-surface: var(--color-white); 
+    --color-surface-muted: var(--color-blue-100);
     --color-brand: var(--color-blue-600);
     --color-accent: var(--color-sky-500);
   }
 
   /* --- 4. Amber Sunset Theme --- */
   .theme-amber {
+    --color-canvas: var(--color-amber-50); 
+    --color-surface: var(--color-white); 
+    --color-surface-muted: var(--color-amber-100);
     --color-brand: var(--color-amber-600);
     --color-accent: var(--color-orange-500);
   }
 
   /* --- 5. Slate Professional Theme --- */
   .theme-slate {
+    --color-canvas: var(--color-slate-100); 
+    --color-surface: var(--color-white); 
+    --color-surface-muted: var(--color-slate-200);
     --color-brand: var(--color-slate-500);
     --color-accent: var(--color-slate-400);
+  }
+
+  .theme-midnight { 
+    --color-canvas: #0f172a; 
+    --color-surface: #1e293b; 
+    --color-surface-muted: #334155; 
+    --color-brand: #6366f1; 
+    --color-accent: #8588f3; 
+    --color-text-main: var(--color-white);     
+    --color-text-sub: var(--color-slate-300); 
+  }
+
+  .theme-sandstone { 
+    --color-canvas: #fdf6e3; 
+    --color-surface: #fbf1c7; 
+    --color-surface-muted: #ebdbb2; 
+    --color-brand: #d65d0e; 
+    --color-accent: #e76e1f; 
+  }
+
+  .theme-vaporwave {
+    --color-canvas: color-mix(in srgb, #240046, #000 20%); 
+    --color-surface: color-mix(in srgb, #3c096c, #000 5%);
+    --color-surface-muted:  color-mix(in srgb, #5a189a, #000 20%);
+    --color-brand:  color-mix(in srgb, #ff00ea, #000 5%); 
+    --color-accent: color-mix(in srgb, #00f2ff, #fff 70%); 
+    --color-text-main:  color-mix(in srgb, #e0aaff, #fff 70%);
+    --color-text-inverse: black
+
+  }
+
+  /* --- Volcanic Theme (High-Contrast Red/Black) --- */
+  .theme-volcanic { 
+    --color-canvas: #1c1917; 
+    --color-surface: #292524; 
+    --color-surface-muted: #44403c; 
+    --color-brand: #ef4444; 
+    --color-accent: #f97316;
+    --color-text-main: var(--color-white);     
+    --color-text-sub: var(--color-slate-300);  
+  }
+
+  /* --- Lavender Theme (Soft Purple) --- */
+  .theme-lavender { 
+    --color-canvas: #faf5ff; 
+    --color-surface: #ffffff; 
+    --color-surface-muted: #f3e8ff; 
+    --color-brand: #7e22ce; 
+    --color-accent: #9333ea; 
+  }
+
+  /* --- Arctic Theme (Cool Cyan) --- */
+  .theme-arctic { 
+    --color-canvas: #ecfeff; 
+    --color-surface: #ffffff; 
+    --color-surface-muted: #cffafe; 
+    --color-brand: #0891b2; 
+    --color-accent: #06b6d4; 
+  }
+
+  .theme-radioactive {
+    --color-canvas: #000000;
+    --color-surface: #1a1a1a;
+    --color-surface-muted: #333333;
+    --color-brand: #05bb00; /* Radioactive Green */
+    --color-accent: #d4d400; /* Toxic Yellow */
+    --color-text-main: #c0f4b3;
+    --color-text-inverse: black;
+    --color-text-sub: #ccc;  
+
+
+  }
+
+  /* --- 4. Cosmic Void (Stellar purple/blue gradients) --- */
+  .theme-cosmic {
+    --color-canvas: #0f172a;
+    --color-surface: #1e1b4b;
+    --color-surface-muted: #312e81;
+    --color-brand: #e68d0c; /* Golden Star */
+    --color-accent: #ec4899; /* Nebula Pink */
+    --color-text-main: #f8fafc;
+    --color-text-inverse: black
+
+    
+  }
+
+  /* --- Midnight Gold (Luxury/Premium) --- */
+  .theme-midnight-gold { 
+    --color-canvas: #0a0a0a;       /* Deep Obsidian */
+    --color-surface: #171717;      /* Matte Charcoal */
+    --color-surface-muted: #262626; /* Refined dark grey */
+    --color-brand: #d4af37;        /* Metallic Champagne Gold */
+    --color-accent: #ebc23c;       /* Soft Highlight Gold */
+    --color-text-main: #fff;  
+    --color-text-sub: #ccc;  
+    --color-text-inverse: black
   }
 
   .dark {
@@ -196,7 +307,7 @@
 }
 
 /* --- Dynamic Heatmap Scaling --- */
-.react-calendar-heatmap .color-empty { fill: var(--color-surface-muted); }
+.react-calendar-heatmap .color-empty { fill: var(--color-surface-muted) !important; }
 .react-calendar-heatmap .color-scale-1 { fill: color-mix(in srgb, var(--color-brand), transparent 70%); }
 .react-calendar-heatmap .color-scale-2 { fill: color-mix(in srgb, var(--color-brand), transparent 45%); }
 .react-calendar-heatmap .color-scale-3 { fill: var(--color-brand); }

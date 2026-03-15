@@ -9,6 +9,15 @@ const THEMES = [
   { id: "theme-ocean", name: "Ocean Blue" },
   { id: "theme-amber", name: "Amber Sunset" },
   { id: "theme-slate", name: "Professional Slate" },
+  { id: "theme-lavender", name: "Soft Lavender" },
+  { id: "theme-arctic", name: "Arctic Cyan" },
+  { id: "theme-midnight", name: "Midnight Blue" },
+  { id: "theme-sandstone", name: "Sandstone" },
+  { id: "theme-vaporwave", name: "Vaporwave" },
+  { id: "theme-volcanic", name: "Volcanic Dark" },
+  { id: "theme-radioactive", name: "Radioactive" },
+  { id: "theme-cosmic", name: "Cosmic" },
+  { id: "theme-midnight-gold", name: "Midnight Gold" },
 ];
 
 export default function SettingsPage() {
