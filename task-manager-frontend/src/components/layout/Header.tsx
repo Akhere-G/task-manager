@@ -1,24 +1,33 @@
-import { Menu, Moon, Sun } from "lucide-react";
+import { Menu, Moon, Sun, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+interface Link {
+  path: string;
+  title: string;
+}
+
 type Props = {
-  links: { path: string; title: string }[];
+  links: Link[];
+  accountLinks: Link[];
   currentPath: string;
   isAuthenticated: boolean;
   logout: () => void;
+  darkMode: boolean;
+  toggleDarkMode: () => void;
 };
 
 export default function Header({
   links,
+  accountLinks,
   currentPath,
   isAuthenticated,
   logout,
+  darkMode,
+  toggleDarkMode,
 }: Props) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(
-    () => localStorage.getItem("theme") === "dark",
-  );
+  const [accountPopupOpen, setAccountPopupOpen] = useState(false);
 
   useEffect(() => {
     if (darkMode) {
@@ -32,7 +41,23 @@ export default function Header({
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
-  const toggleDarkMode = () => setDarkMode((prev) => !prev);
+
+  const StyleLink = ({ title, path }: Link) => {
+    const classes =
+      path.split("?")[0] === currentPath
+        ? "bg-brand/10 text-accent md:bg-transparent"
+        : "text-text-main hover:bg-surface-muted md:hover:bg-transparent hover:text-accent";
+    return (
+      <li
+        key={path}
+        className={`w-full p-2 rounded  md:w-fit md:p-0 ${classes}`}
+      >
+        <Link to={path} className={`font-medium transition-colors `}>
+          {title}
+        </Link>
+      </li>
+    );
+  };
 
   return (
     <>
@@ -64,20 +89,8 @@ export default function Header({
         </div>
         <nav className="p-4 flex flex-col">
           <ul className="flex flex-col gap-2">
-            {links.map(({ title, path }) => (
-              <li key={path}>
-                <Link
-                  to={path}
-                  onClick={closeSidebar}
-                  className={`block p-3 rounded-md font-medium transition-colors ${
-                    currentPath === path
-                      ? "bg-brand/10 text-brand"
-                      : "text-text-main hover:bg-surface-muted"
-                  }`}
-                >
-                  {title}
-                </Link>
-              </li>
+            {[...links, ...accountLinks].map((link) => (
+              <StyleLink key={link.path} {...link} />
             ))}
           </ul>
           <div className="flex gap-4 mt-4">
@@ -128,40 +141,41 @@ export default function Header({
 
           {/* Desktop Navigation (Hidden on Mobile) */}
           <nav className="hidden md:flex items-center gap-8">
-            <ul className="flex gap-6">
-              {links.map(({ title, path }) => (
-                <li key={path}>
-                  <Link
-                    to={path}
-                    className={`font-medium transition-colors ${
-                      currentPath === path
-                        ? "text-brand"
-                        : "text-text-sub hover:text-brand"
-                    }`}
-                  >
-                    {title}
-                  </Link>
-                </li>
+            <ul className="flex gap-6 list-none">
+              {links.map((link) => (
+                <StyleLink key={link.path} {...link} />
               ))}
             </ul>
-            <div className="flex gap-2">
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
-                aria-label="Toggle dark mode"
-              >
-                {darkMode ? (
-                  <Sun className="w-5 h-5" />
-                ) : (
-                  <Moon className="w-5 h-5" />
-                )}
-              </button>
-              {isAuthenticated && (
-                <button className="btn-primary" onClick={logout}>
-                  Logout
-                </button>
+            <button
+              onClick={() => setAccountPopupOpen(!accountPopupOpen)}
+              className="bg-brand relative rounded-full w-8 h-8 flex items-center justify-center"
+            >
+              <User className="fill-text-inverse w-6 h-6" />
+              {accountPopupOpen && isAuthenticated && (
+                <div className="flex gap-2 absolute card border border-slate-200 dark:border-slate-600 right-2 top-8 flex-col items-center">
+                  <button
+                    onClick={toggleDarkMode}
+                    className="p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
+                    aria-label="Toggle dark mode"
+                  >
+                    {darkMode ? (
+                      <Sun className="w-5 h-5" />
+                    ) : (
+                      <Moon className="w-5 h-5" />
+                    )}
+                  </button>
+
+                  <ul>
+                    {accountLinks.map((link) => (
+                      <StyleLink key={link.path} {...link} />
+                    ))}
+                  </ul>
+                  <button className="btn-primary" onClick={logout}>
+                    Logout
+                  </button>
+                </div>
               )}
-            </div>
+            </button>
           </nav>
         </div>
       </header>

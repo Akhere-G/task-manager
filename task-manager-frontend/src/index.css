@@ -28,9 +28,43 @@
   --color-disabled-bg: var(--color-slate-200);
   --color-disabled-text: var(--color-slate-400);
 }
+
 @variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  .react-calendar-heatmap .color-empty { fill: #ebedf0; }
+
+
+  /* --- 1. Emerald Forest Theme --- */
+  .theme-emerald {
+    --color-brand: var(--color-emerald-600);
+    --color-accent: var(--color-teal-500);
+  }
+
+  /* --- 2. Rose Gold Theme --- */
+  .theme-rose {
+    --color-brand: var(--color-rose-500);
+    --color-accent: var(--color-pink-400);
+  }
+
+  /* --- 3. Ocean Blue Theme --- */
+  .theme-ocean {
+    --color-brand: var(--color-blue-600);
+    --color-accent: var(--color-sky-500);
+  }
+
+  /* --- 4. Amber Sunset Theme --- */
+  .theme-amber {
+    --color-brand: var(--color-amber-600);
+    --color-accent: var(--color-orange-500);
+  }
+
+  /* --- 5. Slate Professional Theme --- */
+  .theme-slate {
+    --color-brand: var(--color-slate-500);
+    --color-accent: var(--color-slate-400);
+  }
+
   .dark {
     --color-canvas: var(--color-slate-950);
     --color-surface: var(--color-slate-900);
@@ -40,9 +74,6 @@
     --color-text-main: var(--color-white);      /* Was slate-100 */
     --color-text-sub: var(--color-slate-300);   /* Was slate-400 */
     
-    --color-brand: var(--color-indigo-500);     
-    --color-brand-hover: var(--color-indigo-300);
-    --color-accent: var(--color-violet-400);
     --color-link: var(--color-blue-400);
     --color-link-hover: var(--color-blue-300);
     
@@ -53,6 +84,8 @@
 
     --color-disabled-bg: var(--color-slate-800);
     --color-disabled-text: var(--color-slate-500); /* Was slate-600 */
+
+    
   }
 
   body {
@@ -122,11 +155,6 @@
   }
 }
 
-.react-calendar-heatmap .color-empty { fill: #ebedf0; }
-.react-calendar-heatmap .color-scale-1 { fill: #c7d2fe; }
-.react-calendar-heatmap .color-scale-2 { fill: #818cf8; }
-.react-calendar-heatmap .color-scale-3 { fill: #4f46e5; }
-.react-calendar-heatmap .color-scale-4 { fill: #3730a3; }
 
 .react-calendar-heatmap {
   max-height: 200px;
@@ -161,24 +189,21 @@
   transition: filter 0.2s ease;
 }
 
-/* Dark Mode Heatmap - Indigo Glow Theme */
+
+
 .dark .react-calendar-heatmap .color-empty { 
-  fill: #1e293b; /* Slate-800: Deep background for empty days */
+  fill: #1e293b; 
 }
 
-.dark .react-calendar-heatmap .color-scale-1 { 
-  fill: #312e81; /* Indigo-900: Subtle activity */
-}
+/* --- Dynamic Heatmap Scaling --- */
+.react-calendar-heatmap .color-empty { fill: var(--color-surface-muted); }
+.react-calendar-heatmap .color-scale-1 { fill: color-mix(in srgb, var(--color-brand), transparent 70%); }
+.react-calendar-heatmap .color-scale-2 { fill: color-mix(in srgb, var(--color-brand), transparent 45%); }
+.react-calendar-heatmap .color-scale-3 { fill: var(--color-brand); }
+.react-calendar-heatmap .color-scale-4 { fill: color-mix(in srgb, var(--color-brand), #000 20%); }
 
-.dark .react-calendar-heatmap .color-scale-2 { 
-  fill: #4338ca; /* Indigo-700: Moderate activity */
-}
-
-.dark .react-calendar-heatmap .color-scale-3 { 
-  fill: #6366f1; /* Indigo-500: High activity */
-}
-
-.dark .react-calendar-heatmap .color-scale-4 { 
-  fill: #a5b4fc; /* Indigo-300: Peak activity - bright for contrast */
-}
-
+/* Ensure dark mode high-contrast visibility */
+.dark .react-calendar-heatmap .color-scale-1 { fill: color-mix(in srgb, var(--color-brand), #fff 10%); }
+.dark .react-calendar-heatmap .color-scale-2 { fill: color-mix(in srgb, var(--color-brand), #fff 25%); }
+.dark .react-calendar-heatmap .color-scale-3 { fill: var(--color-brand); }
+.dark .react-calendar-heatmap .color-scale-4 { fill: color-mix(in srgb, var(--color-brand), #000 30%); }

@@ -8,5 +8,6 @@ export { default as CalendarView } from "./CalendarView";
 export { default as Register } from "./Register";
 export { default as Login } from "./Login";
 export { default as DecomposeTask } from "./DecomposeTask";
+export { default as Settings } from "./Settings";
 export { default as RequestPasswordReset } from "./RequestPasswordReset";
 export { default as ResetPassword } from "./ResetPassword";

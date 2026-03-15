@@ -12,6 +12,7 @@ import {
   DecomposeTask,
   RequestPasswordReset,
   ResetPassword,
+  Settings,
 } from "./pages";
 import {
   ErrorBoundary,
@@ -20,9 +21,11 @@ import {
   ProtectedRoute,
 } from "./components/layout";
 import { useAuthContext } from "./context/AuthContext";
+import { useTheme } from "./features/users/ThemeContext";
 
 function App() {
   const { isAuthenticated, logout } = useAuthContext();
+  const { darkMode, toggleDarkMode } = useTheme();
   const location = useLocation();
 
   const protectedRoutes = [
@@ -52,13 +55,18 @@ function App() {
     navLinks.unshift(...loggedOutRoutes);
   }
 
+  const accountLinks = [{ title: "Settings", path: "/settings" }];
+
   return (
     <div className="min-h-screen bg-canvas flex flex-col">
       <Header
+        accountLinks={accountLinks}
         links={navLinks}
         currentPath={location.pathname}
         logout={logout}
         isAuthenticated={isAuthenticated}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
       />
       <main className="grow max-w-7xl mx-auto w-full px-3 py-3 md:px-12 md:py-12">
         <ErrorBoundary onRetry={() => window.location.reload()}>
@@ -108,6 +116,14 @@ function App() {
               element={
                 <ProtectedRoute redirect={!isAuthenticated}>
                   <DecomposeTask />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute redirect={!isAuthenticated}>
+                  <Settings />
                 </ProtectedRoute>
               }
             />
