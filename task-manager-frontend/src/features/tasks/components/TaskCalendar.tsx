@@ -284,7 +284,7 @@ export default function TaskCalendar({
                 : `!border-none !shadow-sm !rounded-md !px-1 !py-1 !text-xs !font-medium transition-all ${
                     (event.resource as Task).isCompleted
                       ? "!bg-slate-200 !text-slate-500 !line-through"
-                      : "!bg-brand !text-white"
+                      : "!bg-brand !text-text-inverse"
                   }`,
           })}
         />

@@ -104,7 +104,7 @@ function TaskCard({
         </span>
       </header>
 
-      <div className="p-4 pb-0 grow space-y-2 flex flex-col">
+      <div className="p-4  grow space-y-2 flex flex-col">
         <div className="flex justify-between items-start">
           <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
             {category?.replace("-", " ")}
@@ -119,7 +119,7 @@ function TaskCard({
         {isLongDesc && !fullDescription && (
           <button
             aria-label={showMore ? "Show More" : "Show Less"}
-            className="p-1.5 rounded-md hover:bg-surface-muted transition-colors group cursor-pointer self-end"
+            className="rounded-md hover:bg-surface-muted transition-colors group cursor-pointer self-end"
             onClick={() => setShowMore((prev) => !prev)}
           >
             <ShowMoreIcon
