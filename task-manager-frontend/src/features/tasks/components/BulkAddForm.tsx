@@ -23,21 +23,45 @@ export default function BulkAddForm() {
   const triggerUpload = () => fileInputRef.current?.click();
 
   const downloadTemplate = (withIsCompleted: boolean = false) => {
-    const headers = ["Title", "Category", "Description", "Start At", "End At"];
+    const headers = [
+      "Title",
+      "Category",
+      "Description",
+      "Start At",
+      "End At",
+      "Repeat By",
+      "Repeat Until",
+    ];
     const sampleData = [
-      "Prepare Report",
-      "work",
-      "Weekly sync prep",
-      "2026-03-01 10:00",
-      "2026-03-01 14:00",
+      [
+        "Go gym",
+        "health",
+        "Leg day",
+        "2026-04-01 18:00",
+        "2026-04-01 20:00",
+        "",
+        "",
+      ],
+      [
+        "Prepare Report",
+        "work",
+        "Weekly sync prep",
+        "2026-03-01 10:00",
+        "2026-03-01 14:00",
+        "daily",
+        "2026-09-01",
+      ],
     ];
 
     if (withIsCompleted) {
       headers.push("is_completed, completed_at");
-      sampleData.push("true", "2025-07-12 16:30:00");
+      sampleData[0].push("true", "2025-07-12 16:30:00");
+      sampleData[1].push("false", "");
     }
 
-    const csvContent = [headers, sampleData].map((e) => e.join(",")).join("\n");
+    const csvContent = [headers, ...sampleData]
+      .map((e) => e.join(","))
+      .join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
