@@ -283,12 +283,9 @@
   @apply text-accent font-bold
 } 
 
-::-webkit-calendar-picker-indicator {
+.dark ::-webkit-calendar-picker-indicator {
   filter: invert(1)
-            brightness(50%)
-            sepia(100%)
-            saturate(10000%)
-            hue-rotate(260deg)
+            brightness(100%)
 }
 
 #heatmap-tooltip {

@@ -85,7 +85,7 @@ export default function Pomodoro() {
       </header>
       <div className="flex gap-6 flex-col lg:flex-row">
         <div className="card overflow-hidden lg:flex-1/2 p-0 flex flex-col gap-2">
-          <header className="p-4 flex justify-between items-center bg-brand text-white">
+          <header className="p-4 flex justify-between items-center bg-brand text-text-main">
             <h2 className="flex gap-2 font-semibold truncate text-text-inverse ">
               <span className="truncate">{title}</span>
             </h2>
@@ -128,7 +128,12 @@ export default function Pomodoro() {
               key={sessionsCompleted}
               duration={POMODORO_DURATION}
               isPlaying={isPlaying}
-              colors={["#615fff", "#615fff"] as [`#${string}`, `#${string}`]}
+              colors={
+                ["var(--color-brand)", "var(--color-accent)"] as unknown as [
+                  `#${string}`,
+                  `#${string}`,
+                ]
+              }
               onComplete={handleSessionComplete}
               colorsTime={[0, 0]}
             >
