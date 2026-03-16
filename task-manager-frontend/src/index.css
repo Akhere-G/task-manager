@@ -53,6 +53,14 @@
     --color-accent: var(--color-pink-400);
   }
 
+  .theme-bubblegum {
+    --color-canvas: var(--color-pink-50); 
+    --color-surface: var(--color-white); 
+    --color-surface-muted: var(--color-pink-100);
+    --color-brand: var(--color-pink-500);
+    --color-accent: var(--color-pink-400);
+  }
+
   /* --- 3. Ocean Blue Theme --- */
   .theme-ocean {
     --color-canvas: var(--color-blue-50); 
@@ -136,6 +144,22 @@
     --color-surface-muted: #cffafe; 
     --color-brand: #0891b2; 
     --color-accent: #06b6d4; 
+  }
+
+  .theme-chocolate-pistachio {
+    --color-canvas: #ddead7; 
+    --color-surface: #ffffff; 
+    --color-surface-muted: #f2ede4;
+    --color-brand: #6c390a;
+    --color-accent: #8c6a51;
+  }
+
+  .theme-timber-dark {
+  --color-canvas: #f5f1e8; 
+    --color-surface: #faf9f6; 
+    --color-surface-muted: #e9e2d5;
+    --color-brand: #ab825b;
+    --color-accent: #c3a380;
   }
 
   .theme-radioactive {
@@ -304,7 +328,8 @@
 }
 
 /* --- Dynamic Heatmap Scaling --- */
-.react-calendar-heatmap .color-empty { fill: var(--color-surface-muted) !important; }
+.react-calendar-heatmap .color-empty { fill: color-mix(in srgb, var(--color-surface-muted), #ddd 50%) !important; }
+.dark .react-calendar-heatmap .color-empty { fill:  var(--color-surface-muted) !important; }
 .react-calendar-heatmap .color-scale-1 { fill: color-mix(in srgb, var(--color-brand), transparent 70%); }
 .react-calendar-heatmap .color-scale-2 { fill: color-mix(in srgb, var(--color-brand), transparent 45%); }
 .react-calendar-heatmap .color-scale-3 { fill: var(--color-brand); }
