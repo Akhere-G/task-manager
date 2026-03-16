@@ -4,13 +4,16 @@ import { useTheme } from "../features/users/ThemeContext";
 
 const THEMES = [
   { id: "", name: "Default (Indigo)" },
-  { id: "theme-emerald", name: "Emerald Forest" },
-  { id: "theme-rose", name: "Rose Gold" },
-  { id: "theme-ocean", name: "Ocean Blue" },
-  { id: "theme-amber", name: "Amber Sunset" },
-  { id: "theme-slate", name: "Professional Slate" },
   { id: "theme-lavender", name: "Soft Lavender" },
+  { id: "theme-ocean", name: "Ocean Blue" },
   { id: "theme-arctic", name: "Arctic Cyan" },
+  { id: "theme-emerald", name: "Emerald Forest" },
+  { id: "theme-amber", name: "Amber Sunset" },
+  { id: "theme-rose", name: "Rose Gold" },
+  { id: "theme-bubblegum", name: "Bubblegum Pink" },
+  { id: "theme-chocolate-pistachio", name: "Cocoa Pistachio" },
+  { id: "theme-timber-dark", name: "Timber" },
+  { id: "theme-slate", name: "Professional Slate" },
   { id: "theme-midnight", name: "Midnight Blue" },
   { id: "theme-sandstone", name: "Sandstone" },
   { id: "theme-vaporwave", name: "Vaporwave" },
@@ -61,12 +64,12 @@ export default function SettingsPage() {
           icon={<Palette className="text-brand" />}
           title="Theme Selection"
         >
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
             {THEMES.map((t) => (
               <button
                 key={t.name}
                 onClick={() => setTheme(t.id)}
-                className={`p-3 rounded-lg border text-sm transition-all cursor-pointer ${
+                className={`py-2 rounded-lg border text-sm transition-all cursor-pointer ${
                   theme === t.id
                     ? "border-brand bg-brand/10 font-bold text-brand"
                     : "border-slate-200 hover:border-brand/50 dark:border-slate-700"
