@@ -114,7 +114,13 @@ export const useTasks = ({
   const result = useQuery({
     queryKey: [
       "tasks",
-      { ...filters, search: deferredSearch, page: currentPage, perPage },
+      {
+        ...filters,
+        search: deferredSearch,
+        page: currentPage,
+        currentDate: format(filters.currentDate, "M"),
+        perPage,
+      },
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
