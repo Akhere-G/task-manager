@@ -131,10 +131,6 @@ def edit_task(task_id):
     data = request.json
     errors = validate_task(data, True)
 
-    if not data.get("isRepeating"):
-        data["repeatBy"] = None
-        data["repeatUntil"] = None
-
     if errors:
         return jsonify({"errors": errors}), 400
 
