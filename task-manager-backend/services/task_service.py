@@ -1,11 +1,16 @@
 from db import get_db_connection
 from datetime import timedelta, datetime, date
 from dateutil.relativedelta import relativedelta
-import calendar
 
 
 def _build_task_filters(
-    user_id, category, search, is_completed, start_date, end_date, duration
+    user_id,
+    category=None,
+    search=None,
+    is_completed=None,
+    start_date=None,
+    end_date=None,
+    duration=None,
 ):
     """Helper to build query strings and parameters dynamically."""
     params = [user_id]
@@ -98,24 +103,19 @@ def get_all_tasks(
         tasks = cursor.fetchall()
 
         if project_repeating:
-            ref_date = (
-                datetime.strptime(current_date, "%Y-%m-%d")
-                if current_date
-                else datetime.now()
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+
+            base_filters, params = _build_task_filters(
+                user_id=user_id,
+                category=category,
+                search=search,
+                is_completed=is_completed,
+                duration=duration,
             )
 
-            view_start = ref_date.replace(
-                day=1, hour=0, minute=0, second=0
-            ) - timedelta(days=6)
-
-            _, last_day = calendar.monthrange(ref_date.year, ref_date.month)
-
-            view_end = ref_date.replace(
-                day=last_day, hour=23, minute=59, second=59
-            ) + timedelta(days=6)
-
             tasks = with_repeating(
-                tasks, view_start, view_end, user_id, cursor, base_filters, params
+                tasks, start, end, user_id, cursor, base_filters, params
             )
 
             total_count = len(tasks)
@@ -187,8 +187,9 @@ def with_repeating(
                 break
 
         # Now generate all instances that fall within the view_end
-        instance_start = update_date(instance_start, task["repeat_by"])
-        instance_end = update_date(instance_end, task["repeat_by"])
+        if task["start_at"] == instance_start:
+            instance_start = update_date(instance_start, task["repeat_by"])
+            instance_end = update_date(instance_end, task["repeat_by"])
 
         while instance_start <= view_end:
             # Check the repeat_until limit again
@@ -203,6 +204,7 @@ def with_repeating(
                     "end_at": instance_end,
                     "is_ghost": True,
                     "id": f"ghost_{task['id']}_{instance_start.strftime('%Y%m%d')}",
+                    "series_id": task["id"],
                 }
             )
             tasks.append(ghost_task)
@@ -401,17 +403,23 @@ def update_task(user_id, task_id, data):
                 updated_data["repeat_until"], "%Y-%m-%d"
             ).date()
 
-        is_within_limit = (
-            not repeat_until_val or repeat_until_val > datetime.now().date()
-        )
+        if updated_data["is_repeating"]:
+            start_at = updated_data["start_at"]
+            if isinstance(start_at, str):
+                start_at = datetime.strptime(start_at, "%Y-%m-%d %H:%M")
 
-        if (
-            updated_data["is_completed"]
-            and not task["is_completed"]
-            and updated_data["is_repeating"]
-            and is_within_limit
-        ):
-            _handle_repeat_task(cursor, user_id, task)
+            next_start = update_date(start_at, updated_data["repeat_by"])
+            if isinstance(repeat_until_val, date):
+                repeat_until_val = datetime.combine(
+                    repeat_until_val, datetime.max.time()
+                )
+            is_within_limit = not repeat_until_val or repeat_until_val >= next_start
+            if (
+                updated_data["is_completed"]
+                and not task["is_completed"]
+                and is_within_limit
+            ):
+                _handle_repeat_task(cursor, user_id, task)
 
         conn.commit()
         return {**updated_data, "id": task_id, "created_at": task["created_at"]}
