@@ -297,9 +297,9 @@ def create_tasks_from_list(user_id, tasks):
         sql = """
             INSERT INTO tasks (
                 title, description, category, start_at, end_at, 
-                user_id, is_completed, completed_at, is_repeating, repeat_by, repeat_until
+                user_id, is_completed, completed_at, is_repeating, repeat_by, repeat_until, created_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
         data = [
@@ -315,6 +315,7 @@ def create_tasks_from_list(user_id, tasks):
                 1 if t.get("repeatBy") else 0,
                 t.get("repeatBy"),
                 t.get("repeatUntil"),
+                t.get("createdAt") or date.today(),
             )
             for t in tasks
         ]
@@ -435,8 +436,8 @@ def update_task(user_id, task_id, data):
 def _handle_repeat_task(cursor, user_id, original_task):
     cursor.execute(
         """INSERT INTO tasks (title, description, category, start_at, end_at, 
-           is_repeating, user_id, series_id, is_completed, created_at) 
-           VALUES (%s, %s, %s, %s, %s, 0, %s, %s, 1, %s)""",
+           is_repeating, user_id, series_id, is_completed, completed_at, created_at) 
+           VALUES (%s, %s, %s, %s, %s, 0, %s, %s, 1, %s, %s)""",
         (
             original_task["title"],
             original_task["description"],
@@ -445,6 +446,7 @@ def _handle_repeat_task(cursor, user_id, original_task):
             original_task["end_at"],
             user_id,
             original_task["id"],
+            original_task["completed_at"] or date.today(),
             original_task["created_at"],
         ),
     )
@@ -454,7 +456,7 @@ def _handle_repeat_task(cursor, user_id, original_task):
 
     cursor.execute(
         """UPDATE tasks 
-           SET start_at = %s, end_at = %s, is_completed = 0, series_id = id, created_at = %s 
+           SET start_at = %s, end_at = %s, is_completed = 0, completed_at = NULL, series_id = id, created_at = %s 
            WHERE id = %s""",
         (next_start, next_end, datetime.now(), original_task["id"]),
     )
