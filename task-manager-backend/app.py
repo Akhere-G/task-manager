@@ -26,6 +26,8 @@ app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
 
 app.config["JWT_COOKIE_CSRF_PROTECT"] = False
 
+app.config["JWT_COOKIE_DOMAIN"] = None
+
 if app.config["JWT_COOKIE_SECURE"]:
     app.config["JWT_COOKIE_SAMESITE"] = "None"
 else:
@@ -39,7 +41,8 @@ CORS(
         r"/*": {
             "origins": [frontend_url, "http://localhost:5173"],
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
+            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+            "expose_headers": ["Set-Cookie"],
         }
     },
     supports_credentials=True,
