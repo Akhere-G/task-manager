@@ -1,55 +1,9 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { User, Shield, Moon, Save, Palette } from "lucide-react";
 import { useTheme } from "../features/users/ThemeContext";
 
-const THEMES = [
-  { id: "", name: "Default (Indigo)" },
-  { id: "theme-lavender", name: "Soft Lavender" },
-  { id: "theme-ocean", name: "Ocean Blue" },
-  { id: "theme-arctic", name: "Arctic Cyan" },
-  { id: "theme-emerald", name: "Emerald Forest" },
-  { id: "theme-amber", name: "Amber Sunset" },
-  { id: "theme-rose", name: "Rose Gold" },
-  { id: "theme-bubblegum", name: "Bubblegum Pink" },
-  { id: "theme-chocolate-pistachio", name: "Cocoa Pistachio" },
-  { id: "theme-timber-dark", name: "Timber" },
-  { id: "theme-slate", name: "Professional Slate" },
-  { id: "theme-midnight", name: "Midnight Blue" },
-  { id: "theme-sandstone", name: "Sandstone" },
-  { id: "theme-vaporwave", name: "Vaporwave" },
-  { id: "theme-volcanic", name: "Volcanic Dark" },
-  { id: "theme-radioactive", name: "Radioactive" },
-  { id: "theme-cosmic", name: "Cosmic" },
-  { id: "theme-midnight-gold", name: "Midnight Gold" },
-];
-
 export default function SettingsPage() {
-  const { darkMode, theme, toggleDarkMode, setTheme } = useTheme();
-
-  useEffect(() => {
-    // Handle Dark Mode
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-
-    // Handle Colour Themes (removing all potential theme classes first)
-    THEMES.forEach((t) => {
-      if (t.id) {
-        document.documentElement.classList.remove(t.id);
-      }
-    });
-
-    // Apply the selected theme
-    if (theme) {
-      document.documentElement.classList.add(theme);
-    }
-
-    localStorage.setItem("app-theme", theme);
-  }, [theme, darkMode]);
+  const { darkMode, theme, toggleDarkMode, setTheme, THEMES } = useTheme();
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -80,7 +34,6 @@ export default function SettingsPage() {
             ))}
           </div>
         </SettingsCard>
-
         {/* Preferences Section */}
         <SettingsCard icon={<Moon className="text-brand" />} title="Appearance">
           <div className="flex items-center justify-between">
@@ -114,8 +67,8 @@ function SettingsCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="card p-6 border border-slate-200 dark:border-slate-800 transition-colors duration-200">
-      <div className="flex items-center gap-3 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div className="card">
+      <div className="flex items-center gap-2 mb-4 border-b border-slate-500 dark:border-slate-400 pb-3">
         {icon}
         <h3 className="text-lg font-bold text-text-main">{title}</h3>
       </div>

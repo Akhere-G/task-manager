@@ -5,17 +5,30 @@ type ThemeContextType = {
   darkMode: boolean;
   setTheme: (theme: string) => void;
   toggleDarkMode: () => void;
+  THEMES: { id: string; name: string }[];
 };
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
 export const THEMES = [
   { id: "", name: "Default (Indigo)" },
-  { id: "theme-emerald", name: "Emerald Forest" },
-  { id: "theme-rose", name: "Rose Gold" },
+  { id: "theme-lavender", name: "Soft Lavender" },
   { id: "theme-ocean", name: "Ocean Blue" },
+  { id: "theme-arctic", name: "Arctic Cyan" },
+  { id: "theme-emerald", name: "Emerald Forest" },
   { id: "theme-amber", name: "Amber Sunset" },
+  { id: "theme-rose", name: "Rose Gold" },
+  { id: "theme-bubblegum", name: "Bubblegum Pink" },
+  { id: "theme-chocolate-pistachio", name: "Cocoa Pistachio" },
+  { id: "theme-timber-dark", name: "Timber" },
   { id: "theme-slate", name: "Professional Slate" },
+  { id: "theme-midnight", name: "Midnight Blue" },
+  { id: "theme-sandstone", name: "Sandstone" },
+  { id: "theme-vaporwave", name: "Vaporwave" },
+  { id: "theme-volcanic", name: "Volcanic Dark" },
+  { id: "theme-radioactive", name: "Radioactive" },
+  { id: "theme-cosmic", name: "Cosmic" },
+  { id: "theme-midnight-gold", name: "Midnight Gold" },
 ];
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -52,7 +65,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider
-      value={{ theme, darkMode, setTheme, toggleDarkMode }}
+      value={{ theme, darkMode, setTheme, toggleDarkMode, THEMES }}
     >
       {children}
     </ThemeContext.Provider>
