@@ -97,13 +97,13 @@ def initialise_database():
         """
         recurring_task_migration = """
         ALTER TABLE tasks
-        ADD COLUMN is_repeating BOOLEAN DEFAULT FALSE;
-        ALTER TABLE tasks
-        ADD COLUMN repeat_by ENUM ("daily", "weekly", "monthly","yearly");
+        ADD COLUMN series_id INT;
         ALTER TABLE tasks
         ADD COLUMN repeat_until DATE;
         ALTER TABLE tasks
-        ADD COLUMN series_id INT;
+        ADD COLUMN repeat_by ENUM ("daily", "weekly", "monthly","yearly");
+        ALTER TABLE tasks
+        ADD COLUMN is_repeating BOOLEAN DEFAULT FALSE;
         """
 
         series_id_migration = """
