@@ -17,7 +17,7 @@ WORKDIR /app
 
 # 5. Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-
+COPY ca.pem /app/ca.pem
 # 6. Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -27,8 +27,8 @@ COPY . .
 # 8. Create the start script
 # This script runs the database initialisation before starting Gunicorn
 RUN echo '#!/bin/sh\n\
-python init_db.py\n\
-gunicorn --bind 0.0.0.0:8080 app:app' > /app/start.sh
+    python init_db.py\n\
+    gunicorn --bind 0.0.0.0:8080 app:app' > /app/start.sh
 
 # 9. Make the start script executable
 RUN chmod +x /app/start.sh
