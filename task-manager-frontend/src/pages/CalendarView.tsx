@@ -14,6 +14,7 @@ const defaultFilters = {
   dueDate: "calendar_view",
   sortBy: "start_at",
   order: "asc",
+  currentDate: format(new Date(), "yyyy-MM-dd"),
 };
 
 export default function CalendarView() {
