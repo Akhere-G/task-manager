@@ -64,12 +64,6 @@ def initialise_database():
         END;
         """
 
-        series_id_migration = """
-        UPDATE tasks 
-        SET series_id = id 
-        WHERE series_id IS NULL;     
-        """
-
         daily_briefs_table = """
         CREATE TABLE IF NOT EXISTS daily_briefs (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -112,6 +106,12 @@ def initialise_database():
         ADD COLUMN series_id INT;
         """
 
+        series_id_migration = """
+        UPDATE tasks 
+        SET series_id = id 
+        WHERE series_id IS NULL;     
+        """
+
         cursor.execute(users_table)
         cursor.execute(tasks_table)
         cursor.execute(daily_briefs_table)
@@ -125,15 +125,15 @@ def initialise_database():
             pass
 
         try:
-            cursor.execute(series_id_migration)
-        except Exception as err:
-            print(f"Error: Could not complete series id migration {err}")
-            pass
-
-        try:
             cursor.execute(recurring_task_migration)
         except Exception as err:
             print(f"Error: Could not complete recurring migration {err}")
+            pass
+
+        try:
+            cursor.execute(series_id_migration)
+        except Exception as err:
+            print(f"Error: Could not complete series id migration {err}")
             pass
 
         try:
