@@ -48,11 +48,13 @@ export default function Header({
         ? "bg-brand/10 text-accent md:bg-transparent"
         : "text-text-main hover:bg-surface-muted md:hover:bg-transparent hover:text-accent";
     return (
-      <li
-        key={path}
-        className={`w-full p-2 rounded  md:w-fit md:p-0 ${classes}`}
-      >
-        <Link to={path} className={`font-medium transition-colors `}>
+      <li key={path} className="w-full">
+        <Link
+          to={path}
+          className={`font-medium transition-colors 
+            w-full p-2  rounded block md:w-max md:p-0 ${classes}
+          `}
+        >
           {title}
         </Link>
       </li>
