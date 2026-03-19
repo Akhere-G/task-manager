@@ -54,7 +54,7 @@ export default function BulkAddForm() {
     ];
 
     if (withIsCompleted) {
-      headers.push("is_completed, completed_at");
+      headers.push("Is Completed", "Completed At");
       sampleData[0].push("true", "2025-07-12 16:30:00");
       sampleData[1].push("false", "");
     }
@@ -63,12 +63,16 @@ export default function BulkAddForm() {
       .map((e) => e.join(","))
       .join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\ufeff", csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
     link.setAttribute("download", "tasks_template.csv");
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -137,6 +141,12 @@ export default function BulkAddForm() {
               task.repeatUntil ||
               task.repeat_until ||
               null,
+            createdAt:
+              task["Created At"] ||
+              task["Created at"] ||
+              task["created at"] ||
+              task.createdAt ||
+              task.created_at,
           }))
           .map((task) => ({
             ...task,
