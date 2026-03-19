@@ -13,6 +13,7 @@ export interface TaskFilters {
   dueDate: string;
   sortBy: string;
   order: string;
+  currentDate: string;
 }
 
 export interface PageDetails {
@@ -23,19 +24,12 @@ export interface PageDetails {
 
 interface UseTasksProps {
   perPage: number | null;
-  defaultFilters?: {
-    search: string;
-    category: string;
-    duration: string;
-    isCompleted: string;
-    dueDate: string;
-    sortBy: string;
-    order: string;
-  };
+  defaultFilters?: TaskFilters;
   projectRepeating?: boolean;
+  enabled?: boolean;
 }
 
-const DEFAULT_FILTERS = {
+const DEFAULT_FILTERS: TaskFilters = {
   search: "",
   category: "",
   duration: "",
@@ -43,6 +37,7 @@ const DEFAULT_FILTERS = {
   dueDate: "",
   sortBy: "start_at",
   order: "asc",
+  currentDate: format(new Date(), "yyyy-MM-dd"),
 };
 
 const apiParamMap: Record<string, string> = {
@@ -60,6 +55,7 @@ export const useTasks = ({
   perPage,
   defaultFilters = DEFAULT_FILTERS,
   projectRepeating = false,
+  enabled = true,
 }: UseTasksProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -86,16 +82,16 @@ export const useTasks = ({
 
   const filters = {
     search: searchInput,
-    category: searchParams.get("category") || "",
-    duration: searchParams.get("duration") || "",
-    isCompleted: searchParams.get("is_completed") || "false",
-    dueDate: searchParams.get("due_date") || "",
-    sortBy: searchParams.get("sort_by") || "start_at",
-    order: searchParams.get("order") || "asc",
-    startDate: searchParams.get("start_date") || "",
-    endDate: searchParams.get("end_date") || "",
+    category: searchParams.get("category") ?? defaultFilters.category,
+    duration: searchParams.get("duration") ?? defaultFilters.duration,
+    isCompleted: searchParams.get("is_completed") ?? defaultFilters.isCompleted,
+    dueDate: searchParams.get("due_date") ?? defaultFilters.dueDate,
+    sortBy: searchParams.get("sort_by") ?? defaultFilters.sortBy,
+    order: searchParams.get("order") ?? defaultFilters.order,
     currentDate:
-      searchParams.get("current_date") || format(new Date(), "yyyy-MM-dd"),
+      searchParams.get("current_date") ??
+      defaultFilters.currentDate ??
+      format(new Date(), "yyyy-MM-dd"),
   };
 
   function addDateParams(
@@ -155,6 +151,7 @@ export const useTasks = ({
     },
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5,
+    enabled,
   });
 
   const updateFilters = (name: string, value: string) => {

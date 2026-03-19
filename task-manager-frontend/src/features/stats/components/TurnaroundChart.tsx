@@ -36,6 +36,12 @@ export default function TurnaroundChart() {
     ? "var(--color-success)"
     : "var(--color-failure)";
 
+  const totalTasks = turnaround.reduce((acc, curr) => acc + curr.count, 0);
+
+  if (totalTasks === 0) {
+    return <EmptyState searchMessage="No tasks completed recently" />;
+  }
+
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
