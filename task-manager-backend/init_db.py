@@ -6,13 +6,18 @@ def initialise_database():
     conn = None
     try:
         db_name = os.getenv("DB_NAME", "task_db")
+        ca_path = os.path.join(os.getcwd(), "ca.pem")
 
         conn = mysql.connector.connect(
             host=os.getenv("DB_HOST"),
             user=os.getenv("DB_USER"),
             password=os.getenv("DB_PASSWORD"),
             port=int(os.getenv("DB_PORT", 3306)),
+            ssl_ca=ca_path,
+            ssl_verify_cert=True,
+            connection_timeout=30,
         )
+
         cursor = conn.cursor()
 
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
