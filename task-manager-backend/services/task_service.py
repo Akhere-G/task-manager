@@ -322,16 +322,15 @@ def create_tasks_from_list(user_id, tasks):
 
         cursor.executemany(sql, data)
 
-        start_id = cursor.lastrowid
         count = cursor.rowcount
 
         cursor.execute(
             """
             UPDATE tasks 
             SET series_id = id 
-            WHERE id BETWEEN %s AND %s
+            WHERE series_id IS NULL AND user_id = %s
         """,
-            (start_id, start_id + count - 1),
+            (user_id,),
         )
 
         conn.commit()
