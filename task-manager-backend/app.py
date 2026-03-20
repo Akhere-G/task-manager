@@ -1,5 +1,5 @@
 import os
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
 from routes.task_routes import task_bp
 from routes.stats_routes import stats_bp
@@ -74,6 +74,17 @@ def serve(path):
 @app.errorhandler(404)
 def not_found(e):
     return app.send_static_file("index.html")
+
+
+@app.errorhandler(500)
+def handle_500_error(e):
+    original = getattr(e, "original_exception", e)
+    return jsonify({"error": "Internal Server Error", "message": str(original)}), 500
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    return jsonify({"error": "Uncaught Exception", "message": str(e)}), 500
 
 
 if __name__ == "__main__":
