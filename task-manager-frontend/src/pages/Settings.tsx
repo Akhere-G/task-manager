@@ -51,9 +51,11 @@ export default function SettingsPage() {
       isCompleted: boolean,
     ) => {
       if (isCompleted && !completedAt) {
-        return format(new Date(endAt), "yyyy-MM-dd");
+        return format(new Date(endAt), "yyyy-MM-dd HH:mm");
       }
-      return completedAt ? format(new Date(completedAt), "yyyy-MM-dd") : "";
+      return completedAt
+        ? format(new Date(completedAt), "yyyy-MM-dd HH:mm")
+        : "";
     };
     const taskData = tasks.map(
       ({
