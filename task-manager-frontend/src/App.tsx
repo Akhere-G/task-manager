@@ -1,19 +1,5 @@
+import { lazy } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
-import {
-  About,
-  AddTask,
-  Contact,
-  Home,
-  Stats,
-  Pomodoro,
-  CalendarView,
-  Register,
-  Login,
-  DecomposeTask,
-  RequestPasswordReset,
-  ResetPassword,
-  Settings,
-} from "./pages";
 import {
   ErrorBoundary,
   Footer,
@@ -22,6 +8,20 @@ import {
 } from "./components/layout";
 import { useAuthContext } from "./context/AuthContext";
 import { useTheme } from "./features/users/ThemeContext";
+
+const Settings = lazy(() => import("./pages/Settings"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const RequestPasswordReset = lazy(() => import("./pages/RequestPasswordReset"));
+const DecomposeTask = lazy(() => import("./pages/DecomposeTask"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const CalendarView = lazy(() => import("./pages/CalendarView"));
+const Pomodoro = lazy(() => import("./pages/Pomodoro"));
+const Stats = lazy(() => import("./pages/Stats"));
+const Home = lazy(() => import("./pages/Home"));
+const Contact = lazy(() => import("./pages/Contact"));
+const AddTask = lazy(() => import("./pages/AddTask"));
+const About = lazy(() => import("./pages/About"));
 
 function App() {
   const { isAuthenticated, logout } = useAuthContext();

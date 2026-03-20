@@ -1,19 +1,45 @@
-import {
-  ActivityHeatMap,
-  BacklogHealthChart,
-  DeadlineProximityChart,
-  ChartCard,
-  HourlyProductivityChart,
-  OverdueDistributionChart,
-  ProductivityChart,
-  StatsOverview,
-  StatusByCategoryChart,
-  TimeSpentChart,
-  TurnaroundChart,
-  EstimationAccuracyChart,
-  WeekOverviewChart,
-  DistributionTrendChart,
-} from "../features/stats/components";
+import { lazy } from "react";
+
+const ActivityHeatMap = lazy(
+  () => import("../features/stats/components/ActivityHeatMap"),
+);
+const BacklogHealthChart = lazy(
+  () => import("../features/stats/components/BacklogHealthChart"),
+);
+const DeadlineProximityChart = lazy(
+  () => import("../features/stats/components/DeadlineProximityChart"),
+);
+const ChartCard = lazy(() => import("../features/stats/components/ChartCard"));
+const HourlyProductivityChart = lazy(
+  () => import("../features/stats/components/HourlyProductivityChart"),
+);
+const OverdueDistributionChart = lazy(
+  () => import("../features/stats/components/ProductivityChart"),
+);
+const ProductivityChart = lazy(
+  () => import("../features/stats/components/ProductivityChart"),
+);
+const StatsOverview = lazy(
+  () => import("../features/stats/components/StatsOverview"),
+);
+const StatusByCategoryChart = lazy(
+  () => import("../features/stats/components/StatusByCategoryChart"),
+);
+const TimeSpentChart = lazy(
+  () => import("../features/stats/components/TimeSpentChart"),
+);
+const TurnaroundChart = lazy(
+  () => import("../features/stats/components/TurnaroundChart"),
+);
+const EstimationAccuracyChart = lazy(
+  () => import("../features/stats/components/EstimationAccuracyChart"),
+);
+const WeekOverviewChart = lazy(
+  () => import("../features/stats/components/WeekOverviewChart"),
+);
+const DistributionTrendChart = lazy(
+  () => import("../features/stats/components/DistributionTrendChart"),
+);
 
 export default function Stats() {
   return (

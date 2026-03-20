@@ -9,6 +9,7 @@ db_backups/
 # --- Node / Frontend ---
 node_modules/
 dist/
+static/
 .eslintcache
 .stylelintcache
 *.log
