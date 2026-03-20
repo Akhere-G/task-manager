@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, make_response
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from routes.task_routes import task_bp
 from routes.stats_routes import stats_bp
@@ -13,7 +13,7 @@ load_dotenv()
 
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="")
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 
@@ -56,44 +56,24 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(ai_bp)
 
 
-@app.before_request
-def handle_options_preflight():
-    if request.method == "OPTIONS":
-        response = make_response()
-        origin = request.headers.get("Origin")
-        if origin in [frontend_url, "http://localhost:5173"]:
-            response.headers.add("Access-Control-Allow-Origin", origin)
-            response.headers.add(
-                "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"
-            )
-            response.headers.add(
-                "Access-Control-Allow-Headers", "Content-Type, Authorization"
-            )
-            response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response
-
-
-@app.after_request
-def add_cors_headers(response):
-    origin = request.headers.get("Origin")
-    if origin in [os.getenv("FRONTEND_URL"), "http://localhost:5173"]:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = (
-            "GET, POST, PUT, DELETE, OPTIONS"
-        )
-        response.headers["Access-Control-Allow-Headers"] = (
-            "Content-Type, Authorization, X-Requested-With"
-        )
-
-    if request.method == "OPTIONS":
-        return response
-    return response
-
-
 @app.route("/health")
 def health_check():
     return {"status": "healthy"}, 200
+
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    path_dir = os.path.abspath("./static")
+    if path != "" and os.path.exists(os.path.join(path_dir, path)):
+        return send_from_directory(os.path.join(path_dir), path)
+    else:
+        return send_from_directory(os.path.join(path_dir), "index.html")
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return app.send_static_file("index.html")
 
 
 if __name__ == "__main__":
