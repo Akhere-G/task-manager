@@ -23,6 +23,7 @@ const DailyBrief = () => {
   return (
     <div className="relative antialiase ">
       <button
+        aria-label={isOpen ? "Close daily brief" : "Open daily brief"}
         onClick={() => setIsOpen(true)}
         className={`
           flex items-center justify-center bg-surface dark:bg-surface-muted border border-slate-200 shadow-md text-brand
@@ -63,12 +64,14 @@ const DailyBrief = () => {
 
             <div className="flex gap-2">
               <button
+                aria-label="Reload daily brief"
                 onClick={() => refetch()}
                 className="p-2 text-text-primary hover:text-brand cursor-pointer bg-brand/10 rounded-full hover:brightness-125"
               >
                 <RefreshCw size={20} />
               </button>
               <button
+                aria-label="Close daily brief"
                 onClick={() => setIsOpen(false)}
                 className="p-2 text-text-primary hover:text-failure cursor-pointer bg-failure/10 rounded-full hover:brightness-125"
               >

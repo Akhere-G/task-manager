@@ -201,7 +201,7 @@ function TaskCard({
               }
               title={isCompleted ? "Mark as pending" : "Mark as complete"}
               aria-label={
-                isCompleted ? "Mark task as pending" : "Mark task as complete"
+                isCompleted ? "Mark task as pending" : "Mark task as completed"
               }
               className="p-1.5 rounded-md hover:bg-success/10 transition-colors group cursor-pointer"
             >

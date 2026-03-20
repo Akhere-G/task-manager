@@ -135,6 +135,7 @@ export default function ResetPassword() {
           handleBlur={handleBlur}
         />
         <button
+          aria-label="Update password"
           className={isLoading ? "btn-primary-disabled" : "btn-primary"}
           disabled={isLoading}
         >

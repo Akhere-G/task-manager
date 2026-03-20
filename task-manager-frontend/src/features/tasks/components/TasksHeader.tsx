@@ -136,6 +136,7 @@ export default function TasksHeader({
           )}
           <button
             type="button"
+            aria-label="Reset Filters"
             className="self-end mb-1 btn-primary h-10"
             onClick={resetFilters}
           >

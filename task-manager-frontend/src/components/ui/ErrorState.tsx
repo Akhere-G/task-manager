@@ -13,6 +13,7 @@ export default function ErrorState({ error }: ErrorStateProps) {
       <p className="text-sm opacity-90 mb-4">{error}</p>
 
       <button
+        aria-label="Reload page"
         onClick={() => window.location.reload()}
         className="px-6 py-2 rounded-md bg-failure text-white font-bold hover:brightness-110 transition-all shadow-sm"
       >

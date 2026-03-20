@@ -175,6 +175,7 @@ export default function Pomodoro() {
               ))}
             </div>
             <button
+              aria-label="Finished early"
               onClick={handleSessionComplete}
               className="btn-primary mt-4"
             >

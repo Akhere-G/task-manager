@@ -35,6 +35,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <div className="flex h-full w-full items-center justify-center p-4 bg-surface-muted rounded-md border border-failure/20">
             <button
               onClick={this.handleReset}
+              aria-label="Reload page"
               className="text-xs font-medium text-failure hover:underline"
             >
               {this.props.message || "Component Error. Click to retry."}
@@ -55,7 +56,11 @@ export default class ErrorBoundary extends Component<Props, State> {
             {this.props.message ||
               "An error occurred while rendering this section."}
           </p>
-          <button onClick={this.handleReset} className="btn-secondary text-sm">
+          <button
+            aria-label="Reload page"
+            onClick={this.handleReset}
+            className="btn-secondary text-sm"
+          >
             Try again
           </button>
         </div>
