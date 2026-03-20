@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request
+from flask import Flask, request, make_response
 from flask_cors import CORS
 from routes.task_routes import task_bp
 from routes.stats_routes import stats_bp
@@ -54,6 +54,23 @@ app.register_blueprint(stats_bp)
 app.register_blueprint(mail_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(ai_bp)
+
+
+@app.before_request
+def handle_options_preflight():
+    if request.method == "OPTIONS":
+        response = make_response()
+        origin = request.headers.get("Origin")
+        if origin in [frontend_url, "http://localhost:5173"]:
+            response.headers.add("Access-Control-Allow-Origin", origin)
+            response.headers.add(
+                "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"
+            )
+            response.headers.add(
+                "Access-Control-Allow-Headers", "Content-Type, Authorization"
+            )
+            response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response
 
 
 @app.after_request
