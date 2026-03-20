@@ -38,7 +38,7 @@ jwt = JWTManager(app)
 CORS(
     app,
     resources={
-        r"/*": {
+        r"/api/*": {
             "origins": [frontend_url, "http://localhost:5173"],
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
@@ -47,6 +47,7 @@ CORS(
     },
     supports_credentials=True,
 )
+
 
 app.register_blueprint(task_bp)
 app.register_blueprint(stats_bp)
