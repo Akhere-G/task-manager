@@ -61,6 +61,12 @@ export default function Header({
     );
   };
 
+  const mobileLinks = [...links];
+
+  if (isAuthenticated) {
+    mobileLinks.push(...accountLinks);
+  }
+
   return (
     <>
       {/* Mobile Sidebar Overlay */}
@@ -91,7 +97,7 @@ export default function Header({
         </div>
         <nav className="p-4 flex flex-col">
           <ul className="flex flex-col gap-2">
-            {[...links, ...accountLinks].map((link) => (
+            {mobileLinks.map((link) => (
               <StyleLink key={link.path} {...link} />
             ))}
           </ul>
@@ -148,36 +154,40 @@ export default function Header({
                 <StyleLink key={link.path} {...link} />
               ))}
             </ul>
-            <button
-              onClick={() => setAccountPopupOpen(!accountPopupOpen)}
-              className="bg-brand relative rounded-full w-8 h-8 flex items-center justify-center"
-            >
-              <User className="fill-text-inverse w-6 h-6" />
-              {accountPopupOpen && isAuthenticated && (
-                <div className="flex gap-2 absolute card border border-slate-200 dark:border-slate-600 right-2 top-8 flex-col items-center">
-                  <button
-                    onClick={toggleDarkMode}
-                    className="p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand"
-                    aria-label="Toggle dark mode"
-                  >
-                    {darkMode ? (
-                      <Sun className="w-5 h-5" />
-                    ) : (
-                      <Moon className="w-5 h-5" />
-                    )}
-                  </button>
+            {isAuthenticated && (
+              <div
+                tabIndex={1}
+                aria-label="Account Menu"
+                onClick={() => setAccountPopupOpen(!accountPopupOpen)}
+                className="bg-brand relative rounded-full w-8 h-8 flex items-center justify-center cursor-pointer"
+              >
+                <User className="fill-text-inverse w-6 h-6" />
+                {accountPopupOpen && isAuthenticated && (
+                  <div className="flex gap-2 absolute card border border-slate-200 dark:border-slate-600 right-2 top-8 flex-col items-center cursor-default">
+                    <button
+                      onClick={toggleDarkMode}
+                      className="p-2 rounded-full hover:bg-surface-muted transition-colors text-text-sub hover:text-brand cursor-pointer"
+                      aria-label="Toggle dark mode"
+                    >
+                      {darkMode ? (
+                        <Sun className="w-5 h-5" />
+                      ) : (
+                        <Moon className="w-5 h-5" />
+                      )}
+                    </button>
 
-                  <ul>
-                    {accountLinks.map((link) => (
-                      <StyleLink key={link.path} {...link} />
-                    ))}
-                  </ul>
-                  <button className="btn-primary" onClick={logout}>
-                    Logout
-                  </button>
-                </div>
-              )}
-            </button>
+                    <ul>
+                      {accountLinks.map((link) => (
+                        <StyleLink key={link.path} {...link} />
+                      ))}
+                    </ul>
+                    <button className="btn-primary" onClick={logout}>
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </nav>
         </div>
       </header>
