@@ -157,7 +157,8 @@ export default function Header({
             </ul>
             {isAuthenticated && (
               <div
-                tabIndex={1}
+                tabIndex={0}
+                role="button"
                 aria-label="Account Menu"
                 onClick={() => setAccountPopupOpen(!accountPopupOpen)}
                 className="bg-brand relative rounded-full w-8 h-8 flex items-center justify-center cursor-pointer"
