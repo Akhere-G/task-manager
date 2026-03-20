@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from routes.task_routes import task_bp
 from routes.stats_routes import stats_bp
@@ -54,6 +54,24 @@ app.register_blueprint(stats_bp)
 app.register_blueprint(mail_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(ai_bp)
+
+
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get("Origin")
+    if origin in [os.getenv("FRONTEND_URL"), "http://localhost:5173"]:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = (
+            "GET, POST, PUT, DELETE, OPTIONS"
+        )
+        response.headers["Access-Control-Allow-Headers"] = (
+            "Content-Type, Authorization, X-Requested-With"
+        )
+
+    if request.method == "OPTIONS":
+        return response
+    return response
 
 
 @app.route("/health")
