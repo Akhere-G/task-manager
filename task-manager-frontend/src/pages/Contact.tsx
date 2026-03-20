@@ -183,6 +183,7 @@ export default function ContactPage() {
 
         <div className="flex justify-end pt-2">
           <button
+            aria-label="Send enquiry"
             type="submit"
             disabled={status !== "idle"}
             className="w-full md:w-max px-12 py-3 bg-brand text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-brand-dark transition-all shadow-sm active:scale-95 disabled:opacity-50"

@@ -80,12 +80,20 @@ export default function Popup({
           className={`gap-4 flex justify-end ${(showCloseButton || handleConfirm) && "p-4"}`}
         >
           {showCloseButton && (
-            <button className="btn-secondary" onClick={close}>
+            <button
+              aria-label="Cancel"
+              className="btn-secondary"
+              onClick={close}
+            >
               Cancel
             </button>
           )}
           {handleConfirm && (
-            <button className={actionButtonClass} onClick={handleConfirm}>
+            <button
+              aria-label={actionText ?? "Confirm"}
+              className={actionButtonClass}
+              onClick={handleConfirm}
+            >
               {actionText}
             </button>
           )}

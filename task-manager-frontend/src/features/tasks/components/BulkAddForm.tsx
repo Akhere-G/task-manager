@@ -197,6 +197,7 @@ export default function BulkAddForm() {
           ref={fileInputRef}
         />
         <button
+          aria-label="Upload CSV"
           className="btn-primary"
           onClick={triggerUpload}
           disabled={isUploading}
@@ -204,6 +205,7 @@ export default function BulkAddForm() {
           {isUploading ? "Uploading..." : "Upload CSV"}
         </button>
         <button
+          aria-label="Downlaod simple template"
           type="button"
           onClick={() => downloadTemplate()}
           className="text-sm cursor-pointer text-accent underline underline-offset-4 hover:text-accent/80"
@@ -214,6 +216,7 @@ export default function BulkAddForm() {
         <div className="flex flex-col items-baseline lg:flex-row lg:gap-2 flex-wrap">
           <p>if you&apos;re exporting from another app</p>
           <button
+            aria-label="Download Advanced template"
             type="button"
             onClick={() => downloadTemplate(true)}
             className="text-sm cursor-pointer text-accent underline underline-offset-4 hover:text-accent/80"

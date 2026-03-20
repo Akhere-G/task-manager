@@ -88,16 +88,25 @@ export default function CustomToolbar({
         />
 
         <div className="flex h-11.5  bg-brand px-1 rounded-lg border border-border-light shadow-sm text-text-inverse">
-          <button onClick={goToBack} className="btn-primary">
+          <button
+            aria-label={`Go to previous ${view === Views.MONTH ? "month" : view === Views.WEEK ? "week" : "day"}`}
+            onClick={goToBack}
+            className="btn-primary"
+          >
             <ChevronLeft size={18} />
           </button>
           <button
+            aria-label="Go to current date"
             onClick={() => setCurrentDate(new Date())}
             className="btn-primary rounded-none  border-x"
           >
             Today
           </button>
-          <button onClick={goToNext} className="btn-primary">
+          <button
+            aria-label={`Go to next ${view === Views.MONTH ? "month" : view === Views.WEEK ? "week" : "day"}`}
+            onClick={goToNext}
+            className="btn-primary"
+          >
             <ChevronRight size={18} />
           </button>
         </div>

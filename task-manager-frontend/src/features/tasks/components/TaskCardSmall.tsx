@@ -25,6 +25,7 @@ export function TaskCardSmall({
       onDragEnd={() => setDraggedEvent?.(null)}
     >
       <button
+        aria-label={`Complete task ${task.title}`}
         onClick={(e) => {
           setIsCompleted(
             task.isGhost ? task.seriesId : task.id,

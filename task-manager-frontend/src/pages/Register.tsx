@@ -170,6 +170,7 @@ export default function Register() {
             handleBlur={handleBlur}
           />
           <button
+            aria-label="Register"
             className={
               isLoading
                 ? "self-end btn-primary-disabled"

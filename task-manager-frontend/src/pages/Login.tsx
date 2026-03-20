@@ -140,6 +140,7 @@ export default function Login() {
             Forgot Password?
           </Link>
           <button
+            aria-label="Login"
             className={
               isLoading
                 ? "self-end btn-primary-disabled"

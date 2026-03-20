@@ -316,6 +316,7 @@ export default function TaskForm({
       <footer className="flex gap-4 justify-end">
         {close && (
           <button
+            aria-label="cancel"
             className={isLoading ? "btn-secondary-disabled" : "btn-secondary"}
             type="button"
             onClick={close}
@@ -325,6 +326,7 @@ export default function TaskForm({
           </button>
         )}
         <button
+          aria-label={confirmButtonText}
           className={isLoading ? "btn-primary-disabled" : "btn-primary"}
           disabled={isLoading}
         >

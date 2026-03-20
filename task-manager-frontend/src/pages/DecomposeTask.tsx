@@ -172,6 +172,7 @@ export default function DecomposeTask() {
               </p>
             </div>
             <button
+              aria-label="Break down tasks into subtasks"
               onClick={handleDecompose}
               disabled={isDecomposing}
               className="btn-primary flex items-center gap-2"
@@ -193,6 +194,7 @@ export default function DecomposeTask() {
               AI suggests these {stagedTasks.length} steps:
             </p>
             <button
+              aria-label="Regenerate sub tasks"
               onClick={handleDecompose}
               className="text-brand text-sm font-semibold hover:underline flex items-center gap-1"
             >
@@ -309,6 +311,7 @@ function AddTaskFooter({
   return (
     <footer className="sticky bottom-6 flex justify-end gap-4 bg-surface/80 backdrop-blur-md p-4 rounded-xl border shadow-lg">
       <button
+        aria-label="Add new task"
         className={`${isSubmitting ? "btn-secondary-disabled" : "btn-secondary"} flex items-center gap-2`}
         onClick={handleAdd}
         disabled={isSubmitting}
@@ -316,6 +319,7 @@ function AddTaskFooter({
         <Plus size={18} /> Add task
       </button>
       <button
+        aria-label="Clear all tasks"
         onClick={handleClear}
         className={isDisabled ? "btn-secondary-disabled" : "btn-secondary"}
         disabled={isSubmitting}
@@ -323,6 +327,7 @@ function AddTaskFooter({
         Clear All
       </button>
       <button
+        aria-label="Save all tasks"
         onClick={handleConfirmAll}
         className={`btn-primary flex items-center gap-2 ${isDisabled ? "btn-primary-disabled" : ""}`}
         disabled={isDisabled}

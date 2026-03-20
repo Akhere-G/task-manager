@@ -120,6 +120,7 @@ export default function SettingsPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
           {THEMES.map((t) => (
             <button
+              aria-label={`Set Theme to ${t.name}`}
               key={t.name}
               onClick={() => setTheme(t.id)}
               className={`py-2 rounded-lg border text-sm transition-all cursor-pointer ${
@@ -137,6 +138,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <span className="text-text-main font-medium">Dark Mode</span>
           <button
+            aria-label="Toggle dark mode"
             onClick={toggleDarkMode}
             className={`w-12 h-6 rounded-full transition-colors cursor-pointer relative ${
               darkMode ? "bg-brand" : "bg-slate-300 dark:bg-slate-600"
@@ -155,6 +157,7 @@ export default function SettingsPage() {
           <div className="flex gap-4 items-center justify-between">
             <h4>Download your task data</h4>
             <button
+              aria-label="Export data"
               onClick={exportData}
               disabled={isLoading}
               className={isLoading ? "btn-primary-disabled" : "btn-primary"}
@@ -215,11 +218,16 @@ export function FutureSections() {
 
     {/* Security Section */}
     <SettingsCard icon={<Shield className="text-brand" />} title="Security">
-      <button className="btn-secondary">Change Password</button>
+      <button aria-label="Change password" className="btn-secondary">
+        Change Password
+      </button>
     </SettingsCard>
 
     <div className="mt-8 flex justify-end">
-      <button className="btn-primary flex items-center gap-2">
+      <button
+        aria-label="Save changes"
+        className="btn-primary flex items-center gap-2"
+      >
         <Save size={18} /> Save Changes
       </button>
     </div>

@@ -84,6 +84,7 @@ export default function RequestPasswordReset() {
             handleBlur={() => setTouched(true)}
           />
           <button
+            aria-label="Send reset link"
             className={
               isLoading
                 ? "self-end btn-primary-disabled"

@@ -105,6 +105,7 @@ export default function Header({
             {isAuthenticated && (
               <button
                 className="btn-primary self-start"
+                aria-label="Logout"
                 onClick={() => {
                   logout();
                   toggleSidebar();
@@ -181,7 +182,11 @@ export default function Header({
                         <StyleLink key={link.path} {...link} />
                       ))}
                     </ul>
-                    <button className="btn-primary" onClick={logout}>
+                    <button
+                      aria-label="Logout"
+                      className="btn-primary"
+                      onClick={logout}
+                    >
                       Logout
                     </button>
                   </div>

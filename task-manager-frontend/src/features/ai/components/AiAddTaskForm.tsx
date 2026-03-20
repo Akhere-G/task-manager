@@ -46,6 +46,7 @@ export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
           disabled={isProcessing}
         />
         <button
+          aria-label="Generate new task with AI"
           type="submit"
           disabled={isProcessing || !input.trim()}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-brand text-white rounded-lg hover:bg-brand/50 disabled:hover:bg-brand disabled:opacity-50 "
