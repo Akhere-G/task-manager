@@ -67,6 +67,7 @@ def keep_alive():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT 1")
+    cursor.fetchone()
     cursor.close()
     conn.close()
     return "DB Poked", 200
