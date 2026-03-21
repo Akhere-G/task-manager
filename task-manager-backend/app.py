@@ -8,6 +8,7 @@ from routes.auth_routes import auth_bp
 from routes.ai_routes import ai_bp
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
+from db import get_db_connection
 
 load_dotenv()
 
@@ -59,6 +60,16 @@ app.register_blueprint(ai_bp)
 @app.route("/health")
 def health_check():
     return {"status": "healthy"}, 200
+
+
+@app.route("/api/keep-alive")
+def keep_alive():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1")
+    cursor.close()
+    conn.close()
+    return "DB Poked", 200
 
 
 @app.route("/", defaults={"path": ""})
