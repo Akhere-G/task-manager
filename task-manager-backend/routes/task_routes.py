@@ -25,7 +25,6 @@ def list_tasks():
     is_completed = request.args.get("is_completed")
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
-    current_date = request.args.get("current_date")
     sort_by = request.args.get("sort_by")
     order = request.args.get("order")
     page = request.args.get("page")
@@ -42,7 +41,6 @@ def list_tasks():
         is_completed,
         start_date,
         end_date,
-        current_date,
         sort_by,
         order,
         limit,
