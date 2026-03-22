@@ -14,7 +14,7 @@ const HourlyProductivityChart = lazy(
   () => import("../features/stats/components/HourlyProductivityChart"),
 );
 const OverdueDistributionChart = lazy(
-  () => import("../features/stats/components/ProductivityChart"),
+  () => import("../features/stats/components/OverdueDistributionChart"),
 );
 const ProductivityChart = lazy(
   () => import("../features/stats/components/ProductivityChart"),
