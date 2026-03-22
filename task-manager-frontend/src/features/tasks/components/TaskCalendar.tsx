@@ -46,6 +46,7 @@ interface TaskCalendarProps {
   currentDate: Date;
   setCurrentDate: (newDate: Date) => void;
 }
+
 export default function TaskCalendar({
   tasks,
   currentDate,
@@ -115,6 +116,8 @@ export default function TaskCalendar({
     const newEnd = new Date(end as Date);
     const task = event.resource as Task;
 
+    if (task.isGhost) return;
+
     const formattedStart = format(newStart, "yyyy-MM-dd HH:mm:ss");
     const formattedEnd = format(newEnd, "yyyy-MM-dd HH:mm:ss");
     const taskId = task.isGhost ? task.seriesId : task.id;
@@ -142,6 +145,8 @@ export default function TaskCalendar({
 
   function onDropFromOutside(day: DragFromOutsideItemArgs) {
     if (!draggedEvent) return;
+
+    if (draggedEvent.isGhost) return;
     const startAt = new Date(draggedEvent.startAt);
     const endAt = new Date(draggedEvent.endAt);
 
@@ -179,9 +184,10 @@ export default function TaskCalendar({
     }
   }
 
-  function onEventResize(e: EventInteractionArgs<object>) {
-    const { start, end, event: task } = e as EventInteractionArgs<Task>;
-
+  function onEventResize(e: EventInteractionArgs<Event>) {
+    const { start, end, event } = e;
+    const task: Task = event.resource;
+    if (task.isGhost) return;
     const startAt = format(start, "yyyy-MM-dd HH:mm");
     const endAt = format(end, "yyyy-MM-dd HH:mm");
 
@@ -191,8 +197,10 @@ export default function TaskCalendar({
       prev.map((t) => (t.id === task.id ? { ...t, startAt, endAt } : t)),
     );
 
+    const id = task.isGhost ? task.seriesId : task.id;
+
     try {
-      updateTask(task.id, {
+      updateTask(id, {
         startAt: format(start, "yyyy-MM-dd HH:mm"),
         endAt: format(end, "yyyy-MM-dd HH:mm"),
       });
