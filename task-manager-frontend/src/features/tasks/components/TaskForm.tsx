@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   categories,
   type CreateTaskInput,
+  type Task,
 } from "../../../features/tasks/types";
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
@@ -38,7 +39,7 @@ interface TaskFormProps {
   confirmButtonText?: string;
   submitAction: (task: CreateTaskInput) => Promise<void>;
   close?: () => void;
-  initialData?: Partial<CreateTaskInput>;
+  initialData?: Partial<Task>;
 }
 export default function TaskForm({
   submitAction,
@@ -203,10 +204,17 @@ export default function TaskForm({
     try {
       setIsloading(true);
 
-      await submitAction({
+      const formattedData = {
         ...formState,
         repeatUntil: formState.repeatUntil || null,
-      });
+      };
+
+      if (initialData?.isGhost) {
+        // don't edit the original task dates when editing ghost tasks
+        formattedData.startAt = "";
+        formattedData.endAt = "";
+      }
+      await submitAction(formattedData);
     } catch (err) {
       console.error(err);
       if (!axios.isAxiosError(err)) {
@@ -261,26 +269,30 @@ export default function TaskForm({
         handleBlur={handleBlur}
         textarea
       />
-      <FormInput
-        label="Start At"
-        name="startAt"
-        type="datetime-local"
-        value={formState.startAt}
-        handleChange={handleChangeStartAt}
-        errorMessage={errorMessages.startAt}
-        touched={touched.startAt}
-        handleBlur={handleBlur}
-      />
-      <FormInput
-        label="End At"
-        name="endAt"
-        type="datetime-local"
-        value={formState.endAt}
-        handleChange={handleChange}
-        errorMessage={errorMessages.endAt}
-        touched={touched.endAt}
-        handleBlur={handleBlur}
-      />
+      {!initialData?.isGhost && (
+        <>
+          <FormInput
+            label="Start At"
+            name="startAt"
+            type="datetime-local"
+            value={formState.startAt}
+            handleChange={handleChangeStartAt}
+            errorMessage={errorMessages.startAt}
+            touched={touched.startAt}
+            handleBlur={handleBlur}
+          />
+          <FormInput
+            label="End At"
+            name="endAt"
+            type="datetime-local"
+            value={formState.endAt}
+            handleChange={handleChange}
+            errorMessage={errorMessages.endAt}
+            touched={touched.endAt}
+            handleBlur={handleBlur}
+          />
+        </>
+      )}
       <div className="flex gap-2 items-baseline">
         <input
           name="isRepeating"
