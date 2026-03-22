@@ -114,7 +114,7 @@ export const useTasks = ({
         ...filters,
         search: deferredSearch,
         page: currentPage,
-        currentDate: format(filters.currentDate, "M"),
+        currentDate: format(filters.currentDate, "M yyyy"),
         perPage,
       },
     ],
