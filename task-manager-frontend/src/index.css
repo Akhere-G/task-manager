@@ -151,7 +151,7 @@
     --color-surface: #ffffff; 
     --color-surface-muted: #f2ede4;
     --color-brand: #6c390a;
-    --color-accent: #8c6a51;
+    --color-accent: #66c860;
   }
 
   .theme-timber-dark {
@@ -201,9 +201,9 @@
   }
 
   .dark {
-    --color-canvas: var(--color-slate-950);
-    --color-surface: var(--color-slate-900);
-    --color-surface-muted: var(--color-slate-800);
+    --color-canvas: color-mix(in srgb, var(--color-accent), var(--color-slate-950) 80%);
+    --color-surface-muted: color-mix(in srgb, var(--color-brand), var(--color-slate-950) 84%);
+    --color-surface: color-mix(in srgb, var(--color-brand), var(--color-slate-950) 87%);
     
     /* Lightened for better legibility */
     --color-text-main: var(--color-white);      /* Was slate-100 */
