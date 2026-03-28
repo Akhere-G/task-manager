@@ -27,7 +27,7 @@ const DailyBrief = () => {
         onClick={() => setIsOpen(true)}
         className={`
           flex items-center justify-center bg-surface dark:bg-surface-muted border border-slate-200 shadow-md text-brand
-          transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
+          transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)
           hover:scale-110 hover:shadow-lg active:scale-95 mx-auto
           ${
             isOpen
@@ -42,7 +42,7 @@ const DailyBrief = () => {
       <div
         className={`
           bg-white border border-slate-200 shadow-sm 
-          transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
+          transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)
           ${
             isOpen
               ? "opacity-100 scale-100 w-full translate-y-0"

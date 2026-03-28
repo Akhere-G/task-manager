@@ -66,7 +66,7 @@ export default function Home() {
       )}
 
       <section
-        className={`transition-opacity duration-200 ${isStale ? "opacity-75" : "opacity-100"}`}
+        className={`transition-opacity duration-150 ${isStale ? "opacity-75" : "opacity-100"}`}
       >
         {MainContent}
       </section>
