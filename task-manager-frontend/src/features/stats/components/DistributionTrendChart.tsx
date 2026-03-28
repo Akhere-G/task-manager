@@ -18,6 +18,7 @@ import useGetStats from "../hooks/useGetStats";
 import type { DistributionTrendData } from "../../../services/api";
 import { categoryColours } from "../../tasks/constants";
 import { capitalise } from "../../../utils/formators";
+import ChartToolTip from "./ChartToolTip";
 
 const CATEGORIES = [
   "work",
@@ -103,27 +104,21 @@ export default function DistributionTrendChart() {
                   item.value > 0 && !hiddenCategories.includes(item.name),
               )
               .sort((a, b) => b.value - a.value);
-
+            const series =
+              sortedItems.length === 0
+                ? [{ name: "No tasks completed." }]
+                : sortedItems.map(({ title, value, colour }) => ({
+                    name: title,
+                    value,
+                    fill: colour,
+                  }));
             return (
-              <div className="card border border-text-main">
-                <p className="font-semibold text-text-main mb-2">
-                  {formatDate(new Date(label), "EEE do MMM")}
-                </p>
-                <div className="space-y-1">
-                  {sortedItems.length === 0 && <p>No tasks completed.</p>}
-                  {sortedItems.map((item) => (
-                    <div key={item.name} className="flex items-center gap-2">
-                      <span
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.colour }}
-                      />
-                      <span className="text-text-main text-sm font-medium">
-                        {item.title}: {item.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ChartToolTip
+                title={{
+                  name: formatDate(new Date(label), "EEE do MMM"),
+                }}
+                series={series}
+              />
             );
           }}
         />

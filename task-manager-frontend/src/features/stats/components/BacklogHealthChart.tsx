@@ -3,6 +3,7 @@ import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { statusColors } from "../constants";
 import useGetStats from "../hooks/useGetStats";
 import type { BacklogHealthData } from "../../../services/api";
+import ChartToolTip from "./ChartToolTip";
 
 export default function BacklogHealthChart() {
   const {
@@ -47,19 +48,18 @@ export default function BacklogHealthChart() {
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
                 const { status, percent, fill } = payload[0].payload;
+
                 return (
-                  <div className="card border border-text-main">
-                    <div className="font-medium text-sm flex items-center gap-2">
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ background: fill }}
-                      />
-                      {status.charAt(0).toUpperCase() + status.slice(1)}:{" "}
-                      {percent}%
-                    </div>
-                  </div>
+                  <ChartToolTip
+                    title={{
+                      name: `${status.charAt(0).toUpperCase() + status.slice(1)}:`,
+                      value: percent + "%",
+                      fill,
+                    }}
+                  />
                 );
               }
+
               return null;
             }}
           />

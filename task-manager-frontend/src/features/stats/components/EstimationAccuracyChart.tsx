@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import {
   ScatterChart,
   Scatter,
@@ -18,6 +17,7 @@ import type {
   NameType,
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
+import ChartToolTip from "./ChartToolTip";
 
 export default function EstimationAccuracyChart() {
   const {
@@ -105,7 +105,13 @@ export default function EstimationAccuracyChart() {
                     : `${absMins.toFixed()} mins`;
 
               return (
-                <p className="card border border-text-main">{`${title} was completed ${time} ${status} `}</p>
+                <ChartToolTip
+                  series={[
+                    {
+                      name: `${title} was completed ${time} ${status} `,
+                    },
+                  ]}
+                />
               );
             }}
           />

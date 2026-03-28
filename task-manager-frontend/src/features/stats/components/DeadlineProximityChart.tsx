@@ -12,6 +12,7 @@ import useGetStats from "../hooks/useGetStats";
 import type { DeadlineProximityData } from "../../../services/api";
 import { capitalise } from "../../../utils/formators";
 import { categoryColours } from "../../tasks/constants";
+import ChartToolTip from "./ChartToolTip";
 
 export default function DeadlineProximityChart() {
   const {
@@ -82,21 +83,18 @@ export default function DeadlineProximityChart() {
               const val = payload[0].value as number;
               const isAhead = val >= 0;
               return (
-                <div className="card border border-text-main">
-                  <p className="font-semibold text-text-main mb-1 flex items-center gap-2">
-                    <span
-                      className="w-2 h-2 rounded-full"
-                      style={{ background: categoryColours[label || ""] }}
-                    />
-                    {capitalise(String(label)).replace("-", " ")}
-                  </p>
-                  <p className="text-sm text-text-main">
-                    {isAhead ? "Ahead by " : "Behind by "}
-                    <span className="font-bold">
-                      {Math.abs(Math.round(val))} days
-                    </span>
-                  </p>
-                </div>
+                <ChartToolTip
+                  title={{
+                    name: capitalise(String(label)).replace("-", " "),
+                    fill: categoryColours[label || ""],
+                  }}
+                  series={[
+                    {
+                      name: isAhead ? "Ahead by " : "Behind by ",
+                      value: Math.abs(Math.round(val)) + " days",
+                    },
+                  ]}
+                />
               );
             }
             return null;

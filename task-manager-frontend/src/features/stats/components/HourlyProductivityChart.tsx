@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import type { HourlyProductivityData } from "../../../services/api";
 import useGetStats from "../hooks/useGetStats";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
+import ChartToolTip from "./ChartToolTip";
 
 export default function HourlyProductivityChart() {
   const { data, isLoading, isError } = useGetStats<HourlyProductivityData[]>(
@@ -64,13 +65,15 @@ export default function HourlyProductivityChart() {
               const count = payload[0].value;
               const suffix = label >= 12 ? "pm" : "am";
               const hour = label === 0 ? 12 : label > 12 ? label - 12 : label;
+
               return (
-                <p className="card border border-text-main bg-surface p-3 rounded-xl shadow-lg">
-                  <span className="font-semibold text-text-main mb-1">
-                    {count}{" "}
-                  </span>
-                  task{count !== 1 && "s"} completed at {hour} {suffix}
-                </p>
+                <ChartToolTip
+                  series={[
+                    {
+                      name: `${count} task${count !== 1 ? "s" : ""} completed at ${hour} ${suffix}`,
+                    },
+                  ]}
+                />
               );
             }
             return null;
