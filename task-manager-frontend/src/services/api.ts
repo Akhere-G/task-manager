@@ -7,7 +7,9 @@ import type {
 } from "../features/auth/types";
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8080/api",
+  baseURL:
+    import.meta.env.VITE_API_URL ||
+    "https://taskflow-752853711822.europe-west2.run.app/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

@@ -3,8 +3,8 @@ FROM node:20-alpine as build
 WORKDIR /app
 
 # Accept the API URL as a build argument
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
+ARG _VITE_API_URL
+ENV VITE_API_URL=$_VITE_API_URL
 
 COPY package*.json ./
 RUN npm install
