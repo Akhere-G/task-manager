@@ -12,6 +12,7 @@ import { categoryColours } from "../../tasks/constants";
 import useGetStats from "../hooks/useGetStats";
 import type { TimeSpentData } from "../../../services/api";
 import { capitalise } from "../../../utils/formators";
+import ChartToolTip from "./ChartToolTip";
 
 export default function TimeSpentChart() {
   const {
@@ -70,18 +71,13 @@ export default function TimeSpentChart() {
               if (active && payload && payload.length) {
                 const time = payload[0].value;
                 return (
-                  <div className="card border border-text-main">
-                    <p className="font-semibold text-text-main mb-2 flex items-center gap-2">
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ background: payload[0].payload.fill }}
-                      />
-                      {capitalise(String(label)).replace("-", " ")}
-                    </p>
-                    <p className="text-sm text-text-main">
-                      Hours spent: <span className="font-bold">{time}</span>
-                    </p>
-                  </div>
+                  <ChartToolTip
+                    title={{
+                      name: capitalise(String(label)).replace("-", " "),
+                      fill: payload[0].payload.fill,
+                    }}
+                    series={[{ name: "Hours spent:", value: time }]}
+                  />
                 );
               }
               return null;

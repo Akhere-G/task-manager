@@ -11,6 +11,8 @@ import {
 } from "recharts";
 import useGetStats from "../hooks/useGetStats";
 import type { ProductivityData } from "../../../services/api";
+import ChartToolTip from "./ChartToolTip";
+import { format } from "date-fns";
 
 export default function ProductivityChart() {
   const {
@@ -79,26 +81,19 @@ export default function ProductivityChart() {
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
                 const taskData = payload.find((p) => p.dataKey === "tasks");
-
                 return (
-                  <div className="card border border-text-main">
-                    <p className="font-semibold text-text-main mb-2">
-                      {new Date(label as string).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-brand" />
-                      <span className="text-sm text-text-main">
-                        Tasks completed:{" "}
-                        <span className="font-bold">
-                          {taskData?.value ?? 0}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
+                  <ChartToolTip
+                    title={{
+                      name: format(label as string, "dd MMM yyyy"),
+                      fill: "bg-brand",
+                    }}
+                    series={[
+                      {
+                        name: "Tasks Completed: ",
+                        value: taskData.value,
+                      },
+                    ]}
+                  />
                 );
               }
               return null;

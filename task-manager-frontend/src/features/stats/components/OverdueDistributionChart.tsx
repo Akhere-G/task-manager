@@ -11,6 +11,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import useGetStats from "../hooks/useGetStats";
 import type { OverdueDistributionData } from "../../../services/api";
+import ChartToolTip from "./ChartToolTip";
 
 export default function OverdueDistributionChart() {
   const {
@@ -66,17 +67,17 @@ export default function OverdueDistributionChart() {
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               const { tooltipLabel, fill, count } = payload[0].payload;
+
               return (
-                <div className="card border border-text-main flex flex-col gap-1">
-                  <p className="text-sm text-text-main flex items-center gap-1">
-                    <span
-                      className="w-2 h-2 rounded-full mr-1"
-                      style={{ background: fill }}
-                    />
-                    <span className="font-bold">{count}</span> Tasks are{" "}
-                    <span className="lowercase">{tooltipLabel}</span> overdue
-                  </p>
-                </div>
+                <ChartToolTip
+                  series={[
+                    {
+                      name: `${count} Task${count != 1 ? "s are" : " is"}`,
+                      value: `${tooltipLabel} overdue`,
+                      fill,
+                    },
+                  ]}
+                />
               );
             }
             return null;

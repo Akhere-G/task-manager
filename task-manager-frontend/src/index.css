@@ -313,7 +313,7 @@
 }
 
 #heatmap-tooltip {
-  @apply border border-text-main shadow-sm bg-surface p-2 md:p-4 rounded-md text-text-main
+  @apply  shadow-2xl bg-surface p-2 md:p-4 rounded-md text-text-main opacity-100
 }
 
 .recharts-pie-sector:hover {

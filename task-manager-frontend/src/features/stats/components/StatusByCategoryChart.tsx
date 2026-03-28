@@ -16,6 +16,7 @@ import { statusColors } from "../constants";
 import useGetStats from "../hooks/useGetStats";
 import type { CategoryVolumeData } from "../../../services/api";
 import { categoryColours } from "../../tasks/constants";
+import ChartToolTip from "./ChartToolTip";
 
 export default function CategoryVolumeChart() {
   const breakpoint = useBreakpoint();
@@ -134,35 +135,21 @@ export default function CategoryVolumeChart() {
           content={({ active, payload, label }) => {
             if (active && payload && payload.length) {
               label = String(label);
+
               return (
-                <div className="card border border-text-main">
-                  <p className="font-semibold text-text-main mb-2 flex items-center gap-2">
-                    <span
-                      className="w-2 h-2 rounded-full "
-                      style={{ background: categoryColours[label || ""] }}
-                    />
-                    {label.charAt(0).toUpperCase() + label.slice(1)}
-                  </p>
-                  <div className="space-y-1">
-                    {payload
-                      .filter((entry) => activeSeries[entry.name.toLowerCase()])
-                      .map((entry) => (
-                        <div
-                          key={entry.name}
-                          className="flex items-center gap-2"
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full"
-                            style={{ background: entry.stroke }}
-                          />
-                          <span className="text-sm text-text-main">
-                            {entry.name}:{" "}
-                            <span className="font-bold">{entry.value}</span>
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
+                <ChartToolTip
+                  title={{
+                    name: label.charAt(0).toUpperCase() + label.slice(1),
+                    fill: categoryColours[label || ""],
+                  }}
+                  series={payload
+                    .filter((entry) => activeSeries[entry.name.toLowerCase()])
+                    .map(({ name, stroke, value }) => ({
+                      name,
+                      fill: stroke,
+                      value,
+                    }))}
+                />
               );
             }
             return null;

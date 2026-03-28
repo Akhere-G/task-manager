@@ -14,6 +14,7 @@ import type { WeekOverviewData } from "../../../services/api";
 import useGetStats from "../hooks/useGetStats";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
+import ChartToolTip from "./ChartToolTip";
 
 export default function WeekOverviewChart() {
   const {
@@ -71,26 +72,25 @@ export default function WeekOverviewChart() {
               const hours = Math.floor(totalHours);
               const minutes = ((totalHours - hours) * 60).toFixed();
               const valueStr = `${hours}hr ${minutes}min`;
+
               return (
-                <div className="card border border-text-main">
-                  <p className="font-semibold text-text-main mb-2">
-                    {formatDate(new Date(label as string), "EEE do MMM")}
-                  </p>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-400" />
-                      <span className="text-sm text-text-main">
-                        Time: <span className="font-bold">{valueStr}</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-brand" />
-                      <span className="text-sm text-text-main">
-                        Tasks: <span className="font-bold">{tasks}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <ChartToolTip
+                  title={{
+                    name: formatDate(new Date(label as string), "EEE do MMM"),
+                  }}
+                  series={[
+                    {
+                      name: "Time:",
+                      value: valueStr,
+                      fill: "bg-blue-400",
+                    },
+                    {
+                      name: "Tasks:",
+                      value: tasks,
+                      fill: "bg-brand",
+                    },
+                  ]}
+                />
               );
             }
             return null;

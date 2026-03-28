@@ -101,7 +101,7 @@ function StatCard({
   isLoading: boolean;
 }) {
   return (
-    <div className="card flex-1 min-w-40 p-4 flex flex-col items-center justify-center text-center shadow-sm border border-border-light transition-all hover:border-brand/30">
+    <div className="card flex-1 min-w-40 p-4 flex flex-col items-center justify-center text-center shadow-sm transition-all">
       <h3 className="text-text-sub text-sm font-medium uppercase tracking-wider mb-2">
         {title}
       </h3>

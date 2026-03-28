@@ -11,6 +11,7 @@ import {
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import type { Turnaround } from "../../../services/api";
 import useGetStats from "../hooks/useGetStats";
+import ChartToolTip from "./ChartToolTip";
 
 const WARNING_THRESHOLD = 15;
 
@@ -76,14 +77,15 @@ export default function TurnaroundChart() {
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
                 const count = payload[0].value;
+
                 return (
-                  <div className="card border border-text-main">
-                    <p className="font-semibold text-text-main mb-1">
-                      <span className="font-bold"> {count} </span>
-                      task{count !== 1 && "s"} took {label} day
-                      {Number(label) !== 1 && "s"} to complete
-                    </p>
-                  </div>
+                  <ChartToolTip
+                    series={[
+                      {
+                        name: `${count} task${count !== 1 ? "s" : ""} took ${label} day${Number(label) !== 1 ? "s" : ""} to complete.`,
+                      },
+                    ]}
+                  />
                 );
               }
               return null;
