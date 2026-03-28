@@ -43,6 +43,7 @@ export default function BacklogHealthChart() {
             outerRadius="80%"
             dataKey="percent"
             nameKey="status"
+            stroke="transparent"
           />
           <Tooltip
             content={({ active, payload }) => {
