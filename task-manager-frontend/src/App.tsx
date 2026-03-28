@@ -68,7 +68,7 @@ function App() {
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
       />
-      <main className="grow max-w-7xl mx-auto w-full px-3 py-3 md:px-12 md:py-12">
+      <main className="grow max-w-7xl mx-auto w-full px-0 py-3 md:px-8 md:py-6">
         <ErrorBoundary onRetry={() => window.location.reload()}>
           <Routes>
             <Route

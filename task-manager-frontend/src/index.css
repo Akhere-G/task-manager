@@ -260,7 +260,7 @@
   }
 
   .card {
-    @apply shadow-sm bg-surface p-2 md:p-4 rounded-md
+    @apply shadow-sm bg-surface p-2 md:p-4  md:rounded-md
   }
 
   .rbc-show-more {

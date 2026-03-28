@@ -51,7 +51,9 @@ export default function Stats() {
 
       <StatsOverview />
 
-      <h2 className="text-2xl border-b mt-4">Performance Summary</h2>
+      <h2 className="text-2xl border-b mt-4 mx-2 md:mx-0">
+        Performance Summary
+      </h2>
 
       <ChartCard
         title="Activity"
@@ -81,7 +83,10 @@ export default function Stats() {
           <ProductivityChart />
         </ChartCard>
       </div>
-      <h2 className="text-2xl border-b mt-4">Planning & Deadlines</h2>
+      <h2 className="text-2xl border-b mt-4 mx-2 md:mx-0">
+        {" "}
+        Planning & Deadlines
+      </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard
@@ -112,7 +117,10 @@ export default function Stats() {
           <OverdueDistributionChart />
         </ChartCard>
       </div>
-      <h2 className="text-2xl border-b mt-4">Workload Distribution</h2>
+      <h2 className="text-2xl border-b mt-4 mx-2 md:mx-0">
+        {" "}
+        Workload Distribution
+      </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard
@@ -143,7 +151,10 @@ export default function Stats() {
           <DistributionTrendChart />
         </ChartCard>
       </div>
-      <h2 className="text-2xl border-b mt-4">Trends & Insights</h2>
+      <h2 className="text-2xl border-b mt-4 mx-2 md:mx-0">
+        {" "}
+        Trends & Insights
+      </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard

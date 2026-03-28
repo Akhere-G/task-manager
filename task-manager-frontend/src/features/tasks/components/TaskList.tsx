@@ -12,7 +12,7 @@ export default function TaskList({ tasks }: TaskListProps) {
   const isMobile = ["xs", "sm"].includes(breakpoint);
 
   return (
-    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6">
       {tasks.map((task) => (
         <li
           key={task.id}

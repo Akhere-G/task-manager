@@ -73,8 +73,7 @@ export default function AboutPage() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section className="text-center mb-20">
+      <section className="text-center mb-20 px-2 md:px-0">
         <h1 className="text-5xl font-extrabold text-text-main mb-6 tracking-tight">
           Visualise Your <span className="text-brand">Workflow.</span>
         </h1>
@@ -85,8 +84,7 @@ export default function AboutPage() {
         </p>
       </section>
 
-      {/* Core Methodology Grid */}
-      <h2 className="text-3xl font-bold text-text-main mb-10 text-left border-b border-border-light pb-4">
+      <h2 className="text-3xl font-bold text-text-main mb-10 text-left border-b border-border-light pb-4 px-2 md:px-0">
         Core Methodology
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
@@ -100,7 +98,6 @@ export default function AboutPage() {
         ))}
       </div>
 
-      {/* Technology Section */}
       <section className="card p-8 bg-bg-secondary rounded-2xl border border-border-light shadow-sm">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
           <div className="max-w-2xl">
@@ -125,7 +122,6 @@ export default function AboutPage() {
             </p>
           </div>
 
-          {/* Reverted Tech Pills */}
           <div className="flex flex-wrap gap-3 justify-start lg:justify-end max-w-xs">
             {[
               "Python",
