@@ -45,7 +45,7 @@ def initialise_database():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             completed_at TIMESTAMP,
             is_repeating BOOLEAN DEFAULT FALSE,
-            repeat_by ENUM ("daily", "weekly", "monthly", "yearly"),
+            repeat_by ENUM ('daily', 'weekly', 'monthly', 'yearly'),
             repeat_until DATE,
             series_id INT,
             user_id INT NOT NULL,
@@ -105,7 +105,7 @@ def initialise_database():
         ALTER TABLE tasks
         ADD COLUMN repeat_until DATE;
         ALTER TABLE tasks
-        ADD COLUMN repeat_by ENUM ("daily", "weekly", "monthly","yearly");
+        ADD COLUMN repeat_by ENUM ('daily', 'weekly', 'monthly','yearly');
         ALTER TABLE tasks
         ADD COLUMN is_repeating BOOLEAN DEFAULT FALSE;
         """
