@@ -16,7 +16,7 @@ export default function TaskList({ tasks }: TaskListProps) {
       {tasks.map((task) => (
         <li
           key={task.id}
-          className="transition-all duration-500 animate-in fade-in slide-in-from-bottom-2"
+          className="transition-all duration-150 animate-in fade-in slide-in-from-bottom-2"
         >
           {isMobile ? (
             <TaskCardSmallConnected {...task} />

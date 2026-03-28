@@ -241,7 +241,7 @@ export default function TaskCalendar({
 
             const classes = [
               "transition-all",
-              "duration-200",
+              "duration-150",
               "cursor-pointer",
               "relative",
             ];

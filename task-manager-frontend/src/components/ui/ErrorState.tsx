@@ -5,7 +5,7 @@ interface ErrorStateProps {
 export default function ErrorState({ error }: ErrorStateProps) {
   return (
     <div
-      className="p-6 text-center rounded-md border animate-in fade-in duration-500
+      className="p-6 text-center rounded-md border animate-in fade-in duration-150
         bg-failure/10 border-failure/20 text-failure w-full min-w-max"
     >
       <div className="text-4xl mb-3">⚠️</div>

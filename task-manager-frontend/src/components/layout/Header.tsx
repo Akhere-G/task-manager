@@ -80,7 +80,7 @@ export default function Header({
       {/* Mobile Sidebar Panel */}
       <aside
         className={`
-        fixed top-0 left-0 h-full w-64 bg-surface z-50 transform transition-transform duration-300 ease-in-out md:hidden shadow-2xl
+        fixed top-0 left-0 h-full w-64 bg-surface z-50 transform transition-transform duration-150 ease-in-out md:hidden shadow-2xl
         overflow-y-scroll
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}

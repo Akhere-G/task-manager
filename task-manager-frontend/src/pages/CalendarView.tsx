@@ -68,7 +68,7 @@ export default function CalendarView() {
         sortable={false}
         showDueDateFilter={false}
       />
-      <section className={`transition-opacity duration-200`}>
+      <section className={`transition-opacity duration-150`}>
         {MainContent}
       </section>
       <button
