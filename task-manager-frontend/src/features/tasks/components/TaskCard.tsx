@@ -83,11 +83,8 @@ function TaskCard({
     <article
       className={`
       relative flex flex-col h-full shadow-sm rounded-md border transition-all duration-150 bg-surface overflow-hidden
-      ${
-        isCompleted
-          ? "border-slate-200 dark:border-slate-800 opacity-60"
-          : "border-slate-200 dark:border-slate-800 hover:border-brand/50 hover:shadow-md"
-      }
+      border-surface
+      ${isCompleted ? "opacity-60" : ""}
     `}
     >
       <header
