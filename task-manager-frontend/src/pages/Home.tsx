@@ -77,10 +77,10 @@ export default function Home() {
 
       <button
         aria-label="Add new task"
-        className="z-1 fixed bottom-5 right-5 btn-primary rounded-full w-10 h-10 flex items-center justify-center shadow-xl "
+        className="z-1 fixed bottom-5 right-5 btn-primary rounded-full w-15 h-15 flex items-center justify-center shadow-xl "
         onClick={() => navigate("/addtask")}
       >
-        <Plus />
+        <Plus size={40} />
       </button>
       <TaskPopups />
     </section>
