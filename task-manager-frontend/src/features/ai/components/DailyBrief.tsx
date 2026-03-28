@@ -10,7 +10,7 @@ const DailyBrief = () => {
   if (isLoading)
     return (
       <div
-        className="flex items-center justify-center bg-surface dark:bg-surface-muted border border-slate-200 shadow-sm text-slate-500 w-12 h-12 rounded-full
+        className="flex items-center justify-center bg-surface dark:bg-surface-muted  shadow-sm text-slate-500 w-12 h-12 rounded-full
         "
       >
         <Sparkles size={24} fill="currentColor" />
@@ -26,7 +26,7 @@ const DailyBrief = () => {
         aria-label={isOpen ? "Close daily brief" : "Open daily brief"}
         onClick={() => setIsOpen(true)}
         className={`
-          flex items-center justify-center bg-surface dark:bg-surface-muted border border-slate-200 shadow-md text-brand
+          flex items-center justify-center bg-surface dark:bg-surface-muted shadow-md text-brand
           transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)
           hover:scale-110 hover:shadow-lg active:scale-95 mx-auto
           ${
@@ -41,7 +41,7 @@ const DailyBrief = () => {
 
       <div
         className={`
-          bg-white border border-slate-200 shadow-sm 
+          bg-white shadow-sm 
           transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)
           ${
             isOpen
