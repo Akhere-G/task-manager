@@ -72,7 +72,6 @@ def generate_daily_brief(user_id):
         today_data = get_all_tasks(
             start_date=today_str,
             end_date=today_str,
-            current_date=today_str,
             user_id=user_id,
             is_completed=False,
             project_repeating=True,
