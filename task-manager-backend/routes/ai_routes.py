@@ -45,7 +45,6 @@ def decompose_task_route():
     category = data.get("category", "")
     start_at = data.get("start_at", "")
     end_at = data.get("end_at", "")
-    estimated_time = data.get("estimatedTime", "")
 
     decomposed_tasks = decompose_task(title, description, category, start_at, end_at)
 
