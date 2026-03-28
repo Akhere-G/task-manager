@@ -18,7 +18,7 @@ export function TaskCardSmall({
   return (
     <div
       key={task.id}
-      className="flex items-center gap-2 px-2 py-4 bg-surface border border-border-light rounded-2xl shadow-sm active:bg-surface-muted transition-colors"
+      className="card flex items-center gap-2"
       onClick={() => setSelectedTask(task)}
       draggable={Boolean(setDraggedEvent)}
       onDragStart={() => setDraggedEvent?.(task)}

@@ -120,7 +120,7 @@ export default function ContactPage() {
 
   return (
     <div>
-      <section className="mb-10">
+      <section className="mb-10 px-2 md:px-0">
         <h1 className="text-4xl font-extrabold text-text-main mb-3 tracking-tight">
           Contact <span className="text-brand">Support.</span>
         </h1>

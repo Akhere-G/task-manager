@@ -17,7 +17,7 @@ export default function CalendarTaskList({
 }: CalendarTaskList) {
   if (tasks.length === 0) {
     return (
-      <div className="py-10 text-center border-2 border-dashed border-slate-100 rounded-3xl bg-surface">
+      <div className="py-10 text-center border-2 border-dashed border-slate-100 md:rounded-md bg-surface">
         <p className="text-text-sub text-sm italic">
           No tasks on {format(currentDate, "PPPP")}.
         </p>
