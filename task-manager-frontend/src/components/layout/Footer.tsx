@@ -19,7 +19,7 @@ const Footer = () => {
             </p>
           </div>
 
-          <div>
+          <div className="pt-2.5">
             <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-4">
               Plan
             </h3>
@@ -75,7 +75,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
+          <div className="pt-2.5">
             <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-4">
               Account
             </h3>
@@ -134,7 +134,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
+          <div className="pt-2.5">
             <h3 className="text-sm font-bold uppercase tracking-wider text-accent mb-4">
               Connect
             </h3>
