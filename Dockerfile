@@ -3,8 +3,8 @@ WORKDIR /build
 COPY task-manager-frontend/package*.json ./
 RUN npm install
 COPY task-manager-frontend/ .
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
+ARG _VITE_API_URL
+ENV VITE_API_URL=$_VITE_API_URL
 RUN npm run build
 
 FROM python:3.11-slim
