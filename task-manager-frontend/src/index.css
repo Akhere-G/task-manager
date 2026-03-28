@@ -201,9 +201,9 @@
   }
 
   .dark {
-    --color-canvas: color-mix(in srgb, var(--color-accent), var(--color-slate-950) 80%);
-    --color-surface-muted: color-mix(in srgb, var(--color-brand), var(--color-slate-950) 84%);
-    --color-surface: color-mix(in srgb, var(--color-brand), var(--color-slate-950) 87%);
+    --color-canvas: color-mix(in srgb, var(--color-accent), var(--color-slate-950) 85%);
+    --color-surface-muted: color-mix(in srgb, var(--color-brand), var(--color-slate-950) 90%);
+    --color-surface: color-mix(in srgb, var(--color-brand), var(--color-slate-950) 95%);
     
     /* Lightened for better legibility */
     --color-text-main: var(--color-white);      /* Was slate-100 */
