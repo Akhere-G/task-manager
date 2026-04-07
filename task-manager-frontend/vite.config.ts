@@ -9,6 +9,22 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/api/tasks"),
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "task-data-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24,
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
         cleanupOutdatedCaches: true,
         maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
