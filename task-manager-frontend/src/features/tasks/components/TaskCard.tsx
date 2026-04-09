@@ -70,13 +70,6 @@ function TaskCard({
       : desc;
   const ShowMoreIcon = showMore ? ChevronUp : ChevronDown;
 
-  const endDate = new Date(endAt);
-  const startDate = new Date(startAt);
-  const duration = (
-    (endDate.getTime() - startDate.getTime()) /
-    60000
-  ).toFixed();
-
   const dateStr = formatDateRange(startAt, endAt);
 
   return (
@@ -88,7 +81,7 @@ function TaskCard({
     `}
     >
       <header
-        className={`p-4 flex justify-between items-center ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}`}
+        className={`p-3 flex justify-between items-center ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}`}
       >
         <h3
           className={`flex gap-2 font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}
@@ -96,58 +89,75 @@ function TaskCard({
           {titleIcon}
           <span className="truncate">{title}</span>
         </h3>
-        <span className="text-xs font-mono shrink-0 bg-white/20 px-2 py-0.5 rounded">
-          {duration}m
-        </span>
+        {showSetIsComplete && (
+          <button
+            onClick={() =>
+              setIsCompleted(isGhost ? seriesId : id, !isCompleted)
+            }
+            title={isCompleted ? "Mark as pending" : "Mark as complete"}
+            aria-label={
+              isCompleted ? "Mark task as pending" : "Mark task as completed"
+            }
+            className="p-1.5 bg-white rounded-full transition-colors group cursor-pointer"
+          >
+            <CheckCircle
+              aria-hidden="true"
+              className={`w-5 h-5 transition-all group-hover:scale-110 
+                ${isCompleted ? "text-success group-hover:text-slate-600 fill-success/20 group-hover:fill-transparent" : "text-slate-600 group-hover:text-success"}`}
+            />
+          </button>
+        )}
       </header>
 
-      <div className="p-4  grow space-y-2 flex flex-col">
+      <div className="p-3  grow space-y-2  flex flex-col">
         <div className="flex justify-between items-start">
           <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
             {category?.replace("-", " ")}
           </span>
-          {isOverdue && (
-            <AlertCircle className="w-4 h-4 text-failure animate-pulse" />
+          {isOverdue && <AlertCircle className="mr-1.5 w-4 h-4 text-failure" />}
+        </div>
+        <div className="flex flex-col">
+          <p className="text-sm text-text-main leading-relaxed m-0">
+            {formattedDescription}
+          </p>
+          {isLongDesc && !fullDescription && (
+            <button
+              aria-label={showMore ? "Show More" : "Show Less"}
+              className="rounded-md hover:bg-surface-muted transition-colors group cursor-pointer self-end"
+              onClick={() => setShowMore((prev) => !prev)}
+            >
+              <ShowMoreIcon
+                aria-hidden="true"
+                className="w-5 h-5 group-hover:scale-110 transition-all"
+              />
+            </button>
           )}
         </div>
-        <p className="text-sm text-text-main leading-relaxed m-0">
-          {formattedDescription}
-        </p>
-        {isLongDesc && !fullDescription && (
-          <button
-            aria-label={showMore ? "Show More" : "Show Less"}
-            className="rounded-md hover:bg-surface-muted transition-colors group cursor-pointer self-end"
-            onClick={() => setShowMore((prev) => !prev)}
-          >
-            <ShowMoreIcon
-              aria-hidden="true"
-              className="w-5 h-5 group-hover:scale-110 transition-all"
-            />
-          </button>
-        )}
-        {isRepeating && (
-          <div className="flex gap-2 items-center justify-end text-xs text-text-sub ">
-            <Repeat className="w-4 h-4" />
-            <p className="uppercase tracking-wide ">
-              {repeatBy}
-              {repeatUntil && (
-                <span> until {formatDateRelative(repeatUntil)}</span>
-              )}
-            </p>
+
+        <div className="flex gap-2 mt-auto">
+          {isRepeating && (
+            <div className="flex gap-2 items-center text-xs text-text-sub ">
+              <Repeat className="w-4 h-4" />
+              <p className="uppercase tracking-wide ">
+                {repeatBy}
+                {repeatUntil && (
+                  <span> until {formatDateRelative(repeatUntil)}</span>
+                )}
+              </p>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-text-sub tracking-wide pr-1.25">
+            <Clock className="w-4 h-4" />
+            <time
+              className={`text-xs font-medium ${isOverdue ? "text-failure font-bold" : ""}`}
+            >
+              {dateStr}
+            </time>
           </div>
-        )}
+        </div>
       </div>
 
-      <footer className="p-4 pt-2 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate items-end rounded-b-md flex justify-between gap-0.5 flex-col xl:flex-row">
-        <div className="flex items-center gap-2 text-text-sub tracking-wide pr-1.25">
-          <Clock className="w-4 h-4" />
-          <time
-            className={`text-xs font-medium ${isOverdue ? "text-failure font-bold" : ""}`}
-          >
-            {dateStr}
-          </time>
-        </div>
-
+      <footer className="p-3 pt-2 mt-auto border-t border-slate-100 dark:border-slate-800 bg-slate items-end rounded-b-md flex justify-between gap-0.5 flex-col xl:flex-row">
         <div className="flex gap-1">
           {showDelete && (
             <button
@@ -191,24 +201,7 @@ function TaskCard({
               />
             </button>
           )}
-          {showSetIsComplete && (
-            <button
-              onClick={() =>
-                setIsCompleted(isGhost ? seriesId : id, !isCompleted)
-              }
-              title={isCompleted ? "Mark as pending" : "Mark as complete"}
-              aria-label={
-                isCompleted ? "Mark task as pending" : "Mark task as completed"
-              }
-              className="p-1.5 rounded-md hover:bg-success/10 transition-colors group cursor-pointer"
-            >
-              <CheckCircle
-                aria-hidden="true"
-                className={`w-5 h-5 transition-all group-hover:scale-110 
-                ${isCompleted ? "text-success fill-success/20" : "text-text-sub group-hover:text-success"}`}
-              />
-            </button>
-          )}
+
           {!isCompleted && showDecompose && (
             <button
               onClick={() => navigate(`/breakdown/${isGhost ? seriesId : id}`)}
