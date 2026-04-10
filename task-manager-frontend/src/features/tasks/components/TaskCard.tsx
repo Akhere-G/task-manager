@@ -98,12 +98,12 @@ function TaskCard({
             aria-label={
               isCompleted ? "Mark task as pending" : "Mark task as completed"
             }
-            className="p-1.5 bg-white rounded-full transition-colors group cursor-pointer"
+            className="p-1.5 bg-surface rounded-full transition-colors group cursor-pointer"
           >
             <CheckCircle
               aria-hidden="true"
               className={`w-5 h-5 transition-all group-hover:scale-110 
-                ${isCompleted ? "text-success group-hover:text-slate-600 fill-success/20 group-hover:fill-transparent" : "text-slate-600 group-hover:text-success"}`}
+                ${isCompleted ? "text-success group-hover:text-text-sub fill-success/20 group-hover:fill-transparent" : "text-text-sub group-hover:text-success"}`}
             />
           </button>
         )}
