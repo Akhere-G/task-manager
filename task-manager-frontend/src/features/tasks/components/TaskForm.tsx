@@ -97,23 +97,30 @@ export default function TaskForm({
   useEffect(() => {
     if (initialData)
       setFormState((prev) => {
-        let startAt;
-        if (initialData.startAt) {
-          startAt = format(initialData.startAt, "yyyy-MM-dd HH:mm");
-        } else {
-          startAt = prev.startAt;
-        }
+        try {
+          let startAt;
 
-        let endAt;
-        if (initialData.endAt) {
-          endAt = format(initialData.endAt, "yyyy-MM-dd HH:mm");
-        } else if (initialData.startAt) {
-          endAt = format(addHours(startAt, 1), "yyyy-MM-dd HH:mm");
-        } else {
-          endAt = prev.endAt;
-        }
+          if (initialData.startAt) {
+            console.log(initialData.startAt);
+            startAt = format(initialData.startAt, "yyyy-MM-dd HH:mm");
+          } else {
+            startAt = prev.startAt;
+          }
 
-        return { ...prev, ...initialData, startAt, endAt };
+          let endAt;
+          if (initialData.endAt) {
+            endAt = format(initialData.endAt, "yyyy-MM-dd HH:mm");
+          } else if (initialData.startAt) {
+            endAt = format(addHours(startAt, 1), "yyyy-MM-dd HH:mm");
+          } else {
+            endAt = prev.endAt;
+          }
+
+          return { ...prev, ...initialData, startAt, endAt };
+        } catch (err) {
+          console.error(err);
+          return prev;
+        }
       });
   }, [initialData]);
 
