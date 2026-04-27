@@ -29,6 +29,7 @@ import CalendarTaskList from "./TaskCalendarList";
 import EventCard from "./EventCard";
 import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
+import { useNavigate } from "react-router-dom";
 
 const locales = { "en-GB": enGB };
 const localizer = dateFnsLocalizer({
@@ -60,6 +61,7 @@ export default function TaskCalendar({
   const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
 
   const breakpoint = useBreakpoint();
+  const navigate = useNavigate();
 
   const isMobile = ["xs", "sm"].includes(breakpoint);
   useEffect(() => {
@@ -222,7 +224,17 @@ export default function TaskCalendar({
             if (!isMobile) setView(Views.DAY);
           }}
           onNavigate={(date) => setCurrentDate(date)}
-          onSelectSlot={({ start }) => setCurrentDate(start as Date)}
+          onSelectSlot={({ start, end, action }) => {
+            switch (action) {
+              case "click":
+                setCurrentDate(start as Date);
+                break;
+              case "select":
+                navigate("/addtask", {
+                  state: { startAt: start, endAt: end },
+                });
+            }
+          }}
           selectable
           popup={!isMobile}
           view={view}

@@ -27,9 +27,22 @@ export default function AddTask() {
 
   const { state } = useLocation();
 
-  let startAt = state?.currentDate ? new Date(state?.currentDate) : null;
+  let startAt;
+  let endAt;
+  if (state?.currentDate) {
+    startAt = new Date(state?.currentDate);
+    startAt = setHours(startAt, new Date().getHours() + 1);
+  } else if (state?.startAt) {
+    startAt = new Date(state?.startAt);
+  } else {
+    startAt = null;
+  }
 
-  if (startAt) startAt = setHours(startAt, new Date().getHours() + 1);
+  if (state?.endAt) {
+    endAt = new Date(state?.endAt);
+  } else {
+    endAt = null;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -59,14 +72,13 @@ export default function AddTask() {
         <TaskForm
           key={aiSuggestion ? JSON.stringify(aiSuggestion) : "manual"}
           submitAction={handleCreate}
-          initialData={
-            startAt
-              ? {
-                  ...aiSuggestion,
-                  startAt: format(startAt, "yyyy MM dd HH:mm"),
-                }
-              : aiSuggestion
-          }
+          initialData={{
+            ...aiSuggestion,
+            startAt: startAt
+              ? format(startAt, "yyyy-MM-dd'T'HH:mm")
+              : undefined,
+            endAt: endAt ? format(endAt, "yyyy-MM-dd'T'HH:mm") : undefined,
+          }}
         />
       </section>
 
