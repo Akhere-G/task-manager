@@ -11,6 +11,7 @@ import {
   Play,
   Sparkles,
   Repeat,
+  SkipForward,
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +28,8 @@ interface TaskCardProps extends Task {
   showSetIsComplete?: boolean;
   showDecompose?: boolean;
   fullDescription?: boolean;
+  showSkip?: boolean;
+  skipTask: (task: Task) => void;
 }
 
 function TaskCard({
@@ -40,6 +43,8 @@ function TaskCard({
   showSetIsComplete = true,
   showDecompose = true,
   fullDescription = false,
+  showSkip = true,
+  skipTask,
   ...task
 }: TaskCardProps) {
   const {
@@ -215,6 +220,19 @@ function TaskCard({
               />
             </button>
           )}
+          {!isCompleted && repeatBy && showSkip && (
+            <button
+              onClick={() => skipTask(task)}
+              title="Skip task"
+              aria-label={`Skip task: ${title}`}
+              className="p-1.5 rounded-md hover:bg-slate-500/10 transition-colors group cursor-pointer"
+            >
+              <SkipForward
+                aria-hidden="true"
+                className="w-5 h-5 text-slate-500/70 group-hover:text-slate-500 group-hover:scale-110 transition-all"
+              />
+            </button>
+          )}
         </div>
       </footer>
     </article>
@@ -231,16 +249,18 @@ interface TaskCardConnectedProps extends Task {
   showPomodoro?: boolean;
   showSetIsComplete?: boolean;
   showDecompose?: boolean;
+  showSkip?: boolean;
   fullDescription?: boolean;
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps) {
-  const { setIsCompleted, openPopup } = useTaskContext();
+  const { setIsCompleted, openPopup, skipTask } = useTaskContext();
 
   return (
     <TaskCard
       setIsCompleted={setIsCompleted}
       onDelete={(task) => openPopup(task, PopupModes.Delete)}
       onEdit={(task) => openPopup(task, PopupModes.Edit)}
+      skipTask={skipTask}
       {...props}
     />
   );
