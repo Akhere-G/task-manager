@@ -3,6 +3,7 @@ import type { CreateTaskInput, Task } from "../features/tasks/types";
 import { taskService } from "../services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { statsQueryKeys } from "../features/stats/constants";
+import { addDays, addMonths, addWeeks, addYears, format } from "date-fns";
 export interface TaskFilters {
   search: string;
   category: string;
@@ -16,6 +17,7 @@ export interface TaskFilters {
 export interface TaskContextType {
   handleDelete: (id: number) => Promise<void>;
   handleEdit: (newTask: CreateTaskInput) => Promise<void>;
+  skipTask: (task: Task) => void;
   updateTask: (id: number, newTaskData: Partial<Task>) => Promise<void>;
   setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>;
   openPopup: (task: Task, mode: PopupMode) => void;
@@ -103,6 +105,41 @@ export default function TaskContextProvider({
     }
   }
 
+  function skipDate(date: Date, repeatBy: string) {
+    switch (repeatBy) {
+      case "daily":
+        return addDays(date, 1);
+      case "weekly":
+        return addWeeks(date, 1);
+      case "monthly":
+        return addMonths(date, 1);
+      case "yearly":
+        return addYears(date, 1);
+    }
+    throw new Error(
+      'Repeat by must be one of: "daily", "weekly", "monthly", "yearly"',
+    );
+  }
+
+  async function skipTask(task: Task) {
+    try {
+      if (!task.repeatBy) return;
+
+      const startAt = new Date(task.startAt);
+      const endAt = new Date(task.endAt);
+
+      const newStartAt = skipDate(startAt, task.repeatBy);
+      const newEndAt = skipDate(endAt, task.repeatBy);
+
+      await updateTask(task.id, {
+        startAt: format(newStartAt, "yyyy-MM-dd HH:mm"),
+        endAt: format(newEndAt, "yyyy-MM-dd HH:mm"),
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   async function setIsCompleted(id: number, isCompleted: boolean) {
     const completedAt = isCompleted
       ? new Date().toISOString().slice(0, 19).replace("T", " ")
@@ -125,6 +162,7 @@ export default function TaskContextProvider({
     openPopup,
     closePopup,
     popupMode,
+    skipTask,
   };
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;

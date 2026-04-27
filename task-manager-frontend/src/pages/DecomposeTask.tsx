@@ -153,6 +153,7 @@ export default function DecomposeTask() {
               showEdit={false}
               showPomodoro={false}
               showDecompose={false}
+              showSkip={false}
               fullDescription
             />
           )}
@@ -286,6 +287,7 @@ function TaskList({
             showSetIsComplete={false}
             showPomodoro={false}
             showDecompose={false}
+            showSkip={false}
             onDelete={(task) => handleDeleteStaged(task.id)}
           />
         </div>
