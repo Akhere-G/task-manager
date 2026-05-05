@@ -235,6 +235,10 @@ export default function TaskCalendar({
                 });
             }
           }}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          handleDragStart={(event: any) => {
+            setDraggedEvent(event.resource);
+          }}
           selectable
           popup={!isMobile}
           view={view}

@@ -136,7 +136,7 @@ export default function TaskContextProvider({
         endAt: format(newEndAt, "yyyy-MM-dd HH:mm"),
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 

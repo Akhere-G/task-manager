@@ -101,7 +101,6 @@ export default function TaskForm({
           let startAt;
 
           if (initialData.startAt) {
-            console.log(initialData.startAt);
             startAt = format(initialData.startAt, "yyyy-MM-dd HH:mm");
           } else {
             startAt = prev.startAt;
