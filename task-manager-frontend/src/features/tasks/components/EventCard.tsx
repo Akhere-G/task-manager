@@ -22,5 +22,5 @@ export default function EventCard({
       </div>
     );
   }
-  return <div className="text-xs truncate">{title}</div>;
+  return <div className="text-[0.7rem]">{title}</div>;
 }

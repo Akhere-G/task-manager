@@ -281,7 +281,7 @@
 
   /* 5. Month View specific tweaks */
   .rbc-month-view, .rbc-time-view {
-    @apply   rounded-md! overflow-hidden;
+    @apply   md:rounded-md! overflow-hidden;
   }
 
 
@@ -290,6 +290,27 @@
   }
 }
 
+.rbc-header {
+  @apply py-2! text-text-sub font-bold! text-xs! uppercase;
+}
+
+.rbc-time-slot {
+  @apply text-xs md:text-base flex justify-center min-h-12; 
+}
+
+.rbc-label {
+  @apply p-0.5! 
+}
+
+
+.rbc-events-container {
+  @apply mr-0!
+}
+
+.rbc-header {
+  @apply  flex justify-center items-center; 
+
+}
 
 .react-calendar-heatmap {
   max-height: 200px;
