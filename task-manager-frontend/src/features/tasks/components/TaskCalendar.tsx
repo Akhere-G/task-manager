@@ -214,7 +214,7 @@ export default function TaskCalendar({
 
   return (
     <div className="space-y-6">
-      <div className="card h-112.5 md:h-225">
+      <div className="card px-0 md:px-2 h-112.5 md:h-225">
         <DnDCalendar
           localizer={localizer}
           events={events}
@@ -238,6 +238,17 @@ export default function TaskCalendar({
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           handleDragStart={(event: any) => {
             setDraggedEvent(event.resource);
+          }}
+          formats={{
+            dayFormat: (date: Date) =>
+              isMobile ? format(date, "dd") : format(date, "EEE dd/MM"),
+            timeGutterFormat: (date) =>
+              isMobile ? format(date, "HH") : format(date, "p"),
+
+            eventTimeRangeFormat: ({ start, end }) =>
+              isMobile
+                ? `${format(start, "H")} - ${format(end, "H")}`
+                : `${format(start, "p")} - ${format(end, "p")}`,
           }}
           selectable
           popup={!isMobile}
@@ -289,7 +300,6 @@ export default function TaskCalendar({
                 setCurrentDate={setCurrentDate}
                 view={view}
                 setView={setView}
-                isMobile={isMobile}
               />
             ),
             event: ({ title, event }) => (

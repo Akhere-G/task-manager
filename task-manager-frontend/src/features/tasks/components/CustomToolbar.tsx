@@ -6,7 +6,6 @@ import {
   startOfWeek,
 } from "date-fns";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect } from "react";
 import { Views, type View } from "react-big-calendar";
 import { FormInput } from "../../../components/ui";
 
@@ -15,19 +14,13 @@ interface CustomToolbarInterface {
   currentDate: Date;
   setCurrentDate: (newDate: Date) => void;
   setView: (view: View) => void;
-  isMobile: boolean;
 }
 export default function CustomToolbar({
   view,
   currentDate,
   setCurrentDate,
   setView,
-  isMobile,
 }: CustomToolbarInterface) {
-  useEffect(() => {
-    if (view === Views.WEEK && isMobile) setView(Views.DAY);
-  }, [view]);
-
   const goToBack = () => {
     const m = new Date(currentDate);
     if (view === Views.MONTH) {
@@ -84,7 +77,7 @@ export default function CustomToolbar({
             { value: Views.MONTH, name: "Month" },
             { value: Views.WEEK, name: "Week" },
             { value: Views.DAY, name: "Day" },
-          ].filter((v) => v.value !== Views.WEEK || !isMobile)}
+          ]}
         />
 
         <div className="flex h-11.5  bg-brand px-1 rounded-lg border border-border-light shadow-sm text-text-inverse">

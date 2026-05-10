@@ -86,14 +86,8 @@ function TaskCard({
     `}
     >
       <header
-        className={`p-3 flex justify-between items-center ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}`}
+        className={`p-3 flex gap-4 items-center ${isCompleted ? "bg-surface-muted" : "bg-brand text-white"}`}
       >
-        <h3
-          className={`flex gap-2 font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}
-        >
-          {titleIcon}
-          <span className="truncate">{title}</span>
-        </h3>
         {showSetIsComplete && (
           <button
             onClick={() =>
@@ -112,6 +106,12 @@ function TaskCard({
             />
           </button>
         )}
+        <h3
+          className={`flex gap-2 font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}
+        >
+          {titleIcon}
+          <span className="truncate">{title}</span>
+        </h3>
       </header>
 
       <div className="p-3  grow space-y-2  flex flex-col">
