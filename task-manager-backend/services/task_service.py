@@ -6,6 +6,7 @@ from utils.task_utils import (
     check_should_repeat,
     handle_repeat_task,
 )
+from utils.formatters import to_snake_case
 
 
 def get_all_tasks(
@@ -241,7 +242,7 @@ def create_tasks_from_list(user_id, tasks):
             conn.close()
 
 
-def update_task(user_id, task_id, data):
+def update_task(user_id, task_id, data: dict):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -249,23 +250,30 @@ def update_task(user_id, task_id, data):
         cursor.execute(
             "SELECT * FROM tasks WHERE id = %s AND user_id = %s", (task_id, user_id)
         )
-        task = cursor.fetchone()
+        task: dict = cursor.fetchone()
         if not task:
             return None
 
-        updated_data = {
-            "title": str(data.get("title", task["title"])).strip(),
-            "description": str(data.get("description", task["description"])).strip(),
-            "category": str(data.get("category", task["category"])).strip(),
-            "start_at": data.get("startAt", task["start_at"]),
-            "end_at": data.get("endAt", task["end_at"]),
-            "is_completed": bool(data.get("isCompleted", task["is_completed"])),
-            "completed_at": data.get("completedAt", task["completed_at"]),
-            "is_repeating": bool(data.get("isRepeating", task["is_repeating"])),
-            "repeat_by": data.get("repeatBy", task["repeat_by"]),
-            "repeat_until": data.get("repeatUntil", task["repeat_until"]),
-            "created_at": task["created_at"],
-        }
+        updated_data = task.copy()
+
+        for k, v in data.items():
+            key = to_snake_case(k)
+
+            if key in [
+                "title",
+                "description",
+                "category",
+                "start_at",
+                "end_at",
+                "is_completed",
+                "completed_at",
+                "is_repeating",
+                "repeat_by",
+                "repeat_until",
+            ]:
+                value = v.strip() if isinstance(v, str) else v
+                value = bool(v) if isinstance(v, int) else v
+                updated_data[key] = value
 
         cursor.execute(
             """

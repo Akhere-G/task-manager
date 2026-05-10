@@ -86,7 +86,7 @@ export default function TaskContextProvider({
     const rawData = {
       ...newTask,
       title: newTask.title.trim(),
-      description: newTask.description?.trim(),
+      description: newTask.description?.trim() || null,
       category: newTask.category,
       startAt: newTask.startAt,
       endAt: newTask.endAt,
