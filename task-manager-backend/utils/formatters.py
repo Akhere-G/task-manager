@@ -1,4 +1,9 @@
 from datetime import datetime, date
+import re
+
+
+def to_snake_case(s):
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
 
 
 def to_camel_case(snake_str):
