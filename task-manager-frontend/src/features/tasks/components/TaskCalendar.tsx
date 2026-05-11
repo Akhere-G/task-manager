@@ -216,7 +216,6 @@ export default function TaskCalendar({
     <div className="space-y-6">
       <div className="card px-0 md:px-2 h-112.5 md:h-225">
         <DnDCalendar
-          longPressThreshold={10}
           localizer={localizer}
           events={events}
           date={currentDate}
