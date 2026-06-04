@@ -122,7 +122,7 @@ function TaskCard({
           {isOverdue && <AlertCircle className="mr-1.5 w-4 h-4 text-failure" />}
         </div>
         <div className="flex flex-col">
-          <p className="text-sm text-text-main leading-relaxed m-0">
+          <p className="text-sm text-text-main leading-relaxed m-0 whitespace-pre-line wrap-break-word">
             {formattedDescription}
           </p>
           {isLongDesc && !fullDescription && (
