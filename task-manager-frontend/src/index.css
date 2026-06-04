@@ -113,6 +113,7 @@
     --color-brand:  color-mix(in srgb, #ff00ea, #000 5%); 
     --color-accent: color-mix(in srgb, #00f2ff, #fff 70%); 
     --color-text-main:  color-mix(in srgb, #e0aaff, #fff 70%);
+    --color-text-sub:  #ccc;
     --color-text-inverse: black
 
   }
@@ -178,6 +179,7 @@
   /* --- 4. Cosmic Void (Stellar purple/blue gradients) --- */
   .theme-cosmic {
     --color-canvas: #0f172a;
+    --color-text-sub: #ddd;
     --color-surface: #1e1b4b;
     --color-surface-muted: #312e81;
     --color-brand: #e68d0c; /* Golden Star */
