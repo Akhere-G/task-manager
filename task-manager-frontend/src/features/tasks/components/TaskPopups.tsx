@@ -5,6 +5,7 @@ import {
   useTaskContext,
   type PopupMode,
 } from "../../../context/TaskContext";
+import useDeleteTask from "../hooks/useDeleteTask";
 import type { CreateTaskInput, Task } from "../types";
 import TaskForm from "./TaskForm";
 
@@ -82,8 +83,8 @@ function TaskPopups({
 }
 
 export default function TaskPopupsConnected() {
+  const { mutate: handleDelete } = useDeleteTask();
   const {
-    handleDelete,
     handleEdit,
     popupMode,
     closePopup,

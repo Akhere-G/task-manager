@@ -15,7 +15,6 @@ export interface TaskFilters {
 }
 
 export interface TaskContextType {
-  handleDelete: (id: number) => Promise<void>;
   handleEdit: (newTask: CreateTaskInput) => Promise<void>;
   skipTask: (task: Task) => void;
   updateTask: (id: number, newTaskData: Partial<Task>) => Promise<void>;
@@ -51,15 +50,6 @@ export default function TaskContextProvider({
     queryKeysAffectedByMutations.forEach((key) =>
       queryClient.invalidateQueries({ queryKey: [key] }),
     );
-
-  async function handleDelete(id: number) {
-    try {
-      await taskService.delete(id);
-      invalidateKeys();
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
   const openPopup = (task: Task, mode: PopupMode) => {
     setSelectedTask(task);
@@ -155,7 +145,6 @@ export default function TaskContextProvider({
 
   const value = {
     handleEdit,
-    handleDelete,
     setIsCompleted,
     updateTask,
     selectedTask,
