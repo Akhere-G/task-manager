@@ -6,6 +6,8 @@ import {
   type PopupMode,
 } from "../../../context/TaskContext";
 import useDeleteTask from "../hooks/useDeleteTask";
+import useEditTask from "../hooks/useEditTask";
+import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import type { CreateTaskInput, Task } from "../types";
 import TaskForm from "./TaskForm";
 
@@ -84,14 +86,10 @@ function TaskPopups({
 
 export default function TaskPopupsConnected() {
   const { mutate: handleDelete } = useDeleteTask();
-  const {
-    handleEdit,
-    popupMode,
-    closePopup,
-    selectedTask,
-    openPopup,
-    setIsCompleted,
-  } = useTaskContext();
+  const { popupMode, closePopup, selectedTask, openPopup } = useTaskContext();
+  const handleEdit = useEditTask({ onSuccess: closePopup });
+
+  const setIsCompleted = useSetIsCompleted();
 
   return (
     <TaskPopups
