@@ -30,6 +30,8 @@ import EventCard from "./EventCard";
 import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import useUpdateTask from "../hooks/useUpdateTask";
+import useSetIsCompleted from "../hooks/useSetIsCompleted";
 
 const locales = { "en-GB": enGB };
 const localizer = dateFnsLocalizer({
@@ -53,7 +55,9 @@ export default function TaskCalendar({
   currentDate,
   setCurrentDate,
 }: TaskCalendarProps) {
-  const { openPopup, updateTask, setIsCompleted } = useTaskContext();
+  const { mutateAsync: updateTask } = useUpdateTask();
+  const setIsCompleted = useSetIsCompleted();
+  const { openPopup } = useTaskContext();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const view = (searchParams.get("view") as View) || Views.MONTH;
@@ -139,9 +143,12 @@ export default function TaskCalendar({
     );
 
     try {
-      await updateTask(taskId, {
-        startAt: formattedStart,
-        endAt: formattedEnd,
+      await updateTask({
+        id: taskId,
+        newTaskData: {
+          startAt: formattedStart,
+          endAt: formattedEnd,
+        },
       });
     } catch (err) {
       console.error("Failed to update task date", err);
@@ -178,9 +185,12 @@ export default function TaskCalendar({
         prev.map((t) => (t.id === taskId ? { ...t, startAt, endAt } : t)),
       );
 
-      updateTask(taskId, {
-        startAt,
-        endAt,
+      updateTask({
+        id: taskId,
+        newTaskData: {
+          startAt,
+          endAt,
+        },
       });
     } catch (err) {
       console.error(err);
@@ -206,9 +216,12 @@ export default function TaskCalendar({
     const id = task.isGhost ? task.seriesId : task.id;
 
     try {
-      updateTask(id, {
-        startAt: format(start, "yyyy-MM-dd HH:mm"),
-        endAt: format(end, "yyyy-MM-dd HH:mm"),
+      updateTask({
+        id,
+        newTaskData: {
+          startAt: format(start, "yyyy-MM-dd HH:mm"),
+          endAt: format(end, "yyyy-MM-dd HH:mm"),
+        },
       });
     } catch (err) {
       console.error(err);

@@ -8,6 +8,9 @@ import {
   subDays,
   startOfDay,
   endOfDay,
+  addWeeks,
+  addMonths,
+  addYears,
 } from "date-fns";
 
 export const formatDate = (dateStr?: string) => {
@@ -81,3 +84,19 @@ export const formatDateRelative = (date = "") => {
   if (sameYear) return format(dateVal, "dd MMM");
   return format(dateVal, "dd MMM yyyy");
 };
+
+export function skipDate(date: Date, repeatBy: string) {
+  switch (repeatBy) {
+    case "daily":
+      return addDays(date, 1);
+    case "weekly":
+      return addWeeks(date, 1);
+    case "monthly":
+      return addMonths(date, 1);
+    case "yearly":
+      return addYears(date, 1);
+  }
+  throw new Error(
+    'Repeat by must be one of: "daily", "weekly", "monthly", "yearly"',
+  );
+}

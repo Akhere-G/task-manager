@@ -16,6 +16,8 @@ import {
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
 import { formatDateRange, formatDateRelative } from "../utils";
+import useSetIsCompleted from "../hooks/useSetIsCompleted";
+import useSkipTask from "../hooks/useSkipTask";
 
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
@@ -253,7 +255,9 @@ interface TaskCardConnectedProps extends Task {
   fullDescription?: boolean;
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps) {
-  const { setIsCompleted, openPopup, skipTask } = useTaskContext();
+  const { openPopup } = useTaskContext();
+  const setIsCompleted = useSetIsCompleted();
+  const skipTask = useSkipTask();
 
   return (
     <TaskCard
