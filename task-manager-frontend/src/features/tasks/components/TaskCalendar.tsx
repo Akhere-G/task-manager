@@ -29,7 +29,7 @@ import CalendarTaskList from "./TaskCalendarList";
 import EventCard from "./EventCard";
 import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const locales = { "en-GB": enGB };
 const localizer = dateFnsLocalizer({
@@ -55,8 +55,12 @@ export default function TaskCalendar({
 }: TaskCalendarProps) {
   const { openPopup, updateTask, setIsCompleted } = useTaskContext();
 
-  const [view, setView] = useState<View>(Views.MONTH);
-
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = (searchParams.get("view") as View) || Views.MONTH;
+  const setView = (view: View) => {
+    searchParams.set("view", view);
+    setSearchParams(searchParams);
+  };
   const [allTasks, setAllTasks] = useState<Task[]>(tasks);
   const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
 
