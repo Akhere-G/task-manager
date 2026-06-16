@@ -8,7 +8,7 @@ from flask_jwt_extended import (
     jwt_required,
 )
 from mailersend import MailerSendClient, EmailBuilder  # type: ignore
-from services.auth_service import (
+from app.services.auth_service import (
     create_user,
     login_user,
     get_user,
@@ -20,8 +20,8 @@ from services.auth_service import (
     create_session,
     rotate_refresh_token,
 )
-from utils.validators import validate_user, validate_password
-from utils.formatters import format_json_response
+from app.utils.validators import validate_user, validate_password
+from app.utils.formatters import format_json_response
 
 auth_bp = Blueprint("auth", __name__)
 

@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from utils.formatters import format_json_response
-from services.stats_service import get_all_dashboard_stats
+from app.utils.formatters import format_json_response
+from app.services.stats_service import get_all_dashboard_stats
 
 stats_bp = Blueprint(
     "stats",

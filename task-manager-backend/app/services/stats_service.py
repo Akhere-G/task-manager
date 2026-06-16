@@ -1,7 +1,7 @@
-from database import db
+from app.database import db
 from datetime import datetime, timedelta
-from services.task_service import with_repeating
-from models import Task
+from app.services.task_service import with_repeating
+from app.models import Task
 
 
 def _get_productivity_trend(tasks):

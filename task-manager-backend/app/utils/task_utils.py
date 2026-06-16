@@ -1,8 +1,8 @@
 from datetime import timedelta, datetime, date
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import select, func, or_
-from database import db
-from models import Task
+from app.database import db
+from app.models import Task
 
 
 def build_task_filters(
