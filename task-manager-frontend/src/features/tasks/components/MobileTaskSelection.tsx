@@ -1,12 +1,12 @@
 import { format } from "date-fns";
 import type { Task } from "../types";
 import CalendarTaskList from "./TaskCalendarList";
+import useSetIsCompleted from "../hooks/useSetIsCompleted";
 
 interface MobileTaskSectionProps {
   currentDate: Date;
   tasks: Task[];
   onSelectTask: (task: Task) => void;
-  setIsCompleted: (id: number, completed: boolean) => void;
   setDraggedEvent: (task: Task | null) => void;
 }
 
@@ -14,9 +14,10 @@ export default function MobileTaskSection({
   currentDate,
   tasks,
   onSelectTask,
-  setIsCompleted,
   setDraggedEvent,
 }: MobileTaskSectionProps) {
+  const setIsCompleted = useSetIsCompleted();
+
   return (
     <div className="md:hidden space-y-4">
       <div className="flex items-center justify-between border-b border-border-light pb-2 px-1">

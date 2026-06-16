@@ -30,7 +30,7 @@ import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useUpdateTask from "../hooks/useUpdateTask";
-import useSetIsCompleted from "../hooks/useSetIsCompleted";
+
 import {
   getCalendarTaskId,
   getDayClassName,
@@ -62,7 +62,6 @@ export default function TaskCalendar({
   setCurrentDate,
 }: TaskCalendarProps) {
   const { mutateAsync: updateTask } = useUpdateTask();
-  const setIsCompleted = useSetIsCompleted();
   const { openPopup } = useTaskContext();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -228,7 +227,6 @@ export default function TaskCalendar({
         currentDate={currentDate}
         tasks={tasksForSelectedDay}
         onSelectTask={(task) => openPopup(task, PopupModes.View)}
-        setIsCompleted={setIsCompleted}
         setDraggedEvent={setDraggedEvent}
       />
     </div>

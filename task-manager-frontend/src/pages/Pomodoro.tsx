@@ -5,8 +5,8 @@ import { isAxiosError } from "axios";
 import { Clock, Pause, Play, Repeat } from "lucide-react";
 import { useState } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
-import { useTaskContext } from "../context/TaskContext";
 import { formatDateRange, formatDateRelative } from "../features/tasks/utils";
+import useSetIsCompleted from "../features/tasks/hooks/useSetIsCompleted";
 
 const POMODORO_DURATION = 25 * 60;
 
@@ -25,7 +25,7 @@ export default function Pomodoro() {
     isError,
     error,
   } = useGetTask(Number(taskId ?? -1));
-  const { setIsCompleted } = useTaskContext();
+  const setIsCompleted = useSetIsCompleted();
 
   const status = isAxiosError(error) ? error.status : 0;
 
