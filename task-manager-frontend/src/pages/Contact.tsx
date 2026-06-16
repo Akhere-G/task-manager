@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Send } from "lucide-react";
-import { contactService, type ContactEnquiry } from "../services/api";
 import { isAxiosError } from "axios";
 import { FormInput } from "../components/ui";
 import { validateContactRequest, type ContactData } from "../utils/validators";
+import { contactService, type ContactEnquiry } from "../features/contact/api";
 
 export default function ContactPage() {
   const [status, setStatus] = useState<"idle" | "sending" | "success">("idle");

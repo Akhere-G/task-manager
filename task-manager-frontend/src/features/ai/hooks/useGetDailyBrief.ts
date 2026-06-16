@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { aiService } from "../../../services/api";
+import { aiService } from "../api";
 
 export default function useGetDailyBrief() {
   return useQuery({

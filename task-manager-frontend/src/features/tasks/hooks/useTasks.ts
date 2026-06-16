@@ -1,9 +1,9 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { calculateDateRange } from "../utils";
-import { taskService } from "../../../services/api";
 import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
+import { taskService } from "../api";
 
 export interface TaskFilters {
   search: string;
