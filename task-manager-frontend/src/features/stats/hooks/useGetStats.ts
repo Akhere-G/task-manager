@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { statsService, type StatsResult } from "../../../services/api";
+import { statsService, type StatsResult } from "../api";
 
 export default function useGetStats<TData = StatsResult>(
   select?: (data: StatsResult) => TData,
