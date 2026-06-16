@@ -12,12 +12,12 @@ import {
 import { format, fromUnixTime } from "date-fns";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import useGetStats from "../hooks/useGetStats";
-import type { EstimationAccuracy } from "../../../services/api";
 import type {
   NameType,
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
 import ChartToolTip from "./ChartToolTip";
+import type { EstimationAccuracy } from "../api";
 
 export default function EstimationAccuracyChart() {
   const {

@@ -14,9 +14,9 @@ import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { statusColors } from "../constants";
 import useGetStats from "../hooks/useGetStats";
-import type { CategoryVolumeData } from "../../../services/api";
 import { categoryColours } from "../../tasks/constants";
 import ChartToolTip from "./ChartToolTip";
+import type { CategoryVolumeData } from "../api";
 
 export default function CategoryVolumeChart() {
   const breakpoint = useBreakpoint();
