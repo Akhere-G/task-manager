@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from utils.validators import validate_contact_request
+from app.utils.validators import validate_contact_request
 import os
 from mailersend import MailerSendClient, EmailBuilder
 from dotenv import load_dotenv

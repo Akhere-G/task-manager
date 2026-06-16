@@ -1,7 +1,11 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from services.ai_service import generate_daily_brief, parse_task_with_ai, decompose_task
-from utils.formatters import format_json_response
+from app.services.ai_service import (
+    generate_daily_brief,
+    parse_task_with_ai,
+    decompose_task,
+)
+from app.utils.formatters import format_json_response
 
 ai_bp = Blueprint("ai", __name__)
 

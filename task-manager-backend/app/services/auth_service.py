@@ -4,8 +4,8 @@ from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from database import db
-from models import User, PasswordReset, RefreshToken
+from app.database import db
+from app.models import User, PasswordReset, RefreshToken
 
 
 def create_user(first_name, last_name, email, password):

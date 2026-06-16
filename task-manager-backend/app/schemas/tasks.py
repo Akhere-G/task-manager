@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from sqlalchemy import String, DateTime, Date, Boolean, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
-from ..database import Base
+from app.database import Base
 
 
 class Task(Base):

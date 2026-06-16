@@ -6,11 +6,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from google import genai
 from groq import Groq
 
-from database import db
-from models import DailyBrief
+from app.database import db
+from app.models import DailyBrief
 
-from services.stats_service import get_all_dashboard_stats
-from services.task_service import get_all_tasks
+from app.services.stats_service import get_all_dashboard_stats
+from app.services.task_service import get_all_tasks
 
 allowed_categories = [
     "work",

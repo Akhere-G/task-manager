@@ -30,8 +30,8 @@ COPY . .
 # 8. Create the start script
 RUN echo '#!/bin/sh\n\
     python app/init_db.py\n\
+    export PYTHONPATH=$PYTHONPATH:$(pwd)\n\
     gunicorn --bind 0.0.0.0:8080 app.main:app' > /app/start.sh
-
 # 9. Make the start script executable
 RUN chmod +x /app/start.sh
 

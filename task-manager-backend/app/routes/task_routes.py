@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
-from utils.formatters import format_json_response
-from utils.validators import validate_task, validate_task_list
-from services.task_service import (
+from app.utils.formatters import format_json_response
+from app.utils.validators import validate_task, validate_task_list
+from app.services.task_service import (
     get_all_tasks,
     create_task,
     update_task,
