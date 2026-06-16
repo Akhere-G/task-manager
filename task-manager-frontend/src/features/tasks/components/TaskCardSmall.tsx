@@ -2,6 +2,7 @@ import { CheckCircle2, Circle, Repeat } from "lucide-react";
 import type { Task } from "../types";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { formatDateRange } from "../utils";
+import useSetIsCompleted from "../hooks/useSetIsCompleted";
 
 interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
@@ -70,7 +71,9 @@ interface TaskCardSmallConnectedProps extends Task {
 export default function TaskCardSmallConnected(
   props: TaskCardSmallConnectedProps,
 ) {
-  const { setIsCompleted, openPopup } = useTaskContext();
+  const setIsCompleted = useSetIsCompleted();
+
+  const { openPopup } = useTaskContext();
   return (
     <TaskCardSmall
       setIsCompleted={setIsCompleted}
