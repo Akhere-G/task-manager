@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FormInput } from "../components/ui";
 import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
-import { authService } from "../services/api";
+import { authService } from "../features/auth/api";
 
 export default function RequestPasswordReset() {
   const location = useLocation();

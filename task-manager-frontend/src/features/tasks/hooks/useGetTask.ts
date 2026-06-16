@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { taskService } from "../../../services/api";
+import { taskService } from "../api";
 
 export default function useGetTask(id: number) {
   return useQuery({

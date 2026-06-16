@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Sparkles, Plus, Loader2, Move } from "lucide-react";
-import { aiService } from "../services/api";
 import TaskCard from "../features/tasks/components/TaskCard";
 import type { CreateTaskInput, Task } from "../features/tasks/types";
 import useGetTask from "../features/tasks/hooks/useGetTask";
@@ -11,6 +10,7 @@ import { ErrorState, LoadingState, Popup } from "../components/ui";
 import { TaskForm } from "../features/tasks/components";
 import { PopupModes, useTaskContext } from "../context/TaskContext";
 import useCreateAllTasks from "../features/tasks/hooks/useCreateAllTasks";
+import { aiService } from "../features/ai/api";
 
 export default function DecomposeTask() {
   const [idCount, setIdCount] = useState(0);

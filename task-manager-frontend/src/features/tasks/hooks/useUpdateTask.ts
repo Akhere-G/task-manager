@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { taskService } from "../../../services/api";
+import { taskService } from "../api";
+
 import type { Task } from "../types";
 
 export default function useUpdateTask() {

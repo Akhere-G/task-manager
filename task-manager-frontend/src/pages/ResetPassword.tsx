@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { FormInput } from "../components/ui";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { authService } from "../services/api";
 import { validateUser } from "../utils/validators";
 import axios from "axios";
+import { authService } from "../features/auth/api";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();

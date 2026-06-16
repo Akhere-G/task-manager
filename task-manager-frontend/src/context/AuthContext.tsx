@@ -5,7 +5,7 @@ import type {
   RegisterUserInput,
   User,
 } from "../features/auth/types";
-import { authService } from "../services/api";
+import { authService } from "../features/auth/api";
 
 interface AuthContextType {
   register: (userData: RegisterUserInput) => Promise<void>;
