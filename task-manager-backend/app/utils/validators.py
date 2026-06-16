@@ -76,10 +76,8 @@ def validate_task(data, is_update=False):
         completed_at = data.get("completedAt")
         if completed_at:
             try:
-                # Handle the 'Z' suffix if coming from JavaScript's toISOString()
                 clean_ts = str(completed_at).replace("Z", "")
 
-                # Check for the two most common formats
                 if "T" in clean_ts:
                     datetime.strptime(clean_ts, "%Y-%m-%dT%H:%M:%S")
                 else:
@@ -117,10 +115,8 @@ def validate_task(data, is_update=False):
         repeat_until = data.get("repeatUntil")
 
         try:
-            # Handle the 'Z' suffix if coming from JavaScript's toISOString()
             clean_ts = str(repeat_until).replace("Z", "")
 
-            # Check for the two most common formats
             if "T" in clean_ts:
                 datetime.strptime(clean_ts, "%Y-%m-%d")
             else:
@@ -145,14 +141,12 @@ def validate_task_list(tasks):
 def validate_contact_request(data):
     errors = {}
 
-    # 1. Full Name Validation
     full_name = data.get("fullName", "").strip()
     if not full_name:
         errors["fullName"] = "Full name is required."
     elif len(full_name) > 100:
         errors["fullName"] = "Name must be under 100 characters."
 
-    # 2. Email Validation
     email = data.get("email", "").strip()
     email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
     if not email:
@@ -160,14 +154,12 @@ def validate_contact_request(data):
     elif not re.match(email_regex, email):
         errors["email"] = "Please enter a valid email address."
 
-    # 3. Subject Validation
     subject = data.get("subject", "").strip()
     if not subject:
         errors["subject"] = "Please select a subject for your enquiry."
     elif len(subject) > 100:
         errors["subject"] = "Subject must be under 100 characters."
 
-    # 4. Message Validation
     message = data.get("message", "").strip()
     if not message:
         errors["message"] = "Message content is required."

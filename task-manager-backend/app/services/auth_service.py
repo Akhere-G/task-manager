@@ -1,5 +1,6 @@
 import secrets
 from datetime import datetime, timedelta
+from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -27,7 +28,7 @@ def create_user(first_name, last_name, email, password):
 
 def login_user(email, password):
     user = db.session.execute(
-        db.select(User).filter_by(email=email)
+        select(User).where(User.email == email)
     ).scalar_one_or_none()
 
     if user and check_password_hash(user.password_hash, password):
@@ -36,19 +37,19 @@ def login_user(email, password):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
-            "password_hash": user.password_hash,
         }
     return None
 
 
 def get_user(id=None, email=None):
-    stmt = db.select(User)
-    if id:
-        stmt = stmt.filter_by(id=id)
-    elif email:
-        stmt = stmt.filter_by(email=email)
-    else:
+    if not id and not email:
         return None
+
+    stmt = select(User)
+    if id:
+        stmt = stmt.where(User.id == id)
+    else:
+        stmt = stmt.where(User.email == email)
 
     user = db.session.execute(stmt).scalar_one_or_none()
     if user:
@@ -65,7 +66,7 @@ def create_reset_token(user_id):
     token = secrets.token_urlsafe(32)
     expires_at = datetime.now() + timedelta(minutes=15)
 
-    db.session.execute(db.delete(PasswordReset).filter_by(user_id=user_id))
+    db.session.execute(delete(PasswordReset).where(PasswordReset.user_id == user_id))
 
     reset_entry = PasswordReset(user_id=user_id, token=token, expires_at=expires_at)
     db.session.add(reset_entry)
@@ -75,7 +76,7 @@ def create_reset_token(user_id):
 
 def verify_reset_token(token):
     result = db.session.execute(
-        db.select(PasswordReset).filter(
+        select(PasswordReset).where(
             PasswordReset.token == token, PasswordReset.expires_at > datetime.now()
         )
     ).scalar_one_or_none()
@@ -85,23 +86,23 @@ def verify_reset_token(token):
 
 def update_password_and_clear_token(user_id, token, new_password):
     user = db.session.execute(
-        db.select(User).filter_by(id=user_id)
+        select(User).where(User.id == user_id)
     ).scalar_one_or_none()
+
     if not user:
         return False
 
     user.password_hash = generate_password_hash(new_password)
-    db.session.execute(db.delete(PasswordReset).filter_by(token=token))
-
+    db.session.execute(delete(PasswordReset).where(PasswordReset.token == token))
     db.session.commit()
     return True
 
 
 def validate_refresh_token(refresh_token):
     user = db.session.execute(
-        db.select(User)
+        select(User)
         .join(RefreshToken, User.id == RefreshToken.user_id)
-        .filter(
+        .where(
             RefreshToken.token == refresh_token,
             RefreshToken.expires_at > datetime.now(),
         )
@@ -118,7 +119,7 @@ def validate_refresh_token(refresh_token):
 
 
 def delete_refresh_token(refresh_token):
-    db.session.execute(db.delete(RefreshToken).filter_by(token=refresh_token))
+    db.session.execute(delete(RefreshToken).where(RefreshToken.token == refresh_token))
     db.session.commit()
 
 

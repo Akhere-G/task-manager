@@ -1,5 +1,5 @@
 import {
-  ComposedChart, // Necessary for mixing Bar and Line
+  ComposedChart,
   Bar,
   Line,
   XAxis,

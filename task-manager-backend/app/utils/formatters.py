@@ -9,7 +9,7 @@ def to_snake_case(s):
 def to_camel_case(snake_str):
     """Converts a snake_case string to camelCase."""
     components = snake_str.split("_")
-    # capitalise the first letter of each component except the first one
+
     return components[0] + "".join(x.title() for x in components[1:])
 
 
@@ -24,7 +24,6 @@ def format_json_response(data):
     if isinstance(data, dict):
         new_dict = {}
         for key, value in data.items():
-            # Convert key and handle nested values
             new_key = to_camel_case(key)
             new_dict[new_key] = format_json_response(value)
         return new_dict

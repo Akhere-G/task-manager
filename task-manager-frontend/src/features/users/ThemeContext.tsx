@@ -72,7 +72,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Custom hook to consume the context easily
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {

@@ -17,7 +17,6 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__, static_folder="static", static_url_path="")
 
-    # Build SQL Connection String from individual components
     db_user = os.getenv("DB_USER", "root")
     db_password = os.getenv("DB_PASSWORD", "Super555")
     db_host = os.getenv("DB_HOST", "localhost")
@@ -28,11 +27,9 @@ def create_app():
         f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     )
 
-    # Database Configuration
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    # JWT Configuration
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token_cookie"
@@ -48,11 +45,9 @@ def create_app():
     else:
         app.config["JWT_COOKIE_SAMESITE"] = "Lax"
 
-    # Initialise Extensions
     jwt.init_app(app)
     db.init_app(app)
 
-    # CORS Configuration
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
     CORS(
         app,
@@ -88,7 +83,6 @@ def create_app():
                 return send_from_directory(static_folder, path)
             return send_from_directory(static_folder, "index.html")
 
-        # Global Error Handlers
         @app.errorhandler(404)
         def not_found(e):
             static_folder = app.static_folder or ""
