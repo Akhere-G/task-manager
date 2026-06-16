@@ -10,8 +10,8 @@ import {
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import useGetStats from "../hooks/useGetStats";
-import type { OverdueDistributionData } from "../../../services/api";
 import ChartToolTip from "./ChartToolTip";
+import type { OverdueDistributionData } from "../api";
 
 export default function OverdueDistributionChart() {
   const {

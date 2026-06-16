@@ -10,9 +10,9 @@ import {
 } from "recharts";
 import { categoryColours } from "../../tasks/constants";
 import useGetStats from "../hooks/useGetStats";
-import type { TimeSpentData } from "../../../services/api";
 import { capitalise } from "../../../utils/formators";
 import ChartToolTip from "./ChartToolTip";
+import type { TimeSpentData } from "../api";
 
 export default function TimeSpentChart() {
   const {

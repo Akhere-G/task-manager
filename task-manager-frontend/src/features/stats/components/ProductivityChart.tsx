@@ -10,9 +10,9 @@ import {
   YAxis,
 } from "recharts";
 import useGetStats from "../hooks/useGetStats";
-import type { ProductivityData } from "../../../services/api";
 import ChartToolTip from "./ChartToolTip";
 import { format } from "date-fns";
+import type { ProductivityData } from "../api";
 
 export default function ProductivityChart() {
   const {

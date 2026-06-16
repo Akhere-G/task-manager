@@ -10,11 +10,11 @@ import {
   Legend,
 } from "recharts";
 import { formatDate } from "date-fns";
-import type { WeekOverviewData } from "../../../services/api";
 import useGetStats from "../hooks/useGetStats";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import ChartToolTip from "./ChartToolTip";
+import type { WeekOverviewData } from "../api";
 
 export default function WeekOverviewChart() {
   const {

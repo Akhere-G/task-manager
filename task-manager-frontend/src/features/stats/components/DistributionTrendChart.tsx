@@ -15,10 +15,10 @@ import { formatDate } from "date-fns";
 import { LoadingState, ErrorState, EmptyState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import useGetStats from "../hooks/useGetStats";
-import type { DistributionTrendData } from "../../../services/api";
 import { categoryColours } from "../../tasks/constants";
 import { capitalise } from "../../../utils/formators";
 import ChartToolTip from "./ChartToolTip";
+import type { DistributionTrendData } from "../api";
 
 const CATEGORIES = [
   "work",

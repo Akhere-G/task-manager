@@ -3,7 +3,7 @@ import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { categoryColours } from "../../tasks/constants";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import useGetStats from "../hooks/useGetStats";
-import type { CategoryVolumeData } from "../../../services/api";
+import type { CategoryVolumeData } from "../api";
 
 export default function CategoryVolumeChart() {
   const breakpoint = useBreakpoint();

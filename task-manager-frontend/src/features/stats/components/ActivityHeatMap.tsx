@@ -3,7 +3,7 @@ import { LoadingState, ErrorState, EmptyState } from "../../../components/ui";
 import { Tooltip } from "react-tooltip";
 import "react-calendar-heatmap/dist/styles.css";
 import useGetStats from "../hooks/useGetStats";
-import type { ProductivityData } from "../../../services/api";
+import type { ProductivityData } from "../api";
 
 interface HeatmapValueType {
   date: string;

@@ -2,8 +2,8 @@ import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { statusColors } from "../constants";
 import useGetStats from "../hooks/useGetStats";
-import type { BacklogHealthData } from "../../../services/api";
 import ChartToolTip from "./ChartToolTip";
+import type { BacklogHealthData } from "../api";
 
 export default function BacklogHealthChart() {
   const {

@@ -7,10 +7,10 @@ import {
   YAxis,
 } from "recharts";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
-import type { HourlyProductivityData } from "../../../services/api";
 import useGetStats from "../hooks/useGetStats";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import ChartToolTip from "./ChartToolTip";
+import type { HourlyProductivityData } from "../api";
 
 export default function HourlyProductivityChart() {
   const { data, isLoading, isError } = useGetStats<HourlyProductivityData[]>(

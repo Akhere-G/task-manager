@@ -9,10 +9,10 @@ import {
 } from "recharts";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import useGetStats from "../hooks/useGetStats";
-import type { DeadlineProximityData } from "../../../services/api";
 import { capitalise } from "../../../utils/formators";
 import { categoryColours } from "../../tasks/constants";
 import ChartToolTip from "./ChartToolTip";
+import type { DeadlineProximityData } from "../api";
 
 export default function DeadlineProximityChart() {
   const {

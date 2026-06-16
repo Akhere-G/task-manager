@@ -9,9 +9,9 @@ import {
   Bar,
 } from "recharts";
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
-import type { Turnaround } from "../../../services/api";
 import useGetStats from "../hooks/useGetStats";
 import ChartToolTip from "./ChartToolTip";
+import type { Turnaround } from "../api";
 
 const WARNING_THRESHOLD = 15;
 
