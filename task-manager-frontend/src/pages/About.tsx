@@ -110,8 +110,8 @@ export default function AboutPage() {
             <p className="text-text-sub leading-relaxed text-lg">
               Our platform is built on a modern full-stack architecture designed
               for high performance. We utilise a{" "}
-              <strong>Python and Flask</strong> backend to handle the heavy
-              lifting, from <strong>database management</strong> to{" "}
+              <strong>Python, Flask and SQLAlchemy</strong> backend to handle
+              the heavy lifting, from <strong>database management</strong> to{" "}
               <strong>AI-driven logic</strong>. On the frontend,{" "}
               <strong>Axios</strong> manages efficient API communication, while{" "}
               <strong>TanStack Query</strong> provides{" "}
@@ -126,6 +126,7 @@ export default function AboutPage() {
             {[
               "Python",
               "Flask",
+              "SQLAlchemy",
               "React",
               "TypeScript",
               "Recharts",
