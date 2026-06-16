@@ -12,6 +12,8 @@ import {
   addMonths,
   addYears,
 } from "date-fns";
+import type { Task } from "./types";
+import { Views, type Event, type View } from "react-big-calendar";
 
 export const formatDate = (dateStr?: string) => {
   const date = dateStr ? new Date(dateStr) : new Date();
@@ -99,4 +101,88 @@ export function skipDate(date: Date, repeatBy: string) {
   throw new Error(
     'Repeat by must be one of: "daily", "weekly", "monthly", "yearly"',
   );
+}
+
+export const getCalendarTaskId = (task: Task): number =>
+  task.isGhost ? task.seriesId : task.id;
+
+export const calendarFormats = (isMobile: boolean) => ({
+  dayFormat: (date: Date) =>
+    isMobile ? format(date, "dd") : format(date, "EEE dd/MM"),
+  timeGutterFormat: (date: Date) =>
+    isMobile ? format(date, "HH") : format(date, "p"),
+  eventTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
+    isMobile
+      ? `${format(start, "H")} - ${format(end, "H")}`
+      : `${format(start, "p")} - ${format(end, "p")}`,
+});
+
+export function getDayClassName(date: Date, currentDate: Date): string {
+  const isSelected = isSameDay(date, currentDate);
+  const isToday = isSameDay(date, new Date());
+  const isCurrentMonth = date.getMonth() === currentDate.getMonth();
+
+  const classes = [
+    "transition-all",
+    "duration-150",
+    "cursor-pointer",
+    "relative",
+  ];
+
+  classes.push(isCurrentMonth ? "bg-surface" : "bg-surface-muted!");
+  classes.push(
+    isSelected ? "bg-brand/20! dark:!bg-brand/50" : "hover:bg-brand/20",
+  );
+  if (isToday) classes.push("!font-bold", "bg-blue-200! dark:bg-blue-600/50!");
+
+  return classes.join(" ");
+}
+
+export function getEventClassName(
+  event: Event,
+  isMobile: boolean,
+  view: View,
+): string {
+  if (isMobile && view === Views.MONTH) {
+    return "!bg-transparent !border-none !shadow-none !pointer-events-none";
+  }
+
+  const task = event.resource as Task;
+  const statusClasses = task.isCompleted
+    ? "!bg-slate-200 !text-slate-500 !line-through"
+    : "!bg-brand !text-text-inverse";
+
+  return `!border-none !shadow-sm !rounded-md !px-1 !py-1 !text-xs !font-medium transition-all ${statusClasses}`;
+}
+
+export function mapTasksToCalendarEvents(
+  tasks: Task[],
+  isMobile: boolean,
+  view: View,
+) {
+  if (!isMobile || view !== Views.MONTH) {
+    return tasks.map((task) => ({
+      id: task.id,
+      title: task.title || "(No Title)",
+      start: new Date(task.startAt),
+      end: new Date(task.endAt),
+      allDay: false,
+      resource: task,
+    }));
+  }
+
+  const uniqueDayLookup: Record<string, number> = {};
+  tasks.forEach((task) => {
+    const date = format(new Date(task.startAt), "yyyy-MM-dd");
+    uniqueDayLookup[date] = (uniqueDayLookup[date] || 0) + 1;
+  });
+
+  return Object.entries(uniqueDayLookup).map(([dayStr, count]) => ({
+    id: dayStr,
+    title: "",
+    start: new Date(dayStr),
+    end: new Date(dayStr),
+    allDay: true,
+    resource: count,
+  }));
 }

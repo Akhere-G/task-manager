@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Calendar,
   dateFnsLocalizer,
@@ -25,13 +25,19 @@ import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import type { Task } from "../types";
-import CalendarTaskList from "./TaskCalendarList";
 import EventCard from "./EventCard";
 import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useUpdateTask from "../hooks/useUpdateTask";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
+import {
+  getCalendarTaskId,
+  getDayClassName,
+  getEventClassName,
+  mapTasksToCalendarEvents,
+} from "../utils";
+import MobileTaskSection from "./MobileTaskSelection";
 
 const locales = { "en-GB": enGB };
 const localizer = dateFnsLocalizer({
@@ -60,62 +66,42 @@ export default function TaskCalendar({
   const { openPopup } = useTaskContext();
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
+
+  const navigate = useNavigate();
+  const breakpoint = useBreakpoint();
+  const isMobile = ["xs", "sm"].includes(breakpoint);
+
   const view = (searchParams.get("view") as View) || Views.MONTH;
   const setView = (view: View) => {
     searchParams.set("view", view);
     setSearchParams(searchParams);
   };
-  const [allTasks, setAllTasks] = useState<Task[]>(tasks);
-  const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
 
-  const breakpoint = useBreakpoint();
-  const navigate = useNavigate();
+  const events = useMemo(
+    () => mapTasksToCalendarEvents(tasks, isMobile, view),
+    [tasks, isMobile, view],
+  );
 
-  const isMobile = ["xs", "sm"].includes(breakpoint);
-  useEffect(() => {
-    setAllTasks(tasks);
-  }, [tasks]);
-
-  const events = useMemo(() => {
-    if (!isMobile || view !== Views.MONTH) {
-      return allTasks.map((task) => {
-        const startDate = new Date(task.startAt);
-        const endDate = new Date(task.endAt);
-
-        return {
-          id: task.id,
-          title: task.title || "(No Title)",
-          start: startDate,
-          end: endDate,
-          allDay: false,
-          resource: task,
-        };
-      });
-    }
-
-    const uniqueDayLookup: Record<string, number> = {};
-    allTasks.forEach((task) => {
-      const date = format(new Date(task.startAt), "yyyy-MM-dd");
-      if (uniqueDayLookup[date]) {
-        uniqueDayLookup[date] += 1;
-      } else {
-        uniqueDayLookup[date] = 1;
-      }
-    });
-
-    return Object.entries(uniqueDayLookup).map(([dayStr, count]) => ({
-      id: dayStr,
-      title: "",
-      start: new Date(dayStr),
-      end: new Date(dayStr),
-      allDay: true,
-      resource: count,
-    }));
-  }, [allTasks, isMobile, view]);
-
-  const tasksForSelectedDay = allTasks.filter((t) =>
+  const tasksForSelectedDay = tasks.filter((t) =>
     isSameDay(new Date(t.startAt), currentDate),
   );
+
+  const handleTaskDateChange = async (task: Task, start: Date, end: Date) => {
+    if (task.isGhost) return;
+    try {
+      await updateTask({
+        id: getCalendarTaskId(task),
+        newTaskData: {
+          startAt: format(start, "yyyy-MM-dd HH:mm:ss"),
+          endAt: format(end, "yyyy-MM-dd HH:mm:ss"),
+        },
+      });
+    } catch (err) {
+      console.error("Failed to update task date", err);
+      throw err;
+    }
+  };
 
   const onEventDrop = async ({
     event,
@@ -126,40 +112,12 @@ export default function TaskCalendar({
     const newEnd = new Date(end as Date);
     const task = event.resource as Task;
 
-    if (task.isGhost) return;
-
-    const formattedStart = format(newStart, "yyyy-MM-dd HH:mm:ss");
-    const formattedEnd = format(newEnd, "yyyy-MM-dd HH:mm:ss");
-    const taskId = task.isGhost ? task.seriesId : task.id;
-
-    const previousTasks = [...allTasks];
-
-    setAllTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId
-          ? { ...t, startAt: formattedStart, endAt: formattedEnd }
-          : t,
-      ),
-    );
-
-    try {
-      await updateTask({
-        id: taskId,
-        newTaskData: {
-          startAt: formattedStart,
-          endAt: formattedEnd,
-        },
-      });
-    } catch (err) {
-      console.error("Failed to update task date", err);
-      setAllTasks(previousTasks);
-    }
+    handleTaskDateChange(task, newStart, newEnd);
   };
 
   function onDropFromOutside(day: DragFromOutsideItemArgs) {
     if (!draggedEvent) return;
 
-    if (draggedEvent.isGhost) return;
     const startAt = new Date(draggedEvent.startAt);
     const endAt = new Date(draggedEvent.endAt);
 
@@ -172,29 +130,10 @@ export default function TaskCalendar({
       endAt.getTime() - startAt.getTime(),
     );
 
-    const prev = allTasks;
     try {
-      const startAt = format(newStartAt, "yyyy-MM-dd HH:mm");
-      const endAt = format(newEndAt, "yyyy-MM-dd HH:mm");
-
-      const taskId = draggedEvent.isGhost
-        ? draggedEvent.seriesId
-        : draggedEvent.id;
-
-      setAllTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, startAt, endAt } : t)),
-      );
-
-      updateTask({
-        id: taskId,
-        newTaskData: {
-          startAt,
-          endAt,
-        },
-      });
+      handleTaskDateChange(draggedEvent, newStartAt, newEndAt);
     } catch (err) {
       console.error(err);
-      setAllTasks(prev);
     } finally {
       setDraggedEvent(null);
     }
@@ -203,30 +142,8 @@ export default function TaskCalendar({
   function onEventResize(e: EventInteractionArgs<Event>) {
     const { start, end, event } = e;
     const task: Task = event.resource;
-    if (task.isGhost) return;
-    const startAt = format(start, "yyyy-MM-dd HH:mm");
-    const endAt = format(end, "yyyy-MM-dd HH:mm");
 
-    const prev = allTasks;
-
-    setAllTasks((prev) =>
-      prev.map((t) => (t.id === task.id ? { ...t, startAt, endAt } : t)),
-    );
-
-    const id = task.isGhost ? task.seriesId : task.id;
-
-    try {
-      updateTask({
-        id,
-        newTaskData: {
-          startAt: format(start, "yyyy-MM-dd HH:mm"),
-          endAt: format(end, "yyyy-MM-dd HH:mm"),
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      setAllTasks(prev);
-    }
+    handleTaskDateChange(task, new Date(start), new Date(end));
   }
 
   return (
@@ -279,35 +196,8 @@ export default function TaskCalendar({
               openPopup(event.resource as Task, PopupModes.View);
           }}
           dayPropGetter={(date) => {
-            const isSelected = isSameDay(date, currentDate);
-            const isToday = isSameDay(date, new Date());
-            const isCurrentMonth = date.getMonth() === currentDate.getMonth();
-
-            const classes = [
-              "transition-all",
-              "duration-150",
-              "cursor-pointer",
-              "relative",
-            ];
-
-            if (!isCurrentMonth) {
-              classes.push("bg-surface-muted!");
-            } else {
-              classes.push("bg-surface");
-            }
-
-            if (isSelected) {
-              classes.push("bg-brand/20! dark:!bg-brand/50 ");
-            } else {
-              classes.push("hover:bg-brand/20 ");
-            }
-
-            if (isToday) {
-              classes.push("!font-bold", "bg-blue-200! dark:bg-blue-600/50!");
-            }
-
             return {
-              className: classes.join(" "),
+              className: getDayClassName(date, currentDate),
             };
           }}
           components={{
@@ -329,38 +219,18 @@ export default function TaskCalendar({
             ),
           }}
           eventPropGetter={(event: Event) => ({
-            className:
-              isMobile && view === Views.MONTH
-                ? "!bg-transparent !border-none !shadow-none !pointer-events-none"
-                : `!border-none !shadow-sm !rounded-md !px-1 !py-1 !text-xs !font-medium transition-all ${
-                    (event.resource as Task).isCompleted
-                      ? "!bg-slate-200 !text-slate-500 !line-through"
-                      : "!bg-brand !text-text-inverse"
-                  }`,
+            className: getEventClassName(event, isMobile, view),
           })}
         />
       </div>
 
-      <div className="md:hidden space-y-4">
-        <div className="flex items-center justify-between border-b border-border-light pb-2 px-1">
-          <p className="text-sm font-bold text-text-sub uppercase tracking-widest">
-            {format(currentDate, "E do MMMM")}
-          </p>
-          <span className="text-xs font-medium text-brand bg-brand/10 px-2 py-0.5 rounded-full">
-            {tasksForSelectedDay.length} Tasks
-          </span>
-        </div>
-
-        <div className="grid gap-2">
-          <CalendarTaskList
-            tasks={tasksForSelectedDay}
-            currentDate={currentDate}
-            setSelectedTask={(task: Task) => openPopup(task, PopupModes.View)}
-            setIsCompleted={setIsCompleted}
-            setDraggedEvent={setDraggedEvent}
-          />
-        </div>
-      </div>
+      <MobileTaskSection
+        currentDate={currentDate}
+        tasks={tasksForSelectedDay}
+        onSelectTask={(task) => openPopup(task, PopupModes.View)}
+        setIsCompleted={setIsCompleted}
+        setDraggedEvent={setDraggedEvent}
+      />
     </div>
   );
 }
