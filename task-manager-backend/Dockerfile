@@ -1,13 +1,13 @@
-# 1. Use an official Python runtime as a parent image
+# 1. Use an official Python runtime
 FROM python:3.11-slim
 
 # 2. Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-# Set PYTHONPATH to the inner app directory so imports like 'routes' work
-ENV PYTHONPATH=/app/app
+# PYTHONPATH ensures Python finds modules inside /app/app
+ENV PYTHONPATH=/app
 
-# 3. Install system dependencies for MySQL and Build Tools
+# 3. Install system dependencies
 RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
     build-essential \
