@@ -1,10 +1,9 @@
 import Papa from "papaparse";
 import { useRef, useState, type ChangeEvent } from "react";
 import { validateTaskList } from "../../../utils/validators";
-import { taskService } from "../../../services/api";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import useInvalidateTaskKeys from "../../../hooks/useInvalidateTaskKeys";
+import useCreateAllTasks from "../hooks/useCreateAllTasks";
 
 function getDescription(task: Record<string, string>) {
   const rawDescription = task.Description || task.description;
@@ -14,9 +13,8 @@ export default function BulkAddForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
+  const { mutateAsync: createAllTasks } = useCreateAllTasks();
   const navigate = useNavigate();
-
-  const invalidateTaskKeys = useInvalidateTaskKeys();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -167,8 +165,7 @@ export default function BulkAddForm() {
         }
 
         try {
-          await taskService.createAll(newTasks);
-          invalidateTaskKeys();
+          await createAllTasks(newTasks);
           navigate(-1);
         } catch (err: unknown) {
           if (axios.isAxiosError(err)) {

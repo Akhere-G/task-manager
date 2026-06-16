@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Sparkles, Plus, Loader2, Move } from "lucide-react";
-import { aiService, taskService } from "../services/api";
-import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
+import { aiService } from "../services/api";
 import TaskCard from "../features/tasks/components/TaskCard";
 import type { CreateTaskInput, Task } from "../features/tasks/types";
 import useGetTask from "../features/tasks/hooks/useGetTask";
@@ -11,12 +10,14 @@ import type { TaskError } from "../utils/validators";
 import { ErrorState, LoadingState, Popup } from "../components/ui";
 import { TaskForm } from "../features/tasks/components";
 import { PopupModes, useTaskContext } from "../context/TaskContext";
+import useCreateAllTasks from "../features/tasks/hooks/useCreateAllTasks";
 
 export default function DecomposeTask() {
   const [idCount, setIdCount] = useState(0);
   const { taskId } = useParams();
   const navigate = useNavigate();
-  const invalidateTaskKeys = useInvalidateTaskKeys();
+  const { mutateAsync: createAllTasks } = useCreateAllTasks();
+
   const {
     data: parentTask,
     isLoading: loadingParent,
@@ -101,8 +102,7 @@ export default function DecomposeTask() {
     if (stagedTasks.length === 0) return;
     setIsSubmitting(true);
     try {
-      await taskService.createAll(stagedTasks);
-      invalidateTaskKeys();
+      await createAllTasks(stagedTasks);
       navigate(-1);
     } catch (err) {
       console.error("Bulk creation failed", err);
