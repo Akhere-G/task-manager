@@ -36,7 +36,6 @@ def get_all_tasks(
         or 0
     )
 
-    # Configure sorting expressions
     sort_map = {
         "created_at": Task.created_at,
         "title": Task.title,
@@ -48,16 +47,13 @@ def get_all_tasks(
     sort_field = sort_map.get(sort_by, Task.created_at)  # type: ignore
     order_expr = desc(sort_field) if order == "desc" else asc(sort_field)
 
-    # Normalise pagination variables
     page = max(int(page or 1), 1)
     limit = max(int(limit) if limit is not None else total_count, 1)
     offset = limit * (page - 1)
 
-    # Fetch tracked tasks from the database
     stmt = select(Task).where(*clauses).order_by(order_expr).limit(limit).offset(offset)
     tracked_tasks = db.session.execute(stmt).scalars().all()
 
-    # Map model instances to dictionaries
     tasks = [
         {
             "id": t.id,
@@ -78,11 +74,11 @@ def get_all_tasks(
         for t in tracked_tasks
     ]
 
-    # Handle virtual recurrence projections if requested
     if project_repeating:
-        parse_date = lambda d: (
-            datetime.strptime(d, "%Y-%m-%d") if isinstance(d, str) else d
-        )
+
+        def parse_date(d):
+            return datetime.strptime(d, "%Y-%m-%d") if isinstance(d, str) else d
+
         start = parse_date(start_date)
         end = parse_date(end_date)
 

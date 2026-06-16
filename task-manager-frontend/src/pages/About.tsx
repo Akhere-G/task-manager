@@ -21,7 +21,7 @@ export default function AboutPage() {
         "Switch between a clean list and a full calendar. Use smart filters and sorting to see exactly what needs your attention right now.",
     },
     {
-      icon: <RefreshCw className="text-brand" size={28} />, // You'll need to import RefreshCw from lucide-react
+      icon: <RefreshCw className="text-brand" size={28} />,
       title: "Seamless Habits",
       description:
         "Set tasks to repeat daily, weekly, or monthly. Our system projects 'ghost tasks' into your future calendar so you can plan for upcoming commitments.",
