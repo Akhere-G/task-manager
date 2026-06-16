@@ -4,6 +4,8 @@ FROM python:3.11-slim
 # 2. Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+# Set PYTHONPATH to the inner app directory so imports like 'routes' work
+ENV PYTHONPATH=/app/app
 
 # 3. Install system dependencies for MySQL and Build Tools
 RUN apt-get update && apt-get install -y \
@@ -12,12 +14,13 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. Set the working directory in the container
+# 4. Set the working directory
 WORKDIR /app
 
-# 5. Copy requirements first to leverage Docker cache
+# 5. Copy requirements and CA certificate
 COPY requirements.txt .
 COPY ca.pem /app/ca.pem
+
 # 6. Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -25,15 +28,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 8. Create the start script
-# This script runs the database initialisation before starting Gunicorn
 RUN echo '#!/bin/sh\n\
-    python init_db.py\n\
+    python app/init_db.py\n\
     gunicorn --bind 0.0.0.0:8080 app.main:app' > /app/start.sh
 
 # 9. Make the start script executable
 RUN chmod +x /app/start.sh
 
-# 10. Expose the port Railway expects
+# 10. Expose the port
 EXPOSE 8080
 
 # 11. Run the start script
