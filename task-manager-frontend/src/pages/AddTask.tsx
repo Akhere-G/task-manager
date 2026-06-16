@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
-import { taskService } from "../services/api";
 import type { CreateTaskInput } from "../features/tasks/types";
 import TaskForm from "../features/tasks/components/TaskForm";
 import { AiAddTaskForm } from "../features/ai/components";
 import { BulkAddForm } from "../features/tasks/components";
 import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
 import { format, setHours } from "date-fns";
+import useCreateTask from "../features/tasks/hooks/useCreateTask";
 
 export default function AddTask() {
   const navigate = useNavigate();
   const invalidateTaskKeys = useInvalidateTaskKeys();
   const [aiSuggestion, setAiSuggestion] = useState<CreateTaskInput>();
+  const { mutateAsync: createTask } = useCreateTask();
 
   async function handleCreate(newTask: CreateTaskInput) {
     const formattedTask = {
@@ -20,7 +21,7 @@ export default function AddTask() {
       startAt: format(newTask.startAt, "yyyy-MM-dd HH:mm"),
       endAt: format(newTask.endAt, "yyyy-MM-dd HH:mm"),
     };
-    await taskService.create(formattedTask);
+    await createTask(formattedTask);
     invalidateTaskKeys();
     navigate(-1);
   }
