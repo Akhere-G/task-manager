@@ -4,13 +4,13 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 
-from .routes.task_routes import task_bp
-from .routes.auth_routes import auth_bp
-from .routes.stats_routes import stats_bp
-from .routes.ai_routes import ai_bp
-from .routes.mail_routes import mail_bp
+from app.routes.task_routes import task_bp
+from app.routes.auth_routes import auth_bp
+from app.routes.stats_routes import stats_bp
+from app.routes.ai_routes import ai_bp
+from app.routes.mail_routes import mail_bp
 
-from .database import db
+from app.database import db
 from sqlalchemy import select, text
 
 load_dotenv()
