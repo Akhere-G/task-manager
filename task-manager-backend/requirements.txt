@@ -28,6 +28,7 @@ google-genai==1.65.0
 groq==1.0.0
 gunicorn==23.0.0
 h11==0.16.0
+http_ece==1.2.1
 httpcore==1.0.9
 httpx==0.28.1
 idna==3.11
@@ -37,6 +38,8 @@ jedi==0.19.2
 Jinja2==3.1.6
 mailersend==2.0.0
 MarkupSafe==3.0.3
+marshmallow==4.3.0
+marshmallow-sqlalchemy==1.5.0
 matplotlib-inline==0.2.1
 multidict==6.7.1
 mysql-connector-python==9.6.0
@@ -48,6 +51,7 @@ prompt_toolkit==3.0.52
 propcache==0.4.1
 ptyprocess==0.7.0
 pure_eval==0.2.3
+py-vapid==1.9.4
 pyasn1==0.6.2
 pyasn1_modules==0.4.2
 pycparser==3.0
@@ -58,6 +62,7 @@ PyJWT==2.11.0
 PyMySQL==1.2.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
+pywebpush==2.3.0
 regex==2026.2.19
 requests==2.32.5
 rsa==4.9.1

@@ -9,6 +9,7 @@ from app.routes.auth_routes import auth_bp
 from app.routes.stats_routes import stats_bp
 from app.routes.ai_routes import ai_bp
 from app.routes.mail_routes import mail_bp
+from app.routes.notifications import notification_bp
 
 from app.database import db
 from sqlalchemy import select, text
@@ -72,6 +73,7 @@ def create_app():
         app.register_blueprint(stats_bp)
         app.register_blueprint(ai_bp)
         app.register_blueprint(mail_bp)
+        app.register_blueprint(notification_bp)
 
         @app.route("/health")
         def health_check():
@@ -98,12 +100,20 @@ def create_app():
         @app.errorhandler(500)
         def handle_500_error(e):
             original = getattr(e, "original_exception", e)
+            import traceback
+
+            print("CRITICAL ERROR")
+            print(traceback.format_exc())
             return jsonify(
                 {"error": "Internal Server Error", "message": str(original)}
             ), 500
 
         @app.errorhandler(Exception)
         def handle_exception(e):
+            import traceback
+
+            print("CRITICAL ERROR")
+            print(traceback.format_exc())
             return jsonify({"error": "Uncaught Exception", "message": str(e)}), 500
 
         return app
