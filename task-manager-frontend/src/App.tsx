@@ -8,6 +8,7 @@ import {
 } from "./components/layout";
 import { useAuthContext } from "./context/AuthContext";
 import { useTheme } from "./features/users/ThemeContext";
+import NotificationsPrompt from "./features/notifications/components/NotificationsPrompt";
 
 const Settings = lazy(() => import("./pages/Settings"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -68,6 +69,7 @@ function App() {
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
       />
+      {isAuthenticated && <NotificationsPrompt />}
       <main className="grow max-w-7xl mx-auto w-full px-0 py-3 md:px-8 md:py-6">
         <ErrorBoundary onRetry={() => window.location.reload()}>
           <Routes>
