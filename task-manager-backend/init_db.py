@@ -53,21 +53,6 @@ def initialise_database():
         );
         """
 
-        fulltext_index = "ALTER TABLE tasks ADD FULLTEXT INDEX idx_tasks_search (title, description);"
-
-        trigger = """
-        CREATE TRIGGER IF NOT EXISTS tr_ensure_completion_timestamp
-        BEFORE UPDATE ON tasks
-        FOR EACH ROW
-        BEGIN
-            IF NEW.is_completed = 1 AND NEW.completed_at IS NULL THEN
-                SET NEW.completed_at = NOW();
-            ELSEIF NEW.is_completed = 0 THEN
-                SET NEW.completed_at = NULL;
-            END IF;
-        END;
-        """
-
         daily_briefs_table = """
         CREATE TABLE IF NOT EXISTS daily_briefs (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -99,63 +84,64 @@ def initialise_database():
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
         """
-        recurring_task_migration = """
-        ALTER TABLE tasks
-        ADD COLUMN series_id INT;
-        ALTER TABLE tasks
-        ADD COLUMN repeat_until DATE;
-        ALTER TABLE tasks
-        ADD COLUMN repeat_by ENUM ('daily', 'weekly', 'monthly','yearly');
-        ALTER TABLE tasks
-        ADD COLUMN is_repeating BOOLEAN DEFAULT FALSE;
+
+        notifications_table = """
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            message TEXT NOT NULL,
+            is_read BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
         """
 
-        series_id_migration = """
-        UPDATE tasks 
-        SET series_id = id 
-        WHERE series_id IS NULL;     
+        notification_subscriptions_table = """
+        CREATE TABLE IF NOT EXISTS notification_subscriptions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            endpoint VARCHAR(500) UNIQUE NOT NULL,
+            p256dh VARCHAR(255) NOT NULL,
+            auth VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_sub_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
         """
 
-        cursor.execute(users_table)
-        conn.commit()
-        cursor.execute(tasks_table)
-        conn.commit()
-        cursor.execute(daily_briefs_table)
-        conn.commit()
-        cursor.execute(password_resets)
-        conn.commit()
-        cursor.execute(refresh_tokens_table)
-        conn.commit()
-
-        try:
-            cursor.execute(fulltext_index)
+        # Execute table creation
+        tables = [
+            users_table,
+            tasks_table,
+            daily_briefs_table,
+            password_resets,
+            refresh_tokens_table,
+            notifications_table,
+            notification_subscriptions_table,
+        ]
+        for sql in tables:
+            cursor.execute(sql)
             conn.commit()
-        except Exception as err:
-            print(f"Error: Could not complete full text {err}")
-            pass
 
-        try:
-            cursor.execute(recurring_task_migration)
-            conn.commit()
-        except Exception as err:
-            print(f"Error: Could not complete recurring migration {err}")
-            pass
+        cursor.execute(
+            "ALTER TABLE tasks ADD FULLTEXT INDEX idx_tasks_search (title, description);"
+        )
 
-        try:
-            cursor.execute(series_id_migration)
-            conn.commit()
-        except Exception as err:
-            print(f"Error: Could not complete series id migration {err}")
-            pass
+        cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS tr_ensure_completion_timestamp
+        BEFORE UPDATE ON tasks
+        FOR EACH ROW
+        BEGIN
+            IF NEW.is_completed = 1 AND NEW.completed_at IS NULL THEN
+                SET NEW.completed_at = NOW();
+            ELSEIF NEW.is_completed = 0 THEN
+                SET NEW.completed_at = NULL;
+            END IF;
+        END;
+        """)
 
-        try:
-            cursor.execute(trigger)
-            conn.commit()
-        except Exception as err:
-            print(
-                f"Error: Could not complete ensure completion time stamp trigger migration {err}"
-            )
-            pass
+        cursor.execute("UPDATE tasks SET series_id = id WHERE series_id IS NULL;")
+        conn.commit()
 
     except Exception as e:
         print(f"Database error: {e}")
