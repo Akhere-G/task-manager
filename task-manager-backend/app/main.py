@@ -20,7 +20,10 @@ jwt = JWTManager()
 
 
 def create_app():
-    app = Flask(__name__, static_folder="static", static_url_path="")
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    static_folder_path = os.path.join(base_dir, "static")
+
+    app = Flask(__name__, static_folder=static_folder_path, static_url_path="")
 
     db_user = os.getenv("DB_USER", "root")
     db_password = os.getenv("DB_PASSWORD", "Super555")
