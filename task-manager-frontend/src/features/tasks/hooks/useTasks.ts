@@ -2,8 +2,9 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { calculateDateRange } from "../utils";
 import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { format } from "date-fns";
+
 import { taskService } from "../api";
+import { formatInTimeZone } from "date-fns-tz";
 
 export interface TaskFilters {
   search: string;
@@ -37,7 +38,7 @@ const DEFAULT_FILTERS: TaskFilters = {
   dueDate: "",
   sortBy: "start_at",
   order: "asc",
-  currentDate: format(new Date(), "yyyy-MM-dd"),
+  currentDate: formatInTimeZone(new Date(), "UTC", "yyyy-MM-dd"),
 };
 
 const apiParamMap: Record<string, string> = {
@@ -91,7 +92,7 @@ export const useTasks = ({
     currentDate:
       searchParams.get("current_date") ??
       defaultFilters.currentDate ??
-      format(new Date(), "yyyy-MM-dd"),
+      formatInTimeZone(new Date(), "UTC", "yyyy-MM-dd"),
   };
 
   function addDateParams(
@@ -101,8 +102,11 @@ export const useTasks = ({
   ) {
     if (value) {
       const { start, end } = calculateDateRange(value, currentDate);
-      searchParams.set("start_date", format(start, "yyyy-MM-dd"));
-      searchParams.set("end_date", format(end, "yyyy-MM-dd"));
+      searchParams.set(
+        "start_date",
+        formatInTimeZone(start, "UTC", "yyyy-MM-dd"),
+      );
+      searchParams.set("end_date", formatInTimeZone(end, "UTC", "yyyy-MM-dd"));
       if (value === "overdue") searchParams.set("is_completed", "false");
     }
   }
@@ -114,7 +118,7 @@ export const useTasks = ({
         ...filters,
         search: deferredSearch,
         page: currentPage,
-        currentDate: format(filters.currentDate, "M yyyy"),
+        currentDate: formatInTimeZone(filters.currentDate, "UTC", "M yyyy"),
         perPage,
       },
     ],

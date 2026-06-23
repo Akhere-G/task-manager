@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import type { CreateTaskInput } from "../../../features/tasks/types";
-import { format } from "date-fns";
 import { aiService } from "../api";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface AiAddTaskFormProps {
   onParsed: (data: CreateTaskInput) => void;
@@ -19,10 +19,18 @@ export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
     setIsProcessing(true);
     try {
       const parsedTask = await aiService.parseTask(input);
-      parsedTask.startAt = format(parsedTask.startAt, "yyyy-MM-dd HH:mm");
-      parsedTask.endAt = format(parsedTask.endAt, "yyyy-MM-dd HH:mm");
+      parsedTask.startAt = formatInTimeZone(
+        parsedTask.startAt,
+        "UTC",
+        "yyyy-MM-dd HH:mm",
+      );
+      parsedTask.endAt = formatInTimeZone(
+        parsedTask.endAt,
+        "UTC",
+        "yyyy-MM-dd HH:mm",
+      );
       parsedTask.repeatUntil = parsedTask.repeatUntil
-        ? format(parsedTask.repeatUntil, "yyyy-MM-dd")
+        ? formatInTimeZone(parsedTask.repeatUntil, "UTC", "yyyy-MM-dd")
         : null;
 
       onParsed(parsedTask);

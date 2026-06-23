@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import type { Task } from "../types";
 import { skipDate } from "../utils";
 import useUpdateTask from "./useUpdateTask";
@@ -18,8 +18,8 @@ export default function useSkipTask() {
       await updateTask({
         id: task.id,
         newTaskData: {
-          startAt: format(newStartAt, "yyyy-MM-dd HH:mm"),
-          endAt: format(newEndAt, "yyyy-MM-dd HH:mm"),
+          startAt: formatInTimeZone(newStartAt, "UTC", "yyyy-MM-dd HH:mm"),
+          endAt: formatInTimeZone(newEndAt, "UTC", "yyyy-MM-dd HH:mm"),
         },
       });
     } catch (err) {
