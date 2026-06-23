@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import re
 
 
@@ -18,6 +18,8 @@ def format_json_response(data):
     Recursively converts dictionary keys from snake_case to camelCase.
     Handles nested dictionaries and lists of dictionaries.
     """
+    if data is None:
+        return None
     if isinstance(data, list):
         return [format_json_response(i) for i in data]
 
@@ -29,6 +31,11 @@ def format_json_response(data):
         return new_dict
 
     if isinstance(data, (datetime, date)):
+        if isinstance(data, datetime):
+            if data.tzinfo is None:
+                data = data.replace(tzinfo=timezone.utc)
+            return data.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
         return data.isoformat()
 
     return data

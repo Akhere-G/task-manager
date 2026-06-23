@@ -7,7 +7,8 @@ import {
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
 import { validateTask, type TaskData } from "../../../utils/validators";
-import { addHours, addMilliseconds, format } from "date-fns";
+import { addHours, addMilliseconds } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
   general: string;
@@ -22,8 +23,8 @@ const getDefaultTimes = () => {
   const endDate = new Date(startDate);
   endDate.setHours(startDate.getHours() + 1);
 
-  const startAt = format(startDate, "yyyy-MM-dd HH:mm");
-  const endAt = format(endDate, "yyyy-MM-dd HH:mm");
+  const startAt = formatInTimeZone(startDate, "UTC", "yyyy-MM-dd HH:mm");
+  const endAt = formatInTimeZone(endDate, "UTC", "yyyy-MM-dd HH:mm");
   return { startAt, endAt };
 };
 
@@ -101,16 +102,28 @@ export default function TaskForm({
           let startAt;
 
           if (initialData.startAt) {
-            startAt = format(initialData.startAt, "yyyy-MM-dd HH:mm");
+            startAt = formatInTimeZone(
+              initialData.startAt,
+              "UTC",
+              "yyyy-MM-dd HH:mm",
+            );
           } else {
             startAt = prev.startAt;
           }
 
           let endAt;
           if (initialData.endAt) {
-            endAt = format(initialData.endAt, "yyyy-MM-dd HH:mm");
+            endAt = formatInTimeZone(
+              initialData.endAt,
+              "UTC",
+              "yyyy-MM-dd HH:mm",
+            );
           } else if (initialData.startAt) {
-            endAt = format(addHours(startAt, 1), "yyyy-MM-dd HH:mm");
+            endAt = formatInTimeZone(
+              addHours(startAt, 1),
+              "UTC",
+              "yyyy-MM-dd HH:mm",
+            );
           } else {
             endAt = prev.endAt;
           }
@@ -173,7 +186,7 @@ export default function TaskForm({
     const newFormState = {
       ...formState,
       startAt: newStartDate,
-      endAt: format(newEndDate, "yyyy-MM-dd HH:mm"),
+      endAt: formatInTimeZone(newEndDate, "UTC", "yyyy-MM-dd HH:mm"),
     };
     setFormState(newFormState);
     validateForm(newFormState);

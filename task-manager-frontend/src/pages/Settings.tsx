@@ -3,7 +3,7 @@ import { User, Shield, Moon, Save, Palette, Database } from "lucide-react";
 import { useTheme } from "../features/users/ThemeContext";
 import { useTasks } from "../features/tasks/hooks/useTasks";
 import type { Task } from "../features/tasks/types";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 const defaultFilters = {
   search: "",
@@ -51,10 +51,10 @@ export default function SettingsPage() {
       isCompleted: boolean,
     ) => {
       if (isCompleted && !completedAt) {
-        return format(new Date(endAt), "yyyy-MM-dd HH:mm");
+        return formatInTimeZone(endAt, "UTC", "yyyy-MM-dd HH:mm");
       }
       return completedAt
-        ? format(new Date(completedAt), "yyyy-MM-dd HH:mm")
+        ? formatInTimeZone(completedAt, "UTC", "yyyy-MM-dd HH:mm")
         : "";
     };
     const taskData = tasks.map(
@@ -73,13 +73,15 @@ export default function SettingsPage() {
         escapeCSV(title),
         category,
         escapeCSV(description),
-        format(new Date(startAt), "yyyy-MM-dd HH:mm"),
-        format(new Date(endAt), "yyyy-MM-dd HH:mm"),
+        formatInTimeZone(startAt, "UTC", "yyyy-MM-dd HH:mm"),
+        formatInTimeZone(endAt, "UTC", "yyyy-MM-dd HH:mm"),
         repeatBy ?? "",
-        repeatUntil ? format(new Date(repeatUntil), "yyyy-MM-dd") : "",
+        repeatUntil
+          ? formatInTimeZone(repeatUntil, "UTC", "yyyy-MM-dd HH:mm")
+          : "",
         String(isCompleted),
         getCompletedAt(completedAt, endAt, isCompleted),
-        format(new Date(createdAt), "yyyy-MM-dd HH:mm"),
+        formatInTimeZone(createdAt, "UTC", "yyyy-MM-dd HH:mm"),
       ],
     );
 

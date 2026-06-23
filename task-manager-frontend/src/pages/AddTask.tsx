@@ -6,8 +6,9 @@ import TaskForm from "../features/tasks/components/TaskForm";
 import { AiAddTaskForm } from "../features/ai/components";
 import { BulkAddForm } from "../features/tasks/components";
 import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
-import { format, setHours } from "date-fns";
+import { setHours } from "date-fns";
 import useCreateTask from "../features/tasks/hooks/useCreateTask";
+import { formatInTimeZone } from "date-fns-tz";
 
 export default function AddTask() {
   const navigate = useNavigate();
@@ -18,8 +19,8 @@ export default function AddTask() {
   async function handleCreate(newTask: CreateTaskInput) {
     const formattedTask = {
       ...newTask,
-      startAt: format(newTask.startAt, "yyyy-MM-dd HH:mm"),
-      endAt: format(newTask.endAt, "yyyy-MM-dd HH:mm"),
+      startAt: formatInTimeZone(newTask.startAt, "UTC", "yyyy-MM-dd HH:mm"),
+      endAt: formatInTimeZone(newTask.endAt, "UTC", "yyyy-MM-dd HH:mm"),
     };
     await createTask(formattedTask);
     invalidateTaskKeys();
@@ -76,9 +77,11 @@ export default function AddTask() {
           initialData={{
             ...aiSuggestion,
             startAt: startAt
-              ? format(startAt, "yyyy-MM-dd'T'HH:mm")
+              ? formatInTimeZone(startAt, "UTC", "yyyy-MM-dd HH:mm")
               : undefined,
-            endAt: endAt ? format(endAt, "yyyy-MM-dd'T'HH:mm") : undefined,
+            endAt: endAt
+              ? formatInTimeZone(endAt, "UTC", "yyyy-MM-dd HH:mm")
+              : undefined,
           }}
         />
       </section>
