@@ -60,6 +60,8 @@ def check_task_reminders():
         now = datetime.now()
         fifteen_minutes_ahead = now + timedelta(minutes=15)
 
+        print(f"Current time: {now}. In fifteen minutes: {fifteen_minutes_ahead}")
+
         stmt = select(Task).where(
             Task.start_at >= now, Task.start_at <= fifteen_minutes_ahead
         )
@@ -85,6 +87,15 @@ def check_task_reminders():
 
 
 if __name__ == "__main__":
-    print("Starting run_reminders.py...")
-    check_task_reminders()
-    print("Starting run_reminders.py...")
+    print("--- Starting run_reminders.py ---")
+    try:
+        check_task_reminders()
+        print("--- run_reminders.py finished successfully ---")
+    except Exception as e:
+        import traceback
+
+        print(f"--- run_reminders.py failed: {e} ---")
+
+        print("CRITICAL ERROR IN RUN_REMINDER:")
+        print(traceback.format_exc())
+        raise e
