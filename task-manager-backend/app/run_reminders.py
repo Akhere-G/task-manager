@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from pywebpush import webpush, WebPushException
 from app.models import Task, Notification, NotificationSubscription
@@ -50,14 +50,14 @@ def send_push_to_user_subscription(session, user_id, title, message):
             if ex.response is not None and ex.response.status_code in [404, 410]:
                 session.delete(sub)
                 session.commit()
-            raise ex
+
     return total_subscriptions
 
 
 def check_task_reminders():
     session = SessionLocal()
     try:
-        now = datetime.now()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         minutes_ahead = now + timedelta(minutes=30)
 
         print(f"Current time: {now}. A few minutes: {minutes_ahead}")
