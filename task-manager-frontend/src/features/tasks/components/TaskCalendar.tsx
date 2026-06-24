@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Calendar,
   dateFnsLocalizer,
@@ -61,6 +61,7 @@ export default function TaskCalendar({
   currentDate,
   setCurrentDate,
 }: TaskCalendarProps) {
+  const [allTasks, setAllTasks] = useState(tasks);
   const { mutateAsync: updateTask } = useUpdateTask();
   const { openPopup } = useTaskContext();
 
@@ -77,26 +78,38 @@ export default function TaskCalendar({
     setSearchParams(searchParams);
   };
 
+  useEffect(() => {
+    setAllTasks(tasks);
+  }, [tasks]);
+
   const events = useMemo(
-    () => mapTasksToCalendarEvents(tasks, isMobile, view),
-    [tasks, isMobile, view],
+    () => mapTasksToCalendarEvents(allTasks, isMobile, view),
+    [allTasks, isMobile, view],
   );
 
-  const tasksForSelectedDay = tasks.filter((t) =>
+  const tasksForSelectedDay = allTasks.filter((t) =>
     isSameDay(new Date(t.startAt), currentDate),
   );
 
   const handleTaskDateChange = async (task: Task, start: Date, end: Date) => {
     if (task.isGhost) return;
+    const prev = allTasks;
+    const startAt = format(start, "yyyy-MM-dd HH:mm:ss");
+    const endAt = format(end, "yyyy-MM-dd HH:mm:ss");
+
+    setAllTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? { ...t, startAt, endAt } : t)),
+    );
     try {
       await updateTask({
         id: getCalendarTaskId(task),
         newTaskData: {
-          startAt: format(start, "yyyy-MM-dd HH:mm:ss"),
-          endAt: format(end, "yyyy-MM-dd HH:mm:ss"),
+          startAt,
+          endAt,
         },
       });
     } catch (err) {
+      setAllTasks(prev);
       console.error("Failed to update task date", err);
       throw err;
     }
