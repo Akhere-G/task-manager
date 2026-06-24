@@ -1,3 +1,4 @@
+print("DEBUG: Script started successfully")
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from pywebpush import webpush, WebPushException
