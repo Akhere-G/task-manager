@@ -26,6 +26,10 @@ def fetch_dashboard_data():
     except ValueError:
         return jsonify({"error": "The 'days' parameter must be an integer."}), 400
     except Exception as e:
+        import traceback
+
+        print("CRITICAL ERROR")
+        print(traceback.format_exc())
         print(f"Dashboard Fetch Error: {str(e)}")
         return jsonify(
             {"error": "An unexpected error occurred while fetching stats."}

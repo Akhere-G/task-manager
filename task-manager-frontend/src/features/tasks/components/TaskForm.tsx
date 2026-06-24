@@ -7,8 +7,8 @@ import {
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
 import { validateTask, type TaskData } from "../../../utils/validators";
-import { addHours, addMilliseconds } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
+import { addHours, addMilliseconds, format, isValid } from "date-fns";
+import { formatForInput } from "../../../utils/formators";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
   general: string;
@@ -23,8 +23,8 @@ const getDefaultTimes = () => {
   const endDate = new Date(startDate);
   endDate.setHours(startDate.getHours() + 1);
 
-  const startAt = formatInTimeZone(startDate, "UTC", "yyyy-MM-dd HH:mm");
-  const endAt = formatInTimeZone(endDate, "UTC", "yyyy-MM-dd HH:mm");
+  const startAt = format(startDate, "yyyy-MM-dd'T'HH:mm");
+  const endAt = format(endDate, "yyyy-MM-dd'T'HH:mm");
   return { startAt, endAt };
 };
 
@@ -102,28 +102,16 @@ export default function TaskForm({
           let startAt;
 
           if (initialData.startAt) {
-            startAt = formatInTimeZone(
-              initialData.startAt,
-              "UTC",
-              "yyyy-MM-dd HH:mm",
-            );
+            startAt = formatForInput(initialData.startAt);
           } else {
             startAt = prev.startAt;
           }
 
           let endAt;
           if (initialData.endAt) {
-            endAt = formatInTimeZone(
-              initialData.endAt,
-              "UTC",
-              "yyyy-MM-dd HH:mm",
-            );
+            endAt = formatForInput(initialData.endAt);
           } else if (initialData.startAt) {
-            endAt = formatInTimeZone(
-              addHours(startAt, 1),
-              "UTC",
-              "yyyy-MM-dd HH:mm",
-            );
+            endAt = formatForInput(addHours(startAt, 1));
           } else {
             endAt = prev.endAt;
           }
@@ -175,18 +163,20 @@ export default function TaskForm({
     const { value: newStartDate } = e.target;
     const startDate = new Date(formState.startAt);
     const endDate = new Date(formState.endAt);
-    let newEndDate = new Date(formState.endAt);
+    let newEndDate = formState.endAt;
 
-    if (newStartDate && formState.startAt) {
+    if (newStartDate && formState.startAt && isValid(startDate)) {
       const duration = endDate.getTime() - startDate.getTime();
       if (duration > 0)
-        newEndDate = addMilliseconds(new Date(newStartDate), duration);
+        newEndDate = formatForInput(
+          addMilliseconds(new Date(newStartDate), duration),
+        );
     }
 
     const newFormState = {
       ...formState,
       startAt: newStartDate,
-      endAt: formatInTimeZone(newEndDate, "UTC", "yyyy-MM-dd HH:mm"),
+      endAt: newEndDate,
     };
     setFormState(newFormState);
     validateForm(newFormState);
@@ -233,6 +223,7 @@ export default function TaskForm({
         formattedData.startAt = "";
         formattedData.endAt = "";
       }
+
       await submitAction(formattedData);
     } catch (err) {
       console.error(err);

@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
-import type { CreateTaskInput } from "../features/tasks/types";
+import type { CreateTaskInput, Task } from "../features/tasks/types";
 import TaskForm from "../features/tasks/components/TaskForm";
 import { AiAddTaskForm } from "../features/ai/components";
 import { BulkAddForm } from "../features/tasks/components";
 import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
 import { setHours } from "date-fns";
 import useCreateTask from "../features/tasks/hooks/useCreateTask";
-import { formatInTimeZone } from "date-fns-tz";
 
 export default function AddTask() {
   const navigate = useNavigate();
@@ -19,8 +18,8 @@ export default function AddTask() {
   async function handleCreate(newTask: CreateTaskInput) {
     const formattedTask = {
       ...newTask,
-      startAt: formatInTimeZone(newTask.startAt, "UTC", "yyyy-MM-dd HH:mm"),
-      endAt: formatInTimeZone(newTask.endAt, "UTC", "yyyy-MM-dd HH:mm"),
+      startAt: newTask.startAt,
+      endAt: newTask.endAt,
     };
     await createTask(formattedTask);
     invalidateTaskKeys();
@@ -44,6 +43,15 @@ export default function AddTask() {
     endAt = new Date(state?.endAt);
   } else {
     endAt = null;
+  }
+
+  const initialData: Partial<Task> = aiSuggestion ?? {};
+  if (startAt) {
+    initialData.startAt = startAt.toISOString();
+  }
+
+  if (endAt) {
+    initialData.endAt = endAt.toISOString();
   }
 
   return (
@@ -74,15 +82,7 @@ export default function AddTask() {
         <TaskForm
           key={aiSuggestion ? JSON.stringify(aiSuggestion) : "manual"}
           submitAction={handleCreate}
-          initialData={{
-            ...aiSuggestion,
-            startAt: startAt
-              ? formatInTimeZone(startAt, "UTC", "yyyy-MM-dd HH:mm")
-              : undefined,
-            endAt: endAt
-              ? formatInTimeZone(endAt, "UTC", "yyyy-MM-dd HH:mm")
-              : undefined,
-          }}
+          initialData={initialData}
         />
       </section>
 

@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from sqlalchemy.exc import SQLAlchemyError
 
 from google import genai
@@ -143,7 +143,7 @@ def generate_daily_brief(user_id):
 
 
 def parse_task_with_ai(user_input):
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     today_str = now.strftime("%Y-%m-%d")
 
     prompt = f"""
@@ -168,9 +168,13 @@ def parse_task_with_ai(user_input):
         if parsed_data.get("category") not in allowed_categories:
             parsed_data["category"] = "general"
         if not parsed_data.get("startAt"):
-            parsed_data["startAt"] = datetime.now().strftime("%Y-%m-%d 23:59:59")
+            parsed_data["startAt"] = datetime.now(timezone.utc).strftime(
+                "%Y-%m-%d 23:59:59"
+            )
         if not parsed_data.get("endAt"):
-            parsed_data["endAt"] = datetime.now().strftime("%Y-%m-%d 23:59:59")
+            parsed_data["endAt"] = datetime.now(timezone.utc).strftime(
+                "%Y-%m-%d 23:59:59"
+            )
         return parsed_data
     except Exception:
         return {

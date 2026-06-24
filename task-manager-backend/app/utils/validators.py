@@ -1,5 +1,6 @@
 from datetime import datetime
 import re
+from dateutil import parser
 
 
 def validate_task(data, is_update=False):
@@ -39,9 +40,7 @@ def validate_task(data, is_update=False):
             errors["startAt"] = "Start At is mandatory."
         else:
             try:
-                clean_start = str(start_at).replace("Z", "").replace("T", " ")
-
-                dt_start = datetime.strptime(clean_start[:16], "%Y-%m-%d %H:%M")
+                dt_start = parser.isoparse(start_at)
             except (ValueError, TypeError):
                 errors["startAt"] = "Invalid format. Use YYYY-MM-DD HH:MM."
 
@@ -51,8 +50,7 @@ def validate_task(data, is_update=False):
             errors["endAt"] = "End At is mandatory."
         else:
             try:
-                clean_end = str(end_val).replace("Z", "").replace("T", " ")
-                dt_end = datetime.strptime(clean_end[:16], "%Y-%m-%d %H:%M")
+                dt_end = parser.isoparse(end_val)
             except (ValueError, TypeError):
                 errors["endAt"] = "Invalid format. Use YYYY-MM-DD HH:MM."
     if dt_start and dt_end:
@@ -76,13 +74,7 @@ def validate_task(data, is_update=False):
         completed_at = data.get("completedAt")
         if completed_at:
             try:
-                clean_ts = str(completed_at).replace("Z", "")
-
-                if "T" in clean_ts:
-                    datetime.strptime(clean_ts, "%Y-%m-%dT%H:%M:%S")
-                else:
-                    datetime.strptime(clean_ts, "%Y-%m-%d %H:%M:%S")
-
+                parser.isoparse(completed_at)
             except (ValueError, TypeError):
                 errors["completedAt"] = (
                     "Invalid timestamp. Use YYYY-MM-DD HH:MM:SS or ISO format."

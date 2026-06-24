@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date
 from sqlalchemy import select, func, desc, asc
 from app.database import db
 from app.models import Task
@@ -8,6 +8,7 @@ from app.utils.task_utils import (
     check_should_repeat,
     handle_repeat_task,
 )
+from dateutil import parser
 from app.utils.formatters import to_snake_case
 
 
@@ -77,7 +78,7 @@ def get_all_tasks(
     if project_repeating:
 
         def parse_date(d):
-            return datetime.strptime(d, "%Y-%m-%d") if isinstance(d, str) else d
+            return parser.isoparse(d) if isinstance(d, str) else d
 
         start = parse_date(start_date)
         end = parse_date(end_date)

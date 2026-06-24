@@ -38,7 +38,6 @@ import {
   mapTasksToCalendarEvents,
 } from "../utils";
 import MobileTaskSection from "./MobileTaskSelection";
-import { formatInTimeZone } from "date-fns-tz";
 
 const locales = { "en-GB": enGB };
 const localizer = dateFnsLocalizer({
@@ -93,8 +92,8 @@ export default function TaskCalendar({
       await updateTask({
         id: getCalendarTaskId(task),
         newTaskData: {
-          startAt: formatInTimeZone(start, "UTC", "yyyy-MM-dd HH:mm:ss"),
-          endAt: formatInTimeZone(end, "UTC", "yyyy-MM-dd HH:mm:ss"),
+          startAt: format(start, "yyyy-MM-dd HH:mm:ss"),
+          endAt: format(end, "yyyy-MM-dd HH:mm:ss"),
         },
       });
     } catch (err) {

@@ -10,7 +10,7 @@ from app.services.task_service import (
     get_task,
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime
+from datetime import datetime, timezone
 
 task_bp = Blueprint("tasks", __name__)
 
@@ -101,7 +101,9 @@ def add_task_list():
         comp_at = task.get("completedAt")
 
         if is_comp and not comp_at:
-            task["completedAt"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            task["completedAt"] = datetime.now(timezone.utc).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
         elif not is_comp:
             task["completedAt"] = None
 

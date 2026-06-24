@@ -1,12 +1,12 @@
 from app.database import db
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.services.task_service import with_repeating
 from app.models import Task
 
 
 def _get_productivity_trend(tasks):
     trend_map = {}
-    today = datetime.now().date()
+    today = datetime.now(timezone.utc).date()
 
     for i in range(366):
         target_date = (today - timedelta(days=i)).isoformat()
@@ -51,12 +51,12 @@ def _get_time_spent(tasks):
 
 def _get_backlog_health(tasks):
     counts = {"Completed": 0, "Overdue": 0, "Pending": 0}
-    now = datetime.now()
-
+    now = datetime.now(timezone.utc)
     for task in tasks:
+        end_at = task["end_at"].replace(tzinfo=timezone.utc)
         if task["is_completed"]:
             counts["Completed"] += 1
-        elif task["end_at"] < now:
+        elif end_at < now:
             counts["Overdue"] += 1
         else:
             counts["Pending"] += 1
@@ -66,16 +66,18 @@ def _get_backlog_health(tasks):
 
 def _get_category_volume(tasks):
     volume_map = {}
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
 
     for t in tasks:
+        end_at = t["end_at"].replace(tzinfo=timezone.utc)
+
         cat = t["category"] or "General"
         if cat not in volume_map:
             volume_map[cat] = {"completed": 0, "overdue": 0, "pending": 0}
 
         if t["is_completed"]:
             volume_map[cat]["completed"] += 1
-        elif t["end_at"] < now:
+        elif end_at < now:
             volume_map[cat]["overdue"] += 1
         else:
             volume_map[cat]["pending"] += 1
@@ -103,10 +105,12 @@ def _get_overdue_distribution(tasks):
         "+3 Months": 0,
     }
 
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     for t in tasks:
-        if not t["is_completed"] and t["end_at"] < now:
-            days_diff = (now - t["end_at"]).days
+        end_at = t["end_at"].replace(tzinfo=timezone.utc)
+
+        if not t["is_completed"] and end_at < now:
+            days_diff = (now - end_at).days
             if days_diff <= 3:
                 distribution["< 3 Days"] += 1
             elif days_diff <= 7:
@@ -123,9 +127,11 @@ def _get_overdue_distribution(tasks):
 
 def _get_deadline_proximity(tasks):
     cat_data = {}
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
 
     for t in tasks:
+        end_at = t["end_at"].replace(tzinfo=timezone.utc)
+
         if t["is_completed"]:
             continue
 
@@ -133,7 +139,7 @@ def _get_deadline_proximity(tasks):
         if cat not in cat_data:
             cat_data[cat] = []
 
-        diff = (t["end_at"] - now).total_seconds() / 86400.0
+        diff = (end_at - now).total_seconds() / 86400.0
         cat_data[cat].append(diff)
 
     results = [
@@ -175,16 +181,19 @@ def _get_turnaround_time(tasks):
 
 
 def _get_estimation_accuracy(tasks):
-    threshold_date = datetime.now() - timedelta(days=30)
+    threshold_date = datetime.now(timezone.utc) - timedelta(days=30)
 
     accuracy_data = []
     for t in tasks:
-        if (
-            t["is_completed"]
-            and t.get("completed_at")
-            and t.get("completed_at") > threshold_date
-        ):
-            variance = (t["end_at"] - t["completed_at"]).total_seconds() / 60.0
+        completed_at = (
+            t["completed_at"].replace(tzinfo=timezone.utc)
+            if t["completed_at"]
+            else None
+        )
+        end_at = t["end_at"].replace(tzinfo=timezone.utc)
+
+        if t["is_completed"] and completed_at and completed_at > threshold_date:
+            variance = (end_at - completed_at).total_seconds() / 60.0
 
             accuracy_data.append(
                 {
@@ -203,17 +212,21 @@ def _get_estimation_accuracy(tasks):
 def _get_week_overview(tasks):
     date_lookup = {}
 
-    view_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    view_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
     view_end = view_start + timedelta(days=7)
 
     for task in tasks:
         if task["is_completed"]:
             continue
 
-        task_end = task["end_at"]
+        task_end = task["end_at"].replace(tzinfo=timezone.utc)
+        task_start = task["start_at"].replace(tzinfo=timezone.utc)
+
         if view_start <= task_end < view_end:
             index = task_end.date()
-            duration = (task_end - (task["start_at"])).total_seconds() / 60.0
+            duration = (task_end - task_start).total_seconds() / 60.0
 
             if index in date_lookup:
                 date_lookup[index]["count"] += 1
@@ -250,7 +263,7 @@ def _get_distribution_trend(tasks):
         "general",
     ]
 
-    today = datetime.now().date()
+    today = datetime.now(timezone.utc).date()
     results = {}
 
     for i in range(7):
@@ -296,7 +309,7 @@ def get_all_dashboard_stats(user_id):
         for t in tracked_tasks
     ]
 
-    view_start = datetime.now()
+    view_start = datetime.now(timezone.utc)
     view_end = view_start + timedelta(days=30)
 
     tasks = with_repeating(all_raw_tasks, view_start, view_end, user_id)
