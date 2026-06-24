@@ -11,49 +11,43 @@ import {
   addWeeks,
   addMonths,
   addYears,
+  parseISO,
 } from "date-fns";
 import type { Task } from "./types";
 import { Views, type Event, type View } from "react-big-calendar";
 
 export const formatDate = (dateStr?: string) => {
-  const date = dateStr ? new Date(dateStr) : new Date();
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+  const date = dateStr ? parseISO(dateStr) : new Date();
+  return format(date, "yyyy-MM-dd");
 };
 
 export const formatDateRange = (startAt: string, endAt: string) => {
-  const endDate = new Date(endAt);
-  const startDate = new Date(startAt);
+  const startDate = parseISO(startAt);
+  const endDate = parseISO(endAt);
+  const now = new Date();
   const sameDay = isSameDay(endDate, startDate);
   const sameYear = isSameYear(endDate, startDate);
-  const isToday = isSameDay(startAt, new Date());
+  const isToday = isSameDay(startDate, now);
 
-  let dateStr = "";
-
-  const year = !isSameYear(startDate, new Date()) || !sameYear ? " yy" : "";
+  const year = !isSameYear(startDate, now) || !sameYear ? " yy" : "";
 
   if (isToday && sameDay) {
-    dateStr = `${format(new Date(startAt), `HH:mm`)} - ${format(new Date(endAt), "HH:mm")}`;
+    return `${format(startDate, "HH:mm")} - ${format(endDate, "HH:mm")}`;
   } else if (sameDay) {
-    dateStr = `${format(new Date(startAt), `d LLL${year}, HH:mm`)} - ${format(new Date(endAt), "HH:mm")}`;
+    return `${format(startDate, `d LLL${year}, HH:mm`)} - ${format(endDate, "HH:mm")}`;
   } else if (sameYear) {
-    dateStr = `${format(new Date(startAt), `d LLL${year}, HH:mm`)} - ${format(new Date(endAt), "d LLL, HH:mm")}`;
+    return `${format(startDate, `d LLL${year}, HH:mm`)} - ${format(endDate, "d LLL, HH:mm")}`;
   } else {
-    dateStr = `${format(new Date(startAt), `d LLL${year}, HH:mm`)} - ${format(new Date(endAt), "d LLL, yy HH:mm")}`;
+    return `${format(startDate, `d LLL${year}, HH:mm`)} - ${format(endDate, "d LLL, yy HH:mm")}`;
   }
-
-  return dateStr;
 };
 
 export const calculateDateRange = (type: string, currentDate: string) => {
   const now = new Date();
   const start = startOfDay(now);
   const end = endOfDay(now);
-
+  const monthStart = startOfMonth(parseISO(currentDate));
+  const monthEnd = endOfMonth(parseISO(currentDate));
   switch (type) {
     case "today":
       return { start, end };
@@ -66,8 +60,8 @@ export const calculateDateRange = (type: string, currentDate: string) => {
       return { start, end: addDays(end, 30) };
     case "calendar_view":
       return {
-        start: subDays(startOfMonth(currentDate), 6),
-        end: addDays(endOfMonth(currentDate), 6),
+        start: subDays(monthStart, 6),
+        end: addDays(monthEnd, 6),
       };
     case "overdue":
       return { start: new Date(2000, 0, 1), end: start };
@@ -77,7 +71,7 @@ export const calculateDateRange = (type: string, currentDate: string) => {
 };
 
 export const formatDateRelative = (date = "") => {
-  const dateVal = new Date(date);
+  const dateVal = parseISO(date);
   const today = new Date();
   const sameDay = isSameDay(dateVal, today);
   const sameYear = isSameYear(dateVal, today);
@@ -164,8 +158,8 @@ export function mapTasksToCalendarEvents(
     return tasks.map((task) => ({
       id: task.id,
       title: task.title || "(No Title)",
-      start: new Date(task.startAt),
-      end: new Date(task.endAt),
+      start: parseISO(task.startAt),
+      end: parseISO(task.endAt),
       allDay: false,
       resource: task,
     }));
@@ -173,15 +167,15 @@ export function mapTasksToCalendarEvents(
 
   const uniqueDayLookup: Record<string, number> = {};
   tasks.forEach((task) => {
-    const date = format(new Date(task.startAt), "yyyy-MM-dd");
+    const date = format(parseISO(task.startAt), "yyyy-MM-dd");
     uniqueDayLookup[date] = (uniqueDayLookup[date] || 0) + 1;
   });
 
   return Object.entries(uniqueDayLookup).map(([dayStr, count]) => ({
     id: dayStr,
     title: "",
-    start: new Date(dayStr),
-    end: new Date(dayStr),
+    start: parseISO(dayStr),
+    end: parseISO(dayStr),
     allDay: true,
     resource: count,
   }));

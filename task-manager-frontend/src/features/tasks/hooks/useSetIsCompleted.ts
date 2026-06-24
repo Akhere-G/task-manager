@@ -4,9 +4,7 @@ export default function useSetIsCompleted() {
   const { mutateAsync: updateTask } = useUpdateTask();
 
   async function setIsCompleted(id: number, isCompleted: boolean) {
-    const completedAt = isCompleted
-      ? new Date().toISOString().slice(0, 19).replace("T", " ")
-      : null;
+    const completedAt = isCompleted ? new Date().toUTCString() : null;
 
     try {
       await updateTask({ id, newTaskData: { isCompleted, completedAt } });

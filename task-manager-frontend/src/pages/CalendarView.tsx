@@ -1,4 +1,3 @@
-import { formatInTimeZone } from "date-fns-tz";
 import { EmptyState, ErrorState, LoadingState } from "../components/ui";
 import { TaskCalendar, TasksHeader } from "../features/tasks/components";
 import TaskPopups from "../features/tasks/components/TaskPopups";
@@ -14,7 +13,7 @@ const defaultFilters = {
   dueDate: "calendar_view",
   sortBy: "start_at",
   order: "asc",
-  currentDate: formatInTimeZone(new Date(), "UTC", "yyyy-MM-dd"),
+  currentDate: new Date().toISOString(),
 };
 
 export default function CalendarView() {
@@ -52,10 +51,7 @@ export default function CalendarView() {
         tasks={data?.tasks ?? []}
         currentDate={new Date(filters.currentDate)}
         setCurrentDate={(newDate: Date) => {
-          updateFilters(
-            "currentDate",
-            formatInTimeZone(newDate, "UTC", "yyyy-MM-dd"),
-          );
+          updateFilters("currentDate", newDate.toISOString());
         }}
       />
     );

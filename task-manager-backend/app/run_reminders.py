@@ -58,13 +58,11 @@ def check_task_reminders():
     session = SessionLocal()
     try:
         now = datetime.now()
-        fifteen_minutes_ahead = now + timedelta(minutes=15)
+        minutes_ahead = now + timedelta(minutes=30)
 
-        print(f"Current time: {now}. In fifteen minutes: {fifteen_minutes_ahead}")
+        print(f"Current time: {now}. A few minutes: {minutes_ahead}")
 
-        stmt = select(Task).where(
-            Task.start_at >= now, Task.start_at <= fifteen_minutes_ahead
-        )
+        stmt = select(Task).where(Task.start_at >= now, Task.start_at <= minutes_ahead)
 
         upcoming_tasks = session.execute(stmt).scalars().all()
 

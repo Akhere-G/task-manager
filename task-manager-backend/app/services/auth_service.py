@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, delete
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -64,7 +64,7 @@ def get_user(id=None, email=None):
 
 def create_reset_token(user_id):
     token = secrets.token_urlsafe(32)
-    expires_at = datetime.now() + timedelta(minutes=15)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
 
     db.session.execute(delete(PasswordReset).where(PasswordReset.user_id == user_id))
 
@@ -77,7 +77,8 @@ def create_reset_token(user_id):
 def verify_reset_token(token):
     result = db.session.execute(
         select(PasswordReset).where(
-            PasswordReset.token == token, PasswordReset.expires_at > datetime.now()
+            PasswordReset.token == token,
+            PasswordReset.expires_at > datetime.now(timezone.utc),
         )
     ).scalar_one_or_none()
 
@@ -104,7 +105,7 @@ def validate_refresh_token(refresh_token):
         .join(RefreshToken, User.id == RefreshToken.user_id)
         .where(
             RefreshToken.token == refresh_token,
-            RefreshToken.expires_at > datetime.now(),
+            RefreshToken.expires_at > datetime.now(timezone.utc),
         )
     ).scalar_one_or_none()
 
@@ -125,7 +126,7 @@ def delete_refresh_token(refresh_token):
 
 def create_session(user_id):
     token = secrets.token_urlsafe(64)
-    expires_at = datetime.now() + timedelta(days=7)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
 
     session_entry = RefreshToken(user_id=user_id, token=token, expires_at=expires_at)
     db.session.add(session_entry)

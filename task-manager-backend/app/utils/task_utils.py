@@ -1,8 +1,9 @@
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime, date, timezone
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import select, func, or_
 from app.database import db
 from app.models import Task
+from dateutil import parser
 
 
 def build_task_filters(
@@ -32,10 +33,10 @@ def build_task_filters(
 
     if start_date and end_date:
         start_dt = datetime.combine(
-            datetime.strptime(str(start_date), "%Y-%m-%d").date(), datetime.min.time()
+            parser.isoparse(str(start_date)).date(), datetime.min.time()
         )
         end_dt = datetime.combine(
-            datetime.strptime(str(end_date), "%Y-%m-%d").date(), datetime.max.time()
+            parser.isoparse(str(end_date)).date(), datetime.max.time()
         )
         clauses.append(Task.end_at.between(start_dt, end_dt))
 
@@ -52,6 +53,8 @@ def build_task_filters(
 
 
 def with_repeating(tasks, view_start, view_end, user_id, additional_clauses=None):
+    view_start = view_start.replace(tzinfo=timezone.utc)
+    view_end = view_end.replace(tzinfo=timezone.utc)
     clauses = [
         Task.user_id == user_id,
         Task.is_repeating,
@@ -64,12 +67,14 @@ def with_repeating(tasks, view_start, view_end, user_id, additional_clauses=None
     repeating_tasks = db.session.execute(select(Task).where(*clauses)).scalars().all()
 
     for task in repeating_tasks:
-        instance_start = task.start_at
-        instance_end = task.end_at
+        instance_start = task.start_at.replace(tzinfo=timezone.utc)
+        instance_end = task.end_at.replace(tzinfo=timezone.utc)
         repeat_until = task.repeat_until
 
         if repeat_until and isinstance(repeat_until, date):
-            repeat_until = datetime.combine(repeat_until, datetime.max.time())
+            repeat_until = datetime.combine(repeat_until, datetime.max.time()).replace(
+                tzinfo=timezone.utc
+            )
         if not repeat_until:
             repeat_until = view_end
 
@@ -77,6 +82,7 @@ def with_repeating(tasks, view_start, view_end, user_id, additional_clauses=None
             instance_start = update_date(instance_start, task.repeat_by)
             instance_end = update_date(instance_end, task.repeat_by)
 
+            print("repeat_until", instance_start, repeat_until)
             if repeat_until and instance_start >= repeat_until:
                 break
 
@@ -129,7 +135,7 @@ def check_should_repeat(old_task, updated_task):
         start_at = updated_task.get("start_at")
 
         if isinstance(start_at, str):
-            start_at = datetime.strptime(start_at, "%Y-%m-%d %H:%M")
+            start_at = parser.isoparse(start_at)
 
         next_start = update_date(start_at, updated_task.get("repeat_by"))
 
@@ -166,7 +172,7 @@ def handle_repeat_task(user_id, original_task):
         current_task.is_completed = False
         current_task.completed_at = None
         current_task.series_id = current_task.id
-        current_task.created_at = datetime.now()
+        current_task.created_at = datetime.now(timezone.utc)
 
     db.session.commit()
 
