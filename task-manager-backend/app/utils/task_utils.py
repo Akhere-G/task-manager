@@ -1,6 +1,6 @@
 from datetime import timedelta, datetime, date, timezone
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, text
 from app.database import db
 from app.models import Task
 from dateutil import parser
@@ -22,9 +22,9 @@ def build_task_filters(
 
     if search:
         clauses.append(
-            func.match(Task.title, Task.description).against(
-                f"{search}*", modifier="IN BOOLEAN MODE"
-            )
+            text(
+                "MATCH(title, description) AGAINST(:search IN BOOLEAN MODE)"
+            ).bindparams(search=f"{search}*")
         )
 
     if is_completed is not None and is_completed != "all":
