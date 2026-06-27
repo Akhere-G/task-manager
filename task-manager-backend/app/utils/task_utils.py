@@ -70,6 +70,7 @@ def with_repeating(tasks, view_start, view_end, user_id, additional_clauses=None
         instance_start = task.start_at.replace(tzinfo=timezone.utc)
         instance_end = task.end_at.replace(tzinfo=timezone.utc)
         repeat_until = task.repeat_until
+        task_start_at = task.start_at.replace(tzinfo=timezone.utc)
 
         if repeat_until and isinstance(repeat_until, date):
             repeat_until = datetime.combine(repeat_until, datetime.max.time()).replace(
@@ -82,11 +83,10 @@ def with_repeating(tasks, view_start, view_end, user_id, additional_clauses=None
             instance_start = update_date(instance_start, task.repeat_by)
             instance_end = update_date(instance_end, task.repeat_by)
 
-            print("repeat_until", instance_start, repeat_until)
             if repeat_until and instance_start >= repeat_until:
                 break
 
-        if task.start_at == instance_start:
+        if task_start_at == instance_start:
             instance_start = update_date(instance_start, task.repeat_by)
             instance_end = update_date(instance_end, task.repeat_by)
 
