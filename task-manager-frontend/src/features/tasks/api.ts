@@ -15,7 +15,7 @@ interface DeleteTaskResult {
 export const taskService = {
   getAll: async (params?: URLSearchParams): Promise<GetTaskResult> => {
     const url = "/tasks" + (params ? `?${params.toString()}` : "");
-    const response = await apiClient.get(url);
+    const response = await apiClient.get<GetTaskResult>(url);
     return response.data;
   },
   getById: async (id: number): Promise<Task> => {
