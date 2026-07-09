@@ -1,7 +1,7 @@
 import { CheckCircle2, Circle, Repeat } from "lucide-react";
 import type { Task } from "../types";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
-import { formatDateRange } from "../utils";
+import { formatDateRange, playSound } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 
 interface TaskCardSmallProps extends Task {
@@ -32,6 +32,9 @@ export function TaskCardSmall({
             task.isGhost ? task.seriesId : task.id,
             !task.isCompleted,
           );
+          if (!task.isCompleted) {
+            playSound("/success.mp3");
+          }
           e.stopPropagation();
         }}
       >

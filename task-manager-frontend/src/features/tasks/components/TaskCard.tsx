@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
-import { formatDateRange, formatDateRelative } from "../utils";
+import { formatDateRange, formatDateRelative, playSound } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import useSkipTask from "../hooks/useSkipTask";
 
@@ -92,9 +92,13 @@ function TaskCard({
       >
         {showSetIsComplete && (
           <button
-            onClick={() =>
-              setIsCompleted(isGhost ? seriesId : id, !isCompleted)
-            }
+            onClick={() => {
+              setIsCompleted(isGhost ? seriesId : id, !isCompleted);
+
+              if (!isCompleted) {
+                playSound("/success.mp3");
+              }
+            }}
             title={isCompleted ? "Mark as pending" : "Mark as complete"}
             aria-label={
               isCompleted ? "Mark task as pending" : "Mark task as completed"
