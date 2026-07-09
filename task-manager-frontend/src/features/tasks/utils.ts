@@ -180,3 +180,8 @@ export function mapTasksToCalendarEvents(
     resource: count,
   }));
 }
+
+export const playSound = async (src: string) => {
+  const sound = new Audio(src);
+  await sound.play();
+};
