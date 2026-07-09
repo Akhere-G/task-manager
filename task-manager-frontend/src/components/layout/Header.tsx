@@ -51,6 +51,7 @@ export default function Header({
       <li key={path} className="w-full">
         <Link
           to={path}
+          onClick={closeSidebar}
           className={`font-medium transition-colors 
             w-full p-2  rounded block md:w-max md:p-0 ${classes}
           `}
