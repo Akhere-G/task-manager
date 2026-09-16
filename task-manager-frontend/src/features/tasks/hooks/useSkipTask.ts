@@ -2,7 +2,8 @@ import type { Task } from "../types";
 import { skipDate } from "../utils";
 import useUpdateTask from "./useUpdateTask";
 
-export default function useSkipTask() {
+export default function useSkipTask(props?: { onSkip?: () => void }) {
+  const { onSkip } = props ?? {};
   const { mutateAsync: updateTask } = useUpdateTask();
   async function skipTask(task: Task) {
     try {
@@ -21,6 +22,7 @@ export default function useSkipTask() {
           endAt: newEndAt.toISOString(),
         },
       });
+      onSkip?.();
     } catch (err) {
       console.error(err);
     }
