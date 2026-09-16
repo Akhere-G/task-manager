@@ -259,9 +259,9 @@ interface TaskCardConnectedProps extends Task {
   fullDescription?: boolean;
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps) {
-  const { openPopup } = useTaskContext();
+  const { openPopup, closePopup } = useTaskContext();
   const setIsCompleted = useSetIsCompleted();
-  const skipTask = useSkipTask();
+  const skipTask = useSkipTask({ onSkip: closePopup });
 
   return (
     <TaskCard
