@@ -31,7 +31,7 @@ def get_generated_text(prompt):
     try:
         client_gemini = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         response = client_gemini.models.generate_content(
-            model="gemini-2.0-flash", contents=prompt
+            model="gemini-3.5-flash", contents=prompt
         )
         if response.text:
             return response.text
@@ -41,7 +41,7 @@ def get_generated_text(prompt):
     try:
         client_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
         completion = client_groq.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="openai/gpt-oss-20b",
             messages=[
                 {
                     "role": "system",
