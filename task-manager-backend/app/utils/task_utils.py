@@ -154,7 +154,7 @@ def handle_repeat_task(user_id, original_task):
         user_id=user_id,
         series_id=original_task["id"],
         is_completed=True,
-        completed_at=original_task["completed_at"] or date.today(),
+        completed_at=original_task["completed_at"] or datetime.now(timezone.utc),
         created_at=original_task["created_at"],
     )
     db.session.add(history_task)

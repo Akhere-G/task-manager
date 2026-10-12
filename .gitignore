@@ -13,3 +13,5 @@ static/
 .eslintcache
 .stylelintcache
 *.log
+
+.DS_Store

@@ -1,15 +1,16 @@
-from datetime import date
-from sqlalchemy import select, func, desc, asc
+from datetime import date, datetime, timezone
+
 from app.database import db
 from app.models import Task
+from app.utils.formatters import to_snake_case
 from app.utils.task_utils import (
     build_task_filters,
-    with_repeating,
     check_should_repeat,
     handle_repeat_task,
+    with_repeating,
 )
 from dateutil import parser
-from app.utils.formatters import to_snake_case
+from sqlalchemy import asc, desc, func, select
 
 
 def get_all_tasks(
@@ -221,7 +222,11 @@ def update_task(user_id, task_id, data: dict):
             value = v.strip() if isinstance(v, str) else v
             value = bool(v) if key in ["is_completed", "is_repeating"] else value
             setattr(task, key, value)
+    if task.is_completed and not old_task_dict["is_completed"]:
+        task.completed_at = datetime.now(timezone.utc)
 
+    elif not task.is_completed and old_task_dict["is_completed"]:
+        task.completed_at = None
     db.session.flush()
 
     updated_task_dict = {
