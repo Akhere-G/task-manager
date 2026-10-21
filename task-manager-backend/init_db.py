@@ -1,5 +1,8 @@
-import mysql.connector
+import pymysql
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def column_exists(cursor, db_name, table, column):
@@ -34,18 +37,19 @@ def run_step(label, step):
 
 def initialise_database():
     conn = None
+    cursor = None
     try:
         db_name = os.getenv("DB_NAME", "task_db")
         ca_path = os.path.join(os.getcwd(), "ca.pem")
 
-        conn = mysql.connector.connect(
-            host=os.getenv("DB_HOST"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
+        conn = pymysql.connect(
+            host=os.getenv("DB_HOST", "127.0.0.1"),
+            user=os.getenv("DB_USER", "root"),
+            password=os.getenv("DB_PASSWORD", ""),
             port=int(os.getenv("DB_PORT", 3306)),
-            ssl_ca=ca_path,
-            ssl_verify_cert=True,
-            connection_timeout=30,
+            database=db_name,
+            connect_timeout=30,
+            cursorclass=pymysql.cursors.Cursor,
         )
 
         cursor = conn.cursor()
@@ -195,7 +199,7 @@ def initialise_database():
     except Exception as e:
         print(f"Database error: {e}")
     finally:
-        if conn and conn.is_connected():
+        if conn and cursor:
             cursor.close()
             conn.close()
 
