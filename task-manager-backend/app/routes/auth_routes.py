@@ -159,18 +159,12 @@ def login():
 @auth_bp.route("/api/auth/demo", methods=["POST"])
 def demo_login():
     try:
-        # A custom header forces a CORS preflight, so another site cannot
-        # silently sign a visitor in to the demo with a plain form POST.
-        if request.headers.get("X-Requested-With") != "XMLHttpRequest":
-            return jsonify({"errors": {"general": "Invalid request."}}), 400
-
         try:
             verify_jwt_in_request(optional=True)
             current_user_id = get_jwt_identity()
         except Exception:
             current_user_id = None
 
-        # Never replace a real user's session with the demo one.
         if current_user_id and not is_demo_user(current_user_id):
             return jsonify({"errors": {"general": "Already signed in."}}), 409
 

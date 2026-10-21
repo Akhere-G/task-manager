@@ -45,7 +45,6 @@ def login_user(email, password):
         select(User).where(User.email == email)
     ).scalar_one_or_none()
 
-    # The demo account has no usable password and is only reachable via /auth/demo.
     if user and not user.is_demo and check_password_hash(user.password_hash, password):
         return _user_dict(user)
     return None
@@ -137,7 +136,6 @@ def is_demo_user(user_id):
 
 def create_session(user_id):
     token = secrets.token_urlsafe(64)
-    # Rotation goes through here too, so demo sessions keep their shorter lifetime.
     ttl = DEMO_SESSION_TTL if is_demo_user(user_id) else SESSION_TTL
     expires_at = datetime.now(timezone.utc) + ttl
 

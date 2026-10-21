@@ -25,7 +25,6 @@ def index_exists(cursor, db_name, table, index):
 
 
 def run_step(label, step):
-    """Run one migration step; report a failure but carry on with the rest."""
     try:
         step()
         print(f"Migration step ok: {label}")
@@ -155,8 +154,6 @@ def initialise_database():
             cursor.execute(sql)
             conn.commit()
 
-        # Steps below are idempotent so this script is safe to run on every deploy.
-        # Each runs on its own so one failure no longer skips the ones after it.
         def add_is_demo_column():
             if not column_exists(cursor, db_name, "users", "is_demo"):
                 cursor.execute(
