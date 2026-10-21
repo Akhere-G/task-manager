@@ -15,6 +15,10 @@ export const authService = {
     const response = await apiClient.post("/auth/login", userData);
     return response.data;
   },
+  demoLogin: async (): Promise<AuthResult> => {
+    const response = await apiClient.post("/auth/demo");
+    return response.data;
+  },
   logout: async (): Promise<void> => {
     await apiClient.post("/auth/logout");
   },

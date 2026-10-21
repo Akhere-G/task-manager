@@ -78,6 +78,7 @@ tqdm==4.67.3
 traitlets==5.14.3
 typing-inspection==0.4.2
 typing_extensions==4.15.0
+tzdata==2026.5
 urllib3==2.6.3
 wcwidth==0.6.0
 websockets==16.0

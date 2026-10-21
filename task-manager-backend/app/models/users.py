@@ -12,6 +12,7 @@ class User(Base):
     last_name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
+    is_demo: Mapped[bool] = mapped_column(server_default="0")
 
 
 class PasswordReset(Base):

@@ -151,6 +151,12 @@ export default function Login() {
             Login
           </button>
         </form>
+        <p className="mt-6 text-sm text-text-sub">
+          Just looking around?{" "}
+          <Link className="text-accent underline" to="/demo">
+            Try the demo
+          </Link>
+        </p>
       </div>
     </div>
   );

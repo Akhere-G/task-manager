@@ -123,6 +123,17 @@ const Footer = () => {
                       onClick={() =>
                         window.scrollTo({ top: 0, behavior: "smooth" })
                       }
+                      to="/demo"
+                      className="text-text-sub hover:text-brand transition-colors"
+                    >
+                      Try demo
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      onClick={() =>
+                        window.scrollTo({ top: 0, behavior: "smooth" })
+                      }
                       to="/login/request-password-reset"
                       className="text-text-sub hover:text-brand transition-colors"
                     >

@@ -10,6 +10,7 @@ import { authService } from "../features/auth/api";
 interface AuthContextType {
   register: (userData: RegisterUserInput) => Promise<void>;
   login: (userDate: LoginUserInput) => Promise<void>;
+  loginAsDemo: () => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   user: User | null;
@@ -58,6 +59,12 @@ export default function AuthContextProvider({
     setIsAuthenticated(true);
   };
 
+  const loginAsDemo = async () => {
+    const { user } = await authService.demoLogin();
+    setUser(user);
+    setIsAuthenticated(true);
+  };
+
   const logout = async () => {
     await authService.logout();
     setUser(null);
@@ -67,7 +74,15 @@ export default function AuthContextProvider({
 
   return (
     <AuthContext.Provider
-      value={{ login, logout, register, user, isAuthenticated, isLoading }}
+      value={{
+        login,
+        loginAsDemo,
+        logout,
+        register,
+        user,
+        isAuthenticated,
+        isLoading,
+      }}
     >
       {!isLoading && children}
     </AuthContext.Provider>
