@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FormInput } from "../components/ui";
 import axios from "axios";
+import { Link } from "react-router-dom";
 import type { RegisterUserInput } from "../features/auth/types";
 import { useAuthContext } from "../context/AuthContext";
 import { validateUser, type UserData } from "../utils/validators";
@@ -181,6 +182,12 @@ export default function Register() {
             Register
           </button>
         </form>
+        <p className="mt-6 text-sm text-text-sub">
+          Just looking around?{" "}
+          <Link className="text-accent underline" to="/demo">
+            Try the demo
+          </Link>
+        </p>
       </div>
     </div>
   );

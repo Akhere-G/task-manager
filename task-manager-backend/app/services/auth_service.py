@@ -5,7 +5,21 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.database import db
+from app.demo import DEMO_USER_EMAIL
 from app.models import User, PasswordReset, RefreshToken
+
+SESSION_TTL = timedelta(days=7)
+DEMO_SESSION_TTL = timedelta(hours=24)
+
+
+def _user_dict(user):
+    return {
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "is_demo": bool(user.is_demo),
+    }
 
 
 def create_user(first_name, last_name, email, password):
@@ -31,14 +45,17 @@ def login_user(email, password):
         select(User).where(User.email == email)
     ).scalar_one_or_none()
 
-    if user and check_password_hash(user.password_hash, password):
-        return {
-            "id": user.id,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-        }
+    # The demo account has no usable password and is only reachable via /auth/demo.
+    if user and not user.is_demo and check_password_hash(user.password_hash, password):
+        return _user_dict(user)
     return None
+
+
+def get_demo_user():
+    user = db.session.execute(
+        select(User).where(User.is_demo.is_(True), User.email == DEMO_USER_EMAIL)
+    ).scalar_one_or_none()
+    return _user_dict(user) if user else None
 
 
 def get_user(id=None, email=None):
@@ -52,14 +69,7 @@ def get_user(id=None, email=None):
         stmt = stmt.where(User.email == email)
 
     user = db.session.execute(stmt).scalar_one_or_none()
-    if user:
-        return {
-            "id": user.id,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-        }
-    return None
+    return _user_dict(user) if user else None
 
 
 def create_reset_token(user_id):
@@ -109,14 +119,7 @@ def validate_refresh_token(refresh_token):
         )
     ).scalar_one_or_none()
 
-    if user:
-        return {
-            "id": user.id,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-        }
-    return None
+    return _user_dict(user) if user else None
 
 
 def delete_refresh_token(refresh_token):
@@ -124,9 +127,19 @@ def delete_refresh_token(refresh_token):
     db.session.commit()
 
 
+def is_demo_user(user_id):
+    return bool(
+        db.session.execute(
+            select(User.is_demo).where(User.id == user_id)
+        ).scalar_one_or_none()
+    )
+
+
 def create_session(user_id):
     token = secrets.token_urlsafe(64)
-    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    # Rotation goes through here too, so demo sessions keep their shorter lifetime.
+    ttl = DEMO_SESSION_TTL if is_demo_user(user_id) else SESSION_TTL
+    expires_at = datetime.now(timezone.utc) + ttl
 
     session_entry = RefreshToken(user_id=user_id, token=token, expires_at=expires_at)
     db.session.add(session_entry)

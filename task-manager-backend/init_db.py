@@ -2,6 +2,37 @@ import mysql.connector
 import os
 
 
+def column_exists(cursor, db_name, table, column):
+    cursor.execute(
+        """
+        SELECT COUNT(*) FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s
+        """,
+        (db_name, table, column),
+    )
+    return cursor.fetchone()[0] > 0
+
+
+def index_exists(cursor, db_name, table, index):
+    cursor.execute(
+        """
+        SELECT COUNT(*) FROM information_schema.STATISTICS
+        WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND INDEX_NAME = %s
+        """,
+        (db_name, table, index),
+    )
+    return cursor.fetchone()[0] > 0
+
+
+def run_step(label, step):
+    """Run one migration step; report a failure but carry on with the rest."""
+    try:
+        step()
+        print(f"Migration step ok: {label}")
+    except Exception as e:
+        print(f"Migration step FAILED: {label}: {e}")
+
+
 def initialise_database():
     conn = None
     try:
@@ -29,7 +60,8 @@ def initialise_database():
             first_name VARCHAR(50) NOT NULL,
             last_name VARCHAR(50) NOT NULL,
             email VARCHAR(100) UNIQUE NOT NULL,
-            password_hash VARCHAR(255) NOT NULL
+            password_hash VARCHAR(255) NOT NULL,
+            is_demo BOOLEAN NOT NULL DEFAULT FALSE
         );
         """
 
@@ -123,25 +155,45 @@ def initialise_database():
             cursor.execute(sql)
             conn.commit()
 
-        cursor.execute(
-            "ALTER TABLE tasks ADD FULLTEXT INDEX idx_tasks_search (title, description);"
-        )
+        # Steps below are idempotent so this script is safe to run on every deploy.
+        # Each runs on its own so one failure no longer skips the ones after it.
+        def add_is_demo_column():
+            if not column_exists(cursor, db_name, "users", "is_demo"):
+                cursor.execute(
+                    "ALTER TABLE users ADD COLUMN is_demo BOOLEAN NOT NULL DEFAULT FALSE"
+                )
+                conn.commit()
 
-        cursor.execute("""
-        CREATE TRIGGER IF NOT EXISTS tr_ensure_completion_timestamp
-        BEFORE UPDATE ON tasks
-        FOR EACH ROW
-        BEGIN
-            IF NEW.is_completed = 1 AND NEW.completed_at IS NULL THEN
-                SET NEW.completed_at = NOW();
-            ELSEIF NEW.is_completed = 0 THEN
-                SET NEW.completed_at = NULL;
-            END IF;
-        END;
-        """)
+        def add_fulltext_index():
+            if not index_exists(cursor, db_name, "tasks", "idx_tasks_search"):
+                cursor.execute(
+                    "ALTER TABLE tasks ADD FULLTEXT INDEX idx_tasks_search (title, description);"
+                )
+                conn.commit()
 
-        cursor.execute("UPDATE tasks SET series_id = id WHERE series_id IS NULL;")
-        conn.commit()
+        def create_completion_trigger():
+            cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS tr_ensure_completion_timestamp
+            BEFORE UPDATE ON tasks
+            FOR EACH ROW
+            BEGIN
+                IF NEW.is_completed = 1 AND NEW.completed_at IS NULL THEN
+                    SET NEW.completed_at = NOW();
+                ELSEIF NEW.is_completed = 0 THEN
+                    SET NEW.completed_at = NULL;
+                END IF;
+            END;
+            """)
+            conn.commit()
+
+        def backfill_series_ids():
+            cursor.execute("UPDATE tasks SET series_id = id WHERE series_id IS NULL;")
+            conn.commit()
+
+        run_step("users.is_demo column", add_is_demo_column)
+        run_step("tasks fulltext index", add_fulltext_index)
+        run_step("completion trigger", create_completion_trigger)
+        run_step("series_id backfill", backfill_series_ids)
 
     except Exception as e:
         print(f"Database error: {e}")

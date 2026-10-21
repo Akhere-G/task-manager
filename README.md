@@ -2,7 +2,7 @@
 
 A high-performance task engine designed to turn raw productivity data into actionable insights. Visualise your workflow, track your progress, manage your energy, and master your time.
 
-**🔗 [Live Deployment](https://taskflow-752853711822.europe-west2.run.app/addtask)**
+**🔗 [Live Deployment](https://taskflow-752853711822.europe-west2.run.app/addtask)** · **🎯 [Try the demo](https://taskflow-752853711822.europe-west2.run.app/demo)** (no sign-up needed)
 
 ---
 

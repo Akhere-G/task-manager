@@ -6,12 +6,15 @@ from flask_jwt_extended import (
     unset_jwt_cookies,
     get_jwt_identity,
     jwt_required,
+    verify_jwt_in_request,
 )
 from mailersend import MailerSendClient, EmailBuilder  # type: ignore
 from app.services.auth_service import (
     create_user,
     login_user,
     get_user,
+    get_demo_user,
+    is_demo_user,
     create_reset_token,
     verify_reset_token,
     update_password_and_clear_token,
@@ -153,6 +156,50 @@ def login():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@auth_bp.route("/api/auth/demo", methods=["POST"])
+def demo_login():
+    try:
+        # A custom header forces a CORS preflight, so another site cannot
+        # silently sign a visitor in to the demo with a plain form POST.
+        if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+            return jsonify({"errors": {"general": "Invalid request."}}), 400
+
+        try:
+            verify_jwt_in_request(optional=True)
+            current_user_id = get_jwt_identity()
+        except Exception:
+            current_user_id = None
+
+        # Never replace a real user's session with the demo one.
+        if current_user_id and not is_demo_user(current_user_id):
+            return jsonify({"errors": {"general": "Already signed in."}}), 409
+
+        user = get_demo_user()
+        if not user:
+            return jsonify(
+                {"errors": {"general": "The demo is temporarily unavailable."}}
+            ), 503
+
+        access_token = create_access_token(
+            identity=str(user["id"]), expires_delta=timedelta(hours=24)
+        )
+
+        response = jsonify(
+            {
+                "message": "Demo session started.",
+                "user": format_json_response(user),
+            }
+        )
+
+        refresh_token = create_session(user["id"])
+        set_refresh_cookies(response, refresh_token)
+        set_access_cookies(response, access_token)
+
+        return response
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @auth_bp.route("/api/auth/logout", methods=["POST"])
 def logout():
     try:
@@ -192,7 +239,7 @@ def request_password_reset():
             return jsonify({"errors": {"email": "Email is required"}}), 400
         user = get_user(email=email)
 
-        if user:
+        if user and not user["is_demo"]:
             token = create_reset_token(user["id"])
             reset_link = f"{os.getenv('FRONTEND_URL')}/reset-password?token={token}"
 

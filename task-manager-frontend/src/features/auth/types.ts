@@ -16,4 +16,5 @@ export type User = {
   lastName: string;
   email: string;
   id: string;
+  isDemo?: boolean;
 };
