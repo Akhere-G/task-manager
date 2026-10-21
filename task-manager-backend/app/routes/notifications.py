@@ -4,6 +4,7 @@ from marshmallow import ValidationError
 from typing import cast, Any
 
 from app.services import notification as notification_service
+from app.services.auth_service import is_demo_user
 from app.schemas.notification_schema import (
     NotificationSchema,
     SubscriptionCreateSchema,
@@ -41,6 +42,11 @@ def read_notification(notification_id):
 @jwt_required()
 def save_subscription_route():
     user_id = get_jwt_identity()
+
+    # save_subscription re-assigns an existing endpoint to whoever posts it, so a
+    # visitor's real subscription could otherwise be moved onto the shared demo user.
+    if is_demo_user(user_id):
+        return jsonify({"error": "Not available in demo mode."}), 403
 
     try:
         raw_data = SubscriptionCreateSchema().load(request.json)

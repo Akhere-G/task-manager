@@ -15,6 +15,13 @@ export const authService = {
     const response = await apiClient.post("/auth/login", userData);
     return response.data;
   },
+  demoLogin: async (): Promise<AuthResult> => {
+    // The custom header makes this a CORS-preflighted request, which the server requires.
+    const response = await apiClient.post("/auth/demo", null, {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    });
+    return response.data;
+  },
   logout: async (): Promise<void> => {
     await apiClient.post("/auth/logout");
   },

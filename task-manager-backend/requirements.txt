@@ -83,3 +83,7 @@ wcwidth==0.6.0
 websockets==16.0
 Werkzeug==3.1.5
 yarl==1.22.0
+
+# Test / runtime data
+pytest==9.1.1
+tzdata==2026.5
