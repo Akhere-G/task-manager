@@ -1,11 +1,12 @@
 # Public Demo Mode — Implementation Specification
 
-> **Status:** Implemented (uncommitted). Verified against a throwaway local MySQL; **nothing has been run against any real/production database.** Deviations from this spec as written:
-> - `is_demo_user()` lives in `app/services/auth_service.py` (not `app/demo/__init__.py`, which only holds `DEMO_USER_EMAIL`), to avoid an import cycle.
-> - `create_session()` picks the 24 h demo lifetime itself (by looking up `is_demo`) instead of taking a `ttl` argument, so token rotation in `/auth/refresh` keeps the demo lifetime too.
-> - `tzdata` was added to `requirements.txt` (data-only; `zoneinfo` needs it on minimal images) alongside `pytest`.
-> - `init_db.py` now runs each migration step separately and prints `Migration step ok/FAILED: <name>`.
-> - Tests: `task-manager-backend/tests/` (69 tests; run with `DB_NAME=<name>_test`, see `tests/conftest.py`).
+> **Status:** Implemented, then simplified after review. **Where this document and the code differ, the code wins.** Simplifications made after the first implementation, which supersede the sections below that describe them:
+> - `app/demo/seed.py` has no dataclasses and no command-line arguments: `python -m app.demo.seed` just resets the account. There is no `--dry-run`, `--now`, `--confirm-db` or advisory lock, and the fixture has no `fixture_version` or email (the email is `DEMO_USER_EMAIL`). It still refuses to touch a real account that uses the demo email, runs in one transaction and only deletes rows with the demo user's id.
+> - `POST /api/auth/demo` has no `X-Requested-With` header check (it still returns 409 if a real user is signed in, and 503 until seeded).
+> - Push-subscription blocking for the demo user was removed (`notifications.py` is unchanged), so the subscription-hijack risk described in §1.1/§8 is accepted.
+> - The added tests and `pytest.ini` were removed.
+> - `is_demo_user()` lives in `app/services/auth_service.py`; `create_session()` picks the 24 h demo lifetime itself so token rotation keeps it.
+> - `init_db.py` runs each migration step separately and prints `Migration step ok/FAILED: <name>`.
 >
 > **Decisions recorded (from review):**
 > 1. Projects and priority are **out of scope** (not modelled, not mentioned in the UI or fixture).

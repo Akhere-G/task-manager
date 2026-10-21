@@ -4,15 +4,12 @@ import axios from "axios";
 import { ErrorState, LoadingState } from "../components/ui";
 import { useAuthContext } from "../context/AuthContext";
 
-// Signs in as the shared demo user. Once authenticated, the route wrapper in App
-// redirects to "/", so there is nothing to render on success.
 export default function Demo() {
   const { loginAsDemo } = useAuthContext();
   const [error, setError] = useState("");
   const started = useRef(false);
 
   useEffect(() => {
-    // React StrictMode runs effects twice in development; only start one session.
     if (started.current) return;
     started.current = true;
 

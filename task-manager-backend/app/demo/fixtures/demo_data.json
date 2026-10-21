@@ -1,8 +1,7 @@
 {
-  "fixture_version": 1,
   "timezone": "Europe/London",
   "seed": 20260101,
-  "user": { "first_name": "Alex", "last_name": "Taylor", "email": "demo@taskflow.invalid" },
+  "user": { "first_name": "Alex", "last_name": "Taylor" },
   "tasks": [
     { "_section": "COMPLETED (past four weeks)" },
     { "title": "Review pull request: auth refactor", "description": "Check token rotation and the cookie settings.", "category": "work", "start": "D-27 10:00", "mins": 45, "created": "D-28 16:00", "done": "D-27 10:35" },
