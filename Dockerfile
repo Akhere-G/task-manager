@@ -33,10 +33,9 @@ COPY task-manager-backend/ .
 # Copy built frontend from stage 1
 COPY --from=frontend-builder /build/dist /app/static
 
-# Create the start script using module execution (-m)
-# This ensures Python treats 'app' as a package correctly
+# Create the start script
 RUN echo '#!/bin/sh\n\
-  python -m app.init_db\n\
+  python init_db.py\n\
   gunicorn --bind 0.0.0.0:8080 "app.main:create_app()"' > /app/start.sh
 
 RUN chmod +x /app/start.sh

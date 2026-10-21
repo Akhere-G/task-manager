@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import {
+  DemoBanner,
   ErrorBoundary,
   Footer,
   Header,
@@ -16,6 +17,7 @@ const RequestPasswordReset = lazy(() => import("./pages/RequestPasswordReset"));
 const DecomposeTask = lazy(() => import("./pages/DecomposeTask"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const Demo = lazy(() => import("./pages/Demo"));
 const CalendarView = lazy(() => import("./pages/CalendarView"));
 const Pomodoro = lazy(() => import("./pages/Pomodoro"));
 const Stats = lazy(() => import("./pages/Stats"));
@@ -25,7 +27,8 @@ const AddTask = lazy(() => import("./pages/AddTask"));
 const About = lazy(() => import("./pages/About"));
 
 function App() {
-  const { isAuthenticated, logout } = useAuthContext();
+  const { isAuthenticated, logout, user } = useAuthContext();
+  const isDemo = Boolean(user?.isDemo);
   const { darkMode, toggleDarkMode } = useTheme();
   const location = useLocation();
 
@@ -42,6 +45,7 @@ function App() {
   const loggedOutRoutes = [
     { title: "Register", path: "/register" },
     { title: "Login", path: "/login" },
+    { title: "Try demo", path: "/demo" },
   ];
 
   const allAccessRoutes = [
@@ -69,7 +73,8 @@ function App() {
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
       />
-      {isAuthenticated && <NotificationsPrompt />}
+      {isDemo && <DemoBanner onExit={logout} />}
+      {isAuthenticated && !isDemo && <NotificationsPrompt />}
       <main className="grow max-w-7xl mx-auto w-full px-0 py-3 md:px-8 md:py-6">
         <ErrorBoundary onRetry={() => window.location.reload()}>
           <Routes>
@@ -144,6 +149,14 @@ function App() {
               element={
                 <ProtectedRoute redirect={isAuthenticated} redirectTo="/">
                   <Login />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/demo"
+              element={
+                <ProtectedRoute redirect={isAuthenticated} redirectTo="/">
+                  <Demo />
                 </ProtectedRoute>
               }
             />
