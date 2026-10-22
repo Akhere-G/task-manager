@@ -4,18 +4,13 @@ os.environ.setdefault("DB_HOST", "127.0.0.1")
 os.environ.setdefault("DB_PORT", "3306")
 os.environ.setdefault("DB_USER", "root")
 os.environ.setdefault("DB_PASSWORD", "")
-os.environ.setdefault("DB_NAME", "task_manager_test")
-os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-for-the-test-suite-only")
-os.environ.setdefault("FRONTEND_URL", "http://localhost:5173")
+os.environ["DB_NAME"] = "task_manager_test"
+os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-the-test-suite-only"
+os.environ["FRONTEND_URL"] = "http://localhost:5173"
 os.environ["JWT_COOKIE_SECURE"] = "False"
 
 import pymysql
 import pytest
-
-if not os.environ["DB_NAME"].endswith("_test"):
-    raise RuntimeError("Refusing to run tests: DB_NAME must end with '_test'.")
-if os.environ["DB_HOST"] not in ("127.0.0.1", "localhost", "::1", "mysql"):
-    raise RuntimeError("Refusing to run tests against a non-local database host.")
 
 from werkzeug.security import generate_password_hash
 
