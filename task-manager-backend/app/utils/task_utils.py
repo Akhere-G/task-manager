@@ -86,7 +86,11 @@ def build_task_filters(
     return clauses
 
 
+MAX_GHOSTS = 5000
+
+
 def with_repeating(tasks, view_start, view_end, user_id, additional_clauses=None):
+    ghost_count = 0
     view_start = view_start.replace(tzinfo=timezone.utc)
     view_end = view_end.replace(tzinfo=timezone.utc)
     clauses = [
@@ -146,6 +150,9 @@ def with_repeating(tasks, view_start, view_end, user_id, additional_clauses=None
                 "is_ghost": True,
             }
             tasks.append(ghost_task)
+            ghost_count += 1
+            if ghost_count >= MAX_GHOSTS:
+                return tasks
 
             instance_start = update_date(instance_start, task.repeat_by)
             instance_end = update_date(instance_end, task.repeat_by)

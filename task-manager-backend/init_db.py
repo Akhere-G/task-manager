@@ -2,6 +2,8 @@ import pymysql
 import os
 from dotenv import load_dotenv
 
+from app.config import DB_REQUIRED, require_env, ssl_ca_path
+
 load_dotenv()
 
 
@@ -36,19 +38,19 @@ def run_step(label, step):
 
 
 def initialise_database():
+    require_env(DB_REQUIRED)
     conn = None
     cursor = None
     try:
-        db_name = os.getenv("DB_NAME", "task_db")
-        ca_path = os.path.join(os.getcwd(), "ca.pem")
-
+        db_name = os.environ["DB_NAME"]
         conn = pymysql.connect(
-            host=os.getenv("DB_HOST", "127.0.0.1"),
-            user=os.getenv("DB_USER", "root"),
-            password=os.getenv("DB_PASSWORD", ""),
+            host=os.environ["DB_HOST"],
+            user=os.environ["DB_USER"],
+            password=os.environ["DB_PASSWORD"],
             port=int(os.getenv("DB_PORT", 3306)),
             database=db_name,
             connect_timeout=30,
+            ssl_ca=ssl_ca_path(),
             cursorclass=pymysql.cursors.Cursor,
         )
 
