@@ -50,3 +50,6 @@ def ssl_ca_path():
     if not path.is_file():
         raise RuntimeError("DB_SSL_CA does not point to an existing file")
     return str(path)
+
+AI_DAILY_LIMIT = 30
+AI_DAILY_LIMIT_DEMO = 60
