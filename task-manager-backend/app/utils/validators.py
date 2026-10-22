@@ -183,8 +183,6 @@ def validate_user(data, is_registering=False):
     errors = {}
 
     def get_clean(field):
-        # Passwords are stripped too: existing accounts were created that way,
-        # so changing it would lock out users whose password had stray spaces.
         return str(data.get(field, "")).strip()
 
     email = get_clean("email")
@@ -261,10 +259,6 @@ MAX_PROJECTION_DAYS = 400
 
 
 def parse_list_params(args):
-    """
-    Validate the query string of GET /api/tasks.
-    :return: (params, errors). params holds cleaned values, errors maps parameter to message.
-    """
     errors = {}
 
     def parse_int(name, default, minimum, maximum=None):

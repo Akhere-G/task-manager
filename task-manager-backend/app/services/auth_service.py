@@ -40,7 +40,6 @@ def create_user(first_name, last_name, email, password):
         return "EXISTS"
 
 
-# Checked when no usable account exists so login takes similar time either way.
 _DUMMY_PASSWORD_HASH = generate_password_hash("not-a-real-password")
 
 
