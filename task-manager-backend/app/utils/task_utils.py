@@ -9,16 +9,10 @@ from dateutil import parser
 
 MAX_SEARCH_LENGTH = 100
 MAX_SEARCH_TERMS = 8
-# InnoDB ignores full-text tokens shorter than innodb_ft_min_token_size (default 3)
 FULLTEXT_MIN_TERM_LENGTH = 3
 
 
 def parse_search(search):
-    """
-    Turn raw user input into a safe search plan.
-    Returns None (no filter), ("fulltext", boolean_query) or ("like", text).
-    Boolean-mode operators in the input are dropped, so it can never be a syntax error.
-    """
     cleaned = " ".join(str(search or "").split())[:MAX_SEARCH_LENGTH]
     terms = re.findall(r"\w+", cleaned)[:MAX_SEARCH_TERMS]
     if not terms:
