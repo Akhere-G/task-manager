@@ -1,6 +1,10 @@
 from flask import Blueprint, request, jsonify
 from app.utils.formatters import format_json_response
-from app.utils.validators import validate_task, validate_task_list
+from app.utils.validators import (
+    parse_list_params,
+    validate_task,
+    validate_task_list,
+)
 from app.services.task_service import (
     get_all_tasks,
     create_task,
@@ -19,33 +23,23 @@ task_bp = Blueprint("tasks", __name__)
 @jwt_required()
 def list_tasks():
     user_id = get_jwt_identity()
-    category = request.args.get("category")
-    search = request.args.get("q")
-    duration = request.args.get("duration")
-    is_completed = request.args.get("is_completed")
-    start_date = request.args.get("start_date")
-    end_date = request.args.get("end_date")
-    sort_by = request.args.get("sort_by")
-    order = request.args.get("order")
-    page = request.args.get("page")
-    limit = request.args.get("limit")
-    project_repeating = (
-        True if request.args.get("project_repeating") == "true" else False
-    )
+    params, errors = parse_list_params(request.args)
+    if errors:
+        return jsonify({"errors": errors}), 400
 
     raw_tasks = get_all_tasks(
         user_id,
-        category,
-        search,
-        duration,
-        is_completed,
-        start_date,
-        end_date,
-        sort_by,
-        order,
-        limit,
-        page,
-        project_repeating,
+        params["category"],
+        params["search"],
+        params["duration"],
+        params["is_completed"],
+        params["start_date"],
+        params["end_date"],
+        params["sort_by"],
+        params["order"],
+        params["limit"],
+        params["page"],
+        params["project_repeating"],
     )
     return jsonify(format_json_response(raw_tasks))
 

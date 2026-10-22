@@ -230,3 +230,84 @@ def validate_password(password):
             or not (re.search(r"[A-Za-z]", password) and re.search(r"[0-9]", password))
         ):
             return password_spec
+
+
+MAX_PAGE_SIZE = 200
+MAX_TASKS_PER_REQUEST = 2000
+MAX_PROJECTION_DAYS = 400
+
+
+def parse_list_params(args):
+    """
+    Validate the query string of GET /api/tasks.
+    :return: (params, errors). params holds cleaned values, errors maps parameter to message.
+    """
+    errors = {}
+
+    def parse_int(name, default, minimum, maximum=None):
+        raw = args.get(name)
+        if raw is None or raw == "":
+            return default
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            errors[name] = f"{name} must be an integer."
+            return default
+        if value < minimum or (maximum is not None and value > maximum):
+            limits = f"at least {minimum}"
+            if maximum is not None:
+                limits = f"between {minimum} and {maximum}"
+            errors[name] = f"{name} must be {limits}."
+            return default
+        return value
+
+    page = parse_int("page", 1, 1)
+    limit = parse_int("limit", None, 1, MAX_PAGE_SIZE)
+
+    start_date = args.get("start_date") or None
+    end_date = args.get("end_date") or None
+    start_dt = end_dt = None
+
+    if bool(start_date) != bool(end_date):
+        errors["start_date"] = "start_date and end_date must be provided together."
+    elif start_date and end_date:
+        try:
+            start_dt = parser.isoparse(start_date)
+        except (ValueError, TypeError):
+            errors["start_date"] = "Invalid date. Use ISO format."
+        try:
+            end_dt = parser.isoparse(end_date)
+        except (ValueError, TypeError):
+            errors["end_date"] = "Invalid date. Use ISO format."
+        if start_dt and end_dt and end_dt < start_dt:
+            errors["end_date"] = "end_date must not be before start_date."
+
+    project_repeating = args.get("project_repeating") == "true"
+    if project_repeating:
+        if not (start_date and end_date):
+            errors["project_repeating"] = (
+                "project_repeating needs start_date and end_date."
+            )
+        elif (
+            start_dt
+            and end_dt
+            and (end_dt - start_dt).days > MAX_PROJECTION_DAYS
+        ):
+            errors["project_repeating"] = (
+                f"Date range must be {MAX_PROJECTION_DAYS} days or fewer."
+            )
+
+    params = {
+        "category": args.get("category"),
+        "search": args.get("q"),
+        "duration": args.get("duration"),
+        "is_completed": args.get("is_completed"),
+        "start_date": start_date,
+        "end_date": end_date,
+        "sort_by": args.get("sort_by"),
+        "order": args.get("order"),
+        "page": page,
+        "limit": limit,
+        "project_repeating": project_repeating,
+    }
+    return params, errors
