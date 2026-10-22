@@ -1,6 +1,7 @@
 import logging
 import os
 from flask import Flask, abort, request, send_from_directory
+from flask_compress import Compress
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
@@ -17,6 +18,7 @@ from app.config import APP_REQUIRED, DB_REQUIRED, build_database_url, require_en
 from app.database import ENGINE_OPTIONS, db
 from app.errors import register_error_handlers
 from app.extensions import limiter
+from app.headers import register_response_headers
 from sqlalchemy import select, text
 
 load_dotenv()
@@ -52,6 +54,8 @@ def create_app():
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     register_error_handlers(app)
+    register_response_headers(app)
+    Compress(app)
 
     @app.before_request
     def require_ajax_header():
@@ -63,7 +67,9 @@ def create_app():
             abort(403, description="Missing required request header.")
 
     app.wsgi_app = ProxyFix(
-        app.wsgi_app, x_for=int(os.getenv("TRUSTED_PROXY_HOPS") or 1)
+        app.wsgi_app,
+        x_for=int(os.getenv("TRUSTED_PROXY_HOPS") or 1),
+        x_proto=int(os.getenv("TRUSTED_PROXY_HOPS") or 1),
     )
 
     redis_url = os.getenv("REDIS_URL")

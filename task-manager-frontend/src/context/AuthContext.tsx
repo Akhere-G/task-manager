@@ -6,6 +6,7 @@ import type {
   User,
 } from "../features/auth/types";
 import { authService } from "../features/auth/api";
+import { removeSubscriptionFromServer } from "../features/notifications/utils";
 import {
   endAnalyticsSession,
   getErrorType,
@@ -100,6 +101,11 @@ export default function AuthContextProvider({
   };
 
   const logout = async () => {
+    try {
+      await removeSubscriptionFromServer();
+    } catch (err) {
+      console.error(err);
+    }
     await authService.logout();
     trackEvent(user?.isDemo ? "demo_exited" : "logout");
     endAnalyticsSession();

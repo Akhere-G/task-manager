@@ -1,10 +1,16 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from ..models import Notification, NotificationSubscription
 from ..database import db
 
 
-def get_notifications(user_id: int):
+MAX_SUBSCRIPTIONS_PER_USER = 10
+
+
+def get_notifications(user_id: int, limit: int = 50, before_id: int | None = None):
     stmt = select(Notification).where(Notification.user_id == user_id)
+    if before_id is not None:
+        stmt = stmt.where(Notification.id < before_id)
+    stmt = stmt.order_by(Notification.id.desc()).limit(limit)
     return db.session.execute(stmt).scalars()
 
 
@@ -28,21 +34,43 @@ def save_subscription(user_id: int, endpoint: str, p256dh: str, auth: str):
     stmt = select(NotificationSubscription).where(
         NotificationSubscription.endpoint == endpoint
     )
-    existing_sub = db.session.execute(stmt).scalar_one_or_none()
+    subscription = db.session.execute(stmt).scalar_one_or_none()
 
-    if existing_sub:
-        existing_sub.user_id = user_id
-        existing_sub.p256dh = p256dh
-        existing_sub.auth = auth
-        db.session.commit()
-        db.session.refresh(existing_sub)
-        return existing_sub
+    if subscription:
+        subscription.user_id = user_id
+        subscription.p256dh = p256dh
+        subscription.auth = auth
+    else:
+        subscription = NotificationSubscription(
+            user_id=user_id, endpoint=endpoint, p256dh=p256dh, auth=auth
+        )
+        db.session.add(subscription)
+    db.session.flush()
 
-    new_sub = NotificationSubscription(
-        user_id=user_id, endpoint=endpoint, p256dh=p256dh, auth=auth
+    keep = (
+        select(NotificationSubscription.id)
+        .where(NotificationSubscription.user_id == user_id)
+        .order_by(NotificationSubscription.id.desc())
+        .limit(MAX_SUBSCRIPTIONS_PER_USER)
     )
-    db.session.add(new_sub)
+    keep_ids = list(db.session.execute(keep).scalars())
+    db.session.execute(
+        delete(NotificationSubscription).where(
+            NotificationSubscription.user_id == user_id,
+            NotificationSubscription.id.not_in(keep_ids),
+        )
+    )
     db.session.commit()
-    db.session.refresh(new_sub)
+    db.session.refresh(subscription)
 
-    return new_sub
+    return subscription
+
+
+def delete_subscription(user_id: int, endpoint: str):
+    db.session.execute(
+        delete(NotificationSubscription).where(
+            NotificationSubscription.user_id == user_id,
+            NotificationSubscription.endpoint == endpoint,
+        )
+    )
+    db.session.commit()

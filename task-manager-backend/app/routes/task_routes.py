@@ -7,6 +7,8 @@ from app.utils.validators import (
     validate_task_list,
 )
 from app.services.task_service import (
+    TaskConflict,
+    TaskValidationError,
     get_all_tasks,
     create_task,
     update_task,
@@ -125,7 +127,17 @@ def edit_task(task_id):
     if errors:
         return jsonify({"errors": errors}), 400
 
-    updated_result = update_task(user_id, task_id, data)
+    try:
+        updated_result = update_task(user_id, task_id, data)
+    except TaskValidationError as error:
+        return jsonify({"errors": {error.field: error.message}}), 400
+    except TaskConflict as conflict:
+        return jsonify(
+            {
+                "error": "This task was already updated.",
+                "task": format_json_response(conflict.task),
+            }
+        ), 409
 
     if updated_result is None:
         return jsonify({"error": f"No task with the id {task_id} exists."}), 404
