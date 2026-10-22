@@ -12,7 +12,7 @@ from app.routes.mail_routes import mail_bp
 from app.routes.notifications import notification_bp
 
 from app.config import APP_REQUIRED, DB_REQUIRED, build_database_url, require_env
-from app.database import db
+from app.database import ENGINE_OPTIONS, db
 from sqlalchemy import select, text
 
 load_dotenv()
@@ -29,6 +29,7 @@ def create_app():
     require_env(DB_REQUIRED + APP_REQUIRED)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = build_database_url()
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = ENGINE_OPTIONS
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
