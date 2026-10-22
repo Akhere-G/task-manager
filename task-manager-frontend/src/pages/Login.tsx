@@ -1,3 +1,4 @@
+import { getRateLimitMessage } from "../utils/errors";
 import { useState } from "react";
 import { FormInput } from "../components/ui";
 import axios from "axios";
@@ -90,7 +91,7 @@ export default function Login() {
       } else {
         setErrorMessages({
           ...errorMessages,
-          general: "Sorry... Something went wrong.",
+          general: getRateLimitMessage(err) ?? "Sorry... Something went wrong.",
         });
       }
     } finally {

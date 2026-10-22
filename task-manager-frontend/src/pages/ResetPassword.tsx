@@ -1,3 +1,4 @@
+import { getRateLimitMessage } from "../utils/errors";
 import { useState } from "react";
 import { FormInput } from "../components/ui";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -96,7 +97,8 @@ export default function ResetPassword() {
         }
       } else {
         setServerError(
-          "Failed to reset password. Sorry, something went wrong...",
+          getRateLimitMessage(err) ??
+            "Failed to reset password. Sorry, something went wrong...",
         );
       }
     } finally {
