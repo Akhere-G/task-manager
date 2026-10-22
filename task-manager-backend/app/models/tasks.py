@@ -24,6 +24,7 @@ class Task(Base):
     )
     repeat_until: Mapped[date | None]
     series_id: Mapped[int | None]
+    reminded_for_start_at: Mapped[datetime | None] = mapped_column(DateTime)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
     __table_args__ = (
