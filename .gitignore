@@ -15,3 +15,5 @@ static/
 *.log
 
 .DS_Store
+# Audit specs are kept locally, not in git
+docs/specs/audit/

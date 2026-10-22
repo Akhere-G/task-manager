@@ -3,7 +3,7 @@ import useGetTask from "../features/tasks/hooks/useGetTask";
 import { EmptyState, ErrorState, LoadingState, Popup } from "../components/ui";
 import { isAxiosError } from "axios";
 import { Clock, Pause, Play, Repeat } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { formatDateRange, formatDateRelative } from "../features/tasks/utils";
 import useSetIsCompleted from "../features/tasks/hooks/useSetIsCompleted";
@@ -29,6 +29,11 @@ export default function Pomodoro() {
   const setIsCompleted = useSetIsCompleted();
 
   const status = isAxiosError(error) ? error.status : 0;
+
+  const alreadyCompleted = Boolean(task?.isCompleted);
+  useEffect(() => {
+    if (alreadyCompleted) navigate(-1);
+  }, [alreadyCompleted, navigate]);
 
   const toggleIsPlaying = () => {
     if (!isPlaying) {
@@ -56,10 +61,7 @@ export default function Pomodoro() {
     repeatUntil,
   } = task;
 
-  if (isCompleted) {
-    navigate(-1);
-    return <></>;
-  }
+  if (isCompleted) return null;
   const isOverdue = !isCompleted && new Date(endAt) < new Date();
 
   const formatStr = (str: string) =>
