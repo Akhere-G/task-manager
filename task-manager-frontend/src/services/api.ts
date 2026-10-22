@@ -20,6 +20,7 @@ const NO_REFRESH_PATHS = [
 ];
 
 let sessionExpiredHandler: (() => void) | null = null;
+let refreshInFlight: Promise<unknown> | null = null;
 
 export const setSessionExpiredHandler = (handler: (() => void) | null) => {
   sessionExpiredHandler = handler;
@@ -44,7 +45,10 @@ apiClient.interceptors.response.use(
     originalRequest._retry = true;
 
     try {
-      await apiClient.post("/auth/refresh");
+      refreshInFlight ??= apiClient.post("/auth/refresh").finally(() => {
+        refreshInFlight = null;
+      });
+      await refreshInFlight;
     } catch {
       sessionExpiredHandler?.();
       return Promise.reject(error);
