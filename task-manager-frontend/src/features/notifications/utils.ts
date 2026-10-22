@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { notificationsService } from "./api";
 import { type NotificationCreate } from "./types";
 
 const VAPID_PUBLIC_KEY =
@@ -64,4 +65,14 @@ export async function registerAndSubscribe(): Promise<NotificationCreate> {
       auth: subJson.keys!.auth,
     },
   };
+}
+
+export async function removeSubscriptionFromServer(): Promise<void> {
+  if (!("serviceWorker" in navigator)) return;
+
+  const registration = await navigator.serviceWorker.getRegistration();
+  const subscription = await registration?.pushManager.getSubscription();
+  if (subscription) {
+    await notificationsService.unsubscribe(subscription.endpoint);
+  }
 }
