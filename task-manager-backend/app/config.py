@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from sqlalchemy.engine import URL
 
@@ -37,3 +38,15 @@ def build_database_url():
         port=int(os.getenv("DB_PORT") or 3306),
         database=os.environ["DB_NAME"],
     )
+
+
+def ssl_ca_path():
+    configured = os.getenv("DB_SSL_CA")
+    if not configured:
+        return None
+    path = Path(configured)
+    if not path.is_absolute():
+        path = Path(__file__).resolve().parent.parent / path
+    if not path.is_file():
+        raise RuntimeError("DB_SSL_CA does not point to an existing file")
+    return str(path)

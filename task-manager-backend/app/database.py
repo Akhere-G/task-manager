@@ -3,11 +3,19 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 
-from app.config import build_database_url
+from app.config import build_database_url, ssl_ca_path
 
 load_dotenv()
 
 DATABASE_URL = build_database_url()
+
+
+def build_connect_args():
+    args = {"connect_timeout": 10, "read_timeout": 30, "write_timeout": 30}
+    ca = ssl_ca_path()
+    if ca:
+        args["ssl"] = {"ca": ca}
+    return args
 
 
 ENGINE_OPTIONS = {
@@ -15,11 +23,7 @@ ENGINE_OPTIONS = {
     "max_overflow": 5,
     "pool_recycle": 280,
     "pool_pre_ping": True,
-    "connect_args": {
-        "connect_timeout": 10,
-        "read_timeout": 30,
-        "write_timeout": 30,
-    },
+    "connect_args": build_connect_args(),
 }
 
 
