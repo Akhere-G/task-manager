@@ -191,15 +191,43 @@ def create_tasks_from_list(user_id, tasks):
     return len(inserted_tasks)
 
 
-def update_task(user_id, task_id, data: dict):
-    task = db.session.execute(
-        select(Task).where(Task.id == task_id, Task.user_id == user_id)
-    ).scalar_one_or_none()
+class TaskValidationError(Exception):
+    def __init__(self, field, message):
+        super().__init__(message)
+        self.field = field
+        self.message = message
 
-    if not task:
-        return None
 
-    old_task_dict = {
+class TaskConflict(Exception):
+    def __init__(self, task):
+        super().__init__("The task has changed since it was loaded.")
+        self.task = task
+
+
+UPDATABLE_FIELDS = [
+    "title",
+    "description",
+    "category",
+    "start_at",
+    "end_at",
+    "is_completed",
+    "completed_at",
+    "is_repeating",
+    "repeat_by",
+    "repeat_until",
+]
+
+
+def _as_naive_utc(value):
+    if isinstance(value, str):
+        value = parser.isoparse(value)
+    if value.tzinfo is not None:
+        value = value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
+
+
+def _task_state(task):
+    return {
         "id": task.id,
         "title": task.title,
         "description": task.description,
@@ -214,20 +242,37 @@ def update_task(user_id, task_id, data: dict):
         "created_at": task.created_at,
     }
 
-    for k, v in data.items():
-        key = to_snake_case(k)
-        if key in [
-            "title",
-            "description",
-            "category",
-            "start_at",
-            "end_at",
-            "is_completed",
-            "completed_at",
-            "is_repeating",
-            "repeat_by",
-            "repeat_until",
-        ]:
+
+def update_task(user_id, task_id, data: dict):
+    task = db.session.execute(
+        select(Task)
+        .where(Task.id == task_id, Task.user_id == user_id)
+        .with_for_update()
+    ).scalar_one_or_none()
+
+    if not task:
+        return None
+
+    old_task_dict = _task_state(task)
+    incoming = {to_snake_case(k): v for k, v in data.items()}
+
+    start = _as_naive_utc(incoming.get("start_at") or task.start_at)
+    end = _as_naive_utc(incoming.get("end_at") or task.end_at)
+    if end <= start:
+        raise TaskValidationError("endAt", "End time must be after the start time.")
+
+    expected_start = incoming.get("expected_start_at")
+    completing = bool(incoming.get("is_completed")) and not task.is_completed
+    if (
+        expected_start
+        and completing
+        and task.is_repeating
+        and _as_naive_utc(expected_start) != task.start_at
+    ):
+        raise TaskConflict(old_task_dict)
+
+    for key, v in incoming.items():
+        if key in UPDATABLE_FIELDS:
             value = v.strip() if isinstance(v, str) else v
             value = bool(v) if key in ["is_completed", "is_repeating"] else value
             setattr(task, key, value)
@@ -238,26 +283,13 @@ def update_task(user_id, task_id, data: dict):
         task.completed_at = None
     db.session.flush()
 
-    updated_task_dict = {
-        "id": task.id,
-        "title": task.title,
-        "description": task.description,
-        "category": task.category,
-        "is_completed": task.is_completed,
-        "completed_at": task.completed_at,
-        "start_at": task.start_at,
-        "end_at": task.end_at,
-        "is_repeating": task.is_repeating,
-        "repeat_by": task.repeat_by,
-        "repeat_until": task.repeat_until,
-        "created_at": task.created_at,
-    }
-
-    if check_should_repeat(old_task_dict, updated_task_dict):
+    if check_should_repeat(old_task_dict, _task_state(task)):
         handle_repeat_task(user_id, old_task_dict)
+        db.session.flush()
 
+    result = _task_state(task)
     db.session.commit()
-    return updated_task_dict
+    return result
 
 
 def delete_task(user_id, task_id):
