@@ -4,6 +4,7 @@ import { useTheme } from "../features/users/ThemeContext";
 import { useTasks } from "../features/tasks/hooks/useTasks";
 import type { Task } from "../features/tasks/types";
 import { trackEvent } from "../services/analytics";
+import { toCsv } from "../utils/csv";
 
 const defaultFilters = {
   search: "",
@@ -37,14 +38,6 @@ export default function SettingsPage() {
       "Created At",
     ];
 
-    const escapeCSV = (value?: string | null) => {
-      const stringValue = !value ? "" : String(value);
-      if (/[",\n]/.test(stringValue)) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      }
-      return stringValue;
-    };
-
     const getCompletedAt = (
       completedAt: string | null,
       endAt: string,
@@ -68,9 +61,9 @@ export default function SettingsPage() {
         completedAt,
         createdAt,
       }) => [
-        escapeCSV(title),
+        title,
         category,
-        escapeCSV(description),
+        description,
         startAt,
         endAt,
         repeatBy ?? "",
@@ -81,9 +74,7 @@ export default function SettingsPage() {
       ],
     );
 
-    const csvContent = [headers, ...taskData]
-      .map((e) => e.join(","))
-      .join("\n");
+    const csvContent = toCsv([headers, ...taskData]);
 
     const blob = new Blob(["\ufeff", csvContent], {
       type: "text/csv;charset=utf-8;",
