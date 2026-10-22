@@ -2,6 +2,7 @@ from app.database import db
 from datetime import datetime, timedelta, timezone
 from app.services.task_service import with_repeating
 from app.models import Task
+from app.utils.serializers import task_to_dict
 
 
 def _get_productivity_trend(tasks):
@@ -289,25 +290,7 @@ def get_all_dashboard_stats(user_id):
         .all()
     )
 
-    all_raw_tasks = [
-        {
-            "id": t.id,
-            "title": t.title,
-            "description": t.description,
-            "category": t.category,
-            "is_completed": t.is_completed,
-            "start_at": t.start_at,
-            "end_at": t.end_at,
-            "created_at": t.created_at,
-            "completed_at": t.completed_at,
-            "is_repeating": t.is_repeating,
-            "repeat_by": t.repeat_by,
-            "repeat_until": t.repeat_until,
-            "series_id": t.series_id,
-            "user_id": t.user_id,
-        }
-        for t in tracked_tasks
-    ]
+    all_raw_tasks = [task_to_dict(t) for t in tracked_tasks]
 
     view_start = datetime.now(timezone.utc)
     view_end = view_start + timedelta(days=30)
