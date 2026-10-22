@@ -11,6 +11,7 @@ from app.routes.ai_routes import ai_bp
 from app.routes.mail_routes import mail_bp
 from app.routes.notifications import notification_bp
 
+from app.config import APP_REQUIRED, DB_REQUIRED, build_database_url, require_env
 from app.database import db
 from sqlalchemy import select, text
 
@@ -25,17 +26,9 @@ def create_app():
 
     app = Flask(__name__, static_folder=static_folder_path, static_url_path="")
 
-    db_user = os.getenv("DB_USER", "root")
-    db_password = os.getenv("DB_PASSWORD", "Super555")
-    db_host = os.getenv("DB_HOST", "localhost")
-    db_port = os.getenv("DB_PORT", "3306")
-    db_name = os.getenv("DB_NAME", "task_db")
+    require_env(DB_REQUIRED + APP_REQUIRED)
 
-    database_url = (
-        f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    )
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    app.config["SQLALCHEMY_DATABASE_URI"] = build_database_url()
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
@@ -56,7 +49,7 @@ def create_app():
     jwt.init_app(app)
     db.init_app(app)
 
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    frontend_url = os.environ["FRONTEND_URL"].rstrip("/")
     CORS(
         app,
         resources={
