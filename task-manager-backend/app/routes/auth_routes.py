@@ -260,7 +260,6 @@ def request_password_reset():
             try:
                 send_password_reset_email(user, email, token)
             except Exception as exc:
-                # Same response either way so account existence is not revealed.
                 logger.error(
                     "Password reset email could not be sent: %s", type(exc).__name__
                 )

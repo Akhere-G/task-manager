@@ -1,5 +1,3 @@
-# Very common passwords that still satisfy the length and letters+digits rules.
-# Compared case-insensitively.
 COMMON_PASSWORDS = frozenset(
     """
     password1 password12 password123 password1234 password01 password11 password2
