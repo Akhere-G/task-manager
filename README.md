@@ -49,7 +49,7 @@ The Daily Brief, AI quick-add and task breakdown send task titles, descriptions 
 
 ### Product Analytics (PostHog)
 
-The frontend can send anonymous usage events to PostHog. It is off unless `VITE_POSTHOG_PROJECT_TOKEN` is set at build time, and it is cookieless (no cookies or localStorage, no autocapture, no session replay).
+The frontend can send anonymous usage events to PostHog. It is off unless configured, and it is cookieless (no cookies or localStorage, no autocapture, no session replay).
 
 * Set `VITE_POSTHOG_PROJECT_TOKEN` (the public project key, never a private key) and optionally `VITE_POSTHOG_HOST` (defaults to the US cloud; use `https://eu.i.posthog.com` for an EU project). These are build-time variables; the Dockerfiles take them as `_VITE_POSTHOG_KEY` and `_VITE_POSTHOG_HOST` build args.
 * Signed-in users are identified by user id only. The shared demo account is never identified, and its events carry `is_demo: true`.
