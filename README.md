@@ -47,7 +47,7 @@ The user interface operates as a highly responsive, single-page application (SPA
 
 The frontend can send anonymous usage events to PostHog. It is off unless configured, and it is cookieless (no cookies or localStorage, no autocapture, no session replay).
 
-* Set `VITE_POSTHOG_KEY` (the public project key, never a private key) and optionally `VITE_POSTHOG_HOST` (defaults to the US cloud; use `https://eu.i.posthog.com` for an EU project). These are build-time variables; the Dockerfiles take them as `_VITE_POSTHOG_KEY` and `_VITE_POSTHOG_HOST` build args.
+* Set `VITE_POSTHOG_PROJECT_TOKEN` (the public project key, never a private key) and optionally `VITE_POSTHOG_HOST` (defaults to the US cloud; use `https://eu.i.posthog.com` for an EU project). These are build-time variables; the Dockerfiles take them as `_VITE_POSTHOG_KEY` and `_VITE_POSTHOG_HOST` build args.
 * Signed-in users are identified by user id only. The shared demo account is never identified, and its events carry `is_demo: true`.
 * Task titles, descriptions, search text, emails and names are never sent.
 
