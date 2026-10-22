@@ -18,7 +18,11 @@ interface TaskPopupsProps {
   popupMode: PopupMode;
   closePopup: () => void;
   openPopup: (task: Task, mode: PopupMode) => void;
-  setIsCompleted: (id: number, isCompleted: boolean) => Promise<void>;
+  setIsCompleted: (
+    id: number,
+    isCompleted: boolean,
+    task?: Task,
+  ) => Promise<void>;
 }
 function TaskPopups({
   handleDelete,
@@ -74,8 +78,8 @@ function TaskPopups({
             onEdit={(task) => {
               openPopup(task, PopupModes.Edit);
             }}
-            setIsCompleted={(task, isCompleted) => {
-              setIsCompleted(task, isCompleted);
+            setIsCompleted={(id, isCompleted, task) => {
+              setIsCompleted(id, isCompleted, task);
               closePopup();
             }}
           />

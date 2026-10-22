@@ -1,4 +1,5 @@
 import axios from "axios";
+import { hasAnalyticsSession, trackEvent } from "./analytics";
 
 const apiClient = axios.create({
   baseURL:
@@ -16,6 +17,9 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (originalRequest.url.includes("/auth/refresh")) {
+        if (hasAnalyticsSession()) {
+          trackEvent("session_expired", undefined, { beacon: true });
+        }
         if (!["/login", "/register"].includes(window.location.pathname)) {
           window.location.href = "/login";
         }

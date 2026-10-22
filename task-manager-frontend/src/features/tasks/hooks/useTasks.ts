@@ -4,6 +4,7 @@ import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { taskService } from "../api";
+import { trackEvent } from "../../../services/analytics";
 
 export interface TaskFilters {
   search: string;
@@ -74,6 +75,7 @@ export const useTasks = ({
         }
         searchParams.set("page", "1");
         setSearchParams(searchParams, { replace: true });
+        trackEvent("tasks_searched", { has_query: Boolean(deferredSearch) });
       }
     }, 400);
 
@@ -155,6 +157,9 @@ export const useTasks = ({
   });
 
   const updateFilters = (name: string, value: string) => {
+    if (name !== "search" && name !== "currentDate") {
+      trackEvent("tasks_filtered", { filter: name });
+    }
     if (name === "search") {
       setSearchInput(value);
     } else {

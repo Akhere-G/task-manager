@@ -30,6 +30,7 @@ import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useUpdateTask from "../hooks/useUpdateTask";
+import { trackEvent } from "../../../services/analytics";
 
 import {
   getCalendarTaskId,
@@ -108,6 +109,7 @@ export default function TaskCalendar({
           endAt,
         },
       });
+      trackEvent("calendar_task_rescheduled");
     } catch (err) {
       setAllTasks(prev);
       console.error("Failed to update task date", err);

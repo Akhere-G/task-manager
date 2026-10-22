@@ -7,6 +7,7 @@ import {
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
 import { validateTask, type TaskData } from "../../../utils/validators";
+import { trackEvent } from "../../../services/analytics";
 import { addHours, addMilliseconds, format, isValid } from "date-fns";
 import { formatForInput } from "../../../utils/formators";
 
@@ -203,12 +204,13 @@ export default function TaskForm({
       repeatUntil: true,
     });
 
-    if (
-      Object.entries(errorMessages).some(
-        ([k, v]) => v !== "" && k !== "general",
-      )
-    )
+    const invalidFields = Object.entries(errorMessages)
+      .filter(([k, v]) => v !== "" && k !== "general")
+      .map(([k]) => k);
+    if (invalidFields.length > 0) {
+      trackEvent("task_form_validation_failed", { fields: invalidFields });
       return;
+    }
 
     try {
       setIsloading(true);

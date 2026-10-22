@@ -1,6 +1,7 @@
 import { useTaskContext } from "../../../context/TaskContext";
 import type { CreateTaskInput, Task } from "../types";
 import useUpdateTask from "./useUpdateTask";
+import { trackEvent } from "../../../services/analytics";
 
 export default function useEditTask(props?: { onSuccess?: () => void }) {
   const { onSuccess } = props ?? {};
@@ -23,6 +24,11 @@ export default function useEditTask(props?: { onSuccess?: () => void }) {
 
     try {
       await updateTask({ id: selectedTask.id, newTaskData: patchData });
+      trackEvent("task_updated", {
+        category: newTask.category,
+        is_repeating: Boolean(newTask.repeatBy),
+        repeat_by: newTask.repeatBy ?? null,
+      });
       onSuccess?.();
     } catch (err) {
       console.error("Update failed:", err);
