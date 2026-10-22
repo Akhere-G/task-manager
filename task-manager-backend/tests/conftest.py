@@ -17,6 +17,7 @@ from werkzeug.security import generate_password_hash
 import init_db
 from app.database import db
 from app.demo import DEMO_USER_EMAIL
+from app.extensions import limiter
 from app.main import create_app
 from app.models import User
 
@@ -67,6 +68,13 @@ def clean_tables(database):
             cur.execute(f"TRUNCATE TABLE {table}")
         cur.execute("SET FOREIGN_KEY_CHECKS=1")
     conn.close()
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    if limiter.initialized:
+        limiter.reset()
+    yield
 
 
 @pytest.fixture

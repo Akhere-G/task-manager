@@ -4,6 +4,7 @@ from flask import Flask, abort, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.routes.task_routes import task_bp
 from app.routes.auth_routes import auth_bp
@@ -15,6 +16,7 @@ from app.routes.notifications import notification_bp
 from app.config import APP_REQUIRED, DB_REQUIRED, build_database_url, require_env
 from app.database import ENGINE_OPTIONS, db
 from app.errors import register_error_handlers
+from app.extensions import limiter
 from sqlalchemy import select, text
 
 load_dotenv()
@@ -55,6 +57,23 @@ def create_app():
     )
     register_error_handlers(app)
 
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app, x_for=int(os.getenv("TRUSTED_PROXY_HOPS") or 1)
+    )
+
+    redis_url = os.getenv("REDIS_URL")
+    if not redis_url:
+        app.logger.warning(
+            "REDIS_URL is not set: rate limits are tracked in memory, per process"
+        )
+    app.config["RATELIMIT_STORAGE_URI"] = redis_url or "memory://"
+    app.config["RATELIMIT_SWALLOW_ERRORS"] = True
+    app.config["RATELIMIT_IN_MEMORY_FALLBACK_ENABLED"] = True
+    app.config.setdefault(
+        "RATELIMIT_ENABLED", os.getenv("RATELIMIT_ENABLED", "True") != "False"
+    )
+    limiter.init_app(app)
+
     jwt.init_app(app)
     db.init_app(app)
 
@@ -81,16 +100,19 @@ def create_app():
         app.register_blueprint(notification_bp)
 
         @app.route("/health")
+        @limiter.exempt
         def health_check():
             return {"status": "healthy"}, 200
 
         @app.route("/api/keep-alive")
+        @limiter.exempt
         def keep_alive():
             db.session.execute(select(text("SELECT 1")))
             return "DB Poked", 200
 
         @app.route("/", defaults={"path": ""})
         @app.route("/<path:path>")
+        @limiter.exempt
         def serve(path: str):
             static_folder = app.static_folder or ""
             if path == "api" or path.startswith("api/"):
