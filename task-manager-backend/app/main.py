@@ -44,12 +44,8 @@ def create_app():
     app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
     app.config["JWT_COOKIE_CSRF_PROTECT"] = False
     app.config["JWT_COOKIE_DOMAIN"] = None
-    app.config["JWT_COOKIE_SECURE"] = os.getenv("JWT_COOKIE_SECURE") == "True"
-
-    if app.config["JWT_COOKIE_SECURE"]:
-        app.config["JWT_COOKIE_SAMESITE"] = "None"
-    else:
-        app.config["JWT_COOKIE_SAMESITE"] = "Lax"
+    app.config["JWT_COOKIE_SECURE"] = os.getenv("JWT_COOKIE_SECURE") != "False"
+    app.config["JWT_COOKIE_SAMESITE"] = os.getenv("JWT_COOKIE_SAMESITE") or "Lax"
 
     logging.basicConfig(
         level=os.getenv("LOG_LEVEL", "INFO"),
@@ -85,7 +81,6 @@ def create_app():
                 "origins": [frontend_url, "http://localhost:5173"],
                 "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
                 "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
-                "expose_headers": ["Set-Cookie"],
             }
         },
         supports_credentials=True,
