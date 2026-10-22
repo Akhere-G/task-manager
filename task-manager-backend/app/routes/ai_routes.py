@@ -6,7 +6,10 @@ from app.services.ai_service import (
     decompose_task,
 )
 from app.utils.formatters import format_json_response
+from app.extensions import limiter
 from app.utils.http import get_json_body
+from app.utils.quota import ai_quota
+from app.utils.validators import validate_decompose, validate_parse_task
 
 ai_bp = Blueprint("ai", __name__)
 
@@ -23,20 +26,27 @@ def get_daily_brief_route():
 
 @ai_bp.route("/api/ai/parse-task", methods=["POST"])
 @jwt_required()
+@limiter.limit("10 per hour")
+@ai_quota
 def parse_task_route():
     data = get_json_body()
-    user_input = data.get("text")
-    if not user_input:
-        return jsonify({"success": False, "error": "No text provided"}), 400
+    errors = validate_parse_task(data)
+    if errors:
+        return jsonify({"success": False, "errors": errors}), 400
 
-    task_data = parse_task_with_ai(user_input)
+    task_data = parse_task_with_ai(data["text"])
     return jsonify(task_data), 200
 
 
 @ai_bp.route("/api/ai/decompose", methods=["POST"])
 @jwt_required()
+@limiter.limit("10 per hour")
+@ai_quota
 def decompose_task_route():
     data = get_json_body()
+    errors = validate_decompose(data)
+    if errors:
+        return jsonify({"errors": errors}), 400
 
     title = data.get("title", "")
     description = data.get("description", "")

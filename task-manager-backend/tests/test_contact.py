@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 import app.routes.mail_routes as mail_routes
 
 VALID = {
@@ -36,7 +38,9 @@ def test_mailer_failure_returns_502(client):
     assert "provider down" not in response.get_data(as_text=True)
 
 
-def test_invalid_bodies_return_400(client):
-    for body in (None, [], {}, {**VALID, "email": 5}, {**VALID, "fullName": "A\nB"}):
-        response = client.post("/api/contact", json=body)
-        assert response.status_code == 400, body
+@pytest.mark.parametrize(
+    "body",
+    [None, [], {}, {**VALID, "email": 5}, {**VALID, "fullName": "A\nB"}],
+)
+def test_invalid_bodies_return_400(client, body):
+    assert client.post("/api/contact", json=body).status_code == 400

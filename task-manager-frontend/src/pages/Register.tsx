@@ -1,3 +1,4 @@
+import { getRateLimitMessage } from "../utils/errors";
 import { useState } from "react";
 import { FormInput } from "../components/ui";
 import axios from "axios";
@@ -100,7 +101,9 @@ export default function Register() {
       } else {
         setErrorMessages({
           ...errorMessages,
-          general: "Unable to create account. Please try again or log in.",
+          general:
+            getRateLimitMessage(err) ??
+            "Unable to create account. Please try again or log in.",
         });
       }
     } finally {

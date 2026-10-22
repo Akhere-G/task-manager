@@ -4,7 +4,6 @@ from datetime import timedelta
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
     create_access_token,
-    unset_jwt_cookies,
     get_jwt_identity,
     jwt_required,
     verify_jwt_in_request,
@@ -26,36 +25,18 @@ from app.services.auth_service import (
     purge_expired_sessions,
 )
 from app.database import db
+from app.extensions import email_only, ip_and_email, limiter
 from app.utils.validators import validate_user, validate_password
 from app.utils.formatters import format_json_response
+from app.utils.cookies import (
+    clear_auth_cookies,
+    set_access_cookies,
+    set_refresh_cookies,
+)
 from app.utils.http import get_json_body
 
 auth_bp = Blueprint("auth", __name__)
 logger = logging.getLogger(__name__)
-
-
-def set_refresh_cookies(response, refresh_token):
-    is_secure = os.getenv("JWT_COOKIE_SECURE") == "True"
-    response.set_cookie(
-        "refresh_token",
-        refresh_token,
-        httponly=True,
-        secure=is_secure,
-        samesite="None" if is_secure else "Lax",
-        path="/",
-    )
-
-
-def set_access_cookies(response, access_token):
-    is_secure = os.getenv("JWT_COOKIE_SECURE") == "True"
-    response.set_cookie(
-        "access_token_cookie",
-        access_token,
-        httponly=True,
-        secure=is_secure,
-        samesite="None" if is_secure else "Lax",
-        path="/",
-    )
 
 
 def get_password_reset_html(reset_link):
@@ -76,6 +57,7 @@ def get_password_reset_html(reset_link):
 
 
 @auth_bp.route("/api/auth/register", methods=["POST"])
+@limiter.limit("5 per hour")
 def register():
     data = get_json_body()
 
@@ -122,6 +104,8 @@ def register():
 
 
 @auth_bp.route("/api/auth/login", methods=["POST"])
+@limiter.limit("10 per minute")
+@limiter.limit("5 per 15 minutes", key_func=ip_and_email)
 def login():
     data = get_json_body()
 
@@ -162,6 +146,7 @@ def login():
 
 
 @auth_bp.route("/api/auth/demo", methods=["POST"])
+@limiter.limit("20 per hour")
 def demo_login():
     try:
         verify_jwt_in_request(optional=True)
@@ -202,8 +187,7 @@ def logout():
     if refresh_token:
         delete_refresh_token(refresh_token)
     response = jsonify({"message": "Logout successful."})
-    unset_jwt_cookies(response)
-    response.set_cookie("refresh_token", "", expires=0)
+    clear_auth_cookies(response)
     return response
 
 
@@ -239,6 +223,8 @@ def send_password_reset_email(user, email, token):
 
 
 @auth_bp.route("/api/auth/request-password-reset", methods=["POST"])
+@limiter.limit("3 per hour")
+@limiter.limit("3 per hour", key_func=email_only)
 def request_password_reset():
     data = get_json_body()
     email = data.get("email")
@@ -263,6 +249,7 @@ def request_password_reset():
 
 
 @auth_bp.route("/api/auth/reset-password", methods=["POST"])
+@limiter.limit("10 per hour")
 def reset_password():
     data = get_json_body()
     token = data.get("token")
@@ -287,6 +274,7 @@ def reset_password():
 
 
 @auth_bp.route("/api/auth/refresh", methods=["POST"])
+@limiter.limit("60 per minute")
 def refresh():
     refresh_token = request.cookies.get("refresh_token")
 

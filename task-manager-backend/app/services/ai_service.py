@@ -4,6 +4,7 @@ from datetime import datetime, date, timezone
 from sqlalchemy.exc import SQLAlchemyError
 
 from google import genai
+from google.genai import types
 from groq import Groq
 
 from app.database import db
@@ -11,6 +12,8 @@ from app.models import DailyBrief
 
 from app.services.stats_service import get_all_dashboard_stats
 from app.services.task_service import get_all_tasks
+
+GEMINI_TIMEOUT_MS = 10_000
 
 allowed_categories = [
     "work",
@@ -29,7 +32,10 @@ allowed_categories = [
 
 def get_generated_text(prompt):
     try:
-        client_gemini = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        client_gemini = genai.Client(
+            api_key=os.getenv("GEMINI_API_KEY"),
+            http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_MS),
+        )
         response = client_gemini.models.generate_content(
             model="gemini-3.5-flash", contents=prompt
         )

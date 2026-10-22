@@ -1,6 +1,7 @@
 import html
 import logging
 from flask import Blueprint, request, jsonify
+from app.extensions import limiter
 from app.utils.validators import validate_contact_request
 import os
 from mailersend import MailerSendClient, EmailBuilder
@@ -46,6 +47,7 @@ mail_bp = Blueprint("contact", __name__)
 
 
 @mail_bp.route("/api/contact", methods=["POST"])
+@limiter.limit("3 per hour")
 def handle_contact():
     data = request.get_json(silent=True)
 
