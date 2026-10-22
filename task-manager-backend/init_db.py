@@ -212,6 +212,34 @@ def initialise_database():
                 cursor.execute(f"ALTER TABLE {table} MODIFY token VARCHAR(255) NULL")
                 conn.commit()
 
+        def add_session_indexes():
+            if not index_exists(cursor, db_name, "refresh_tokens", "uq_refresh_tokens_token_hash"):
+                cursor.execute(
+                    "SELECT COUNT(*) FROM (SELECT token_hash FROM refresh_tokens "
+                    "WHERE token_hash IS NOT NULL GROUP BY token_hash HAVING COUNT(*) > 1) d"
+                )
+                if cursor.fetchone()[0]:
+                    raise RuntimeError("duplicate refresh token hashes found")
+                cursor.execute(
+                    "ALTER TABLE refresh_tokens ADD UNIQUE INDEX uq_refresh_tokens_token_hash (token_hash)"
+                )
+                conn.commit()
+            if not index_exists(cursor, db_name, "refresh_tokens", "idx_refresh_tokens_expires"):
+                cursor.execute(
+                    "ALTER TABLE refresh_tokens ADD INDEX idx_refresh_tokens_expires (expires_at)"
+                )
+                conn.commit()
+            if not index_exists(cursor, db_name, "password_resets", "idx_password_resets_token_hash"):
+                cursor.execute(
+                    "ALTER TABLE password_resets ADD INDEX idx_password_resets_token_hash (token_hash)"
+                )
+                conn.commit()
+            if not index_exists(cursor, db_name, "password_resets", "idx_password_resets_expires"):
+                cursor.execute(
+                    "ALTER TABLE password_resets ADD INDEX idx_password_resets_expires (expires_at)"
+                )
+                conn.commit()
+
         run_step("users.is_demo column", add_is_demo_column)
         run_step("tasks fulltext index", add_fulltext_index)
         run_step("completion trigger", create_completion_trigger)
@@ -219,6 +247,7 @@ def initialise_database():
         run_step("token_hash columns", add_token_hash_columns)
         run_step("token_hash backfill", backfill_token_hashes)
         run_step("plaintext token columns nullable", relax_plaintext_token_columns)
+        run_step("session table indexes", add_session_indexes)
 
     except Exception as e:
         print(f"Database error: {e}")

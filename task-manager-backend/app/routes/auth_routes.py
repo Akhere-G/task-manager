@@ -23,7 +23,9 @@ from app.services.auth_service import (
     delete_refresh_token,
     create_session,
     rotate_refresh_token,
+    purge_expired_sessions,
 )
+from app.database import db
 from app.utils.validators import validate_user, validate_password
 from app.utils.formatters import format_json_response
 from app.utils.http import get_json_body
@@ -134,6 +136,12 @@ def login():
 
     if not user:
         return jsonify({"errors": {"general": "Invalid credentials."}}), 400
+
+    try:
+        purge_expired_sessions(user["id"])
+    except Exception:
+        db.session.rollback()
+        logger.exception("Could not purge expired sessions")
 
     access_token = create_access_token(
         identity=str(user["id"]), expires_delta=timedelta(hours=24)
