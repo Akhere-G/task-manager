@@ -245,6 +245,11 @@ def initialise_database():
                 cursor.execute("ALTER TABLE refresh_tokens ADD COLUMN replaced_at DATETIME NULL")
                 conn.commit()
 
+        def add_tasks_reminded_for_start_at():
+            if not column_exists(cursor, db_name, "tasks", "reminded_for_start_at"):
+                cursor.execute("ALTER TABLE tasks ADD COLUMN reminded_for_start_at DATETIME NULL")
+                conn.commit()
+
         run_step("users.is_demo column", add_is_demo_column)
         run_step("tasks fulltext index", add_fulltext_index)
         run_step("completion trigger", create_completion_trigger)
@@ -254,6 +259,7 @@ def initialise_database():
         run_step("plaintext token columns nullable", relax_plaintext_token_columns)
         run_step("session table indexes", add_session_indexes)
         run_step("refresh_tokens.replaced_at column", add_refresh_tokens_replaced_at)
+        run_step("tasks.reminded_for_start_at column", add_tasks_reminded_for_start_at)
 
     except Exception as e:
         print(f"Database error: {e}")
