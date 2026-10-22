@@ -25,7 +25,6 @@ export type AnalyticsEvent =
   | "logout"
   | "demo_exited"
   | "password_reset_requested"
-  | "session_expired"
   | "task_created"
   | "task_updated"
   | "task_completed"
