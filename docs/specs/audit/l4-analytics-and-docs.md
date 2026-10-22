@@ -1,5 +1,7 @@
 # L4: Analytics defaults, hardcoded URLs and documentation drift
 
+> **Decision (user, after batch 1):** the hardcoded PostHog key fallback and the production API URL fallback are **kept as they are**. Only the `console.log` removal, the README corrections and the `.env.example` update from this spec apply. Sections 3.1 (key removal) and 3.2 (API default) and the related build-argument check are withdrawn.
+
 > **Severity:** Low · **Category:** Privacy / documentation · **Effort:** Small · **Status:** Specified, not implemented
 > **Finding status:** Confirmed.
 > **Depends on:** none (touch `.env.example` together with [H3](h3-hardcoded-db-default.md), [H4](h4-redis-rate-limiting.md), [M4](m4-db-tls.md), [L2](l2-contact-email.md), [M14](m14-ai-reliability.md)).
