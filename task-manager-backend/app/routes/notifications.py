@@ -1,9 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from typing import cast, Any
 
 from app.services import notification as notification_service
+from app.utils.http import get_json_body
 from app.schemas.notification_schema import (
     NotificationSchema,
     SubscriptionCreateSchema,
@@ -43,7 +44,7 @@ def save_subscription_route():
     user_id = get_jwt_identity()
 
     try:
-        raw_data = SubscriptionCreateSchema().load(request.json)
+        raw_data = SubscriptionCreateSchema().load(get_json_body())
         data = cast(dict[str, Any], raw_data)
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400

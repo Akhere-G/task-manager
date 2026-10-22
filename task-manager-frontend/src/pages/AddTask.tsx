@@ -53,7 +53,7 @@ export default function AddTask() {
     endAt = null;
   }
 
-  const initialData: Partial<Task> = aiSuggestion ?? {};
+  const initialData: Partial<Task> = { ...aiSuggestion };
   if (startAt) {
     initialData.startAt = startAt.toISOString();
   }
