@@ -57,7 +57,12 @@ export default function DecomposeTask() {
       trackEvent("ai_task_breakdown_failed", { error_type: getErrorType(err) });
 
       if (axios.isAxiosError(err)) {
-        setDecomposeErrors("Something went wrong. Please try again.");
+        const status = err.response?.status;
+        const limitMessage =
+          status === 429 || status === 503 ? err.response?.data?.error : null;
+        setDecomposeErrors(
+          limitMessage || "Something went wrong. Please try again.",
+        );
       }
     } finally {
       setIsDecomposing(false);

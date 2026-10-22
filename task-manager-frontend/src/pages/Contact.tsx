@@ -1,3 +1,4 @@
+import { getRateLimitMessage } from "../utils/errors";
 import React, { useState } from "react";
 import { Send } from "lucide-react";
 import { isAxiosError } from "axios";
@@ -105,7 +106,7 @@ export default function ContactPage() {
       } else {
         setErrorMessages((prev) => ({
           ...prev,
-          general: "Sorry! Something went wrong...",
+          general: getRateLimitMessage(error) ?? "Sorry! Something went wrong...",
         }));
       }
     }
