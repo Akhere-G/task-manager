@@ -10,6 +10,7 @@ import {
 import { useAuthContext } from "./context/AuthContext";
 import { useTheme } from "./features/users/ThemeContext";
 import NotificationsPrompt from "./features/notifications/components/NotificationsPrompt";
+import usePageViewTracking from "./hooks/usePageViewTracking";
 
 const Settings = lazy(() => import("./pages/Settings"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -31,6 +32,7 @@ function App() {
   const isDemo = Boolean(user?.isDemo);
   const { darkMode, toggleDarkMode } = useTheme();
   const location = useLocation();
+  usePageViewTracking();
 
   const protectedRoutes = [
     { title: "Tasks", path: "/" },

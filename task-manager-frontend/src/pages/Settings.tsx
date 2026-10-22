@@ -3,6 +3,7 @@ import { User, Shield, Moon, Save, Palette, Database } from "lucide-react";
 import { useTheme } from "../features/users/ThemeContext";
 import { useTasks } from "../features/tasks/hooks/useTasks";
 import type { Task } from "../features/tasks/types";
+import { trackEvent } from "../services/analytics";
 
 const defaultFilters = {
   search: "",
@@ -101,6 +102,7 @@ export default function SettingsPage() {
     const { data } = await refetch();
     if (data) {
       downloadTasks(data.tasks);
+      trackEvent("tasks_exported_csv", { row_count: data.tasks.length });
     }
   };
   return (

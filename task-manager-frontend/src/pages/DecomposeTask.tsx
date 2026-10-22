@@ -11,6 +11,7 @@ import { TaskForm } from "../features/tasks/components";
 import { PopupModes, useTaskContext } from "../context/TaskContext";
 import useCreateAllTasks from "../features/tasks/hooks/useCreateAllTasks";
 import { aiService } from "../features/ai/api";
+import { getErrorType, trackEvent } from "../services/analytics";
 
 export default function DecomposeTask() {
   const [idCount, setIdCount] = useState(0);
@@ -35,8 +36,10 @@ export default function DecomposeTask() {
   async function handleDecompose() {
     if (!parentTask) return;
     setIsDecomposing(true);
+    trackEvent("ai_task_breakdown_requested");
     try {
       const { tasks } = await aiService.decomposeTask(parentTask);
+      trackEvent("ai_task_breakdown_succeeded", { subtask_count: tasks.length });
       const formattedTasks: Task[] = tasks.map((task, id) => ({
         ...task,
         id,
@@ -51,6 +54,7 @@ export default function DecomposeTask() {
       setDecomposeErrors("");
     } catch (err) {
       console.error("Failed to decompose task", err);
+      trackEvent("ai_task_breakdown_failed", { error_type: getErrorType(err) });
 
       if (axios.isAxiosError(err)) {
         setDecomposeErrors("Something went wrong. Please try again.");
@@ -103,6 +107,13 @@ export default function DecomposeTask() {
     setIsSubmitting(true);
     try {
       await createAllTasks(stagedTasks);
+      trackEvent("ai_task_breakdown_applied", {
+        subtask_count: stagedTasks.length,
+      });
+      trackEvent("task_created", {
+        source: "breakdown",
+        count: stagedTasks.length,
+      });
       navigate(-1);
     } catch (err) {
       console.error("Bulk creation failed", err);

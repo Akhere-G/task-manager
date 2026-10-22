@@ -7,7 +7,7 @@ import useSetIsCompleted from "../hooks/useSetIsCompleted";
 interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
   setDraggedEvent?: (task: Task | null) => void;
-  setIsCompleted: (id: number, isCompleted: boolean) => void;
+  setIsCompleted: (id: number, isCompleted: boolean, task?: Task) => void;
 }
 export function TaskCardSmall({
   setSelectedTask,
@@ -31,6 +31,7 @@ export function TaskCardSmall({
           setIsCompleted(
             task.isGhost ? task.seriesId : task.id,
             !task.isCompleted,
+            task,
           );
           if (!task.isCompleted) {
             playSound("/success.mp3");

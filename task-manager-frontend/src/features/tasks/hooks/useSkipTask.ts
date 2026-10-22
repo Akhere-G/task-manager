@@ -1,6 +1,7 @@
 import type { Task } from "../types";
 import { skipDate } from "../utils";
 import useUpdateTask from "./useUpdateTask";
+import { trackEvent } from "../../../services/analytics";
 
 export default function useSkipTask(props?: { onSkip?: () => void }) {
   const { onSkip } = props ?? {};
@@ -22,6 +23,7 @@ export default function useSkipTask(props?: { onSkip?: () => void }) {
           endAt: newEndAt.toISOString(),
         },
       });
+      trackEvent("recurring_task_skipped", { repeat_by: task.repeatBy });
       onSkip?.();
     } catch (err) {
       console.error(err);

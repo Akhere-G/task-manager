@@ -3,6 +3,7 @@ import { FormInput } from "../components/ui";
 import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
 import { authService } from "../features/auth/api";
+import { trackEvent } from "../services/analytics";
 
 export default function RequestPasswordReset() {
   const location = useLocation();
@@ -32,6 +33,7 @@ export default function RequestPasswordReset() {
 
     try {
       await authService.requestPasswordReset(email);
+      trackEvent("password_reset_requested");
       setSuccess(true);
     } catch (err) {
       if (axios.isAxiosError(err)) {

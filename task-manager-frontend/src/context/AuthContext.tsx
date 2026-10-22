@@ -6,6 +6,12 @@ import type {
   User,
 } from "../features/auth/types";
 import { authService } from "../features/auth/api";
+import {
+  endAnalyticsSession,
+  getErrorType,
+  startAnalyticsSession,
+  trackEvent,
+} from "../services/analytics";
 
 interface AuthContextType {
   register: (userData: RegisterUserInput) => Promise<void>;
@@ -34,6 +40,7 @@ export default function AuthContextProvider({
     const checkSession = async () => {
       try {
         const response = await authService.checkSession();
+        startAnalyticsSession(response.user);
         setUser(response.user);
         setIsAuthenticated(true);
       } catch (err) {
@@ -48,25 +55,43 @@ export default function AuthContextProvider({
   }, []);
 
   const register = async (userData: RegisterUserInput) => {
-    const { user } = await authService.register(userData);
-    setUser(user);
-    setIsAuthenticated(true);
+    try {
+      const { user } = await authService.register(userData);
+      startAnalyticsSession(user);
+      trackEvent("register");
+      setUser(user);
+      setIsAuthenticated(true);
+    } catch (err) {
+      trackEvent("register_failed", { error_type: getErrorType(err) });
+      throw err;
+    }
   };
 
   const login = async ({ email, password }: LoginUserInput) => {
-    const { user } = await authService.login({ email, password });
-    setUser(user);
-    setIsAuthenticated(true);
+    try {
+      const { user } = await authService.login({ email, password });
+      startAnalyticsSession(user);
+      trackEvent("login");
+      setUser(user);
+      setIsAuthenticated(true);
+    } catch (err) {
+      trackEvent("login_failed", { error_type: getErrorType(err) });
+      throw err;
+    }
   };
 
   const loginAsDemo = async () => {
     const { user } = await authService.demoLogin();
+    startAnalyticsSession(user);
+    trackEvent("demo_started");
     setUser(user);
     setIsAuthenticated(true);
   };
 
   const logout = async () => {
     await authService.logout();
+    trackEvent(user?.isDemo ? "demo_exited" : "logout");
+    endAnalyticsSession();
     setUser(null);
     setIsAuthenticated(false);
     queryClient.clear();

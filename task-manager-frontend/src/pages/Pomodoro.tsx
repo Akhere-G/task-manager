@@ -7,6 +7,7 @@ import { useState } from "react";
 import { CountdownCircleTimer } from "react-countdown-circle-timer";
 import { formatDateRange, formatDateRelative } from "../features/tasks/utils";
 import useSetIsCompleted from "../features/tasks/hooks/useSetIsCompleted";
+import { trackEvent } from "../services/analytics";
 
 const POMODORO_DURATION = 25 * 60;
 
@@ -29,7 +30,12 @@ export default function Pomodoro() {
 
   const status = isAxiosError(error) ? error.status : 0;
 
-  const toggleIsPlaying = () => setIsPlaying((prev) => !prev);
+  const toggleIsPlaying = () => {
+    if (!isPlaying) {
+      trackEvent("pomodoro_started", { sessions_completed: sessionsCompleted });
+    }
+    setIsPlaying((prev) => !prev);
+  };
 
   if (isLoading) return <LoadingState />;
   if (isError && status !== 404)
@@ -68,6 +74,9 @@ export default function Pomodoro() {
   const totalExpectedSessions = Math.ceil(duration / 25);
 
   const handleSessionComplete = () => {
+    trackEvent("pomodoro_completed", {
+      sessions_completed: sessionsCompleted + 1,
+    });
     setIsPlaying(false);
     setSessionsCompleted((prev) => prev + 1);
     setShowCompleteModal(true);
@@ -189,7 +198,7 @@ export default function Pomodoro() {
           close={() => setShowCompleteModal(false)}
           title={`Complete task: ${title}?`}
           handleConfirm={() => {
-            setIsCompleted(id, true);
+            setIsCompleted(id, true, task);
             navigate(-1);
           }}
           actionButtonVariant="primary"

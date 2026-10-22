@@ -8,6 +8,7 @@ import { BulkAddForm } from "../features/tasks/components";
 import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
 import { setHours } from "date-fns";
 import useCreateTask from "../features/tasks/hooks/useCreateTask";
+import { trackEvent } from "../services/analytics";
 
 export default function AddTask() {
   const navigate = useNavigate();
@@ -22,6 +23,13 @@ export default function AddTask() {
       endAt: newTask.endAt,
     };
     await createTask(formattedTask);
+    trackEvent("task_created", {
+      source: aiSuggestion ? "ai" : "form",
+      category: newTask.category,
+      is_repeating: Boolean(newTask.repeatBy),
+      repeat_by: newTask.repeatBy ?? null,
+      count: 1,
+    });
     invalidateTaskKeys();
     navigate(-1);
   }

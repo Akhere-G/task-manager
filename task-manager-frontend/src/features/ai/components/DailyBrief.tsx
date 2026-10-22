@@ -2,6 +2,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Sparkles, RefreshCw, X } from "lucide-react";
 import { useGetDailyBrief } from "../hooks";
+import { trackEvent } from "../../../services/analytics";
 
 const DailyBrief = () => {
   const { data: brief, isLoading, isError, refetch } = useGetDailyBrief();
@@ -24,7 +25,10 @@ const DailyBrief = () => {
     <div className="relative antialiase ">
       <button
         aria-label={isOpen ? "Close daily brief" : "Open daily brief"}
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(true);
+          trackEvent("ai_daily_brief_viewed");
+        }}
         className={`
           flex items-center justify-center bg-surface dark:bg-surface-muted shadow-md text-brand
           transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)

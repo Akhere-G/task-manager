@@ -7,10 +7,13 @@ import TaskContextProvider from "./context/TaskContext.tsx";
 import AuthProvider from "./context/AuthContext.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./features/users/ThemeContext.tsx";
+import { initAnalytics } from "./services/analytics.ts";
 
 const root = document.getElementById("root") || document.body;
 
 const queryClient = new QueryClient();
+
+initAnalytics();
 
 createRoot(root).render(
   <StrictMode>

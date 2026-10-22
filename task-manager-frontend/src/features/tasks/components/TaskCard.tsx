@@ -21,7 +21,7 @@ import useSkipTask from "../hooks/useSkipTask";
 
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
-  setIsCompleted: (id: number, isComplete: boolean) => void;
+  setIsCompleted: (id: number, isComplete: boolean, task?: Task) => void;
   onDelete: (task: Task) => void;
   onEdit: (task: Task) => void;
   showDelete?: boolean;
@@ -93,7 +93,7 @@ function TaskCard({
         {showSetIsComplete && (
           <button
             onClick={() => {
-              setIsCompleted(isGhost ? seriesId : id, !isCompleted);
+              setIsCompleted(isGhost ? seriesId : id, !isCompleted, task);
 
               if (!isCompleted) {
                 playSound("/success.mp3");
@@ -247,7 +247,7 @@ function TaskCard({
 
 interface TaskCardConnectedProps extends Task {
   titleIcon?: React.ReactNode;
-  setIsCompleted?: (id: number, isCompleted: boolean) => void;
+  setIsCompleted?: (id: number, isCompleted: boolean, task?: Task) => void;
   onDelete?: (task: Task) => void;
   onEdit?: (task: Task) => void;
   showDelete?: boolean;

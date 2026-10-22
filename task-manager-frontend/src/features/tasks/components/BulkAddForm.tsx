@@ -4,6 +4,7 @@ import { validateTaskList } from "../../../utils/validators";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import useCreateAllTasks from "../hooks/useCreateAllTasks";
+import { trackEvent } from "../../../services/analytics";
 
 function getDescription(task: Record<string, string>) {
   const rawDescription = task.Description || task.description;
@@ -166,6 +167,8 @@ export default function BulkAddForm() {
 
         try {
           await createAllTasks(newTasks);
+          trackEvent("tasks_imported_csv", { row_count: newTasks.length });
+          trackEvent("task_created", { source: "csv", count: newTasks.length });
           navigate(-1);
         } catch (err: unknown) {
           if (axios.isAxiosError(err)) {

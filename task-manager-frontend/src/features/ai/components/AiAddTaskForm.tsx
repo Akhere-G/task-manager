@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import type { CreateTaskInput } from "../../../features/tasks/types";
 import { aiService } from "../api";
+import { getErrorType, trackEvent } from "../../../services/analytics";
 
 interface AiAddTaskFormProps {
   onParsed: (data: CreateTaskInput) => void;
@@ -16,8 +17,10 @@ export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
     if (!input.trim() || isProcessing) return;
 
     setIsProcessing(true);
+    trackEvent("ai_task_parse_requested");
     try {
       const parsedTask = await aiService.parseTask(input);
+      trackEvent("ai_task_parse_succeeded");
 
       parsedTask.repeatUntil = parsedTask.repeatUntil
         ? parsedTask.repeatUntil
@@ -27,6 +30,7 @@ export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
       setInput("");
     } catch (err) {
       console.error(err);
+      trackEvent("ai_task_parse_failed", { error_type: getErrorType(err) });
     } finally {
       setIsProcessing(false);
     }

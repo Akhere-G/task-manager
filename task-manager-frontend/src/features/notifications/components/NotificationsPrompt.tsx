@@ -6,6 +6,7 @@ import {
   registerAndSubscribe,
 } from "../utils";
 import useSubscribe from "../hooks/useSubscribe";
+import { trackEvent } from "../../../services/analytics";
 
 export default function NotificationsPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -35,8 +36,10 @@ export default function NotificationsPrompt() {
       await subscribe(subscriptionData);
       console.log("Successfully subscribed to notifications.");
       // TODO: get toast
+      trackEvent("notifications_prompt_responded", { result: "granted" });
       setShowPrompt(false);
     } catch {
+      trackEvent("notifications_prompt_responded", { result: "failed" });
       console.error("Could not subscribe.");
     }
   };
@@ -50,7 +53,13 @@ export default function NotificationsPrompt() {
         <button className="btn-primary" onClick={handleSubscribe}>
           Subscribe
         </button>
-        <button className="btn-secondary" onClick={() => setShowPrompt(false)}>
+        <button
+          className="btn-secondary"
+          onClick={() => {
+            trackEvent("notifications_prompt_responded", { result: "dismissed" });
+            setShowPrompt(false);
+          }}
+        >
           Maybe later
         </button>
       </div>
