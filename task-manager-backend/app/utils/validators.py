@@ -133,26 +133,40 @@ def validate_task_list(tasks):
 def validate_contact_request(data):
     errors = {}
 
-    full_name = data.get("fullName", "").strip()
+    if not isinstance(data, dict):
+        return {"general": "A JSON object is required."}
+
+    def get_text(field):
+        value = data.get(field, "")
+        return value.strip() if isinstance(value, str) else None
+
+    def has_line_break(value):
+        return "\r" in value or "\n" in value
+
+    full_name = get_text("fullName")
     if not full_name:
         errors["fullName"] = "Full name is required."
     elif len(full_name) > 100:
         errors["fullName"] = "Name must be under 100 characters."
+    elif has_line_break(full_name):
+        errors["fullName"] = "Name must be a single line."
 
-    email = data.get("email", "").strip()
+    email = get_text("email")
     email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
     if not email:
         errors["email"] = "Email address is required."
-    elif not re.match(email_regex, email):
+    elif len(email) > 254 or not re.match(email_regex, email):
         errors["email"] = "Please enter a valid email address."
 
-    subject = data.get("subject", "").strip()
+    subject = get_text("subject")
     if not subject:
         errors["subject"] = "Please select a subject for your enquiry."
     elif len(subject) > 100:
         errors["subject"] = "Subject must be under 100 characters."
+    elif has_line_break(subject):
+        errors["subject"] = "Subject must be a single line."
 
-    message = data.get("message", "").strip()
+    message = get_text("message")
     if not message:
         errors["message"] = "Message content is required."
     elif len(message) < 10:
