@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 from app.database import db
 from app.models import Task
 from app.utils.formatters import to_snake_case
+from app.utils.validators import MAX_TASKS_PER_REQUEST
 from app.utils.task_utils import (
     build_task_filters,
     check_should_repeat,
@@ -50,10 +51,18 @@ def get_all_tasks(
     order_expr = desc(sort_field) if order == "desc" else asc(sort_field)
 
     page = max(int(page or 1), 1)
-    limit = max(int(limit) if limit is not None else total_count, 1)
+    if limit is None:
+        limit = min(total_count, MAX_TASKS_PER_REQUEST)
+    limit = max(int(limit), 1)
     offset = limit * (page - 1)
 
-    stmt = select(Task).where(*clauses).order_by(order_expr).limit(limit).offset(offset)
+    stmt = (
+        select(Task)
+        .where(*clauses)
+        .order_by(order_expr, Task.id)
+        .limit(limit)
+        .offset(offset)
+    )
     tracked_tasks = db.session.execute(stmt).scalars().all()
 
     tasks = [
