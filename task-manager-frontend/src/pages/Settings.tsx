@@ -1,9 +1,10 @@
 import React from "react";
-import { User, Shield, Moon, Save, Palette, Database } from "lucide-react";
+import { Moon, Palette, Database } from "lucide-react";
 import { useTheme } from "../features/users/ThemeContext";
 import { useTasks } from "../features/tasks/hooks/useTasks";
 import type { Task } from "../features/tasks/types";
 import { trackEvent } from "../services/analytics";
+import { toCsv } from "../utils/csv";
 
 const defaultFilters = {
   search: "",
@@ -37,14 +38,6 @@ export default function SettingsPage() {
       "Created At",
     ];
 
-    const escapeCSV = (value?: string | null) => {
-      const stringValue = !value ? "" : String(value);
-      if (/[",\n]/.test(stringValue)) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      }
-      return stringValue;
-    };
-
     const getCompletedAt = (
       completedAt: string | null,
       endAt: string,
@@ -68,9 +61,9 @@ export default function SettingsPage() {
         completedAt,
         createdAt,
       }) => [
-        escapeCSV(title),
+        title,
         category,
-        escapeCSV(description),
+        description,
         startAt,
         endAt,
         repeatBy ?? "",
@@ -81,9 +74,7 @@ export default function SettingsPage() {
       ],
     );
 
-    const csvContent = [headers, ...taskData]
-      .map((e) => e.join(","))
-      .join("\n");
+    const csvContent = toCsv([headers, ...taskData]);
 
     const blob = new Blob(["\ufeff", csvContent], {
       type: "text/csv;charset=utf-8;",
@@ -193,42 +184,4 @@ function SettingsCard({
       {children}
     </div>
   );
-}
-
-export function FutureSections() {
-  {
-    /* Profile Section */
-  }
-  <div>
-    <SettingsCard icon={<User className="text-brand" />} title="Profile">
-      <div className="space-y-4">
-        <input
-          type="text"
-          placeholder="Full Name"
-          className="w-full p-2 bg-surface-muted rounded-md border border-slate-200 dark:border-slate-700 text-text-main focus:outline-none focus:border-brand transition-colors"
-        />
-        <input
-          type="email"
-          placeholder="Email Address"
-          className="w-full p-2 bg-surface-muted rounded-md border border-slate-200 dark:border-slate-700 text-text-main focus:outline-none focus:border-brand transition-colors"
-        />
-      </div>
-    </SettingsCard>
-
-    {/* Security Section */}
-    <SettingsCard icon={<Shield className="text-brand" />} title="Security">
-      <button aria-label="Change password" className="btn-secondary">
-        Change Password
-      </button>
-    </SettingsCard>
-
-    <div className="mt-8 flex justify-end">
-      <button
-        aria-label="Save changes"
-        className="btn-primary flex items-center gap-2"
-      >
-        <Save size={18} /> Save Changes
-      </button>
-    </div>
-  </div>;
 }

@@ -59,8 +59,6 @@ const POSTHOG_KEY =
 const POSTHOG_HOST =
   import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com";
 
-console.log(`Host is ${POSTHOG_HOST}`);
-console.log(`Key is present: ${Boolean(POSTHOG_KEY)}`);
 let isEnabled = false;
 let identifiedId: string | null = null;
 let isDemo = false;
