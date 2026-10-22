@@ -2,6 +2,8 @@ from datetime import datetime
 import re
 from dateutil import parser
 
+from app.utils.common_passwords import is_common_password
+
 
 def validate_task(data, is_update=False):
     """
@@ -181,6 +183,8 @@ def validate_user(data, is_registering=False):
     errors = {}
 
     def get_clean(field):
+        # Passwords are stripped too: existing accounts were created that way,
+        # so changing it would lock out users whose password had stray spaces.
         return str(data.get(field, "")).strip()
 
     email = get_clean("email")
@@ -222,6 +226,8 @@ def validate_user(data, is_registering=False):
             errors["password"] = "Password must be 50 characters or less."
         elif not (re.search(r"[A-Za-z]", password) and re.search(r"[0-9]", password)):
             errors["password"] = "Password must contain both letters and numbers."
+        elif is_common_password(password):
+            errors["password"] = "That password is too common. Choose a different one."
 
     confirm_password = get_clean("confirmPassword")
     if not confirm_password:
@@ -236,14 +242,17 @@ def validate_password(password):
     if not password:
         return "Password is required."
 
-    password_spec = "Password must be at between 8 and 50 characters and contain letters and numbers. "
-    if password:
-        if (
-            len(password) < 8
-            or len(password) > 50
-            or not (re.search(r"[A-Za-z]", password) and re.search(r"[0-9]", password))
-        ):
-            return password_spec
+    if (
+        len(password) < 8
+        or len(password) > 50
+        or not (re.search(r"[A-Za-z]", password) and re.search(r"[0-9]", password))
+    ):
+        return "Password must be at between 8 and 50 characters and contain letters and numbers. "
+
+    if is_common_password(password):
+        return "That password is too common. Choose a different one."
+
+    return None
 
 
 MAX_PAGE_SIZE = 200
