@@ -4,7 +4,6 @@ from datetime import timedelta
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
     create_access_token,
-    unset_jwt_cookies,
     get_jwt_identity,
     jwt_required,
     verify_jwt_in_request,
@@ -29,34 +28,15 @@ from app.database import db
 from app.extensions import email_only, ip_and_email, limiter
 from app.utils.validators import validate_user, validate_password
 from app.utils.formatters import format_json_response
+from app.utils.cookies import (
+    clear_auth_cookies,
+    set_access_cookies,
+    set_refresh_cookies,
+)
 from app.utils.http import get_json_body
 
 auth_bp = Blueprint("auth", __name__)
 logger = logging.getLogger(__name__)
-
-
-def set_refresh_cookies(response, refresh_token):
-    is_secure = os.getenv("JWT_COOKIE_SECURE") == "True"
-    response.set_cookie(
-        "refresh_token",
-        refresh_token,
-        httponly=True,
-        secure=is_secure,
-        samesite="None" if is_secure else "Lax",
-        path="/",
-    )
-
-
-def set_access_cookies(response, access_token):
-    is_secure = os.getenv("JWT_COOKIE_SECURE") == "True"
-    response.set_cookie(
-        "access_token_cookie",
-        access_token,
-        httponly=True,
-        secure=is_secure,
-        samesite="None" if is_secure else "Lax",
-        path="/",
-    )
 
 
 def get_password_reset_html(reset_link):
@@ -207,8 +187,7 @@ def logout():
     if refresh_token:
         delete_refresh_token(refresh_token)
     response = jsonify({"message": "Logout successful."})
-    unset_jwt_cookies(response)
-    response.set_cookie("refresh_token", "", expires=0)
+    clear_auth_cookies(response)
     return response
 
 
