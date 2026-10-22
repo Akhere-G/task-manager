@@ -1,8 +1,20 @@
 from flask import jsonify, request, send_from_directory
+from flask_limiter.errors import RateLimitExceeded
 from werkzeug.exceptions import HTTPException, NotFound
 
 
 def register_error_handlers(app):
+    @app.errorhandler(RateLimitExceeded)
+    def handle_rate_limit(error):
+        response = jsonify({"error": "Too many requests. Please try again later."})
+        response.status_code = 429
+        try:
+            retry_after = int(error.limit.limit.get_expiry())
+            response.headers["Retry-After"] = str(retry_after)
+        except Exception:
+            pass
+        return response
+
     @app.errorhandler(HTTPException)
     def handle_http_exception(error):
         if request.path.startswith("/api/"):
