@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Shield, Moon, Save, Palette, Database } from "lucide-react";
+import { Moon, Palette, Database } from "lucide-react";
 import { useTheme } from "../features/users/ThemeContext";
 import { useTasks } from "../features/tasks/hooks/useTasks";
 import type { Task } from "../features/tasks/types";
@@ -184,42 +184,4 @@ function SettingsCard({
       {children}
     </div>
   );
-}
-
-export function FutureSections() {
-  {
-    /* Profile Section */
-  }
-  <div>
-    <SettingsCard icon={<User className="text-brand" />} title="Profile">
-      <div className="space-y-4">
-        <input
-          type="text"
-          placeholder="Full Name"
-          className="w-full p-2 bg-surface-muted rounded-md border border-slate-200 dark:border-slate-700 text-text-main focus:outline-none focus:border-brand transition-colors"
-        />
-        <input
-          type="email"
-          placeholder="Email Address"
-          className="w-full p-2 bg-surface-muted rounded-md border border-slate-200 dark:border-slate-700 text-text-main focus:outline-none focus:border-brand transition-colors"
-        />
-      </div>
-    </SettingsCard>
-
-    {/* Security Section */}
-    <SettingsCard icon={<Shield className="text-brand" />} title="Security">
-      <button aria-label="Change password" className="btn-secondary">
-        Change Password
-      </button>
-    </SettingsCard>
-
-    <div className="mt-8 flex justify-end">
-      <button
-        aria-label="Save changes"
-        className="btn-primary flex items-center gap-2"
-      >
-        <Save size={18} /> Save Changes
-      </button>
-    </div>
-  </div>;
 }
