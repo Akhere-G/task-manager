@@ -30,7 +30,7 @@ interface UseTasksProps {
   enabled?: boolean;
 }
 
-const DEFAULT_FILTERS: TaskFilters = {
+const getDefaultFilters = (): TaskFilters => ({
   search: "",
   category: "",
   duration: "",
@@ -39,7 +39,7 @@ const DEFAULT_FILTERS: TaskFilters = {
   sortBy: "start_at",
   order: "asc",
   currentDate: new Date().toISOString(),
-};
+});
 
 const apiParamMap: Record<string, string> = {
   search: "q",
@@ -54,11 +54,13 @@ const apiParamMap: Record<string, string> = {
 
 export const useTasks = ({
   perPage,
-  defaultFilters = DEFAULT_FILTERS,
+  defaultFilters: providedDefaults,
   projectRepeating = false,
   enabled = true,
 }: UseTasksProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [initialDefaults] = useState(getDefaultFilters);
+  const defaultFilters = providedDefaults ?? initialDefaults;
 
   const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
   const deferredSearch = useDeferredValue(searchInput);
@@ -67,20 +69,21 @@ export const useTasks = ({
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (searchParams.get("q") !== deferredSearch) {
+      if ((searchParams.get("q") ?? "") !== deferredSearch) {
+        const next = new URLSearchParams(searchParams);
         if (deferredSearch) {
-          searchParams.set("q", deferredSearch);
+          next.set("q", deferredSearch);
         } else {
-          searchParams.delete("q");
+          next.delete("q");
         }
-        searchParams.set("page", "1");
-        setSearchParams(searchParams, { replace: true });
+        next.set("page", "1");
+        setSearchParams(next, { replace: true });
         trackEvent("tasks_searched", { has_query: Boolean(deferredSearch) });
       }
     }, 400);
 
     return () => clearTimeout(handler);
-  }, [deferredSearch]);
+  }, [deferredSearch, searchParams, setSearchParams]);
 
   const filters = {
     search: searchInput,
@@ -142,36 +145,43 @@ export const useTasks = ({
         params.set("limit", String(perPage));
       }
 
-      const result = await taskService.getAll(params);
-      if (result.currentPage > result.totalPages) {
-        result.currentPage = result.totalPages;
-        params.set("page", String(result.currentPage));
-        setSearchParams(params);
-      }
-
-      return result;
+      return taskService.getAll(params);
     },
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5,
     enabled,
   });
 
+  const loadedPage = result.data;
+  useEffect(() => {
+    if (
+      loadedPage &&
+      loadedPage.totalPages > 0 &&
+      loadedPage.currentPage > loadedPage.totalPages
+    ) {
+      const next = new URLSearchParams(searchParams);
+      next.set("page", String(loadedPage.totalPages));
+      setSearchParams(next, { replace: true });
+    }
+  }, [loadedPage, searchParams, setSearchParams]);
+
   const updateFilters = (name: string, value: string) => {
     if (name !== "search" && name !== "currentDate") {
       trackEvent("tasks_filtered", { filter: name });
     }
+    const next = new URLSearchParams(searchParams);
     if (name === "search") {
       setSearchInput(value);
     } else {
       const apiKey = apiParamMap[name];
       if (apiKey && value) {
-        searchParams.set(apiKey, value);
+        next.set(apiKey, value);
       } else {
-        searchParams.delete(apiKey);
+        next.delete(apiKey);
       }
     }
-    searchParams.set("page", "1");
-    setSearchParams(searchParams);
+    next.set("page", "1");
+    setSearchParams(next);
   };
 
   const resetFilters = () => {
@@ -189,8 +199,9 @@ export const useTasks = ({
   };
 
   const setPage = (page: number) => {
-    searchParams.set("page", String(page));
-    setSearchParams(searchParams);
+    const next = new URLSearchParams(searchParams);
+    next.set("page", String(page));
+    setSearchParams(next);
   };
 
   const isStale = result.isFetching || searchInput !== deferredSearch;
