@@ -53,14 +53,10 @@ export type AnalyticsEvent =
 type AnalyticsValue = string | number | boolean | string[] | null | undefined;
 export type AnalyticsProps = Record<string, AnalyticsValue>;
 
-const POSTHOG_KEY =
-  import.meta.env.VITE_POSTHOG_PROJECT_TOKEN ||
-  "phc_wKM74BsqUZpdxFSohBW7zoQf4igr2WP6R3XKkTer4Qke";
+const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN;
 const POSTHOG_HOST =
   import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com";
 
-console.log(`Host is ${POSTHOG_HOST}`);
-console.log(`Key is present: ${Boolean(POSTHOG_KEY)}`);
 let isEnabled = false;
 let identifiedId: string | null = null;
 let isDemo = false;

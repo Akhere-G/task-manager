@@ -2,9 +2,7 @@ import axios from "axios";
 import { hasAnalyticsSession, trackEvent } from "./analytics";
 
 const apiClient = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_URL ||
-    "https://taskflow-752853711822.europe-west2.run.app/api",
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
