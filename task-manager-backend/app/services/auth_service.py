@@ -40,12 +40,19 @@ def create_user(first_name, last_name, email, password):
         return "EXISTS"
 
 
+_DUMMY_PASSWORD_HASH = generate_password_hash("not-a-real-password")
+
+
 def login_user(email, password):
     user = db.session.execute(
         select(User).where(User.email == email)
     ).scalar_one_or_none()
 
-    if user and not user.is_demo and check_password_hash(user.password_hash, password):
+    if not user or user.is_demo:
+        check_password_hash(_DUMMY_PASSWORD_HASH, password)
+        return None
+
+    if check_password_hash(user.password_hash, password):
         return _user_dict(user)
     return None
 

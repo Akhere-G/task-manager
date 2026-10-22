@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import timedelta
 from flask import Blueprint, request, jsonify
@@ -27,6 +28,7 @@ from app.utils.validators import validate_user, validate_password
 from app.utils.formatters import format_json_response
 
 auth_bp = Blueprint("auth", __name__)
+logger = logging.getLogger(__name__)
 
 
 def set_refresh_cookies(response, refresh_token):
@@ -223,33 +225,44 @@ def get_me():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+def send_password_reset_email(user, email, token):
+    frontend_url = (os.getenv("FRONTEND_URL") or "").rstrip("/")
+    if not frontend_url:
+        raise RuntimeError("FRONTEND_URL is not configured")
+
+    reset_link = f"{frontend_url}/reset-password?token={token}"
+
+    ms = MailerSendClient(os.getenv("MAIL_SEND_API_KEY"))
+    email_payload = (
+        EmailBuilder()
+        .from_email(os.getenv("MAIL_SEND_EMAIL"), "Task Manager Support")
+        .to_many([{"email": email, "name": user["first_name"]}])
+        .subject("Reset your password")
+        .html(get_password_reset_html(reset_link))
+        .build()
+    )
+    ms.emails.send(email_payload)
+
+
 @auth_bp.route("/api/auth/request-password-reset", methods=["POST"])
 def request_password_reset():
     try:
         data = request.json or {}
         email = data.get("email")
 
-        if not email:
+        if not email or not isinstance(email, str):
             return jsonify({"errors": {"email": "Email is required"}}), 400
+        email = email.strip()
         user = get_user(email=email)
 
         if user and not user["is_demo"]:
             token = create_reset_token(user["id"])
-            reset_link = f"{os.getenv('FRONTEND_URL')}/reset-password?token={token}"
-
-            ms = MailerSendClient(os.getenv("MAIL_SEND_API_KEY"))
-            html_content = get_password_reset_html(reset_link)
-
-            email_payload = (
-                EmailBuilder()
-                .from_email(os.getenv("MAIL_SEND_EMAIL"), "Task Manager Support")
-                .to_many([{"email": email, "name": user["first_name"]}])
-                .subject("Reset your password")
-                .html(html_content)
-                .build()
-            )
-
-            ms.emails.send(email_payload)
+            try:
+                send_password_reset_email(user, email, token)
+            except Exception as exc:
+                logger.error(
+                    "Password reset email could not be sent: %s", type(exc).__name__
+                )
 
         return jsonify(
             {"message": "If an account exists, a reset link has been sent."}

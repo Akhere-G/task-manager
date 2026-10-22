@@ -2,6 +2,8 @@ from datetime import datetime
 import re
 from dateutil import parser
 
+from app.utils.common_passwords import is_common_password
+
 
 def validate_task(data, is_update=False):
     """
@@ -133,26 +135,40 @@ def validate_task_list(tasks):
 def validate_contact_request(data):
     errors = {}
 
-    full_name = data.get("fullName", "").strip()
+    if not isinstance(data, dict):
+        return {"general": "A JSON object is required."}
+
+    def get_text(field):
+        value = data.get(field, "")
+        return value.strip() if isinstance(value, str) else None
+
+    def has_line_break(value):
+        return "\r" in value or "\n" in value
+
+    full_name = get_text("fullName")
     if not full_name:
         errors["fullName"] = "Full name is required."
     elif len(full_name) > 100:
         errors["fullName"] = "Name must be under 100 characters."
+    elif has_line_break(full_name):
+        errors["fullName"] = "Name must be a single line."
 
-    email = data.get("email", "").strip()
+    email = get_text("email")
     email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
     if not email:
         errors["email"] = "Email address is required."
-    elif not re.match(email_regex, email):
+    elif len(email) > 254 or not re.match(email_regex, email):
         errors["email"] = "Please enter a valid email address."
 
-    subject = data.get("subject", "").strip()
+    subject = get_text("subject")
     if not subject:
         errors["subject"] = "Please select a subject for your enquiry."
     elif len(subject) > 100:
         errors["subject"] = "Subject must be under 100 characters."
+    elif has_line_break(subject):
+        errors["subject"] = "Subject must be a single line."
 
-    message = data.get("message", "").strip()
+    message = get_text("message")
     if not message:
         errors["message"] = "Message content is required."
     elif len(message) < 10:
@@ -208,6 +224,8 @@ def validate_user(data, is_registering=False):
             errors["password"] = "Password must be 50 characters or less."
         elif not (re.search(r"[A-Za-z]", password) and re.search(r"[0-9]", password)):
             errors["password"] = "Password must contain both letters and numbers."
+        elif is_common_password(password):
+            errors["password"] = "That password is too common. Choose a different one."
 
     confirm_password = get_clean("confirmPassword")
     if not confirm_password:
@@ -222,11 +240,91 @@ def validate_password(password):
     if not password:
         return "Password is required."
 
-    password_spec = "Password must be at between 8 and 50 characters and contain letters and numbers. "
-    if password:
-        if (
-            len(password) < 8
-            or len(password) > 50
-            or not (re.search(r"[A-Za-z]", password) and re.search(r"[0-9]", password))
+    if (
+        len(password) < 8
+        or len(password) > 50
+        or not (re.search(r"[A-Za-z]", password) and re.search(r"[0-9]", password))
+    ):
+        return "Password must be at between 8 and 50 characters and contain letters and numbers. "
+
+    if is_common_password(password):
+        return "That password is too common. Choose a different one."
+
+    return None
+
+
+MAX_PAGE_SIZE = 200
+MAX_TASKS_PER_REQUEST = 2000
+MAX_PROJECTION_DAYS = 400
+
+
+def parse_list_params(args):
+    errors = {}
+
+    def parse_int(name, default, minimum, maximum=None):
+        raw = args.get(name)
+        if raw is None or raw == "":
+            return default
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            errors[name] = f"{name} must be an integer."
+            return default
+        if value < minimum or (maximum is not None and value > maximum):
+            limits = f"at least {minimum}"
+            if maximum is not None:
+                limits = f"between {minimum} and {maximum}"
+            errors[name] = f"{name} must be {limits}."
+            return default
+        return value
+
+    page = parse_int("page", 1, 1)
+    limit = parse_int("limit", None, 1, MAX_PAGE_SIZE)
+
+    start_date = args.get("start_date") or None
+    end_date = args.get("end_date") or None
+    start_dt = end_dt = None
+
+    if bool(start_date) != bool(end_date):
+        errors["start_date"] = "start_date and end_date must be provided together."
+    elif start_date and end_date:
+        try:
+            start_dt = parser.isoparse(start_date)
+        except (ValueError, TypeError):
+            errors["start_date"] = "Invalid date. Use ISO format."
+        try:
+            end_dt = parser.isoparse(end_date)
+        except (ValueError, TypeError):
+            errors["end_date"] = "Invalid date. Use ISO format."
+        if start_dt and end_dt and end_dt < start_dt:
+            errors["end_date"] = "end_date must not be before start_date."
+
+    project_repeating = args.get("project_repeating") == "true"
+    if project_repeating:
+        if not (start_date and end_date):
+            errors["project_repeating"] = (
+                "project_repeating needs start_date and end_date."
+            )
+        elif (
+            start_dt
+            and end_dt
+            and (end_dt - start_dt).days > MAX_PROJECTION_DAYS
         ):
-            return password_spec
+            errors["project_repeating"] = (
+                f"Date range must be {MAX_PROJECTION_DAYS} days or fewer."
+            )
+
+    params = {
+        "category": args.get("category"),
+        "search": args.get("q"),
+        "duration": args.get("duration"),
+        "is_completed": args.get("is_completed"),
+        "start_date": start_date,
+        "end_date": end_date,
+        "sort_by": args.get("sort_by"),
+        "order": args.get("order"),
+        "page": page,
+        "limit": limit,
+        "project_repeating": project_repeating,
+    }
+    return params, errors

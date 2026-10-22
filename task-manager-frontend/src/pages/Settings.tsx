@@ -1,28 +1,17 @@
 import React from "react";
 import { Moon, Palette, Database } from "lucide-react";
 import { useTheme } from "../features/users/ThemeContext";
-import { useTasks } from "../features/tasks/hooks/useTasks";
+import { taskService } from "../features/tasks/api";
 import type { Task } from "../features/tasks/types";
 import { trackEvent } from "../services/analytics";
 import { toCsv } from "../utils/csv";
 
-const defaultFilters = {
-  search: "",
-  category: "",
-  duration: "",
-  isCompleted: "all",
-  dueDate: "",
-  sortBy: "created_at",
-  order: "asc",
-  currentDate: new Date().toISOString(),
-};
+const EXPORT_PAGE_SIZE = 200;
+
 export default function SettingsPage() {
   const { darkMode, theme, toggleDarkMode, setTheme, THEMES } = useTheme();
-  const { isLoading, isError, refetch } = useTasks({
-    perPage: null,
-    enabled: false,
-    defaultFilters,
-  });
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
 
   const downloadTasks = (tasks: Task[]) => {
     const headers = [
@@ -89,11 +78,39 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const fetchAllTasks = async () => {
+    const tasks: Task[] = [];
+    let page = 1;
+    let totalPages = 1;
+    do {
+      const params = new URLSearchParams({
+        is_completed: "all",
+        sort_by: "created_at",
+        order: "asc",
+        project_repeating: "false",
+        page: String(page),
+        limit: String(EXPORT_PAGE_SIZE),
+      });
+      const result = await taskService.getAll(params);
+      tasks.push(...result.tasks);
+      totalPages = result.totalPages;
+      page += 1;
+    } while (page <= totalPages);
+    return tasks;
+  };
+
   const exportData = async () => {
-    const { data } = await refetch();
-    if (data) {
-      downloadTasks(data.tasks);
-      trackEvent("tasks_exported_csv", { row_count: data.tasks.length });
+    setIsLoading(true);
+    setIsError(false);
+    try {
+      const tasks = await fetchAllTasks();
+      downloadTasks(tasks);
+      trackEvent("tasks_exported_csv", { row_count: tasks.length });
+    } catch (err) {
+      console.error(err);
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
