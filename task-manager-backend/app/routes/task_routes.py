@@ -1,6 +1,11 @@
 from flask import Blueprint, request, jsonify
 from app.utils.formatters import format_json_response
-from app.utils.validators import validate_task, validate_task_list
+from app.utils.http import get_json_body
+from app.utils.validators import (
+    parse_list_params,
+    validate_task,
+    validate_task_list,
+)
 from app.services.task_service import (
     get_all_tasks,
     create_task,
@@ -19,33 +24,23 @@ task_bp = Blueprint("tasks", __name__)
 @jwt_required()
 def list_tasks():
     user_id = get_jwt_identity()
-    category = request.args.get("category")
-    search = request.args.get("q")
-    duration = request.args.get("duration")
-    is_completed = request.args.get("is_completed")
-    start_date = request.args.get("start_date")
-    end_date = request.args.get("end_date")
-    sort_by = request.args.get("sort_by")
-    order = request.args.get("order")
-    page = request.args.get("page")
-    limit = request.args.get("limit")
-    project_repeating = (
-        True if request.args.get("project_repeating") == "true" else False
-    )
+    params, errors = parse_list_params(request.args)
+    if errors:
+        return jsonify({"errors": errors}), 400
 
     raw_tasks = get_all_tasks(
         user_id,
-        category,
-        search,
-        duration,
-        is_completed,
-        start_date,
-        end_date,
-        sort_by,
-        order,
-        limit,
-        page,
-        project_repeating,
+        params["category"],
+        params["search"],
+        params["duration"],
+        params["is_completed"],
+        params["start_date"],
+        params["end_date"],
+        params["sort_by"],
+        params["order"],
+        params["limit"],
+        params["page"],
+        params["project_repeating"],
     )
     return jsonify(format_json_response(raw_tasks))
 
@@ -55,23 +50,19 @@ def list_tasks():
 def fetch_task(task_id):
     user_id = get_jwt_identity()
 
-    try:
-        task = get_task(user_id, task_id)
+    task = get_task(user_id, task_id)
 
-        if task:
-            return jsonify(format_json_response(task)), 200
+    if task:
+        return jsonify(format_json_response(task)), 200
 
-        return jsonify({"error": "No task with that id"}), 404
-
-    except Exception:
-        return jsonify({"error": "An internal server error occurred"}), 500
+    return jsonify({"error": "No task with that id"}), 404
 
 
 @task_bp.route("/api/tasks", methods=["POST"])
 @jwt_required()
 def add_task():
     user_id = get_jwt_identity()
-    data = request.json
+    data = get_json_body()
 
     if data.get("repeatBy"):
         data["isRepeating"] = True
@@ -91,10 +82,13 @@ def add_task():
 @jwt_required()
 def add_task_list():
     user_id = get_jwt_identity()
-    data = request.json
+    data = get_json_body(allow_list=True)
 
     if not data or not isinstance(data, list):
         return jsonify({"error": "Invalid data format"}), 400
+
+    if not all(isinstance(task, dict) for task in data):
+        return jsonify({"error": "Every task must be an object"}), 400
 
     for task in data:
         is_comp = task.get("isCompleted", False)
@@ -117,18 +111,15 @@ def add_task_list():
     if has_errors:
         return jsonify({"errors": errors}), 400
 
-    try:
-        count = create_tasks_from_list(user_id, data)
-        return jsonify({"tasks_created": count}), 201
-    except Exception:
-        return jsonify({"error": "Database operation failed"}), 500
+    count = create_tasks_from_list(user_id, data)
+    return jsonify({"tasks_created": count}), 201
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["PATCH"])
 @jwt_required()
 def edit_task(task_id):
     user_id = get_jwt_identity()
-    data = request.json
+    data = get_json_body()
     errors = validate_task(data, True)
 
     if errors:

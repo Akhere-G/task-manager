@@ -1,5 +1,6 @@
+import logging
 import os
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, abort, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
@@ -11,7 +12,9 @@ from app.routes.ai_routes import ai_bp
 from app.routes.mail_routes import mail_bp
 from app.routes.notifications import notification_bp
 
-from app.database import db
+from app.config import APP_REQUIRED, DB_REQUIRED, build_database_url, require_env
+from app.database import ENGINE_OPTIONS, db
+from app.errors import register_error_handlers
 from sqlalchemy import select, text
 
 load_dotenv()
@@ -25,17 +28,10 @@ def create_app():
 
     app = Flask(__name__, static_folder=static_folder_path, static_url_path="")
 
-    db_user = os.getenv("DB_USER", "root")
-    db_password = os.getenv("DB_PASSWORD", "Super555")
-    db_host = os.getenv("DB_HOST", "localhost")
-    db_port = os.getenv("DB_PORT", "3306")
-    db_name = os.getenv("DB_NAME", "task_db")
+    require_env(DB_REQUIRED + APP_REQUIRED)
 
-    database_url = (
-        f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    )
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    app.config["SQLALCHEMY_DATABASE_URI"] = build_database_url()
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = ENGINE_OPTIONS
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
@@ -53,10 +49,16 @@ def create_app():
     else:
         app.config["JWT_COOKIE_SAMESITE"] = "Lax"
 
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    register_error_handlers(app)
+
     jwt.init_app(app)
     db.init_app(app)
 
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    frontend_url = os.environ["FRONTEND_URL"].rstrip("/")
     CORS(
         app,
         resources={
@@ -91,33 +93,11 @@ def create_app():
         @app.route("/<path:path>")
         def serve(path: str):
             static_folder = app.static_folder or ""
+            if path == "api" or path.startswith("api/"):
+                abort(404)
             if path != "" and os.path.exists(os.path.join(static_folder, path)):
                 return send_from_directory(static_folder, path)
             return send_from_directory(static_folder, "index.html")
-
-        @app.errorhandler(404)
-        def not_found(e):
-            static_folder = app.static_folder or ""
-            return send_from_directory(static_folder, "index.html")
-
-        @app.errorhandler(500)
-        def handle_500_error(e):
-            original = getattr(e, "original_exception", e)
-            import traceback
-
-            print("CRITICAL ERROR")
-            print(traceback.format_exc())
-            return jsonify(
-                {"error": "Internal Server Error", "message": str(original)}
-            ), 500
-
-        @app.errorhandler(Exception)
-        def handle_exception(e):
-            import traceback
-
-            print("CRITICAL ERROR")
-            print(traceback.format_exc())
-            return jsonify({"error": "Uncaught Exception", "message": str(e)}), 500
 
         return app
 

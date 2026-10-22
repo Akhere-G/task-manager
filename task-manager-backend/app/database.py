@@ -1,27 +1,29 @@
-import os
-from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 
+from app.config import build_database_url, ssl_ca_path
+
 load_dotenv()
 
-app = Flask(__name__)
+DATABASE_URL = build_database_url()
 
-user = os.getenv("DB_USER", "root")
-password = os.getenv("DB_PASSWORD", "")
-host = os.getenv("DB_HOST", "127.0.0.1")
-port = os.getenv("DB_PORT", "3306")
-database = os.getenv("DB_NAME", "task_db")
 
-DATABASE_URL = f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}"
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+def build_connect_args():
+    args = {"connect_timeout": 10, "read_timeout": 30, "write_timeout": 30}
+    ca = ssl_ca_path()
+    if ca:
+        args["ssl"] = {"ca": ca}
+    return args
 
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+
+ENGINE_OPTIONS = {
     "pool_size": 10,
+    "max_overflow": 5,
     "pool_recycle": 280,
     "pool_pre_ping": True,
+    "connect_args": build_connect_args(),
 }
 
 
@@ -31,5 +33,5 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 
-engine = create_engine(DATABASE_URL, pool_size=10, pool_recycle=280, pool_pre_ping=True)
+engine = create_engine(DATABASE_URL, **ENGINE_OPTIONS)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
