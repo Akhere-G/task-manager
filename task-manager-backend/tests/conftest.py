@@ -12,6 +12,7 @@ os.environ["JWT_COOKIE_SECURE"] = "False"
 import pymysql
 import pytest
 
+from flask.testing import FlaskClient
 from werkzeug.security import generate_password_hash
 
 import init_db
@@ -54,9 +55,17 @@ def database():
     init_db.initialise_database()
 
 
+class AjaxClient(FlaskClient):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.environ_base["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
+
+
 @pytest.fixture(scope="session")
 def app(database):
-    return create_app()
+    app = create_app()
+    app.test_client_class = AjaxClient
+    return app
 
 
 @pytest.fixture(autouse=True)
