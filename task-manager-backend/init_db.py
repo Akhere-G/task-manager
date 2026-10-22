@@ -193,10 +193,67 @@ def initialise_database():
             cursor.execute("UPDATE tasks SET series_id = id WHERE series_id IS NULL;")
             conn.commit()
 
+        def add_token_hash_columns():
+            for table in ("refresh_tokens", "password_resets"):
+                if not column_exists(cursor, db_name, table, "token_hash"):
+                    cursor.execute(f"ALTER TABLE {table} ADD COLUMN token_hash CHAR(64) NULL")
+                    conn.commit()
+
+        def backfill_token_hashes():
+            for table in ("refresh_tokens", "password_resets"):
+                cursor.execute(
+                    f"UPDATE {table} SET token_hash = SHA2(token, 256) "
+                    "WHERE token_hash IS NULL AND token IS NOT NULL"
+                )
+                conn.commit()
+
+        def relax_plaintext_token_columns():
+            for table in ("refresh_tokens", "password_resets"):
+                cursor.execute(f"ALTER TABLE {table} MODIFY token VARCHAR(255) NULL")
+                conn.commit()
+
+        def add_session_indexes():
+            if not index_exists(cursor, db_name, "refresh_tokens", "uq_refresh_tokens_token_hash"):
+                cursor.execute(
+                    "SELECT COUNT(*) FROM (SELECT token_hash FROM refresh_tokens "
+                    "WHERE token_hash IS NOT NULL GROUP BY token_hash HAVING COUNT(*) > 1) d"
+                )
+                if cursor.fetchone()[0]:
+                    raise RuntimeError("duplicate refresh token hashes found")
+                cursor.execute(
+                    "ALTER TABLE refresh_tokens ADD UNIQUE INDEX uq_refresh_tokens_token_hash (token_hash)"
+                )
+                conn.commit()
+            if not index_exists(cursor, db_name, "refresh_tokens", "idx_refresh_tokens_expires"):
+                cursor.execute(
+                    "ALTER TABLE refresh_tokens ADD INDEX idx_refresh_tokens_expires (expires_at)"
+                )
+                conn.commit()
+            if not index_exists(cursor, db_name, "password_resets", "idx_password_resets_token_hash"):
+                cursor.execute(
+                    "ALTER TABLE password_resets ADD INDEX idx_password_resets_token_hash (token_hash)"
+                )
+                conn.commit()
+            if not index_exists(cursor, db_name, "password_resets", "idx_password_resets_expires"):
+                cursor.execute(
+                    "ALTER TABLE password_resets ADD INDEX idx_password_resets_expires (expires_at)"
+                )
+                conn.commit()
+
+        def add_refresh_tokens_replaced_at():
+            if not column_exists(cursor, db_name, "refresh_tokens", "replaced_at"):
+                cursor.execute("ALTER TABLE refresh_tokens ADD COLUMN replaced_at DATETIME NULL")
+                conn.commit()
+
         run_step("users.is_demo column", add_is_demo_column)
         run_step("tasks fulltext index", add_fulltext_index)
         run_step("completion trigger", create_completion_trigger)
         run_step("series_id backfill", backfill_series_ids)
+        run_step("token_hash columns", add_token_hash_columns)
+        run_step("token_hash backfill", backfill_token_hashes)
+        run_step("plaintext token columns nullable", relax_plaintext_token_columns)
+        run_step("session table indexes", add_session_indexes)
+        run_step("refresh_tokens.replaced_at column", add_refresh_tokens_replaced_at)
 
     except Exception as e:
         print(f"Database error: {e}")
