@@ -18,19 +18,6 @@ def fetch_dashboard_data():
     """
     user_id = get_jwt_identity()
 
-    try:
-        stats_data = get_all_dashboard_stats(user_id)
+    stats_data = get_all_dashboard_stats(user_id)
 
-        return jsonify(format_json_response(stats_data)), 200
-
-    except ValueError:
-        return jsonify({"error": "The 'days' parameter must be an integer."}), 400
-    except Exception as e:
-        import traceback
-
-        print("CRITICAL ERROR")
-        print(traceback.format_exc())
-        print(f"Dashboard Fetch Error: {str(e)}")
-        return jsonify(
-            {"error": "An unexpected error occurred while fetching stats."}
-        ), 500
+    return jsonify(format_json_response(stats_data)), 200

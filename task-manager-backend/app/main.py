@@ -1,5 +1,6 @@
+import logging
 import os
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, abort, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
@@ -13,6 +14,7 @@ from app.routes.notifications import notification_bp
 
 from app.config import APP_REQUIRED, DB_REQUIRED, build_database_url, require_env
 from app.database import ENGINE_OPTIONS, db
+from app.errors import register_error_handlers
 from sqlalchemy import select, text
 
 load_dotenv()
@@ -46,6 +48,12 @@ def create_app():
         app.config["JWT_COOKIE_SAMESITE"] = "None"
     else:
         app.config["JWT_COOKIE_SAMESITE"] = "Lax"
+
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    register_error_handlers(app)
 
     jwt.init_app(app)
     db.init_app(app)
@@ -85,33 +93,11 @@ def create_app():
         @app.route("/<path:path>")
         def serve(path: str):
             static_folder = app.static_folder or ""
+            if path == "api" or path.startswith("api/"):
+                abort(404)
             if path != "" and os.path.exists(os.path.join(static_folder, path)):
                 return send_from_directory(static_folder, path)
             return send_from_directory(static_folder, "index.html")
-
-        @app.errorhandler(404)
-        def not_found(e):
-            static_folder = app.static_folder or ""
-            return send_from_directory(static_folder, "index.html")
-
-        @app.errorhandler(500)
-        def handle_500_error(e):
-            original = getattr(e, "original_exception", e)
-            import traceback
-
-            print("CRITICAL ERROR")
-            print(traceback.format_exc())
-            return jsonify(
-                {"error": "Internal Server Error", "message": str(original)}
-            ), 500
-
-        @app.errorhandler(Exception)
-        def handle_exception(e):
-            import traceback
-
-            print("CRITICAL ERROR")
-            print(traceback.format_exc())
-            return jsonify({"error": "Uncaught Exception", "message": str(e)}), 500
 
         return app
 
