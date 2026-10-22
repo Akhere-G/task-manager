@@ -9,7 +9,6 @@ import { authService } from "../features/auth/api";
 import {
   endAnalyticsSession,
   getErrorType,
-  hasAnalyticsSession,
   startAnalyticsSession,
   trackEvent,
 } from "../services/analytics";
@@ -40,10 +39,7 @@ export default function AuthContextProvider({
 
   useEffect(() => {
     setSessionExpiredHandler(() => {
-      if (hasAnalyticsSession()) {
-        trackEvent("session_expired", undefined, { beacon: true });
-        endAnalyticsSession();
-      }
+      endAnalyticsSession();
       setUser(null);
       setIsAuthenticated(false);
       queryClient.clear();
