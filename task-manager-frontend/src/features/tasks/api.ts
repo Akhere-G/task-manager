@@ -30,7 +30,10 @@ export const taskService = {
     const response = await apiClient.post("/tasks/bulk", tasksData);
     return response.data;
   },
-  update: async (id: number, taskData: Partial<Task>): Promise<Task> => {
+  update: async (
+    id: number,
+    taskData: Partial<Task> & { expectedStartAt?: string },
+  ): Promise<Task> => {
     const response = await apiClient.patch(`/tasks/${id}`, taskData);
     return response.data;
   },

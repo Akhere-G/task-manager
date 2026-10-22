@@ -1,18 +1,31 @@
-print("DEBUG: Script started successfully")
-from datetime import datetime, timedelta, timezone
-from sqlalchemy import select
-from pywebpush import webpush, WebPushException
-from app.models import Task, Notification, NotificationSubscription
-from app.database import SessionLocal
 import json
+import logging
 import os
-from dotenv import load_dotenv
+from datetime import datetime, timedelta, timezone
 from typing import Dict
+
+from dotenv import load_dotenv
+from pywebpush import WebPushException, webpush
+from sqlalchemy import or_, select
+
+from app.database import SessionLocal
+from app.models import Notification, NotificationSubscription, Task
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
 VAPID_CLAIMS: Dict[str, str | int] = {"sub": "mailto:101akhere5@gmail.com"}
+
+REMINDER_WINDOW = timedelta(minutes=30)
+PUSH_TIMEOUT_SECONDS = 10
+
+
+def reminder_body(task):
+    if task.description:
+        return f"{task.category} -- {task.description}"
+    return task.category
 
 
 def send_push_to_user_subscription(session, user_id, title, message):
@@ -27,8 +40,6 @@ def send_push_to_user_subscription(session, user_id, title, message):
 
     payload = json.dumps({"title": title, "message": message})
 
-    print(f"{len(subscriptions)} (s) subscriptions")
-
     total_subscriptions = 0
 
     for sub in subscriptions:
@@ -41,16 +52,18 @@ def send_push_to_user_subscription(session, user_id, title, message):
                 data=payload,
                 vapid_private_key=VAPID_PRIVATE_KEY,
                 vapid_claims=VAPID_CLAIMS,
+                timeout=PUSH_TIMEOUT_SECONDS,
             )
             total_subscriptions += 1
         except WebPushException as ex:
-            import traceback
-
-            print("CRITICAL ERROR IN SCHEDULER, could not push notifications:")
-            print(traceback.format_exc())
+            logger.warning("Push to subscription %s failed: %s", sub.id, ex)
             if ex.response is not None and ex.response.status_code in [404, 410]:
                 session.delete(sub)
                 session.commit()
+        except Exception as ex:
+            logger.warning(
+                "Push to subscription %s failed: %s", sub.id, type(ex).__name__
+            )
 
     return total_subscriptions
 
@@ -59,42 +72,49 @@ def check_task_reminders():
     session = SessionLocal()
     try:
         now = datetime.now(timezone.utc).replace(tzinfo=None)
-        minutes_ahead = now + timedelta(minutes=30)
 
-        print(f"Current time: {now}. A few minutes: {minutes_ahead}")
-
-        stmt = select(Task).where(Task.start_at >= now, Task.start_at <= minutes_ahead)
-
+        stmt = select(Task).where(
+            Task.is_completed.is_(False),
+            Task.start_at >= now,
+            Task.start_at <= now + REMINDER_WINDOW,
+            or_(
+                Task.reminded_for_start_at.is_(None),
+                Task.reminded_for_start_at != Task.start_at,
+            ),
+        )
         upcoming_tasks = session.execute(stmt).scalars().all()
-
-        print(f"{len(upcoming_tasks)} upcoming task(s)")
 
         total_notifications = 0
         for task in upcoming_tasks:
-            time = int((task.start_at - now).seconds / 60)
-            suffix = "s" if not time == 1 else ""
-            notifications = send_push_to_user_subscription(
-                session=session,
-                user_id=task.user_id,
-                title=f"{task.title} starting in {time} minute{suffix}!",
-                message=f"{task.category} -- {task.description}",
-            )
-            total_notifications += notifications
-        print(f"Sent {total_notifications} notification(s)")
+            try:
+                minutes = int((task.start_at - now).total_seconds() // 60)
+                suffix = "" if minutes == 1 else "s"
+                total_notifications += send_push_to_user_subscription(
+                    session=session,
+                    user_id=task.user_id,
+                    title=f"{task.title} starting in {minutes} minute{suffix}!",
+                    message=reminder_body(task),
+                )
+                task.reminded_for_start_at = task.start_at
+                session.commit()
+            except Exception:
+                session.rollback()
+                logger.exception("Could not send the reminder for task %s", task.id)
+
+        logger.info(
+            "%s upcoming task(s), %s push(es) sent", len(upcoming_tasks), total_notifications
+        )
     finally:
         session.close()
 
 
 if __name__ == "__main__":
-    print("--- Starting run_reminders.py ---")
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
     try:
         check_task_reminders()
-        print("--- run_reminders.py finished successfully ---")
-    except Exception as e:
-        import traceback
-
-        print(f"--- run_reminders.py failed: {e} ---")
-
-        print("CRITICAL ERROR IN RUN_REMINDER:")
-        print(traceback.format_exc())
-        raise e
+    except Exception:
+        logger.exception("run_reminders failed")
+        raise

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.ai_service import (
     generate_daily_brief,
@@ -19,9 +19,9 @@ ai_bp = Blueprint("ai", __name__)
 def get_daily_brief_route():
     user_id = get_jwt_identity()
 
-    brief_text = generate_daily_brief(user_id)
+    brief_text, is_fallback = generate_daily_brief(user_id, request.args.get("tz"))
 
-    return jsonify({"success": True, "brief": brief_text}), 200
+    return jsonify({"success": True, "brief": brief_text, "fallback": is_fallback}), 200
 
 
 @ai_bp.route("/api/ai/parse-task", methods=["POST"])
