@@ -1,3 +1,5 @@
+import html
+import logging
 from flask import Blueprint, request, jsonify
 from app.utils.validators import validate_contact_request
 import os
@@ -7,7 +9,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+logger = logging.getLogger(__name__)
+
+SENDER_NAME = "TaskFlow Contact Form"
+
+
 def send_enquiry_email(full_name, email, subject, message):
+    full_name, email, subject, message = (
+        html.escape(value, quote=True) for value in (full_name, email, subject, message)
+    )
     return f"""
     <div style="background-color: #f8fafc; padding: 20px; font-family: sans-serif;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -37,40 +47,39 @@ mail_bp = Blueprint("contact", __name__)
 
 @mail_bp.route("/api/contact", methods=["POST"])
 def handle_contact():
-    data = request.json
+    data = request.get_json(silent=True)
 
     validation_errors = validate_contact_request(data)
 
     if validation_errors:
         return jsonify({"status": "error", "errors": validation_errors}), 400
 
-    full_name = data.get("fullName")
-    email = data.get("email")
-    subject = data.get("subject")
-    message = data.get("message")
+    full_name = data["fullName"].strip()
+    visitor_email = data["email"].strip()
+    subject = data["subject"].strip()
+    message = data["message"].strip()
 
     from_email = os.getenv("MAIL_SEND_EMAIL")
-    to_email = os.getenv("MAIL_USERNAME")
+    to_email = os.getenv("CONTACT_TO_EMAIL") or os.getenv("MAIL_USERNAME")
     ms_api_key = os.getenv("MAIL_SEND_API_KEY")
 
-    ms = MailerSendClient(ms_api_key)
-
     try:
-        html_content = send_enquiry_email(full_name, email, subject, message)
+        ms = MailerSendClient(ms_api_key)
+        html_content = send_enquiry_email(full_name, visitor_email, subject, message)
         email = (
             EmailBuilder()
-            .from_email(from_email, full_name)
+            .from_email(from_email, SENDER_NAME)
+            .reply_to(visitor_email, full_name)
             .to_many([{"email": to_email, "name": "Ak"}])
-            .subject(subject)
+            .subject(f"[Contact] {subject}")
             .html(html_content)
             .build()
         )
 
         ms.emails.send(email)
 
-    except Exception as e:
-        print("error")
-        print("error", e)
-        return jsonify({"message": "Enquiry could not be sent"}), 400
+    except Exception as exc:
+        logger.error("Contact enquiry could not be sent: %s", type(exc).__name__)
+        return jsonify({"message": "Enquiry could not be sent"}), 502
 
     return jsonify({"message": "Enquiry sent successfully"}), 201
