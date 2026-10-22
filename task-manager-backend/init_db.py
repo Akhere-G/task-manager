@@ -1,5 +1,7 @@
-import pymysql
 import os
+import sys
+
+import pymysql
 from dotenv import load_dotenv
 
 from app.config import DB_REQUIRED, require_env, ssl_ca_path
@@ -29,16 +31,22 @@ def index_exists(cursor, db_name, table, index):
     return cursor.fetchone()[0] > 0
 
 
-def run_step(label, step):
+failed_steps = []
+
+
+def run_step(label, step, required=True):
     try:
         step()
         print(f"Migration step ok: {label}")
     except Exception as e:
         print(f"Migration step FAILED: {label}: {e}")
+        if required:
+            failed_steps.append(label)
 
 
 def initialise_database():
     require_env(DB_REQUIRED)
+    failed_steps.clear()
     conn = None
     cursor = None
     try:
@@ -252,7 +260,7 @@ def initialise_database():
 
         run_step("users.is_demo column", add_is_demo_column)
         run_step("tasks fulltext index", add_fulltext_index)
-        run_step("completion trigger", create_completion_trigger)
+        run_step("completion trigger", create_completion_trigger, required=False)
         run_step("series_id backfill", backfill_series_ids)
         run_step("token_hash columns", add_token_hash_columns)
         run_step("token_hash backfill", backfill_token_hashes)
@@ -263,11 +271,14 @@ def initialise_database():
 
     except Exception as e:
         print(f"Database error: {e}")
+        failed_steps.append("database connection")
     finally:
         if conn and cursor:
             cursor.close()
             conn.close()
 
+    return not failed_steps
+
 
 if __name__ == "__main__":
-    initialise_database()
+    sys.exit(0 if initialise_database() else 1)
