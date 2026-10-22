@@ -1,6 +1,6 @@
 import logging
 import os
-from flask import Flask, abort, send_from_directory
+from flask import Flask, abort, request, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
@@ -52,6 +52,15 @@ def create_app():
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     register_error_handlers(app)
+
+    @app.before_request
+    def require_ajax_header():
+        if (
+            request.path.startswith("/api/")
+            and request.method in ("POST", "PUT", "PATCH", "DELETE")
+            and request.headers.get("X-Requested-With") != "XMLHttpRequest"
+        ):
+            abort(403, description="Missing required request header.")
 
     app.wsgi_app = ProxyFix(
         app.wsgi_app, x_for=int(os.getenv("TRUSTED_PROXY_HOPS") or 1)
