@@ -2,7 +2,7 @@ import pymysql
 import os
 from dotenv import load_dotenv
 
-from app.config import DB_REQUIRED, require_env
+from app.config import DB_REQUIRED, require_env, ssl_ca_path
 
 load_dotenv()
 
@@ -43,8 +43,6 @@ def initialise_database():
     cursor = None
     try:
         db_name = os.environ["DB_NAME"]
-        ca_path = os.path.join(os.getcwd(), "ca.pem")
-
         conn = pymysql.connect(
             host=os.environ["DB_HOST"],
             user=os.environ["DB_USER"],
@@ -52,6 +50,7 @@ def initialise_database():
             port=int(os.getenv("DB_PORT", 3306)),
             database=db_name,
             connect_timeout=30,
+            ssl_ca=ssl_ca_path(),
             cursorclass=pymysql.cursors.Cursor,
         )
 

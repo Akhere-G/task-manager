@@ -55,3 +55,36 @@ def test_no_hardcoded_database_password_fallback():
     import app.main as main
 
     assert "getenv(\"DB_PASSWORD\"," not in inspect.getsource(main)
+
+
+def test_ssl_ca_unset_means_no_ssl(monkeypatch):
+    from app.config import ssl_ca_path
+    from app.database import build_connect_args
+
+    monkeypatch.delenv("DB_SSL_CA", raising=False)
+    assert ssl_ca_path() is None
+    assert "ssl" not in build_connect_args()
+
+
+def test_ssl_ca_is_added_to_connection_arguments(monkeypatch, tmp_path):
+    from app.database import build_connect_args
+
+    ca = tmp_path / "ca.pem"
+    ca.write_text("not a real certificate")
+    monkeypatch.setenv("DB_SSL_CA", str(ca))
+    assert build_connect_args()["ssl"] == {"ca": str(ca)}
+
+
+def test_relative_ssl_ca_resolves_from_project_root(monkeypatch):
+    from app.config import ssl_ca_path
+
+    monkeypatch.setenv("DB_SSL_CA", "ca.pem")
+    assert ssl_ca_path().endswith("task-manager-backend/ca.pem")
+
+
+def test_missing_ssl_ca_file_fails_loudly(monkeypatch):
+    from app.config import ssl_ca_path
+
+    monkeypatch.setenv("DB_SSL_CA", "/does/not/exist.pem")
+    with pytest.raises(RuntimeError, match="DB_SSL_CA"):
+        ssl_ca_path()
