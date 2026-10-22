@@ -1,7 +1,7 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, text
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -147,6 +147,24 @@ def delete_refresh_token(refresh_token):
             RefreshToken.token_hash == hash_token(refresh_token)
         )
     )
+    db.session.commit()
+
+
+PURGE_BATCH_SIZE = 500
+
+
+def purge_expired_sessions(user_id):
+    now = datetime.now(timezone.utc)
+    db.session.execute(
+        delete(RefreshToken).where(
+            RefreshToken.user_id == user_id, RefreshToken.expires_at < now
+        )
+    )
+    for table in ("refresh_tokens", "password_resets"):
+        db.session.execute(
+            text(f"DELETE FROM {table} WHERE expires_at < :now LIMIT {PURGE_BATCH_SIZE}"),
+            {"now": now},
+        )
     db.session.commit()
 
 

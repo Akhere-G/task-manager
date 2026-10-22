@@ -85,3 +85,64 @@ def test_existing_plaintext_rows_are_migrated_and_keep_working(client, make_user
 
 def test_missing_refresh_cookie_is_unauthorised(client):
     assert client.post("/api/auth/refresh").status_code == 401
+
+
+def insert_session(user_id, token_hash, expires):
+    import os
+
+    conn = _connection()
+    with conn.cursor() as cur:
+        cur.execute(f"USE `{os.environ['DB_NAME']}`")
+        cur.execute(
+            "INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES (%s, %s, %s)",
+            (user_id, token_hash, expires),
+        )
+    conn.close()
+
+
+def naive_utc(delta):
+    return datetime.now(timezone.utc).replace(tzinfo=None) + delta
+
+
+def test_login_removes_expired_sessions_but_keeps_valid_ones(make_user, login):
+    a = make_user("a@example.com")
+    b = make_user("b@example.com")
+    insert_session(a, "a" * 64, naive_utc(-timedelta(days=1)))
+    insert_session(a, "b" * 64, naive_utc(timedelta(days=1)))
+    insert_session(b, "c" * 64, naive_utc(-timedelta(days=2)))
+    insert_session(b, "d" * 64, naive_utc(timedelta(days=2)))
+
+    login("a@example.com")
+
+    remaining = {row[0] for row in rows("SELECT token_hash FROM refresh_tokens")}
+    assert "a" * 64 not in remaining
+    assert "b" * 64 in remaining
+    assert "c" * 64 not in remaining
+    assert "d" * 64 in remaining
+
+
+def test_purge_failure_does_not_block_login(app, make_user):
+    make_user()
+    client = app.test_client()
+    with mock.patch.object(auth_routes, "purge_expired_sessions", side_effect=RuntimeError("db hiccup")):
+        response = client.post(
+            "/api/auth/login", json={"email": "user@example.com", "password": DEFAULT_PASSWORD}
+        )
+    assert response.status_code == 200
+
+
+def test_demo_sessions_keep_their_24_hour_lifetime(client, make_demo_user):
+    make_demo_user()
+    assert client.post("/api/auth/demo").status_code == 200
+    expires = rows("SELECT expires_at FROM refresh_tokens")[0][0]
+    remaining = expires - naive_utc(timedelta(0))
+    assert timedelta(hours=23) < remaining <= timedelta(hours=24, seconds=1)
+
+
+def test_session_lookups_use_the_unique_token_hash_index(make_user):
+    insert_session(make_user(), "x" * 64, naive_utc(timedelta(days=1)))
+    plan = rows(
+        "EXPLAIN FORMAT=TRADITIONAL SELECT id FROM refresh_tokens WHERE token_hash = %s",
+        ("x" * 64,),
+    )
+    assert "uq_refresh_tokens_token_hash" in str(plan)
