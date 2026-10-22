@@ -8,6 +8,9 @@ os.environ["DB_NAME"] = "task_manager_test"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-the-test-suite-only"
 os.environ["FRONTEND_URL"] = "http://localhost:5173"
 os.environ["JWT_COOKIE_SECURE"] = "False"
+os.environ["MAIL_SEND_API_KEY"] = "test-key"
+os.environ["MAIL_SEND_EMAIL"] = "noreply@example.com"
+os.environ["CONTACT_TO_EMAIL"] = "owner@example.com"
 
 import pymysql
 import pytest
