@@ -13,7 +13,7 @@ A high-performance task engine designed to turn raw productivity data into actio
 * **Your Daily Brief (AI Coach):** Start your day with an AI coach that reviews pending and overdue tasks to suggest the best plan of action for a productive morning.
 * **Break It Down (AI Subtasks):** Avoid being overwhelmed by large projects. The built-in AI splits single large tasks into a clear, manageable checklist of smaller steps.
 * **Quick-Add Tools:** Add tasks instantly by typing naturally with our AI assistant, or upload a CSV file to migrate an entire project's worth of tasks in one go.
-* **Pomodoro Timer:** Boost focus using timed work intervals. Completed sessions are automatically logged against your tasks for accurate, hands-free time-tracking.
+* **Pomodoro Timer:** Boost focus using timed work intervals. When a session finishes you can mark the task complete straight away.
 * **Performance Summary:** Monitor progress with a year-long activity map, tracking your overall 'Backlog Health' and daily productivity metrics.
 * **Planning & Deadlines:** Visualise the week ahead to review upcoming deadlines. Dedicated charts highlight how close your due dates are and flag overdue items.
 * **Workload Insights:** Understand exactly where your time goes with detailed breakdowns of time spent on different categories (e.g., work, health, or hobbies) over a rolling seven-day window.
@@ -43,9 +43,13 @@ The user interface operates as a highly responsive, single-page application (SPA
 * **State Management:** TanStack Query (Server-state caching and seamless optimistic updates)
 * **Data Visualisation:** Recharts (Dynamic rendering of workload insights and performance history)
 
+### AI features and data
+
+The Daily Brief, AI quick-add and task breakdown send task titles, descriptions and categories to the configured AI providers (Google Gemini, with Groq as a fallback). Nothing is sent unless you use those features.
+
 ### Product Analytics (PostHog)
 
-The frontend can send anonymous usage events to PostHog. It is off unless configured, and it is cookieless (no cookies or localStorage, no autocapture, no session replay).
+The frontend can send anonymous usage events to PostHog. It is off unless `VITE_POSTHOG_PROJECT_TOKEN` is set at build time, and it is cookieless (no cookies or localStorage, no autocapture, no session replay).
 
 * Set `VITE_POSTHOG_PROJECT_TOKEN` (the public project key, never a private key) and optionally `VITE_POSTHOG_HOST` (defaults to the US cloud; use `https://eu.i.posthog.com` for an EU project). These are build-time variables; the Dockerfiles take them as `_VITE_POSTHOG_KEY` and `_VITE_POSTHOG_HOST` build args.
 * Signed-in users are identified by user id only. The shared demo account is never identified, and its events carry `is_demo: true`.
