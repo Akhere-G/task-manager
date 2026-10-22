@@ -193,10 +193,32 @@ def initialise_database():
             cursor.execute("UPDATE tasks SET series_id = id WHERE series_id IS NULL;")
             conn.commit()
 
+        def add_token_hash_columns():
+            for table in ("refresh_tokens", "password_resets"):
+                if not column_exists(cursor, db_name, table, "token_hash"):
+                    cursor.execute(f"ALTER TABLE {table} ADD COLUMN token_hash CHAR(64) NULL")
+                    conn.commit()
+
+        def backfill_token_hashes():
+            for table in ("refresh_tokens", "password_resets"):
+                cursor.execute(
+                    f"UPDATE {table} SET token_hash = SHA2(token, 256) "
+                    "WHERE token_hash IS NULL AND token IS NOT NULL"
+                )
+                conn.commit()
+
+        def relax_plaintext_token_columns():
+            for table in ("refresh_tokens", "password_resets"):
+                cursor.execute(f"ALTER TABLE {table} MODIFY token VARCHAR(255) NULL")
+                conn.commit()
+
         run_step("users.is_demo column", add_is_demo_column)
         run_step("tasks fulltext index", add_fulltext_index)
         run_step("completion trigger", create_completion_trigger)
         run_step("series_id backfill", backfill_series_ids)
+        run_step("token_hash columns", add_token_hash_columns)
+        run_step("token_hash backfill", backfill_token_hashes)
+        run_step("plaintext token columns nullable", relax_plaintext_token_columns)
 
     except Exception as e:
         print(f"Database error: {e}")

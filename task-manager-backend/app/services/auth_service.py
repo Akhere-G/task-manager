@@ -1,3 +1,4 @@
+import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, delete
@@ -10,6 +11,10 @@ from app.models import User, PasswordReset, RefreshToken
 
 SESSION_TTL = timedelta(days=7)
 DEMO_SESSION_TTL = timedelta(hours=24)
+
+
+def hash_token(token):
+    return hashlib.sha256(token.encode()).hexdigest()
 
 
 def _user_dict(user):
@@ -84,7 +89,9 @@ def create_reset_token(user_id):
 
     db.session.execute(delete(PasswordReset).where(PasswordReset.user_id == user_id))
 
-    reset_entry = PasswordReset(user_id=user_id, token=token, expires_at=expires_at)
+    reset_entry = PasswordReset(
+        user_id=user_id, token_hash=hash_token(token), expires_at=expires_at
+    )
     db.session.add(reset_entry)
     db.session.commit()
     return token
@@ -93,7 +100,7 @@ def create_reset_token(user_id):
 def verify_reset_token(token):
     result = db.session.execute(
         select(PasswordReset).where(
-            PasswordReset.token == token,
+            PasswordReset.token_hash == hash_token(token),
             PasswordReset.expires_at > datetime.now(timezone.utc),
         )
     ).scalar_one_or_none()
@@ -110,17 +117,23 @@ def update_password_and_clear_token(user_id, token, new_password):
         return False
 
     user.password_hash = generate_password_hash(new_password)
-    db.session.execute(delete(PasswordReset).where(PasswordReset.token == token))
+    db.session.execute(
+        delete(PasswordReset).where(PasswordReset.token_hash == hash_token(token))
+    )
+    db.session.execute(delete(RefreshToken).where(RefreshToken.user_id == user_id))
     db.session.commit()
     return True
 
 
 def validate_refresh_token(refresh_token):
+    if not refresh_token:
+        return None
+
     user = db.session.execute(
         select(User)
         .join(RefreshToken, User.id == RefreshToken.user_id)
         .where(
-            RefreshToken.token == refresh_token,
+            RefreshToken.token_hash == hash_token(refresh_token),
             RefreshToken.expires_at > datetime.now(timezone.utc),
         )
     ).scalar_one_or_none()
@@ -129,7 +142,11 @@ def validate_refresh_token(refresh_token):
 
 
 def delete_refresh_token(refresh_token):
-    db.session.execute(delete(RefreshToken).where(RefreshToken.token == refresh_token))
+    db.session.execute(
+        delete(RefreshToken).where(
+            RefreshToken.token_hash == hash_token(refresh_token)
+        )
+    )
     db.session.commit()
 
 
@@ -146,7 +163,9 @@ def create_session(user_id):
     ttl = DEMO_SESSION_TTL if is_demo_user(user_id) else SESSION_TTL
     expires_at = datetime.now(timezone.utc) + ttl
 
-    session_entry = RefreshToken(user_id=user_id, token=token, expires_at=expires_at)
+    session_entry = RefreshToken(
+        user_id=user_id, token_hash=hash_token(token), expires_at=expires_at
+    )
     db.session.add(session_entry)
     db.session.commit()
     return token

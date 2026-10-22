@@ -21,7 +21,8 @@ class PasswordReset(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
-    token: Mapped[str] = mapped_column(String(255))
+    token: Mapped[str | None] = mapped_column(String(255))
+    token_hash: Mapped[str | None] = mapped_column(String(64))
     expires_at: Mapped[datetime] = mapped_column(DateTime)
 
 
@@ -30,5 +31,6 @@ class RefreshToken(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    token: Mapped[str] = mapped_column(String(255), unique=True)
+    token: Mapped[str | None] = mapped_column(String(255))
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime)
