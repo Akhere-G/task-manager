@@ -1,9 +1,52 @@
+import re
 from datetime import timedelta, datetime, date, timezone
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import select, func, or_, text
 from app.database import db
 from app.models import Task
 from dateutil import parser
+
+
+MAX_SEARCH_LENGTH = 100
+MAX_SEARCH_TERMS = 8
+# InnoDB ignores full-text tokens shorter than innodb_ft_min_token_size (default 3)
+FULLTEXT_MIN_TERM_LENGTH = 3
+
+
+def parse_search(search):
+    """
+    Turn raw user input into a safe search plan.
+    Returns None (no filter), ("fulltext", boolean_query) or ("like", text).
+    Boolean-mode operators in the input are dropped, so it can never be a syntax error.
+    """
+    cleaned = " ".join(str(search or "").split())[:MAX_SEARCH_LENGTH]
+    terms = re.findall(r"\w+", cleaned)[:MAX_SEARCH_TERMS]
+    if not terms:
+        return None
+    if all(len(term) >= FULLTEXT_MIN_TERM_LENGTH for term in terms):
+        return "fulltext", " ".join(f"+{term}*" for term in terms)
+    return "like", cleaned
+
+
+def build_search_clause(search):
+    plan = parse_search(search)
+    if plan is None:
+        return None
+
+    mode, value = plan
+    if mode == "fulltext":
+        table = Task.__tablename__
+        return text(
+            f"MATCH({table}.title, {table}.description) "
+            "AGAINST(:search IN BOOLEAN MODE)"
+        ).bindparams(search=value)
+
+    escaped = value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{escaped}%"
+    return or_(
+        Task.title.like(pattern, escape="\\"),
+        Task.description.like(pattern, escape="\\"),
+    )
 
 
 def build_task_filters(
@@ -20,12 +63,9 @@ def build_task_filters(
     if category and category != "all":
         clauses.append(Task.category == category)
 
-    if search:
-        clauses.append(
-            text(
-                "MATCH(title, description) AGAINST(:search IN BOOLEAN MODE)"
-            ).bindparams(search=f"{search}*")
-        )
+    search_clause = build_search_clause(search)
+    if search_clause is not None:
+        clauses.append(search_clause)
 
     if is_completed is not None and is_completed != "all":
         val = True if str(is_completed).lower() == "true" else False
