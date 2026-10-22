@@ -34,3 +34,4 @@ class RefreshToken(Base):
     token: Mapped[str | None] = mapped_column(String(255))
     token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime)
+    replaced_at: Mapped[datetime | None] = mapped_column(DateTime)

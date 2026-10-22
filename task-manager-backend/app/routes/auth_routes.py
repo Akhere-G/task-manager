@@ -306,7 +306,8 @@ def refresh():
             "user": format_json_response(user),
         }
     )
-    set_refresh_cookies(response, new_refresh_token)
+    if new_refresh_token:
+        set_refresh_cookies(response, new_refresh_token)
     set_access_cookies(response, token)
 
     return response

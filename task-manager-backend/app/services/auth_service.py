@@ -1,7 +1,7 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, delete, text
+from sqlalchemy import select, delete, text, update, or_
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -11,6 +11,7 @@ from app.models import User, PasswordReset, RefreshToken
 
 SESSION_TTL = timedelta(days=7)
 DEMO_SESSION_TTL = timedelta(hours=24)
+REFRESH_GRACE = timedelta(seconds=10)
 
 
 def hash_token(token):
@@ -129,12 +130,17 @@ def validate_refresh_token(refresh_token):
     if not refresh_token:
         return None
 
+    now = datetime.now(timezone.utc)
     user = db.session.execute(
         select(User)
         .join(RefreshToken, User.id == RefreshToken.user_id)
         .where(
             RefreshToken.token_hash == hash_token(refresh_token),
-            RefreshToken.expires_at > datetime.now(timezone.utc),
+            RefreshToken.expires_at > now,
+            or_(
+                RefreshToken.replaced_at.is_(None),
+                RefreshToken.replaced_at > now - REFRESH_GRACE,
+            ),
         )
     ).scalar_one_or_none()
 
@@ -155,16 +161,24 @@ PURGE_BATCH_SIZE = 500
 
 def purge_expired_sessions(user_id):
     now = datetime.now(timezone.utc)
+    cutoff = now - REFRESH_GRACE
     db.session.execute(
         delete(RefreshToken).where(
-            RefreshToken.user_id == user_id, RefreshToken.expires_at < now
+            RefreshToken.user_id == user_id,
+            or_(RefreshToken.expires_at < now, RefreshToken.replaced_at < cutoff),
         )
     )
-    for table in ("refresh_tokens", "password_resets"):
-        db.session.execute(
-            text(f"DELETE FROM {table} WHERE expires_at < :now LIMIT {PURGE_BATCH_SIZE}"),
-            {"now": now},
-        )
+    db.session.execute(
+        text(
+            "DELETE FROM refresh_tokens WHERE expires_at < :now "
+            f"OR replaced_at < :cutoff LIMIT {PURGE_BATCH_SIZE}"
+        ),
+        {"now": now, "cutoff": cutoff},
+    )
+    db.session.execute(
+        text(f"DELETE FROM password_resets WHERE expires_at < :now LIMIT {PURGE_BATCH_SIZE}"),
+        {"now": now},
+    )
     db.session.commit()
 
 
@@ -176,7 +190,7 @@ def is_demo_user(user_id):
     )
 
 
-def create_session(user_id):
+def _add_session(user_id):
     token = secrets.token_urlsafe(64)
     ttl = DEMO_SESSION_TTL if is_demo_user(user_id) else SESSION_TTL
     expires_at = datetime.now(timezone.utc) + ttl
@@ -185,10 +199,28 @@ def create_session(user_id):
         user_id=user_id, token_hash=hash_token(token), expires_at=expires_at
     )
     db.session.add(session_entry)
+    return token
+
+
+def create_session(user_id):
+    token = _add_session(user_id)
     db.session.commit()
     return token
 
 
 def rotate_refresh_token(old_token, user_id):
-    delete_refresh_token(old_token)
-    return create_session(user_id)
+    claimed = db.session.execute(
+        update(RefreshToken)
+        .where(
+            RefreshToken.token_hash == hash_token(old_token),
+            RefreshToken.replaced_at.is_(None),
+        )
+        .values(replaced_at=datetime.now(timezone.utc))
+    )
+    if claimed.rowcount != 1:
+        db.session.rollback()
+        return None
+
+    token = _add_session(user_id)
+    db.session.commit()
+    return token
