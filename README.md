@@ -51,7 +51,7 @@ The Daily Brief, AI quick-add and task breakdown send task titles, descriptions 
 
 The frontend can send anonymous usage events to PostHog. It is off unless configured, and it is cookieless (no cookies or localStorage, no autocapture, no session replay).
 
-* Set `VITE_POSTHOG_PROJECT_TOKEN` (the public project key, never a private key) and optionally `VITE_POSTHOG_HOST` (defaults to the US cloud; use `https://eu.i.posthog.com` for an EU project). These are build-time variables; the Dockerfiles take them as `_VITE_POSTHOG_KEY` and `_VITE_POSTHOG_HOST` build args.
+* Set `VITE_POSTHOG_PROJECT_TOKEN` (the public project key, never a private key) and optionally `VITE_POSTHOG_HOST` (defaults to the US cloud; use `https://eu.i.posthog.com` for an EU project). These are build-time variables; the Dockerfiles take them as `_VITE_POSTHOG_PROJECT_TOKEN` and `_VITE_POSTHOG_HOST` build args.
 * Signed-in users are identified by user id only. The shared demo account is never identified, and its events carry `is_demo: true`.
 * Task titles, descriptions, search text, emails and names are never sent.
 
@@ -67,3 +67,12 @@ The frontend can send anonymous usage events to PostHog. It is off unless config
 | **Styles** | Tailwind CSS | Consistent, hardware-accelerated design tokens |
 | **Data Fetching** | Axios / TanStack Query | Asynchronous API communication and caching |
 | **Analytics** | Recharts | Interactive charting and productivity telemetry |
+
+---
+
+## Running with Docker
+
+The root `Dockerfile` is the supported build: it builds the frontend and serves it from the Flask app on port 8080. On start it runs the database migrations (`init_db.py`) and stops if a required step fails, then starts gunicorn (`WEB_CONCURRENCY`, `GUNICORN_THREADS` and `GUNICORN_TIMEOUT` tune it; `WEB_CONCURRENCY x 15` should stay below the database connection limit).
+
+For local development `docker compose up --build` starts MySQL, Redis and the app on http://localhost:8080 with development-only defaults; export `GEMINI_API_KEY`, `GROQ_API_KEY`, `MAIL_SEND_API_KEY` and `MAIL_SEND_EMAIL` first if you want AI and email features. Compose reads a `.env` file in the repository root if one exists, so keep it to `KEY=value` lines.
+

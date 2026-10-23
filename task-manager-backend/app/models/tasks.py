@@ -29,4 +29,6 @@ class Task(Base):
 
     __table_args__ = (
         Index("idx_tasks_search", "title", "description", mysql_prefix="FULLTEXT"),
+        Index("idx_tasks_user_end_at", "user_id", "end_at"),
+        Index("idx_tasks_user_completed", "user_id", "is_completed", "completed_at"),
     )
