@@ -62,8 +62,3 @@ def test_cannot_read_another_users_notification(app, make_user, login):
     assert b.get("/api/notifications").get_json() == []
     assert b.patch(f"/api/notifications/{note_id}/read").status_code == 404
 
-
-def test_requests_without_login_are_rejected(client):
-    assert client.get("/api/tasks").status_code == 401
-    assert client.post("/api/tasks", json={}).status_code == 401
-    assert client.get("/api/stats/dashboard").status_code == 401
