@@ -258,6 +258,19 @@ def initialise_database():
                 cursor.execute("ALTER TABLE tasks ADD COLUMN reminded_for_start_at DATETIME NULL")
                 conn.commit()
 
+        def add_tasks_user_indexes():
+            if not index_exists(cursor, db_name, "tasks", "idx_tasks_user_end_at"):
+                cursor.execute(
+                    "ALTER TABLE tasks ADD INDEX idx_tasks_user_end_at (user_id, end_at)"
+                )
+                conn.commit()
+            if not index_exists(cursor, db_name, "tasks", "idx_tasks_user_completed"):
+                cursor.execute(
+                    "ALTER TABLE tasks ADD INDEX idx_tasks_user_completed "
+                    "(user_id, is_completed, completed_at)"
+                )
+                conn.commit()
+
         run_step("users.is_demo column", add_is_demo_column)
         run_step("tasks fulltext index", add_fulltext_index)
         run_step("completion trigger", create_completion_trigger, required=False)
@@ -268,6 +281,7 @@ def initialise_database():
         run_step("session table indexes", add_session_indexes)
         run_step("refresh_tokens.replaced_at column", add_refresh_tokens_replaced_at)
         run_step("tasks.reminded_for_start_at column", add_tasks_reminded_for_start_at)
+        run_step("tasks user indexes", add_tasks_user_indexes)
 
     except Exception as e:
         print(f"Database error: {e}")

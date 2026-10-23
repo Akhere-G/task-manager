@@ -201,8 +201,8 @@ def _get_estimation_accuracy(tasks):
                     "id": t["id"],
                     "title": t["title"],
                     "category": t["category"],
-                    "estimated_at": int(t["end_at"].timestamp()),
-                    "completed_at": int(t["completed_at"].timestamp()),
+                    "estimated_at": int(end_at.timestamp()),
+                    "completed_at": int(completed_at.timestamp()),
                     "variance_minutes": int(variance),
                 }
             )
@@ -283,7 +283,7 @@ def _get_distribution_trend(tasks):
     return sorted(results.values(), key=lambda x: x["date"])
 
 
-def get_all_dashboard_stats(user_id):
+def _load_projected_tasks(user_id):
     tracked_tasks = (
         db.session.execute(db.select(Task).where(Task.user_id == user_id))
         .scalars()
@@ -295,7 +295,19 @@ def get_all_dashboard_stats(user_id):
     view_start = datetime.now(timezone.utc)
     view_end = view_start + timedelta(days=30)
 
-    tasks = with_repeating(all_raw_tasks, view_start, view_end, user_id)
+    return with_repeating(all_raw_tasks, view_start, view_end, user_id)
+
+
+def get_brief_stats(user_id):
+    tasks = _load_projected_tasks(user_id)
+    return {
+        "productivity": _get_productivity_trend(tasks),
+        "categoryVolume": _get_category_volume(tasks),
+    }
+
+
+def get_all_dashboard_stats(user_id):
+    tasks = _load_projected_tasks(user_id)
 
     return {
         "productivity": _get_productivity_trend(tasks),
