@@ -2,7 +2,7 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /build
 COPY task-manager-frontend/package*.json ./
-RUN npm install
+RUN npm ci
 COPY task-manager-frontend/ .
 ARG _VITE_API_URL
 ENV VITE_API_URL=$_VITE_API_URL
@@ -37,12 +37,13 @@ COPY task-manager-backend/ .
 # Copy built frontend from stage 1
 COPY --from=frontend-builder /build/dist /app/static
 
-# Create the start script
-RUN echo '#!/bin/sh\n\
-  python init_db.py\n\
-  gunicorn --bind 0.0.0.0:8080 "app.main:create_app()"' > /app/start.sh
+# Start script: run migrations (stop on failure), then serve
+COPY docker/start.sh /app/start.sh
+RUN chmod +x /app/start.sh \
+  && useradd --system --no-create-home app \
+  && chown -R app /app
 
-RUN chmod +x /app/start.sh
+USER app
 
 EXPOSE 8080
 CMD ["/app/start.sh"]
