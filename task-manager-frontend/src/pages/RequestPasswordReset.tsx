@@ -1,3 +1,4 @@
+import { getRateLimitMessage } from "../utils/errors";
 import { useState } from "react";
 import { FormInput } from "../components/ui";
 import axios from "axios";
@@ -38,7 +39,8 @@ export default function RequestPasswordReset() {
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(
-          "Unable to process request. Please check your email and try again.",
+          getRateLimitMessage(err) ??
+            "Unable to process request. Please check your email and try again.",
         );
       } else {
         setError("Sorry, something went wrong. Please try again later.");

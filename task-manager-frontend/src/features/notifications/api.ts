@@ -5,4 +5,7 @@ export const notificationsService = {
   subscribe: async function (sub: NotificationCreate) {
     await apiClient.post("/notifications/subscribe", sub);
   },
+  unsubscribe: async function (endpoint: string) {
+    await apiClient.delete("/notifications/subscribe", { data: { endpoint } });
+  },
 };

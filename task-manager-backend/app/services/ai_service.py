@@ -1,9 +1,13 @@
-import os
 import json
+import logging
+import os
 from datetime import datetime, date, timezone
-from sqlalchemy.exc import SQLAlchemyError
+from zoneinfo import ZoneInfo
+
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from google import genai
+from google.genai import types
 from groq import Groq
 
 from app.database import db
@@ -11,6 +15,20 @@ from app.models import DailyBrief
 
 from app.services.stats_service import get_all_dashboard_stats
 from app.services.task_service import get_all_tasks
+
+logger = logging.getLogger(__name__)
+
+GEMINI_TIMEOUT_MS = 10_000
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+SYSTEM_PROMPT = (
+    "You are an encouraging, positive and grounded productivity coach "
+    "who uses British English."
+)
+FALLBACK_BRIEF = (
+    "I've had a bit of a wobble fetching your brief. "
+    "Looking at your list though, you've got this. Onwards!"
+)
 
 allowed_categories = [
     "work",
@@ -29,36 +47,47 @@ allowed_categories = [
 
 def get_generated_text(prompt):
     try:
-        client_gemini = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        client_gemini = genai.Client(
+            api_key=os.getenv("GEMINI_API_KEY"),
+            http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_MS),
+        )
         response = client_gemini.models.generate_content(
-            model="gemini-3.5-flash", contents=prompt
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
         )
         if response.text:
             return response.text
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Gemini request failed: %s", type(exc).__name__)
 
     try:
         client_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
         completion = client_groq.chat.completions.create(
-            model="openai/gpt-oss-20b",
+            model=GROQ_MODEL,
             messages=[
-                {
-                    "role": "system",
-                    "content": "You are an encouraging, positive and grounded productivity coach. Who uses British English",
-                },
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
             timeout=10.0,
         )
         return completion.choices[0].message.content
-    except Exception:
+    except Exception as exc:
+        logger.warning("Groq request failed: %s", type(exc).__name__)
         raise Exception("All AI providers failed.")
 
 
-def generate_daily_brief(user_id):
+def local_today(timezone_name):
     try:
-        today = date.today()
+        zone = ZoneInfo(timezone_name) if timezone_name else timezone.utc
+    except Exception:
+        zone = timezone.utc
+    return datetime.now(zone).date()
+
+
+def generate_daily_brief(user_id, timezone_name=None):
+    try:
+        today = local_today(timezone_name)
         today_str = today.strftime("%Y-%m-%d")
 
         existing_brief = db.session.execute(
@@ -68,7 +97,7 @@ def generate_daily_brief(user_id):
         ).scalar_one_or_none()
 
         if existing_brief:
-            return existing_brief.brief_text
+            return existing_brief.brief_text, False
 
         today_data = get_all_tasks(
             start_date=today_str,
@@ -132,14 +161,23 @@ def generate_daily_brief(user_id):
             user_id=user_id, brief_text=generated_text, generated_date=today
         )
         db.session.add(new_brief)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            stored = db.session.execute(
+                db.select(DailyBrief).where(
+                    DailyBrief.user_id == user_id, DailyBrief.generated_date == today
+                )
+            ).scalar_one()
+            return stored.brief_text, False
 
-        return generated_text
+        return generated_text, False
 
     except (Exception, SQLAlchemyError) as err:
         db.session.rollback()
-        print(f"Error generating brief: {err}")
-        return "I've had a bit of a wobble fetching your brief. Looking at your list though, you've got this. Onwards!"
+        logger.warning("Could not generate the daily brief: %s", type(err).__name__)
+        return FALLBACK_BRIEF, True
 
 
 def parse_task_with_ai(user_input):
