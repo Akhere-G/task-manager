@@ -6,7 +6,7 @@ from app.models import Task
 from app.services.task_query import TaskQuery
 from app.utils.formatters import to_snake_case
 from app.utils.serializers import task_to_dict
-from app.utils.validators import MAX_TASKS_PER_REQUEST
+from app.schemas.constants import MAX_TASKS_PER_REQUEST
 from app.utils.task_utils import (
     build_task_filters,
     check_should_repeat,
