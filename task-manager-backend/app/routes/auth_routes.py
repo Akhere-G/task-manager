@@ -26,7 +26,12 @@ from app.services.auth_service import (
 )
 from app.database import db
 from app.extensions import email_only, ip_and_email, limiter
-from app.utils.validators import validate_user, validate_password
+from app.schemas.auth_schema import (
+    LoginSchema,
+    PasswordResetRequestSchema,
+    RegisterSchema,
+    ResetPasswordSchema,
+)
 from app.utils.formatters import format_json_response
 from app.utils.cookies import (
     clear_auth_cookies,
@@ -59,18 +64,12 @@ def get_password_reset_html(reset_link):
 @auth_bp.route("/api/auth/register", methods=["POST"])
 @limiter.limit("5 per hour")
 def register():
-    data = get_json_body()
+    data = RegisterSchema().load(get_json_body())
+    first_name = data["firstName"]
+    last_name = data["lastName"]
+    email = data["email"]
 
-    errors = validate_user(data, is_registering=True)
-    if errors:
-        return jsonify({"errors": errors}), 400
-
-    first_name = str(data.get("firstName", "")).strip()
-    last_name = str(data.get("lastName", "")).strip()
-    email = str(data.get("email", "")).strip()
-    password = str(data.get("password", "")).strip()
-
-    user_id = create_user(first_name, last_name, email, password)
+    user_id = create_user(first_name, last_name, email, data["password"])
 
     if user_id == "EXISTS":
         return jsonify(
@@ -107,16 +106,9 @@ def register():
 @limiter.limit("10 per minute")
 @limiter.limit("5 per 15 minutes", key_func=ip_and_email)
 def login():
-    data = get_json_body()
+    data = LoginSchema().load(get_json_body())
 
-    errors = validate_user(data)
-    if errors:
-        return jsonify({"errors": errors}), 400
-
-    email = str(data.get("email", "")).strip()
-    password = str(data.get("password", "")).strip()
-
-    user = login_user(email, password)
+    user = login_user(data["email"], data["password"])
 
     if not user:
         return jsonify({"errors": {"general": "Invalid credentials."}}), 400
@@ -226,12 +218,7 @@ def send_password_reset_email(user, email, token):
 @limiter.limit("3 per hour")
 @limiter.limit("3 per hour", key_func=email_only)
 def request_password_reset():
-    data = get_json_body()
-    email = data.get("email")
-
-    if not email or not isinstance(email, str):
-        return jsonify({"errors": {"email": "Email is required"}}), 400
-    email = email.strip()
+    email = PasswordResetRequestSchema().load(get_json_body())["email"]
     user = get_user(email=email)
 
     if user and not user["is_demo"]:
@@ -251,16 +238,9 @@ def request_password_reset():
 @auth_bp.route("/api/auth/reset-password", methods=["POST"])
 @limiter.limit("10 per hour")
 def reset_password():
-    data = get_json_body()
-    token = data.get("token")
-    new_password = data.get("password")
-
-    if not token or not new_password:
-        return jsonify({"message": "Invalid request"}), 400
-
-    error = validate_password(new_password)
-    if error:
-        return jsonify({"errors": {"password": error}}), 400
+    data = ResetPasswordSchema().load(get_json_body())
+    token = data["token"]
+    new_password = data["password"]
 
     user_id = verify_reset_token(token)
     if not user_id:
