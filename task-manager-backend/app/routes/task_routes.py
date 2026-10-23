@@ -1,12 +1,9 @@
 from flask import Blueprint, request, jsonify
 from app.utils.formatters import format_json_response
-from app.utils.http import get_json_body
-from app.utils.validators import (
-    parse_list_params,
-    validate_task,
-    validate_task_list,
-)
-from app.services.task_query import TaskQuery
+from app.schemas.query_schema import TaskListQuerySchema
+from app.schemas.task_schema import BulkTaskSchema, TaskCreateSchema, TaskSchema
+from app.utils.http import flatten_item_errors, get_json_body
+from marshmallow import ValidationError
 from app.services.task_service import (
     TaskConflict,
     TaskValidationError,
@@ -18,7 +15,6 @@ from app.services.task_service import (
     get_task,
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime, timezone
 
 task_bp = Blueprint("tasks", __name__)
 
@@ -27,11 +23,8 @@ task_bp = Blueprint("tasks", __name__)
 @jwt_required()
 def list_tasks():
     user_id = get_jwt_identity()
-    params, errors = parse_list_params(request.args)
-    if errors:
-        return jsonify({"errors": errors}), 400
-
-    raw_tasks = get_all_tasks(user_id, TaskQuery(**params))
+    query = TaskListQuerySchema().load(request.args.to_dict())
+    raw_tasks = get_all_tasks(user_id, query)
     return jsonify(format_json_response(raw_tasks))
 
 
@@ -52,15 +45,7 @@ def fetch_task(task_id):
 @jwt_required()
 def add_task():
     user_id = get_jwt_identity()
-    data = get_json_body()
-
-    if data.get("repeatBy"):
-        data["isRepeating"] = True
-
-    errors = validate_task(data)
-
-    if errors:
-        return jsonify({"errors": errors}), 400
+    data = TaskCreateSchema().load(get_json_body())
 
     task_id = create_task(user_id, data)
 
@@ -77,28 +62,10 @@ def add_task_list():
     if not data or not isinstance(data, list):
         return jsonify({"error": "Invalid data format"}), 400
 
-    if not all(isinstance(task, dict) for task in data):
-        return jsonify({"error": "Every task must be an object"}), 400
-
-    for task in data:
-        is_comp = task.get("isCompleted", False)
-        comp_at = task.get("completedAt")
-
-        if is_comp and not comp_at:
-            task["completedAt"] = datetime.now(timezone.utc).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
-        elif not is_comp:
-            task["completedAt"] = None
-
-        task["isCompleted"] = is_comp
-
-        if task.get("repeatBy"):
-            task["isRepeating"] = True
-
-    errors, has_errors = validate_task_list(data)
-
-    if has_errors:
+    try:
+        data = BulkTaskSchema(many=True).load(data)
+    except ValidationError as error:
+        errors = flatten_item_errors(error.messages, len(data))
         return jsonify({"errors": errors}), 400
 
     count = create_tasks_from_list(user_id, data)
@@ -109,11 +76,7 @@ def add_task_list():
 @jwt_required()
 def edit_task(task_id):
     user_id = get_jwt_identity()
-    data = get_json_body()
-    errors = validate_task(data, True)
-
-    if errors:
-        return jsonify({"errors": errors}), 400
+    data = TaskSchema(partial=True).load(get_json_body())
 
     try:
         updated_result = update_task(user_id, task_id, data)

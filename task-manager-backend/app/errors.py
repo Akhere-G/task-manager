@@ -1,6 +1,9 @@
 from flask import jsonify, request, send_from_directory
 from flask_limiter.errors import RateLimitExceeded
+from marshmallow import ValidationError
 from werkzeug.exceptions import HTTPException, NotFound
+
+from app.utils.http import flatten_errors
 
 
 def register_error_handlers(app):
@@ -14,6 +17,10 @@ def register_error_handlers(app):
         except Exception:
             pass
         return response
+
+    @app.errorhandler(ValidationError)
+    def handle_validation_error(error):
+        return jsonify({"errors": flatten_errors(error.messages)}), 400
 
     @app.errorhandler(HTTPException)
     def handle_http_exception(error):

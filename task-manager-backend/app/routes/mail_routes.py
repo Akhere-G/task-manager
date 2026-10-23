@@ -2,7 +2,8 @@ import html
 import logging
 from flask import Blueprint, request, jsonify
 from app.extensions import limiter
-from app.utils.validators import validate_contact_request
+from app.schemas.contact_schema import ContactSchema
+from app.utils.http import get_json_body
 import os
 from mailersend import MailerSendClient, EmailBuilder
 from dotenv import load_dotenv
@@ -49,17 +50,11 @@ mail_bp = Blueprint("contact", __name__)
 @mail_bp.route("/api/contact", methods=["POST"])
 @limiter.limit("3 per hour")
 def handle_contact():
-    data = request.get_json(silent=True)
-
-    validation_errors = validate_contact_request(data)
-
-    if validation_errors:
-        return jsonify({"status": "error", "errors": validation_errors}), 400
-
-    full_name = data["fullName"].strip()
-    visitor_email = data["email"].strip()
-    subject = data["subject"].strip()
-    message = data["message"].strip()
+    data = ContactSchema().load(get_json_body())
+    full_name = data["fullName"]
+    visitor_email = data["email"]
+    subject = data["subject"]
+    message = data["message"]
 
     from_email = os.getenv("MAIL_SEND_EMAIL")
     to_email = os.getenv("CONTACT_TO_EMAIL") or os.getenv("MAIL_USERNAME")

@@ -10,8 +10,12 @@ from google import genai
 from google.genai import types
 from groq import Groq
 
+from marshmallow import ValidationError
+
 from app.database import db
 from app.models import DailyBrief
+from app.schemas.ai_schema import AiTaskSchema
+from app.schemas.constants import VALID_CATEGORIES
 
 from app.services.stats_service import get_brief_stats
 from app.services.task_query import TaskQuery
@@ -19,6 +23,7 @@ from app.services.task_service import get_all_tasks
 
 logger = logging.getLogger(__name__)
 
+MAX_SUBTASKS = 7
 GEMINI_TIMEOUT_MS = 10_000
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
@@ -30,21 +35,6 @@ FALLBACK_BRIEF = (
     "I've had a bit of a wobble fetching your brief. "
     "Looking at your list though, you've got this. Onwards!"
 )
-
-allowed_categories = [
-    "work",
-    "home",
-    "chores",
-    "life-admin",
-    "health",
-    "self-care",
-    "social",
-    "hobbies",
-    "learning",
-    "finance",
-    "general",
-]
-
 
 def get_generated_text(prompt):
     try:
@@ -76,6 +66,15 @@ def get_generated_text(prompt):
     except Exception as exc:
         logger.warning("Groq request failed: %s", type(exc).__name__)
         raise Exception("All AI providers failed.")
+
+
+def extract_json(text):
+    cleaned = text.strip()
+    if "```" in cleaned:
+        cleaned = cleaned.split("```")[1].strip()
+        if cleaned.lower().startswith("json"):
+            cleaned = cleaned[4:].strip()
+    return json.loads(cleaned)
 
 
 def local_today(timezone_name):
@@ -193,7 +192,7 @@ def parse_task_with_ai(user_input):
     Return ONLY a JSON object, with no other comments with these keys:
     - title: (string)
     - description: (string or null), put any extra information here
-    - category: (MUST be one of: {", ".join(allowed_categories)})
+    - category: (MUST be one of: {", ".join(VALID_CATEGORIES)})
     - startAt: Datetime (MUST be present), use YYYY-MM-DD HH:MM. Should be set to any date time mention. If no time mentioned, use {today_str} 00:00.
     - endAt: Datetime use YYYY-MM-DD HH:MM (MUST be present). Should be after startAt but on the same day. If no time mentioned, if a duration was mentioned, add that to the start date and set this to that. Otherwise set to an hour after start at.
     - isRepeating: boolean. True if task is daily/every day, weekly, monthly, yearly or repeated
@@ -201,23 +200,9 @@ def parse_task_with_ai(user_input):
     - repeatUntil DATE or Null. use YYYY-MM-DD. For repeating tasks: Identify the end date mentioned.
     """
 
-    raw_json = get_generated_text(prompt) or ""
-    clean_json = raw_json.replace("```json", "").replace("```", "").strip()
-
     try:
-        parsed_data = json.loads(clean_json)
-        if parsed_data.get("category") not in allowed_categories:
-            parsed_data["category"] = "general"
-        if not parsed_data.get("startAt"):
-            parsed_data["startAt"] = datetime.now(timezone.utc).strftime(
-                "%Y-%m-%d 23:59:59"
-            )
-        if not parsed_data.get("endAt"):
-            parsed_data["endAt"] = datetime.now(timezone.utc).strftime(
-                "%Y-%m-%d 23:59:59"
-            )
-        return parsed_data
-    except Exception:
+        return AiTaskSchema().load(extract_json(get_generated_text(prompt) or ""))
+    except (ValueError, ValidationError):
         return {
             "title": user_input[:50],
             "description": user_input,
@@ -238,25 +223,22 @@ def decompose_task(title, description, category, start_at, end_at):
     Return only a json list of objects of this format
     - title: (string)
     - description: (string or null)
-    - category: (MUST be one of: {", ".join(allowed_categories)})
+    - category: (MUST be one of: {", ".join(VALID_CATEGORIES)})
     - startAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is {today}. If no time mentioned, default to end of day 00:00)
     - endAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, If no due date mentioned, default to end of day 23:59)
     """
     try:
-        raw_json = get_generated_text(prompt) or ""
-        clean_json = raw_json.strip()
-
-        if "```" in clean_json:
-            parts = clean_json.split("```")
-            clean_json = parts[1].strip()
-
-            if clean_json.lower().startswith("json"):
-                clean_json = clean_json[4:].strip()
-
-        tasks = json.loads(clean_json)
-
-        if not isinstance(tasks, list):
-            return []
-        return tasks
+        items = extract_json(get_generated_text(prompt) or "")
     except Exception:
         return []
+
+    if not isinstance(items, list):
+        return []
+
+    subtasks = []
+    for item in items[:MAX_SUBTASKS]:
+        try:
+            subtasks.append(AiTaskSchema().load(item))
+        except ValidationError:
+            continue
+    return subtasks
