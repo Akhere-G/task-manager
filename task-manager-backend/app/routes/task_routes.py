@@ -1,10 +1,9 @@
 from flask import Blueprint, request, jsonify
 from app.utils.formatters import format_json_response
+from app.schemas.query_schema import TaskListQuerySchema
 from app.schemas.task_schema import BulkTaskSchema, TaskCreateSchema, TaskSchema
 from app.utils.http import flatten_item_errors, get_json_body
-from app.utils.validators import parse_list_params
 from marshmallow import ValidationError
-from app.services.task_query import TaskQuery
 from app.services.task_service import (
     TaskConflict,
     TaskValidationError,
@@ -24,11 +23,8 @@ task_bp = Blueprint("tasks", __name__)
 @jwt_required()
 def list_tasks():
     user_id = get_jwt_identity()
-    params, errors = parse_list_params(request.args)
-    if errors:
-        return jsonify({"errors": errors}), 400
-
-    raw_tasks = get_all_tasks(user_id, TaskQuery(**params))
+    query = TaskListQuerySchema().load(request.args.to_dict())
+    raw_tasks = get_all_tasks(user_id, query)
     return jsonify(format_json_response(raw_tasks))
 
 
