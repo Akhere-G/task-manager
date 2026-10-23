@@ -8,8 +8,8 @@ from app.utils.common_passwords import is_common_password
 EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
 
 
-def required_text(label, *validators):
-    message = f"{label} is required."
+def required_text(label, *validators, message=None):
+    message = message or f"{label} is required."
     return Text(
         required=True,
         validate=[validate.Length(min=1, error=message), *validators],

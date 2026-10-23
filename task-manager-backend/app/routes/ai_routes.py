@@ -8,7 +8,7 @@ from app.services.ai_service import (
 from app.utils.formatters import format_json_response
 from app.extensions import ai_daily_limit, limiter, user_key
 from app.utils.http import get_json_body
-from app.utils.validators import validate_decompose, validate_parse_task
+from app.schemas.ai_schema import DecomposeSchema, ParseTaskSchema
 
 ai_bp = Blueprint("ai", __name__)
 
@@ -28,10 +28,7 @@ def get_daily_brief_route():
 @limiter.limit("10 per hour")
 @limiter.limit(ai_daily_limit, key_func=user_key, scope="ai-daily")
 def parse_task_route():
-    data = get_json_body()
-    errors = validate_parse_task(data)
-    if errors:
-        return jsonify({"success": False, "errors": errors}), 400
+    data = ParseTaskSchema().load(get_json_body())
 
     task_data = parse_task_with_ai(data["text"])
     return jsonify(task_data), 200
@@ -42,18 +39,15 @@ def parse_task_route():
 @limiter.limit("10 per hour")
 @limiter.limit(ai_daily_limit, key_func=user_key, scope="ai-daily")
 def decompose_task_route():
-    data = get_json_body()
-    errors = validate_decompose(data)
-    if errors:
-        return jsonify({"errors": errors}), 400
+    data = DecomposeSchema().load(get_json_body())
 
-    title = data.get("title", "")
-    description = data.get("description", "")
-    category = data.get("category", "")
-    start_at = data.get("start_at", "")
-    end_at = data.get("end_at", "")
-
-    decomposed_tasks = decompose_task(title, description, category, start_at, end_at)
+    decomposed_tasks = decompose_task(
+        data["title"],
+        data.get("description") or "",
+        data.get("category") or "",
+        data.get("startAt") or "",
+        data.get("endAt") or "",
+    )
 
     if len(decomposed_tasks) == 0:
         return jsonify({"error": "Could not decommpose task "}), 400
