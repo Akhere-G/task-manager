@@ -13,4 +13,4 @@ Disallow: /addtask
 Disallow: /pomodoro/
 Disallow: /breakdown/
 
-Sitemap: https://task-flow-ai.up.railway.app/sitemap.xml
+Sitemap: https://taskflow-752853711822.europe-west2.run.app/sitemap.xml
