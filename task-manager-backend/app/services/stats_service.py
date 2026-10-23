@@ -2,6 +2,7 @@ from app.database import db
 from datetime import datetime, timedelta, timezone
 from app.services.task_service import with_repeating
 from app.models import Task
+from app.utils.serializers import task_to_dict
 
 
 def _get_productivity_trend(tasks):
@@ -200,8 +201,8 @@ def _get_estimation_accuracy(tasks):
                     "id": t["id"],
                     "title": t["title"],
                     "category": t["category"],
-                    "estimated_at": int(t["end_at"].timestamp()),
-                    "completed_at": int(t["completed_at"].timestamp()),
+                    "estimated_at": int(end_at.timestamp()),
+                    "completed_at": int(completed_at.timestamp()),
                     "variance_minutes": int(variance),
                 }
             )
@@ -282,37 +283,31 @@ def _get_distribution_trend(tasks):
     return sorted(results.values(), key=lambda x: x["date"])
 
 
-def get_all_dashboard_stats(user_id):
+def _load_projected_tasks(user_id):
     tracked_tasks = (
         db.session.execute(db.select(Task).where(Task.user_id == user_id))
         .scalars()
         .all()
     )
 
-    all_raw_tasks = [
-        {
-            "id": t.id,
-            "title": t.title,
-            "description": t.description,
-            "category": t.category,
-            "is_completed": t.is_completed,
-            "start_at": t.start_at,
-            "end_at": t.end_at,
-            "created_at": t.created_at,
-            "completed_at": t.completed_at,
-            "is_repeating": t.is_repeating,
-            "repeat_by": t.repeat_by,
-            "repeat_until": t.repeat_until,
-            "series_id": t.series_id,
-            "user_id": t.user_id,
-        }
-        for t in tracked_tasks
-    ]
+    all_raw_tasks = [task_to_dict(t) for t in tracked_tasks]
 
     view_start = datetime.now(timezone.utc)
     view_end = view_start + timedelta(days=30)
 
-    tasks = with_repeating(all_raw_tasks, view_start, view_end, user_id)
+    return with_repeating(all_raw_tasks, view_start, view_end, user_id)
+
+
+def get_brief_stats(user_id):
+    tasks = _load_projected_tasks(user_id)
+    return {
+        "productivity": _get_productivity_trend(tasks),
+        "categoryVolume": _get_category_volume(tasks),
+    }
+
+
+def get_all_dashboard_stats(user_id):
+    tasks = _load_projected_tasks(user_id)
 
     return {
         "productivity": _get_productivity_trend(tasks),

@@ -13,7 +13,7 @@ from groq import Groq
 from app.database import db
 from app.models import DailyBrief
 
-from app.services.stats_service import get_all_dashboard_stats
+from app.services.stats_service import get_brief_stats
 from app.services.task_service import get_all_tasks
 
 logger = logging.getLogger(__name__)
@@ -107,7 +107,7 @@ def generate_daily_brief(user_id, timezone_name=None):
             project_repeating=True,
         )
         today_tasks = today_data.get("tasks", [])
-        stats = get_all_dashboard_stats(user_id)
+        stats = get_brief_stats(user_id)
 
         recent_productivity = stats.get("productivity", [])[-7:]
         total_completed_week = sum(d["tasks"] for d in recent_productivity)

@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 from app.database import db
 from app.models import Task
 from app.utils.formatters import to_snake_case
+from app.utils.serializers import task_to_dict
 from app.utils.validators import MAX_TASKS_PER_REQUEST
 from app.utils.task_utils import (
     build_task_filters,
@@ -65,25 +66,7 @@ def get_all_tasks(
     )
     tracked_tasks = db.session.execute(stmt).scalars().all()
 
-    tasks = [
-        {
-            "id": t.id,
-            "title": t.title,
-            "description": t.description,
-            "category": t.category,
-            "is_completed": t.is_completed,
-            "start_at": t.start_at,
-            "end_at": t.end_at,
-            "created_at": t.created_at,
-            "completed_at": t.completed_at,
-            "is_repeating": t.is_repeating,
-            "repeat_by": t.repeat_by,
-            "repeat_until": t.repeat_until,
-            "series_id": t.series_id,
-            "user_id": t.user_id,
-        }
-        for t in tracked_tasks
-    ]
+    tasks = [task_to_dict(t) for t in tracked_tasks]
 
     if project_repeating:
 
@@ -120,22 +103,7 @@ def get_task(user_id, task_id):
     if not task:
         return None
 
-    return {
-        "id": task.id,
-        "title": task.title,
-        "description": task.description,
-        "category": task.category,
-        "is_completed": task.is_completed,
-        "start_at": task.start_at,
-        "end_at": task.end_at,
-        "created_at": task.created_at,
-        "completed_at": task.completed_at,
-        "is_repeating": task.is_repeating,
-        "repeat_by": task.repeat_by,
-        "repeat_until": task.repeat_until,
-        "series_id": task.series_id,
-        "user_id": task.user_id,
-    }
+    return task_to_dict(task)
 
 
 def create_task(user_id, data):

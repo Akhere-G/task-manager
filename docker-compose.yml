@@ -1,32 +1,54 @@
 services:
   db:
     image: mysql:8.0
-    restart: always
     environment:
       MYSQL_DATABASE: task_manager
-      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dev-only-password}
     ports:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
-  backend:
-    build: ./backend
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      args:
+        _VITE_API_URL: /api
     ports:
       - "8080:8080"
     depends_on:
-      - db
-    env_file: ./backend/.env
-
-  frontend:
-    build: 
-      context: ./frontend
-      args:
-        - VITE_API_URL=http://localhost:8080/api
-    ports:
-      - "5173:80"
-    depends_on:
-      - backend
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dev-only-password}
+      DB_NAME: task_manager
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-secret-change-me-0123456789abcdef}
+      JWT_COOKIE_SECURE: "False"
+      FRONTEND_URL: http://localhost:8080
+      TRUSTED_PROXY_HOPS: "0"
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      MAIL_SEND_API_KEY: ${MAIL_SEND_API_KEY:-}
+      MAIL_SEND_EMAIL: ${MAIL_SEND_EMAIL:-}
 
 volumes:
   db_data:
