@@ -50,7 +50,7 @@ def _connection():
     )
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def database():
     conn = _connection()
     with conn.cursor() as cur:
@@ -72,7 +72,7 @@ def app(database):
     return app
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def clean_tables(database):
     conn = _connection()
     with conn.cursor() as cur:
@@ -84,7 +84,7 @@ def clean_tables(database):
     conn.close()
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def reset_rate_limits():
     if limiter.initialized:
         limiter.reset()
