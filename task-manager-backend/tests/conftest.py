@@ -24,7 +24,6 @@ import init_db
 from app.database import db
 from app.demo import DEMO_USER_EMAIL
 from app.extensions import limiter
-from app.utils.quota import reset_memory_counts
 from app.main import create_app
 from app.models import User
 
@@ -89,7 +88,6 @@ def clean_tables(database):
 def reset_rate_limits():
     if limiter.initialized:
         limiter.reset()
-    reset_memory_counts()
     yield
 
 
