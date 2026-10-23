@@ -5,6 +5,21 @@ from dateutil import parser
 from app.utils.common_passwords import is_common_password
 
 
+VALID_CATEGORIES = [
+    "work",
+    "home",
+    "chores",
+    "life-admin",
+    "health",
+    "self-care",
+    "social",
+    "hobbies",
+    "learning",
+    "finance",
+    "general",
+]
+
+
 def validate_task(data, is_update=False):
     """
     Validates task data.
@@ -13,20 +28,6 @@ def validate_task(data, is_update=False):
     :return: A dictionary of errors. Empty if valid.
     """
     errors = {}
-
-    VALID_CATEGORIES = [
-        "work",
-        "home",
-        "chores",
-        "life-admin",
-        "health",
-        "self-care",
-        "social",
-        "hobbies",
-        "learning",
-        "finance",
-        "general",
-    ]
 
     if "title" in data or not is_update:
         title = str(data.get("title", "")).strip()
@@ -328,3 +329,43 @@ def parse_list_params(args):
         "project_repeating": project_repeating,
     }
     return params, errors
+
+
+MAX_PARSE_TEXT_LENGTH = 500
+MAX_DECOMPOSE_TITLE_LENGTH = 255
+MAX_DECOMPOSE_DESCRIPTION_LENGTH = 2000
+
+
+def validate_parse_task(data):
+    text = data.get("text")
+    if not isinstance(text, str) or not text.strip():
+        return {"text": "Text is required."}
+    if len(text) > MAX_PARSE_TEXT_LENGTH:
+        return {"text": f"Text must be {MAX_PARSE_TEXT_LENGTH} characters or fewer."}
+    return {}
+
+
+def validate_decompose(data):
+    errors = {}
+
+    title = data.get("title")
+    if not isinstance(title, str) or not title.strip():
+        errors["title"] = "Title is required."
+    elif len(title) > MAX_DECOMPOSE_TITLE_LENGTH:
+        errors["title"] = f"Title must be {MAX_DECOMPOSE_TITLE_LENGTH} characters or fewer."
+
+    description = data.get("description")
+    if description is not None:
+        if not isinstance(description, str):
+            errors["description"] = "Description must be text."
+        elif len(description) > MAX_DECOMPOSE_DESCRIPTION_LENGTH:
+            errors["description"] = (
+                f"Description must be {MAX_DECOMPOSE_DESCRIPTION_LENGTH} characters or fewer."
+            )
+
+    category = data.get("category")
+    if category not in (None, "") and category not in VALID_CATEGORIES:
+        errors["category"] = "Invalid category."
+
+    return errors
+

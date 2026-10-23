@@ -15,11 +15,14 @@ os.environ["CONTACT_TO_EMAIL"] = "owner@example.com"
 import pymysql
 import pytest
 
+from flask.testing import FlaskClient
 from werkzeug.security import generate_password_hash
 
 import init_db
 from app.database import db
 from app.demo import DEMO_USER_EMAIL
+from app.extensions import limiter
+from app.utils.quota import reset_memory_counts
 from app.main import create_app
 from app.models import User
 
@@ -55,9 +58,17 @@ def database():
     init_db.initialise_database()
 
 
+class AjaxClient(FlaskClient):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.environ_base["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
+
+
 @pytest.fixture(scope="session")
 def app(database):
-    return create_app()
+    app = create_app()
+    app.test_client_class = AjaxClient
+    return app
 
 
 @pytest.fixture(autouse=True)
@@ -70,6 +81,14 @@ def clean_tables(database):
             cur.execute(f"TRUNCATE TABLE {table}")
         cur.execute("SET FOREIGN_KEY_CHECKS=1")
     conn.close()
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    if limiter.initialized:
+        limiter.reset()
+    reset_memory_counts()
+    yield
 
 
 @pytest.fixture

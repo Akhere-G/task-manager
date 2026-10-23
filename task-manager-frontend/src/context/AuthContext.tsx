@@ -6,12 +6,14 @@ import type {
   User,
 } from "../features/auth/types";
 import { authService } from "../features/auth/api";
+import { removeSubscriptionFromServer } from "../features/notifications/utils";
 import {
   endAnalyticsSession,
   getErrorType,
   startAnalyticsSession,
   trackEvent,
 } from "../services/analytics";
+import { setSessionExpiredHandler } from "../services/api";
 
 interface AuthContextType {
   register: (userData: RegisterUserInput) => Promise<void>;
@@ -35,6 +37,16 @@ export default function AuthContextProvider({
   const [isLoading, setIsLoading] = useState(true);
 
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      endAnalyticsSession();
+      setUser(null);
+      setIsAuthenticated(false);
+      queryClient.clear();
+    });
+    return () => setSessionExpiredHandler(null);
+  }, [queryClient]);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -89,6 +101,11 @@ export default function AuthContextProvider({
   };
 
   const logout = async () => {
+    try {
+      await removeSubscriptionFromServer();
+    } catch (err) {
+      console.error(err);
+    }
     await authService.logout();
     trackEvent(user?.isDemo ? "demo_exited" : "logout");
     endAnalyticsSession();

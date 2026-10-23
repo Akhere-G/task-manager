@@ -215,8 +215,6 @@ def handle_repeat_task(user_id, original_task):
         current_task.series_id = current_task.id
         current_task.created_at = datetime.now(timezone.utc)
 
-    db.session.commit()
-
 
 def update_date(old_date, repeat_by):
     if repeat_by == "daily":

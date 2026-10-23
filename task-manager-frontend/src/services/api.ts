@@ -1,5 +1,4 @@
 import axios from "axios";
-import { hasAnalyticsSession, trackEvent } from "./analytics";
 
 const apiClient = axios.create({
   baseURL:
@@ -8,30 +7,55 @@ const apiClient = axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
   },
 });
+
+const NO_REFRESH_PATHS = [
+  "/auth/me",
+  "/auth/refresh",
+  "/auth/login",
+  "/auth/register",
+  "/auth/demo",
+  "/auth/logout",
+];
+
+let sessionExpiredHandler: (() => void) | null = null;
+let refreshInFlight: Promise<unknown> | null = null;
+
+export const setSessionExpiredHandler = (handler: (() => void) | null) => {
+  sessionExpiredHandler = handler;
+};
+
+const skipsRefresh = (url?: string) =>
+  NO_REFRESH_PATHS.some((path) => url?.endsWith(path));
 
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (originalRequest.url.includes("/auth/refresh")) {
-        if (hasAnalyticsSession()) {
-          trackEvent("session_expired", undefined, { beacon: true });
-        }
-        if (!["/login", "/register"].includes(window.location.pathname)) {
-          window.location.href = "/login";
-        }
-        return Promise.reject(error);
-      }
-      originalRequest._retry = true;
-
-      await apiClient.post("/auth/refresh");
-
-      return apiClient(originalRequest);
+    if (
+      error.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      skipsRefresh(originalRequest.url)
+    ) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    originalRequest._retry = true;
+
+    try {
+      refreshInFlight ??= apiClient.post("/auth/refresh").finally(() => {
+        refreshInFlight = null;
+      });
+      await refreshInFlight;
+    } catch {
+      sessionExpiredHandler?.();
+      return Promise.reject(error);
+    }
+
+    return apiClient(originalRequest);
   },
 );
 

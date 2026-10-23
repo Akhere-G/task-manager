@@ -11,7 +11,9 @@ export interface DecomposeTaskResult {
 
 export const aiService = {
   getDailyBrief: async (): Promise<DailyBrief> => {
-    const response = await apiClient.get("/ai/daily-brief");
+    const response = await apiClient.get("/ai/daily-brief", {
+      params: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone },
+    });
     return response.data;
   },
   parseTask: async (text: string): Promise<CreateTaskInput> => {

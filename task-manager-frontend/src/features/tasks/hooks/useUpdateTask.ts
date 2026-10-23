@@ -3,8 +3,14 @@ import { taskService } from "../api";
 import type { Task } from "../types";
 import { toFormattedUTCDate } from "../../../utils/formators";
 
-const formatTask = (newTaskData: Partial<Task>): Partial<Task> => {
+type TaskUpdate = Partial<Task> & { expectedStartAt?: string };
+
+const formatTask = (newTaskData: TaskUpdate): TaskUpdate => {
   const formattedData = { ...newTaskData };
+  if (newTaskData.expectedStartAt)
+    formattedData.expectedStartAt = toFormattedUTCDate(
+      newTaskData.expectedStartAt,
+    );
   if (newTaskData.startAt)
     formattedData.startAt = toFormattedUTCDate(newTaskData.startAt);
   if (newTaskData.endAt)
@@ -23,7 +29,7 @@ export default function useUpdateTask() {
       newTaskData,
     }: {
       id: number;
-      newTaskData: Partial<Task>;
+      newTaskData: TaskUpdate;
     }) => {
       const formattedData = formatTask(newTaskData);
       return taskService.update(id, formattedData);

@@ -1,5 +1,5 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from marshmallow import Schema, fields, pre_load
+from marshmallow import Schema, fields, pre_load, validate
 from ..models import Notification
 import re
 
@@ -36,12 +36,14 @@ class NotificationSchema(SQLAlchemyAutoSchema):
 class SubscriptionKeysSchema(Schema):
     p256dh = fields.String(
         required=True,
+        validate=validate.Length(max=255),
         error_messages={
             "required": "p256dh key is required.",
         },
     )
     auth = fields.String(
         required=True,
+        validate=validate.Length(max=255),
         error_messages={
             "required": "Auth key is required.",
         },
@@ -58,6 +60,10 @@ class SubscriptionCreateSchema(Schema):
 
     endpoint = fields.String(
         required=True,
+        validate=[
+            validate.Length(max=500),
+            validate.Regexp(r"^https://", error="Endpoint must be an https URL."),
+        ],
         error_messages={
             "required": "Endpoint is required.",
         },
