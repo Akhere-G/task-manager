@@ -1,7 +1,11 @@
 import hashlib
 
 from flask import request
+from flask_jwt_extended import get_jwt_identity
 from flask_limiter import Limiter
+
+from app import config
+from app.services.auth_service import is_demo_user
 
 
 def client_ip():
@@ -24,6 +28,19 @@ def ip_and_email():
 
 def email_only():
     return _fingerprint(_json_email())
+
+
+def user_key():
+    return f"user:{get_jwt_identity()}"
+
+
+def ai_daily_limit():
+    limit = (
+        config.AI_DAILY_LIMIT_DEMO
+        if is_demo_user(get_jwt_identity())
+        else config.AI_DAILY_LIMIT
+    )
+    return f"{limit} per day"
 
 
 limiter = Limiter(

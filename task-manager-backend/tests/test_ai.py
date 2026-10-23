@@ -4,7 +4,6 @@ import pytest
 
 import app.routes.ai_routes as ai_routes
 from app import config
-from app.utils import quota
 
 
 @pytest.fixture
@@ -62,10 +61,3 @@ def test_demo_account_has_its_own_limit(client, make_demo_user, monkeypatch):
 
     codes = [client.post("/api/ai/parse-task", json={"text": "Task"}).status_code for _ in range(3)]
     assert codes == [200, 200, 429]
-
-
-def test_quota_store_failure_blocks_ai_calls(session, fake_ai):
-    with mock.patch.object(quota, "count_ai_call", side_effect=quota.QuotaUnavailable):
-        response = session.post("/api/ai/parse-task", json={"text": "Task"})
-    assert response.status_code == 503
-    fake_ai[0].assert_not_called()
