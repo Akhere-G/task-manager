@@ -135,3 +135,62 @@ def test_a_failing_mailer_does_not_reveal_the_account(client, make_user):
     ):
         response = request_reset(client, "user@example.com")
     assert response.status_code == 200
+
+
+def set_cookie_headers(response):
+    return response.headers.getlist("Set-Cookie")
+
+
+def test_login_sets_http_only_session_cookies(client, make_user):
+    make_user()
+
+    response = client.post(
+        "/api/auth/login", json={"email": "user@example.com", "password": DEFAULT_PASSWORD}
+    )
+
+    cookies = {c.split("=", 1)[0]: c for c in set_cookie_headers(response)}
+    assert {"access_token_cookie", "refresh_token"} <= set(cookies)
+    for name in ("access_token_cookie", "refresh_token"):
+        assert "HttpOnly" in cookies[name]
+        assert "Path=/" in cookies[name]
+    assert "access_token" not in response.get_json(), "tokens must not appear in the body"
+
+
+def test_a_malformed_access_cookie_is_rejected(client, make_user):
+    make_user()
+    client.post("/api/auth/login", json={"email": "user@example.com", "password": DEFAULT_PASSWORD})
+
+    client.set_cookie("access_token_cookie", "not.a.jwt")
+
+    # flask-jwt-extended answers 422 for a token it cannot decode, 401 when there is none.
+    assert client.get("/api/tasks").status_code in (401, 422)
+    assert client.get("/api/auth/me").status_code in (401, 422)
+
+
+def test_a_valid_refresh_token_restores_a_lost_access_cookie(make_user, login):
+    make_user()
+    session = login()
+    session.delete_cookie("access_token_cookie")
+    assert session.get("/api/tasks").status_code == 401
+
+    assert session.post("/api/auth/refresh").status_code == 200
+
+    assert session.get("/api/tasks").status_code == 200
+
+
+def test_logout_ends_the_session_and_clears_the_cookies(make_user, login):
+    make_user()
+    session = login()
+
+    response = session.post("/api/auth/logout")
+
+    assert response.status_code == 200
+    assert session.get("/api/tasks").status_code == 401
+    assert session.post("/api/auth/refresh").status_code == 401
+
+
+def test_a_garbage_refresh_token_cannot_start_a_session(client):
+    client.set_cookie("refresh_token", "made-up-token")
+
+    assert client.post("/api/auth/refresh").status_code == 401
+    assert client.get("/api/tasks").status_code == 401

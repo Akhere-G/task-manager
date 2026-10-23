@@ -5,7 +5,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import { globalIgnores } from "eslint/config";
 
 export default tseslint.config(
-  globalIgnores(["dist", "dev-dist", "coverage"]),
+  globalIgnores(["dist", "dev-dist", "coverage", "test-results", "playwright-report"]),
   eslint.configs.recommended,
   tseslint.configs.strict,
   pluginReact.configs.flat.recommended,

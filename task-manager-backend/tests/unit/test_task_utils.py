@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 
 import pytest
 
-from app.utils.task_utils import parse_search, update_date
+from app.utils.task_utils import check_should_repeat, parse_search, update_date
 
 
 def test_blank_search_means_no_filter():
@@ -39,3 +39,58 @@ def test_update_date_moves_to_the_next_occurrence(repeat_by, expected):
 
 def test_monthly_repeat_clamps_to_the_end_of_a_short_month():
     assert update_date(datetime(2026, 1, 31), "monthly") == datetime(2026, 2, 28)
+
+
+def test_yearly_repeat_from_a_leap_day_clamps_to_the_28th():
+    assert update_date(datetime(2024, 2, 29), "yearly") == datetime(2025, 2, 28)
+
+
+def test_weekly_repeat_keeps_the_time_of_day_across_a_month_boundary():
+    assert update_date(datetime(2026, 3, 30, 9, 15), "weekly") == datetime(2026, 4, 6, 9, 15)
+
+
+def completed(**overrides):
+    task = {
+        "is_repeating": True,
+        "is_completed": True,
+        "repeat_by": "daily",
+        "repeat_until": None,
+        "start_at": datetime(2026, 3, 2, 9),
+    }
+    task.update(overrides)
+    return task
+
+
+PENDING = {"is_completed": False}
+
+
+def test_completing_an_open_ended_repeating_task_repeats_it():
+    assert check_should_repeat(PENDING, completed()) is True
+
+
+def test_only_the_completion_transition_triggers_a_repeat():
+    assert check_should_repeat({"is_completed": True}, completed()) is False
+    assert check_should_repeat(PENDING, completed(is_completed=False)) is False
+
+
+def test_non_repeating_tasks_never_repeat():
+    assert check_should_repeat(PENDING, completed(is_repeating=False)) is False
+
+
+@pytest.mark.parametrize(
+    "repeat_until, expected",
+    [
+        (date(2026, 3, 3), True),
+        ("2026-03-03", True),
+        (date(2026, 3, 2), False),
+        ("2026-03-02", False),
+    ],
+)
+def test_repeat_until_is_inclusive_of_the_next_occurrence_day(repeat_until, expected):
+    updated = completed(repeat_until=repeat_until)
+    assert check_should_repeat(PENDING, updated) is expected
+
+
+def test_start_time_may_arrive_as_a_string():
+    updated = completed(start_at="2026-03-02T09:00:00", repeat_until=date(2026, 3, 3))
+    assert check_should_repeat(PENDING, updated) is True

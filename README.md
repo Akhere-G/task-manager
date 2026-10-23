@@ -70,6 +70,10 @@ The frontend can send anonymous usage events to PostHog. It is off unless config
 
 ---
 
+## Testing
+
+Backend (pytest), frontend (Vitest) and end-to-end (Playwright) suites are documented in [TESTING.md](TESTING.md).
+
 ## Running with Docker
 
 The root `Dockerfile` is the supported build: it builds the frontend and serves it from the Flask app on port 8080. On start it runs the database migrations (`init_db.py`) and stops if a required step fails, then starts gunicorn (`WEB_CONCURRENCY`, `GUNICORN_THREADS` and `GUNICORN_TIMEOUT` tune it; `WEB_CONCURRENCY x 15` should stay below the database connection limit).

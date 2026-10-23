@@ -96,3 +96,98 @@ def test_completing_the_same_occurrence_twice_returns_a_conflict(session, task_p
 
     assert again.status_code == 409
     assert len(session.get("/api/tasks?is_completed=all").get_json()["tasks"]) == 2
+
+
+def test_rescheduling_moves_a_task_and_keeps_its_duration_valid(session, task_payload):
+    task_id = create(session, task_payload())
+
+    moved = session.patch(
+        f"/api/tasks/{task_id}",
+        json={"startAt": "2026-03-05 14:00:00", "endAt": "2026-03-05 15:30:00"},
+    )
+
+    assert moved.status_code == 200
+    stored = session.get(f"/api/tasks/{task_id}").get_json()
+    assert stored["startAt"] == "2026-03-05T14:00:00Z"
+    assert stored["endAt"] == "2026-03-05T15:30:00Z"
+
+
+def test_rescheduling_before_the_start_is_rejected_and_changes_nothing(session, task_payload):
+    task_id = create(session, task_payload())
+
+    response = session.patch(f"/api/tasks/{task_id}", json={"startAt": "2026-03-02 12:00:00"})
+
+    assert response.status_code == 400
+    assert session.get(f"/api/tasks/{task_id}").get_json()["startAt"] == "2026-03-02T10:00:00Z"
+
+
+def test_completing_and_reopening_a_task_tracks_the_completion_time(session, task_payload):
+    task_id = create(session, task_payload())
+
+    done = session.patch(
+        f"/api/tasks/{task_id}",
+        json={"isCompleted": True, "completedAt": "2026-03-02 10:30:00"},
+    )
+    assert done.status_code == 200
+    stored = session.get(f"/api/tasks/{task_id}").get_json()
+    assert stored["isCompleted"] is True and stored["completedAt"] is not None
+
+    reopened = session.patch(
+        f"/api/tasks/{task_id}", json={"isCompleted": False, "completedAt": None}
+    )
+    assert reopened.status_code == 200
+    stored = session.get(f"/api/tasks/{task_id}").get_json()
+    assert stored["isCompleted"] is False and stored["completedAt"] is None
+
+
+def test_completion_must_say_when_it_happened(session, task_payload):
+    task_id = create(session, task_payload())
+
+    response = session.patch(f"/api/tasks/{task_id}", json={"isCompleted": True})
+
+    assert response.status_code == 400
+    assert "isCompleted" in response.get_json()["errors"]
+    assert session.get(f"/api/tasks/{task_id}").get_json()["isCompleted"] is False
+
+
+def test_a_deleted_task_leaves_the_list(session, task_payload):
+    keep = create(session, task_payload(title="Keep"))
+    drop = create(session, task_payload(title="Drop"))
+
+    assert session.delete(f"/api/tasks/{drop}").status_code == 200
+
+    tasks = session.get("/api/tasks").get_json()["tasks"]
+    assert [t["id"] for t in tasks] == [keep]
+
+
+@pytest.mark.parametrize(
+    "method, path",
+    [
+        ("get", "/api/tasks"),
+        ("get", "/api/tasks/1"),
+        ("post", "/api/tasks"),
+        ("post", "/api/tasks/bulk"),
+        ("patch", "/api/tasks/1"),
+        ("delete", "/api/tasks/1"),
+        ("get", "/api/stats/dashboard"),
+        ("get", "/api/ai/daily-brief"),
+        ("post", "/api/ai/parse-task"),
+        ("post", "/api/ai/decompose"),
+    ],
+)
+def test_protected_routes_reject_anonymous_requests(client, method, path):
+    assert getattr(client, method)(path, json={}).status_code == 401
+
+
+def test_a_task_cannot_be_created_without_the_ajax_header(session, task_payload):
+    del session.environ_base["HTTP_X_REQUESTED_WITH"]
+
+    assert session.post("/api/tasks", json=task_payload()).status_code == 403
+    assert session.get("/api/tasks").get_json()["tasks"] == []
+
+
+def test_a_failed_bulk_create_saves_nothing(session, task_payload):
+    bad = session.post("/api/tasks/bulk", json=[task_payload(title="Fine"), task_payload(title="")])
+
+    assert bad.status_code == 400
+    assert session.get("/api/tasks").get_json()["tasks"] == []
