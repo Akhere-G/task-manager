@@ -1,7 +1,9 @@
+from dataclasses import replace
 from datetime import date, datetime, timezone
 
 from app.database import db
 from app.models import Task
+from app.services.task_query import TaskQuery
 from app.utils.formatters import to_snake_case
 from app.utils.serializers import task_to_dict
 from app.utils.validators import MAX_TASKS_PER_REQUEST
@@ -15,23 +17,8 @@ from dateutil import parser
 from sqlalchemy import asc, desc, func, select
 
 
-def get_all_tasks(
-    user_id,
-    category=None,
-    search=None,
-    duration=None,
-    is_completed=None,
-    start_date=None,
-    end_date=None,
-    sort_by=None,
-    order=None,
-    limit=None,
-    page=None,
-    project_repeating=False,
-):
-    clauses = build_task_filters(
-        user_id, category, search, is_completed, start_date, end_date, duration
-    )
+def get_all_tasks(user_id, query=TaskQuery()):
+    clauses = build_task_filters(user_id, query)
 
     total_count = (
         db.session.execute(
@@ -48,10 +35,11 @@ def get_all_tasks(
             func.literal_column("MINUTE"), Task.start_at, Task.end_at
         ),
     }
-    sort_field = sort_map.get(sort_by, Task.created_at)  # type: ignore
-    order_expr = desc(sort_field) if order == "desc" else asc(sort_field)
+    sort_field = sort_map.get(query.sort_by, Task.created_at)  # type: ignore
+    order_expr = desc(sort_field) if query.order == "desc" else asc(sort_field)
 
-    page = max(int(page or 1), 1)
+    page = max(int(query.page or 1), 1)
+    limit = query.limit
     if limit is None:
         limit = min(total_count, MAX_TASKS_PER_REQUEST)
     limit = max(int(limit), 1)
@@ -68,20 +56,16 @@ def get_all_tasks(
 
     tasks = [task_to_dict(t) for t in tracked_tasks]
 
-    if project_repeating:
+    if query.project_repeating:
 
         def parse_date(d):
             return parser.isoparse(d) if isinstance(d, str) else d
 
-        start = parse_date(start_date)
-        end = parse_date(end_date)
+        start = parse_date(query.start_date)
+        end = parse_date(query.end_date)
 
         base_clauses = build_task_filters(
-            user_id=user_id,
-            category=category,
-            search=search,
-            is_completed=is_completed,
-            duration=duration,
+            user_id, replace(query, start_date=None, end_date=None)
         )
 
         tasks = with_repeating(tasks, start, end, user_id, base_clauses)

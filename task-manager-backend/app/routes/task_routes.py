@@ -6,6 +6,7 @@ from app.utils.validators import (
     validate_task,
     validate_task_list,
 )
+from app.services.task_query import TaskQuery
 from app.services.task_service import (
     TaskConflict,
     TaskValidationError,
@@ -30,20 +31,7 @@ def list_tasks():
     if errors:
         return jsonify({"errors": errors}), 400
 
-    raw_tasks = get_all_tasks(
-        user_id,
-        params["category"],
-        params["search"],
-        params["duration"],
-        params["is_completed"],
-        params["start_date"],
-        params["end_date"],
-        params["sort_by"],
-        params["order"],
-        params["limit"],
-        params["page"],
-        params["project_repeating"],
-    )
+    raw_tasks = get_all_tasks(user_id, TaskQuery(**params))
     return jsonify(format_json_response(raw_tasks))
 
 
