@@ -14,6 +14,7 @@ from app.database import db
 from app.models import DailyBrief
 
 from app.services.stats_service import get_brief_stats
+from app.services.task_query import TaskQuery
 from app.services.task_service import get_all_tasks
 
 logger = logging.getLogger(__name__)
@@ -100,11 +101,13 @@ def generate_daily_brief(user_id, timezone_name=None):
             return existing_brief.brief_text, False
 
         today_data = get_all_tasks(
-            start_date=today_str,
-            end_date=today_str,
-            user_id=user_id,
-            is_completed=False,
-            project_repeating=True,
+            user_id,
+            TaskQuery(
+                start_date=today_str,
+                end_date=today_str,
+                is_completed=False,
+                project_repeating=True,
+            ),
         )
         today_tasks = today_data.get("tasks", [])
         stats = get_brief_stats(user_id)
