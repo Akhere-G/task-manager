@@ -43,21 +43,18 @@ def build_search_clause(search):
     )
 
 
-def build_task_filters(
-    user_id,
-    category=None,
-    search=None,
-    is_completed=None,
-    start_date=None,
-    end_date=None,
-    duration=None,
-):
+def build_task_filters(user_id, query):
+    category = query.category
+    is_completed = query.is_completed
+    start_date = query.start_date
+    end_date = query.end_date
+    duration = query.duration
     clauses = [Task.user_id == user_id]
 
     if category and category != "all":
         clauses.append(Task.category == category)
 
-    search_clause = build_search_clause(search)
+    search_clause = build_search_clause(query.search)
     if search_clause is not None:
         clauses.append(search_clause)
 

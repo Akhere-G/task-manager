@@ -9,7 +9,7 @@ os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-the-test-suite-only"
 os.environ["FRONTEND_URL"] = "http://localhost:5173"
 os.environ["JWT_COOKIE_SECURE"] = "False"
 os.environ["TRUSTED_PROXY_HOPS"] = "1"
-os.environ.pop("REDIS_URL", None)
+os.environ["REDIS_URL"] = ""
 os.environ["MAIL_SEND_API_KEY"] = "test-key"
 os.environ["MAIL_SEND_EMAIL"] = "noreply@example.com"
 os.environ["CONTACT_TO_EMAIL"] = "owner@example.com"
@@ -24,7 +24,6 @@ import init_db
 from app.database import db
 from app.demo import DEMO_USER_EMAIL
 from app.extensions import limiter
-from app.utils.quota import reset_memory_counts
 from app.main import create_app
 from app.models import User
 
@@ -89,7 +88,6 @@ def clean_tables(database):
 def reset_rate_limits():
     if limiter.initialized:
         limiter.reset()
-    reset_memory_counts()
     yield
 
 
