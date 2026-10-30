@@ -89,6 +89,15 @@ type RecurrenceFields = Pick<
   "repeatBy" | "repeatInterval" | "repeatDays"
 >;
 
+const joinList = (items: string[]) =>
+  items.length < 2
+    ? items.join("")
+    : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+
+const sameDays = (days: RepeatDay[], expected: number[]) =>
+  days.length === expected.length &&
+  expected.every((day, index) => Number(days[index]) === day);
+
 export function describeRecurrence({
   repeatBy,
   repeatInterval,
@@ -107,10 +116,35 @@ export function describeRecurrence({
       ? `${unit[0].toUpperCase()}${unit.slice(1)}ly`
       : `Every ${interval} ${unit}s`;
   }
-  const days = sortDays(repeatBy, repeatDays)
-    .map((day) => formatDay(repeatBy, day))
-    .join(", ");
-  return `${days} ${cycle}`;
+
+  const days = sortDays(repeatBy, repeatDays);
+  const names = days.map((day) => formatDay(repeatBy, day));
+
+  if (repeatBy === "weekly") {
+    const everyDay = sameDays(days, [0, 1, 2, 3, 4, 5, 6]);
+    const weekdays = sameDays(days, [0, 1, 2, 3, 4]);
+    const weekend = sameDays(days, [5, 6]);
+
+    if (interval === 1) {
+      if (everyDay) return "Every day";
+      if (weekdays) return "Every weekday";
+      if (weekend) return "Every weekend";
+      return `Every ${joinList(names)}`;
+    }
+    const label = everyDay
+      ? "Every day"
+      : weekdays
+        ? "Weekdays"
+        : weekend
+          ? "Weekends"
+          : joinList(names);
+    return `${label} ${cycle}`;
+  }
+
+  if (repeatBy === "monthly") {
+    return `The ${joinList(names)} of ${cycle}`;
+  }
+  return `${joinList(names)} ${cycle}`;
 }
 
 /** e.g. "3 times every 2 weeks" */

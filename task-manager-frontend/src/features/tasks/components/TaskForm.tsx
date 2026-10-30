@@ -395,7 +395,6 @@ export default function TaskForm({
               repeatBy={formState.repeatBy}
               interval={formState.repeatInterval ?? 1}
               days={formState.repeatDays ?? null}
-              timeZone={formState.repeatTimezone}
               intervalError={errorMessages.repeatInterval}
               daysError={errorMessages.repeatDays}
               onIntervalChange={(repeatInterval) =>
