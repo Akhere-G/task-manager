@@ -11,11 +11,7 @@ import { trackEvent } from "../../../services/analytics";
 import { addHours, addMilliseconds, format, isValid } from "date-fns";
 import { formatForInput } from "../../../utils/formators";
 import RecurrencePicker from "./RecurrencePicker";
-import {
-  REPEAT_LIMITS,
-  defaultDays,
-  getBrowserTimeZone,
-} from "../recurrence";
+import { REPEAT_LIMITS, defaultDays, getBrowserTimeZone } from "../recurrence";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
   general: string;

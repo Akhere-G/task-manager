@@ -90,7 +90,11 @@ export default function RecurrencePicker({
       {intervalError && <p className={errorClass}>{intervalError}</p>}
 
       {repeatBy === "weekly" && (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Weekdays">
+        <div
+          className="flex flex-wrap gap-2"
+          role="group"
+          aria-label="Weekdays"
+        >
           {WEEKDAY_NAMES.map((name, index) => (
             <button
               key={name}
@@ -154,7 +158,10 @@ export default function RecurrencePicker({
               value={yearlyDay}
               onChange={(e) =>
                 setYearlyDay(
-                  Math.min(Math.max(Number(e.target.value) || 1, 1), yearlyMaxDay),
+                  Math.min(
+                    Math.max(Number(e.target.value) || 1, 1),
+                    yearlyMaxDay,
+                  ),
                 )
               }
               className={`${inputClass} w-20`}

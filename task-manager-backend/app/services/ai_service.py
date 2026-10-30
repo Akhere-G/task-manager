@@ -16,6 +16,7 @@ from app.models import DailyBrief
 from app.services.stats_service import get_brief_stats
 from app.services.task_query import TaskQuery
 from app.services.task_service import get_all_tasks
+from app.utils.recurrence import REPEAT_FREQUENCIES, REPEAT_INTERVAL_LIMITS, normalise_days
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +184,43 @@ def generate_daily_brief(user_id, timezone_name=None):
         return FALLBACK_BRIEF, True
 
 
+def clean_recurrence(parsed):
+    """Drop anything the model got wrong so the form always gets a usable pattern."""
+    repeat_by = parsed.get("repeatBy")
+    if repeat_by not in REPEAT_FREQUENCIES:
+        parsed.update(
+            isRepeating=False,
+            repeatBy=None,
+            repeatInterval=1,
+            repeatDays=None,
+            repeatUntil=None,
+        )
+        return parsed
+
+    try:
+        interval = int(parsed.get("repeatInterval") or 1)
+    except (TypeError, ValueError):
+        interval = 1
+    interval = min(max(interval, 1), REPEAT_INTERVAL_LIMITS[repeat_by])
+
+    days = parsed.get("repeatDays")
+    days = normalise_days(repeat_by, days if isinstance(days, list) else []) or None
+
+    until = parsed.get("repeatUntil")
+    try:
+        datetime.strptime(str(until), "%Y-%m-%d")
+    except ValueError:
+        until = None
+
+    parsed.update(
+        isRepeating=True,
+        repeatInterval=interval,
+        repeatDays=days,
+        repeatUntil=until,
+    )
+    return parsed
+
+
 def parse_task_with_ai(user_input):
     now = datetime.now(timezone.utc)
     today_str = now.strftime("%Y-%m-%d")
@@ -198,6 +236,12 @@ def parse_task_with_ai(user_input):
     - endAt: Datetime use YYYY-MM-DD HH:MM (MUST be present). Should be after startAt but on the same day. If no time mentioned, if a duration was mentioned, add that to the start date and set this to that. Otherwise set to an hour after start at.
     - isRepeating: boolean. True if task is daily/every day, weekly, monthly, yearly or repeated
     - repeatBy: ENUM ("daily", "weekly", "monthly", "yearly") or null. For repeating tasks: Identify the frequency mentioned.
+    - repeatInterval: integer of 1 or more, default 1. "every 2 weeks" is 2, "every 3 days" is 3, "every other month" is 2.
+    - repeatDays: list or null. Only when specific days are mentioned.
+        weekly: weekday numbers where Monday is 0 and Sunday is 6, e.g. "Monday and Thursday" is [0, 3].
+        monthly: days of the month from 1 to 31, e.g. "the 1st and 15th" is [1, 15].
+        yearly: "MM-DD" strings, e.g. "14 February and 25 December" is ["02-14", "12-25"].
+        Use null for daily tasks, when no specific days are mentioned, or when the task does not repeat.
     - repeatUntil DATE or Null. use YYYY-MM-DD. For repeating tasks: Identify the end date mentioned.
     """
 
@@ -216,7 +260,7 @@ def parse_task_with_ai(user_input):
             parsed_data["endAt"] = datetime.now(timezone.utc).strftime(
                 "%Y-%m-%d 23:59:59"
             )
-        return parsed_data
+        return clean_recurrence(parsed_data)
     except Exception:
         return {
             "title": user_input[:50],
