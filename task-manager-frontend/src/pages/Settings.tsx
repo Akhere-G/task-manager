@@ -5,6 +5,7 @@ import { taskService } from "../features/tasks/api";
 import type { Task } from "../features/tasks/types";
 import { trackEvent } from "../services/analytics";
 import { toCsv } from "../utils/csv";
+import { formatRepeatDays } from "../features/tasks/recurrence";
 
 const EXPORT_PAGE_SIZE = 200;
 
@@ -22,6 +23,9 @@ export default function SettingsPage() {
       "End At",
       "Repeat By",
       "Repeat Until",
+      "Repeat Interval",
+      "Repeat Days",
+      "Repeat Time Zone",
       "Is Completed",
       "Completed At",
       "Created At",
@@ -46,6 +50,9 @@ export default function SettingsPage() {
         endAt,
         repeatBy,
         repeatUntil,
+        repeatInterval,
+        repeatDays,
+        repeatTimezone,
         isCompleted,
         completedAt,
         createdAt,
@@ -57,6 +64,9 @@ export default function SettingsPage() {
         endAt,
         repeatBy ?? "",
         repeatUntil ? repeatUntil : "",
+        repeatBy ? (repeatInterval ?? 1) : "",
+        formatRepeatDays(repeatBy, repeatDays),
+        repeatBy ? (repeatTimezone ?? "") : "",
         String(isCompleted),
         getCompletedAt(completedAt, endAt, isCompleted),
         createdAt,

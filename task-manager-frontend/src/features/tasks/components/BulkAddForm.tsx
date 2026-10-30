@@ -5,6 +5,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import useCreateAllTasks from "../hooks/useCreateAllTasks";
 import { trackEvent } from "../../../services/analytics";
+import { parseRepeatDays, parseRepeatInterval } from "../recurrence";
 
 function getDescription(task: Record<string, string>) {
   const rawDescription = task.Description || task.description;
@@ -30,6 +31,9 @@ export default function BulkAddForm() {
       "End At",
       "Repeat By",
       "Repeat Until",
+      "Repeat Interval",
+      "Repeat Days",
+      "Repeat Time Zone",
     ];
     const sampleData = [
       [
@@ -40,15 +44,21 @@ export default function BulkAddForm() {
         "2026-04-01 20:00",
         "",
         "",
+        "",
+        "",
+        "",
       ],
       [
         "Prepare Report",
         "work",
         "Weekly sync prep",
-        "2026-03-01 10:00",
-        "2026-03-01 14:00",
-        "daily",
+        "2026-03-02 10:00",
+        "2026-03-02 14:00",
+        "weekly",
         "2026-09-01",
+        "1",
+        "Mon;Wed;Fri",
+        "UTC",
       ],
     ];
 
@@ -140,6 +150,28 @@ export default function BulkAddForm() {
               task.repeatUntil ||
               task.repeat_until ||
               null,
+            rawRepeatInterval:
+              task["Repeat Interval"] ||
+              task["Repeat interval"] ||
+              task["repeat interval"] ||
+              task.repeatInterval ||
+              task.repeat_interval ||
+              "",
+            rawRepeatDays:
+              task["Repeat Days"] ||
+              task["Repeat days"] ||
+              task["repeat days"] ||
+              task.repeatDays ||
+              task.repeat_days ||
+              "",
+            rawRepeatTimezone:
+              task["Repeat Time Zone"] ||
+              task["Repeat Timezone"] ||
+              task["Repeat time zone"] ||
+              task["repeat time zone"] ||
+              task.repeatTimezone ||
+              task.repeat_timezone ||
+              "",
             createdAt:
               task["Created At"] ||
               task["Created at"] ||
@@ -147,10 +179,29 @@ export default function BulkAddForm() {
               task.createdAt ||
               task.created_at,
           }))
-          .map((task) => ({
-            ...task,
-            isRepeating: !!task.repeatBy,
-          }));
+          .map(
+            ({
+              rawRepeatInterval,
+              rawRepeatDays,
+              rawRepeatTimezone,
+              ...task
+            }) => {
+              const repeatInterval = task.repeatBy
+                ? parseRepeatInterval(rawRepeatInterval)
+                : undefined;
+              const repeatDays = parseRepeatDays(task.repeatBy, rawRepeatDays);
+              const repeatTimezone = task.repeatBy
+                ? rawRepeatTimezone.trim()
+                : "";
+              return {
+                ...task,
+                isRepeating: !!task.repeatBy,
+                ...(repeatInterval !== undefined ? { repeatInterval } : {}),
+                ...(repeatDays ? { repeatDays } : {}),
+                ...(repeatTimezone ? { repeatTimezone } : {}),
+              };
+            },
+          );
 
         const { hasErrors, allErrors } = validateTaskList(newTasks);
 

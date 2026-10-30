@@ -1,5 +1,5 @@
 import type { Task } from "../features/tasks/types";
-import { REPEAT_LIMITS } from "../features/tasks/recurrence";
+import { REPEAT_LIMITS, isValidRepeatDay } from "../features/tasks/recurrence";
 
 export interface TaskData {
   title: string;
@@ -14,6 +14,7 @@ export interface TaskData {
   repeatBy?: string | null;
   repeatInterval?: number | null;
   repeatDays?: (number | string)[] | null;
+  repeatTimezone?: string | null;
 }
 
 export interface ContactData {
@@ -136,10 +137,12 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
   }
 
   if (typeof data.repeatBy === "string" && data.repeatBy in REPEAT_LIMITS) {
-    const limit = REPEAT_LIMITS[data.repeatBy];
+    const repeatBy = data.repeatBy;
+    const limit = REPEAT_LIMITS[repeatBy];
     const interval = data.repeatInterval ?? 1;
     if (!Number.isInteger(interval) || interval < 1 || interval > limit) {
-      errors["repeatInterval"] = `Repeat interval must be between 1 and ${limit}.`;
+      errors["repeatInterval"] =
+        `Repeat interval must be between 1 and ${limit}.`;
     }
     if (
       "repeatDays" in data &&
@@ -147,6 +150,21 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
       !data.repeatDays?.length
     ) {
       errors["repeatDays"] = "Choose at least one day.";
+    } else if (
+      data.repeatDays?.length &&
+      (data.repeatBy === "daily" ||
+        !data.repeatDays.every((day) => isValidRepeatDay(repeatBy, day)))
+    ) {
+      errors["repeatDays"] =
+        "Repeat days must be weekdays (Mon-Sun), days of the month (1-31) or MM-DD dates.";
+    }
+  }
+
+  if (data.repeatTimezone) {
+    try {
+      new Intl.DateTimeFormat(undefined, { timeZone: data.repeatTimezone });
+    } catch {
+      errors["repeatTimezone"] = "Repeat time zone is not a valid time zone.";
     }
   }
 

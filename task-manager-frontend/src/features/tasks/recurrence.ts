@@ -124,3 +124,76 @@ export function describeTimes(
   const times = count === 1 ? "Once" : `${count} times`;
   return `${times} ${interval > 1 ? `every ${interval} ${unit}s` : `every ${unit}`}`;
 }
+
+export function isValidRepeatDay(repeatBy: string, day: unknown): boolean {
+  if (repeatBy === "weekly") {
+    return (
+      Number.isInteger(day) && (day as number) >= 0 && (day as number) <= 6
+    );
+  }
+  if (repeatBy === "monthly") {
+    return (
+      Number.isInteger(day) && (day as number) >= 1 && (day as number) <= 31
+    );
+  }
+  if (repeatBy === "yearly") {
+    if (typeof day !== "string" || !/^\d\d-\d\d$/.test(day)) return false;
+    const [month, date] = day.split("-").map(Number);
+    return month >= 1 && month <= 12 && date >= 1 && date <= daysInMonth(month);
+  }
+  return false;
+}
+
+// 2024 is a leap year, so Feb 29 is accepted.
+const daysInMonth = (month: number) => new Date(2024, month, 0).getDate();
+
+const CSV_DAY_SEPARATOR = ";";
+
+/** CSV cell for the chosen days: "Mon;Thu", "1;15" or "02-14;12-25". */
+export function formatRepeatDays(
+  repeatBy: string | null | undefined,
+  days: RepeatDay[] | null | undefined,
+): string {
+  if (!repeatBy || !days?.length) return "";
+  return sortDays(repeatBy, days)
+    .map((day) =>
+      repeatBy === "weekly" ? (WEEKDAY_NAMES[Number(day)] ?? day) : day,
+    )
+    .join(CSV_DAY_SEPARATOR);
+}
+
+/**
+ * Reads a CSV cell written by formatRepeatDays. Weekdays may be names (Mon, Monday)
+ * or numbers (Monday = 0). Anything unreadable is kept as text so validation rejects it.
+ */
+export function parseRepeatDays(
+  repeatBy: string | null | undefined,
+  text: string | null | undefined,
+): RepeatDay[] | null {
+  const tokens = (text ?? "")
+    .split(/[;|]/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+  if (!repeatBy || tokens.length === 0) return null;
+
+  return tokens.map((token) => {
+    if (repeatBy === "weekly") {
+      const index = WEEKDAY_NAMES.findIndex(
+        (name) => name.toLowerCase() === token.slice(0, 3).toLowerCase(),
+      );
+      if (index !== -1 && /^[a-z]+$/i.test(token)) return index;
+    }
+    if (repeatBy === "weekly" || repeatBy === "monthly") {
+      return /^\d+$/.test(token) ? Number(token) : token;
+    }
+    return token;
+  });
+}
+
+export function parseRepeatInterval(
+  text: string | null | undefined,
+): number | undefined {
+  const value = (text ?? "").trim();
+  if (!value) return undefined;
+  return /^\d+$/.test(value) ? Number(value) : NaN;
+}
