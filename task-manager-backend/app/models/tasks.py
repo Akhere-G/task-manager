@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Index, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
@@ -23,6 +23,9 @@ class Task(Base):
         Enum("daily", "weekly", "monthly", "yearly", name="repeat_by_enum")
     )
     repeat_until: Mapped[date | None]
+    repeat_interval: Mapped[int] = mapped_column(server_default="1")
+    repeat_days: Mapped[list | None] = mapped_column(JSON)
+    repeat_timezone: Mapped[str | None] = mapped_column(String(64))
     series_id: Mapped[int | None]
     reminded_for_start_at: Mapped[datetime | None] = mapped_column(DateTime)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))

@@ -28,6 +28,7 @@ export default function AddTask() {
       category: newTask.category,
       is_repeating: Boolean(newTask.repeatBy),
       repeat_by: newTask.repeatBy ?? null,
+      repeat_interval: newTask.repeatInterval ?? 1,
       count: 1,
     });
     invalidateTaskKeys();

@@ -50,6 +50,9 @@ class TaskSchema(SQLAlchemyAutoSchema):
     is_repeating = auto_field()
     repeat_by = auto_field()
     repeat_until = auto_field()
+    repeat_interval = auto_field()
+    repeat_days = auto_field()
+    repeat_timezone = auto_field()
 
     @validates_schema
     def validate_times(self, data, **kwargs):

@@ -32,7 +32,10 @@ export const taskService = {
   },
   update: async (
     id: number,
-    taskData: Partial<Task> & { expectedStartAt?: string },
+    taskData: Partial<Task> & {
+      expectedStartAt?: string;
+      skipOccurrence?: boolean;
+    },
   ): Promise<Task> => {
     const response = await apiClient.patch(`/tasks/${id}`, taskData);
     return response.data;

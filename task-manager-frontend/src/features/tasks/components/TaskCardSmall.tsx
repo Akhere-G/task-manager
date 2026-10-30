@@ -3,6 +3,7 @@ import type { Task } from "../types";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { formatDateRange, playSound } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
+import { describeRecurrence } from "../recurrence";
 
 interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
@@ -50,7 +51,14 @@ export function TaskCardSmall({
           <span
             className={`flex items-center font-semibold truncate text-ellipsis whitespace-nowrap text-nowrap over text-[12px] pr-1 ${task.isCompleted ? "text-text-sub line-through opacity-60" : "text-text-main"}`}
           >
-            {task.isRepeating && <Repeat className="w-3 h-3 mr-2" />}
+            {task.isRepeating && (
+              <Repeat
+                className="w-3 h-3 mr-2"
+                aria-label={describeRecurrence(task)}
+              >
+                <title>{describeRecurrence(task)}</title>
+              </Repeat>
+            )}
             {task.title}
           </span>
           <span className="text-[10px] font-bold uppercase tracking-widest text-accent text-nowrap">

@@ -3,6 +3,11 @@ import re
 from dateutil import parser
 
 from app.utils.common_passwords import is_common_password
+from app.utils.recurrence import (
+    REPEAT_INTERVAL_LIMITS,
+    is_valid_month_day,
+    is_valid_zone,
+)
 
 
 VALID_CATEGORIES = [
@@ -119,6 +124,48 @@ def validate_task(data, is_update=False):
 
         except (ValueError, TypeError):
             errors["repeatUntil"] = "Repeat Until is an invalid date."
+
+    errors.update(validate_recurrence_pattern(data))
+    return errors
+
+
+def validate_recurrence_pattern(data):
+    errors = {}
+    repeat_by = data.get("repeatBy")
+
+    interval = data.get("repeatInterval")
+    if interval is not None:
+        limit = REPEAT_INTERVAL_LIMITS.get(repeat_by, max(REPEAT_INTERVAL_LIMITS.values()))
+        if isinstance(interval, bool) or not isinstance(interval, int):
+            errors["repeatInterval"] = "Repeat interval must be a whole number."
+        elif interval < 1 or interval > limit:
+            errors["repeatInterval"] = f"Repeat interval must be between 1 and {limit}."
+
+    days = data.get("repeatDays")
+    if days is not None:
+        if not isinstance(days, list):
+            errors["repeatDays"] = "Repeat days must be a list."
+        elif repeat_by == "daily":
+            errors["repeatDays"] = "Daily tasks do not use repeat days."
+        elif not days and repeat_by:
+            errors["repeatDays"] = "Choose at least one day."
+        elif len(set(map(str, days))) != len(days):
+            errors["repeatDays"] = "Repeat days must not contain duplicates."
+        elif repeat_by == "weekly" and not all(
+            isinstance(d, int) and not isinstance(d, bool) and 0 <= d <= 6 for d in days
+        ):
+            errors["repeatDays"] = "Weekly repeat days must be weekdays (0 to 6)."
+        elif repeat_by == "monthly" and not all(
+            isinstance(d, int) and not isinstance(d, bool) and 1 <= d <= 31 for d in days
+        ):
+            errors["repeatDays"] = "Monthly repeat days must be between 1 and 31."
+        elif repeat_by == "yearly" and not all(is_valid_month_day(d) for d in days):
+            errors["repeatDays"] = "Yearly repeat days must be dates formatted MM-DD."
+
+    zone = data.get("repeatTimezone")
+    if zone is not None and not is_valid_zone(zone):
+        errors["repeatTimezone"] = "Repeat time zone is not a valid time zone."
+
     return errors
 
 

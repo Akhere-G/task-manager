@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { formatDateRange, formatDateRelative, playSound } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import useSkipTask from "../hooks/useSkipTask";
+import { describeRecurrence } from "../recurrence";
 
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
@@ -63,6 +64,7 @@ function TaskCard({
     repeatBy,
     repeatUntil,
   } = task;
+  const repeatLabel = describeRecurrence(task);
   const [showMore, setShowMore] = useState(false);
   const navigate = useNavigate();
 
@@ -150,7 +152,7 @@ function TaskCard({
             <div className="flex gap-2 items-center text-xs text-text-sub ">
               <Repeat className="w-4 h-4" />
               <p className="uppercase tracking-wide ">
-                {repeatBy}
+                {repeatLabel}
                 {repeatUntil && (
                   <span> until {formatDateRelative(repeatUntil)}</span>
                 )}

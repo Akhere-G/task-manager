@@ -11,6 +11,9 @@ TASK_FIELDS = (
     "is_repeating",
     "repeat_by",
     "repeat_until",
+    "repeat_interval",
+    "repeat_days",
+    "repeat_timezone",
     "series_id",
     "user_id",
 )

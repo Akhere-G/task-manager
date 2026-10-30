@@ -8,9 +8,6 @@ import {
   subDays,
   startOfDay,
   endOfDay,
-  addWeeks,
-  addMonths,
-  addYears,
   parseISO,
 } from "date-fns";
 import type { Task } from "./types";
@@ -80,22 +77,6 @@ export const formatDateRelative = (date = "") => {
   if (sameYear) return format(dateVal, "dd MMM");
   return format(dateVal, "dd MMM yyyy");
 };
-
-export function skipDate(date: Date, repeatBy: string) {
-  switch (repeatBy) {
-    case "daily":
-      return addDays(date, 1);
-    case "weekly":
-      return addWeeks(date, 1);
-    case "monthly":
-      return addMonths(date, 1);
-    case "yearly":
-      return addYears(date, 1);
-  }
-  throw new Error(
-    'Repeat by must be one of: "daily", "weekly", "monthly", "yearly"',
-  );
-}
 
 export const getCalendarTaskId = (task: Task): number =>
   task.isGhost ? task.seriesId : task.id;
