@@ -28,6 +28,7 @@ export default function useEditTask(props?: { onSuccess?: () => void }) {
         category: newTask.category,
         is_repeating: Boolean(newTask.repeatBy),
         repeat_by: newTask.repeatBy ?? null,
+        repeat_interval: newTask.repeatInterval ?? 1,
       });
       onSuccess?.();
     } catch (err) {

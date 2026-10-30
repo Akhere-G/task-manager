@@ -12,6 +12,9 @@ export interface Task {
   isRepeating?: boolean | null;
   repeatBy?: string | null;
   repeatUntil?: string | null;
+  repeatInterval?: number | null;
+  repeatDays?: (number | string)[] | null;
+  repeatTimezone?: string | null;
   isGhost: boolean;
   seriesId: number;
 }

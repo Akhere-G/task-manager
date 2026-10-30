@@ -3,7 +3,10 @@ import { taskService } from "../api";
 import type { Task } from "../types";
 import { toFormattedUTCDate } from "../../../utils/formators";
 
-type TaskUpdate = Partial<Task> & { expectedStartAt?: string };
+type TaskUpdate = Partial<Task> & {
+  expectedStartAt?: string;
+  skipOccurrence?: boolean;
+};
 
 const formatTask = (newTaskData: TaskUpdate): TaskUpdate => {
   const formattedData = { ...newTaskData };

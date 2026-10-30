@@ -2,7 +2,7 @@ import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({
   children,
-  redirectTo = "/register",
+  redirectTo = "/login",
   redirect = true,
 }: {
   children: React.ReactNode;

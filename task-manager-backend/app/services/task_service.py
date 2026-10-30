@@ -6,6 +6,13 @@ from app.models import Task
 from app.services.task_query import TaskQuery
 from app.utils.formatters import to_snake_case
 from app.utils.serializers import task_to_dict
+from app.utils.recurrence import (
+    default_days,
+    get_zone,
+    next_occurrence,
+    normalise_days,
+    snap_to_slot,
+)
 from app.utils.validators import MAX_TASKS_PER_REQUEST
 from app.utils.task_utils import (
     build_task_filters,
@@ -90,6 +97,31 @@ def get_task(user_id, task_id):
     return task_to_dict(task)
 
 
+def _apply_recurrence(task):
+    """Fill in and normalise the recurrence fields so the series starts on a chosen day."""
+    if not task.is_repeating or not task.repeat_by:
+        task.repeat_interval = 1
+        task.repeat_days = None
+        task.repeat_timezone = None
+        return
+
+    zone = get_zone(task.repeat_timezone)
+    task.repeat_interval = task.repeat_interval or 1
+    if task.repeat_by == "daily":
+        task.repeat_days = None
+    else:
+        task.repeat_days = normalise_days(
+            task.repeat_by, task.repeat_days
+        ) or default_days(task.start_at, task.repeat_by, zone)
+
+    snapped = snap_to_slot(
+        task.start_at, task.repeat_by, task.repeat_interval, task.repeat_days, zone
+    )
+    if snapped != task.start_at:
+        task.end_at += snapped - task.start_at
+        task.start_at = snapped
+
+
 def create_task(user_id, data):
     new_task = Task(
         title=data.get("title", "").strip(),
@@ -97,13 +129,17 @@ def create_task(user_id, data):
         if data.get("description")
         else None,
         category=str(data.get("category", "General")).strip(),
-        start_at=data.get("startAt"),
-        end_at=data.get("endAt"),
+        start_at=_as_naive_utc(data.get("startAt")),
+        end_at=_as_naive_utc(data.get("endAt")),
         is_repeating=bool(data.get("isRepeating")),
         repeat_by=data.get("repeatBy"),
         repeat_until=data.get("repeatUntil"),
+        repeat_interval=data.get("repeatInterval") or 1,
+        repeat_days=data.get("repeatDays"),
+        repeat_timezone=data.get("repeatTimezone"),
         user_id=user_id,
     )
+    _apply_recurrence(new_task)
     db.session.add(new_task)
     db.session.flush()
 
@@ -120,16 +156,20 @@ def create_tasks_from_list(user_id, tasks):
             title=t.get("title"),
             description=t.get("description").strip() if t.get("description") else None,
             category=t.get("category", "General"),
-            start_at=t.get("startAt"),
-            end_at=t.get("endAt"),
+            start_at=_as_naive_utc(t.get("startAt")),
+            end_at=_as_naive_utc(t.get("endAt")),
             user_id=user_id,
             is_completed=bool(t.get("isCompleted")),
             completed_at=t.get("completedAt"),
             is_repeating=bool(t.get("repeatBy")),
             repeat_by=t.get("repeatBy"),
             repeat_until=t.get("repeatUntil"),
+            repeat_interval=t.get("repeatInterval") or 1,
+            repeat_days=t.get("repeatDays"),
+            repeat_timezone=t.get("repeatTimezone"),
             created_at=t.get("createdAt") or date.today(),
         )
+        _apply_recurrence(new_task)
         db.session.add(new_task)
         inserted_tasks.append(new_task)
 
@@ -167,7 +207,18 @@ UPDATABLE_FIELDS = [
     "is_repeating",
     "repeat_by",
     "repeat_until",
+    "repeat_interval",
+    "repeat_days",
+    "repeat_timezone",
 ]
+
+RECURRENCE_FIELDS = {
+    "repeat_by",
+    "repeat_interval",
+    "repeat_days",
+    "repeat_timezone",
+    "start_at",
+}
 
 
 def _as_naive_utc(value):
@@ -191,6 +242,9 @@ def _task_state(task):
         "is_repeating": task.is_repeating,
         "repeat_by": task.repeat_by,
         "repeat_until": task.repeat_until,
+        "repeat_interval": task.repeat_interval,
+        "repeat_days": task.repeat_days,
+        "repeat_timezone": task.repeat_timezone,
         "created_at": task.created_at,
     }
 
@@ -233,6 +287,30 @@ def update_task(user_id, task_id, data: dict):
 
     elif not task.is_completed and old_task_dict["is_completed"]:
         task.completed_at = None
+
+    task.start_at = _as_naive_utc(task.start_at)
+    task.end_at = _as_naive_utc(task.end_at)
+
+    if "repeat_by" in incoming and "repeat_days" not in incoming:
+        task.repeat_days = None
+    if RECURRENCE_FIELDS & incoming.keys() or not task.is_repeating:
+        _apply_recurrence(task)
+
+    if (
+        incoming.get("skip_occurrence")
+        and task.is_repeating
+        and task.repeat_by
+        and not task.is_completed
+    ):
+        next_start = next_occurrence(
+            task.start_at,
+            task.repeat_by,
+            task.repeat_interval,
+            task.repeat_days,
+            get_zone(task.repeat_timezone),
+        )
+        task.end_at = next_start + (task.end_at - task.start_at)
+        task.start_at = next_start
     db.session.flush()
 
     if check_should_repeat(old_task_dict, _task_state(task)):

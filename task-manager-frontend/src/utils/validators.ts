@@ -1,4 +1,5 @@
 import type { Task } from "../features/tasks/types";
+import { REPEAT_LIMITS } from "../features/tasks/recurrence";
 
 export interface TaskData {
   title: string;
@@ -11,6 +12,8 @@ export interface TaskData {
   repeatUntil?: string | null;
   isRepeating?: boolean | null;
   repeatBy?: string | null;
+  repeatInterval?: number | null;
+  repeatDays?: (number | string)[] | null;
 }
 
 export interface ContactData {
@@ -129,6 +132,21 @@ export const validateTask = (data: Partial<TaskData>, isUpdate = false) => {
     if (!["daily", "weekly", "monthly", "yearly"].includes(repeatBy)) {
       errors["repeatBy"] =
         "Repeat should must only be daily, weekly, monthly or yearly.";
+    }
+  }
+
+  if (typeof data.repeatBy === "string" && data.repeatBy in REPEAT_LIMITS) {
+    const limit = REPEAT_LIMITS[data.repeatBy];
+    const interval = data.repeatInterval ?? 1;
+    if (!Number.isInteger(interval) || interval < 1 || interval > limit) {
+      errors["repeatInterval"] = `Repeat interval must be between 1 and ${limit}.`;
+    }
+    if (
+      "repeatDays" in data &&
+      data.repeatBy !== "daily" &&
+      !data.repeatDays?.length
+    ) {
+      errors["repeatDays"] = "Choose at least one day.";
     }
   }
 

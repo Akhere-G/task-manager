@@ -10,6 +10,12 @@ import { validateTask, type TaskData } from "../../../utils/validators";
 import { trackEvent } from "../../../services/analytics";
 import { addHours, addMilliseconds, format, isValid } from "date-fns";
 import { formatForInput } from "../../../utils/formators";
+import RecurrencePicker from "./RecurrencePicker";
+import {
+  REPEAT_LIMITS,
+  defaultDays,
+  getBrowserTimeZone,
+} from "../recurrence";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
   general: string;
@@ -37,6 +43,24 @@ const repeatByOptions = [
   { name: "Yearly", value: "yearly" },
 ];
 
+function recurrenceFor(
+  repeatBy: string | null | undefined,
+  startAt: string,
+  interval?: number | null,
+) {
+  if (!repeatBy) {
+    return { repeatInterval: 1, repeatDays: null, repeatTimezone: null };
+  }
+  return {
+    repeatInterval: Math.min(
+      Math.max(interval || 1, 1),
+      REPEAT_LIMITS[repeatBy] ?? 1,
+    ),
+    repeatDays: defaultDays(startAt, repeatBy),
+    repeatTimezone: getBrowserTimeZone(),
+  };
+}
+
 interface TaskFormProps {
   confirmButtonText?: string;
   submitAction: (task: CreateTaskInput) => Promise<void>;
@@ -57,6 +81,9 @@ export default function TaskForm({
     isRepeating: false,
     repeatBy: null,
     repeatUntil: null,
+    repeatInterval: 1,
+    repeatDays: null,
+    repeatTimezone: null,
   });
 
   const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
@@ -69,6 +96,9 @@ export default function TaskForm({
     isRepeating: "",
     repeatBy: "",
     repeatUntil: "",
+    repeatInterval: "",
+    repeatDays: "",
+    repeatTimezone: "",
   });
 
   const [touched, setTouched] = useState({
@@ -92,6 +122,9 @@ export default function TaskForm({
     isRepeating: "",
     repeatBy: "",
     repeatUntil: "",
+    repeatInterval: "",
+    repeatDays: "",
+    repeatTimezone: "",
   };
 
   const [isLoading, setIsloading] = useState(false);
@@ -117,7 +150,17 @@ export default function TaskForm({
             endAt = prev.endAt;
           }
 
-          return { ...prev, ...initialData, startAt, endAt };
+          const merged = { ...prev, ...initialData, startAt, endAt };
+          if (merged.repeatBy) {
+            // Series created before intervals/days existed carry neither.
+            merged.repeatInterval = merged.repeatInterval || 1;
+            merged.repeatTimezone =
+              merged.repeatTimezone ?? getBrowserTimeZone();
+            if (merged.repeatBy !== "daily" && !merged.repeatDays?.length) {
+              merged.repeatDays = defaultDays(startAt, merged.repeatBy);
+            }
+          }
+          return merged;
         } catch (err) {
           console.error(err);
           return prev;
@@ -139,6 +182,20 @@ export default function TaskForm({
   ) {
     const { name, value } = e.target;
     const newFormState = { ...formState, [name]: value };
+    if (name === "repeatBy") {
+      Object.assign(
+        newFormState,
+        recurrenceFor(value, formState.startAt, formState.repeatInterval),
+      );
+    }
+    setFormState(newFormState);
+    validateForm(newFormState);
+  }
+
+  function handleRecurrenceChange(
+    changes: Pick<CreateTaskInput, "repeatInterval" | "repeatDays">,
+  ) {
+    const newFormState = { ...formState, ...changes };
     setFormState(newFormState);
     validateForm(newFormState);
   }
@@ -151,6 +208,11 @@ export default function TaskForm({
       [name]: checked,
       repeatBy: checked ? formState.repeatBy : null,
       repeatUntil: checked ? formState.repeatUntil : null,
+      ...(checked
+        ? {
+            repeatTimezone: formState.repeatTimezone ?? getBrowserTimeZone(),
+          }
+        : recurrenceFor(null, formState.startAt)),
     };
     setFormState(newFormState);
     validateForm(newFormState);
@@ -174,10 +236,17 @@ export default function TaskForm({
         );
     }
 
+    const daysWereDefault =
+      JSON.stringify(formState.repeatDays) ===
+      JSON.stringify(defaultDays(formState.startAt, formState.repeatBy));
     const newFormState = {
       ...formState,
       startAt: newStartDate,
       endAt: newEndDate,
+      repeatDays:
+        formState.repeatBy && daysWereDefault
+          ? defaultDays(newStartDate, formState.repeatBy)
+          : formState.repeatDays,
     };
     setFormState(newFormState);
     validateForm(newFormState);
@@ -325,6 +394,28 @@ export default function TaskForm({
             touched={touched.repeatBy}
             options={repeatByOptions}
           />
+          {formState.repeatBy && (
+            <RecurrencePicker
+              repeatBy={formState.repeatBy}
+              interval={formState.repeatInterval ?? 1}
+              days={formState.repeatDays ?? null}
+              timeZone={formState.repeatTimezone}
+              intervalError={errorMessages.repeatInterval}
+              daysError={errorMessages.repeatDays}
+              onIntervalChange={(repeatInterval) =>
+                handleRecurrenceChange({
+                  repeatInterval,
+                  repeatDays: formState.repeatDays,
+                })
+              }
+              onDaysChange={(repeatDays) =>
+                handleRecurrenceChange({
+                  repeatInterval: formState.repeatInterval,
+                  repeatDays,
+                })
+              }
+            />
+          )}
           <FormInput
             name="repeatUntil"
             label="Repeat Until"

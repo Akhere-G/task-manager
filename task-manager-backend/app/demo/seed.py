@@ -19,6 +19,7 @@ from app.models import (
     Task,
     User,
 )
+from app.utils.recurrence import default_days, previous_occurrence
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import delete, select
 from werkzeug.security import generate_password_hash
@@ -57,14 +58,13 @@ def resolve_time(spec, now, tz):
     return next(c for c in candidates if c > now)
 
 
-def step_back(value, repeat_by, n):
-    if repeat_by == "daily":
-        return value - timedelta(days=n)
-    if repeat_by == "weekly":
-        return value - timedelta(weeks=n)
-    if repeat_by == "monthly":
-        return value - relativedelta(months=n)
-    return value - relativedelta(years=n)
+def step_back(value, repeat, n, tz):
+    """The occurrence `n` steps before `value`, the inverse of what completing a task does."""
+    for _ in range(n):
+        value = previous_occurrence(
+            value, repeat["by"], repeat.get("interval", 1), repeat.get("days"), tz
+        )
+    return value
 
 
 def build_rows(fixture, now):
@@ -92,7 +92,7 @@ def build_rows(fixture, now):
         if "history" in item:
             h = item["history"]
             for n in sorted(h["n"]):
-                h_start = step_back(start, repeat["by"], n)
+                h_start = step_back(start, repeat, n, tz)
                 jitter = rng.randint(-h["jitter_min"], h["jitter_min"])
                 done = h_start + timedelta(minutes=h["done_after_min"] + jitter)
                 done = min(done, now - timedelta(minutes=1))
@@ -115,6 +115,13 @@ def build_rows(fixture, now):
                 if "done" in item
                 else None,
                 "repeat_by": repeat["by"] if repeat else None,
+                "repeat_interval": repeat.get("interval", 1) if repeat else 1,
+                "repeat_days": (
+                    repeat.get("days") or default_days(start, repeat["by"], tz)
+                    if repeat
+                    else None
+                ),
+                "repeat_timezone": fixture["timezone"] if repeat else None,
                 "repeat_until": resolve_time(repeat["until"] + " 12:00", now, tz).date()
                 if repeat and repeat["until"]
                 else None,
@@ -127,6 +134,9 @@ def build_rows(fixture, now):
                     "end_at": h["start_at"] + length,
                     "repeat_by": None,
                     "repeat_until": None,
+                    "repeat_interval": 1,
+                    "repeat_days": None,
+                    "repeat_timezone": None,
                     "master": master,
                     **h,
                 }

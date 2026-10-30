@@ -92,6 +92,9 @@ def initialise_database():
             is_repeating BOOLEAN DEFAULT FALSE,
             repeat_by ENUM ('daily', 'weekly', 'monthly', 'yearly'),
             repeat_until DATE,
+            repeat_interval INT NOT NULL DEFAULT 1,
+            repeat_days JSON NULL,
+            repeat_timezone VARCHAR(64) NULL,
             series_id INT,
             user_id INT NOT NULL,
             CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -258,6 +261,17 @@ def initialise_database():
                 cursor.execute("ALTER TABLE tasks ADD COLUMN reminded_for_start_at DATETIME NULL")
                 conn.commit()
 
+        def add_tasks_recurrence_columns():
+            columns = {
+                "repeat_interval": "INT NOT NULL DEFAULT 1",
+                "repeat_days": "JSON NULL",
+                "repeat_timezone": "VARCHAR(64) NULL",
+            }
+            for column, definition in columns.items():
+                if not column_exists(cursor, db_name, "tasks", column):
+                    cursor.execute(f"ALTER TABLE tasks ADD COLUMN {column} {definition}")
+                    conn.commit()
+
         def add_tasks_user_indexes():
             if not index_exists(cursor, db_name, "tasks", "idx_tasks_user_end_at"):
                 cursor.execute(
@@ -281,6 +295,7 @@ def initialise_database():
         run_step("session table indexes", add_session_indexes)
         run_step("refresh_tokens.replaced_at column", add_refresh_tokens_replaced_at)
         run_step("tasks.reminded_for_start_at column", add_tasks_reminded_for_start_at)
+        run_step("tasks recurrence columns", add_tasks_recurrence_columns)
         run_step("tasks user indexes", add_tasks_user_indexes)
 
     except Exception as e:
