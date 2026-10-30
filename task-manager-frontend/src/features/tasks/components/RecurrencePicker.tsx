@@ -14,7 +14,6 @@ interface RecurrencePickerProps {
   repeatBy: string;
   interval: number;
   days: RepeatDay[] | null;
-  timeZone?: string | null;
   intervalError?: string;
   daysError?: string;
   onIntervalChange: (interval: number) => void;
@@ -38,7 +37,6 @@ export default function RecurrencePicker({
   repeatBy,
   interval,
   days,
-  timeZone,
   intervalError,
   daysError,
   onIntervalChange,
@@ -204,7 +202,6 @@ export default function RecurrencePicker({
           : selected.length > 0
             ? describeTimes(repeatBy, interval, selected.length)
             : "Choose at least one day"}
-        {timeZone && ` · days follow ${timeZone}`}
       </p>
     </fieldset>
   );
