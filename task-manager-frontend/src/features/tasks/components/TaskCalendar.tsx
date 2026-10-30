@@ -75,8 +75,17 @@ export default function TaskCalendar({
 
   const view = (searchParams.get("view") as View) || Views.MONTH;
   const setView = (view: View) => {
-    searchParams.set("view", view);
-    setSearchParams(searchParams);
+    const next = new URLSearchParams(searchParams);
+    next.set("view", view);
+    setSearchParams(next);
+  };
+
+  const drillDown = (date: Date) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("current_date", date.toISOString());
+    next.set("page", "1");
+    if (!isMobile) next.set("view", Views.DAY);
+    setSearchParams(next);
   };
 
   useEffect(() => {
@@ -167,10 +176,7 @@ export default function TaskCalendar({
           localizer={localizer}
           events={events}
           date={currentDate}
-          onDrillDown={(date) => {
-            setCurrentDate(date);
-            if (!isMobile) setView(Views.DAY);
-          }}
+          onDrillDown={drillDown}
           onNavigate={(date) => setCurrentDate(date)}
           onSelectSlot={({ start, end, action }) => {
             switch (action) {
