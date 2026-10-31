@@ -207,3 +207,35 @@ def snap_to_slot(start, repeat_by, interval, days, tz=UTC):
     if repeat_by == "daily" or _on_slot(start, repeat_by, chosen, tz):
         return start
     return next_occurrence(start, repeat_by, interval, chosen, tz)
+
+
+
+def _lands_on(day, start, repeat_by, tz):
+    local = _to_local(start, tz)
+    if repeat_by == "weekly":
+        return day == local.weekday()
+    if repeat_by == "monthly":
+        last_day = monthrange(local.year, local.month)[1]
+        return min(day, last_day) == local.day
+    if repeat_by == "yearly":
+        month, month_day = _parse_month_day(day)
+        last_day = monthrange(local.year, month)[1]
+        return month == local.month and min(month_day, last_day) == local.day
+    return False
+
+
+def replace_slot(repeat_by, days, old_start, new_start, tz=UTC):
+    new_days = []
+    for day in days or []:
+        if not _lands_on(day, old_start, repeat_by, tz):
+            new_days.append(day)
+
+    new_day = default_days(new_start, repeat_by, tz)[0]
+    new_days.append(new_day)
+    return normalise_days(repeat_by, new_days)
+
+
+def at_time_of(start, other, tz=UTC):
+    day = _to_local(start, tz).date()
+    time_source = _to_local(other, tz)
+    return _from_local(_at(day, time_source, tz), start)
