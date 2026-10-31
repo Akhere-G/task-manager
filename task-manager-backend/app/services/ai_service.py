@@ -89,7 +89,7 @@ def generate_daily_brief(user_id, timezone_name=None):
                 project_repeating=True,
             ),
         )
-        today_tasks = today_data.get("tasks", [])
+        today_tasks = today_data["tasks"]
         stats = get_brief_stats(user_id)
 
         recent_productivity = stats.get("productivity", [])[-7:]
@@ -107,15 +107,13 @@ def generate_daily_brief(user_id, timezone_name=None):
 
         total_mins_today = 0
         for t in today_tasks:
-            start = t["start_at"]
-            end = t["end_at"]
-            if start and end:
-                delta = end - start
+            if t.start_at and t.end_at:
+                delta = t.end_at - t.start_at
                 total_mins_today += int(delta.total_seconds() / 60)
 
         task_list_str = "\n".join(
             [
-                f"- {t['title']} ({t['category']}, {t['start_at']} - {t['end_at']})"
+                f"- {t.title} ({t.category}, {t.start_at} - {t.end_at})"
                 for t in today_tasks
             ]
         )

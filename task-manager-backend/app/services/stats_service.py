@@ -1,10 +1,9 @@
 from app.database import db
 from datetime import datetime, timedelta, timezone
-from app.services.task_service import with_repeating
 from app.constants import CATEGORIES
 from app.models import Task
 from app.utils.dates import as_aware_utc
-from app.utils.serializers import task_to_dict
+from app.utils.task_utils import with_repeating
 
 
 def _get_productivity_trend(tasks):
@@ -271,6 +270,19 @@ def _get_distribution_trend(tasks):
     return sorted(results.values(), key=lambda x: x["date"])
 
 
+# Temporary dict view of tasks for the loops below; they move to SQL queries next.
+STAT_FIELDS = (
+    "id",
+    "title",
+    "category",
+    "is_completed",
+    "start_at",
+    "end_at",
+    "created_at",
+    "completed_at",
+)
+
+
 def _load_projected_tasks(user_id):
     tracked_tasks = (
         db.session.execute(db.select(Task).where(Task.user_id == user_id))
@@ -278,12 +290,11 @@ def _load_projected_tasks(user_id):
         .all()
     )
 
-    all_raw_tasks = [task_to_dict(t) for t in tracked_tasks]
-
     view_start = datetime.now(timezone.utc)
     view_end = view_start + timedelta(days=30)
 
-    return with_repeating(all_raw_tasks, view_start, view_end, user_id)
+    projected = with_repeating(tracked_tasks, view_start, view_end, user_id)
+    return [{field: getattr(t, field) for field in STAT_FIELDS} for t in projected]
 
 
 def get_brief_stats(user_id):
