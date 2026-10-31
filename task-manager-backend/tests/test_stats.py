@@ -106,7 +106,7 @@ def test_backlog_counts_overdue_pending_and_projected_repeats(app, login, add_ta
 
     volume = {v["category"]: v for v in stats["categoryVolume"]}
     assert (volume["work"]["overdue"], volume["work"]["pending"]) == (1, 1)
-    assert volume["health"]["pending"] > 2  # the task itself plus its projected repeats
+    assert volume["health"]["pending"] > 2
     assert stats["overdueDistribution"] == [{"daysOverdue": "1 Week", "count": 1}]
     backlog = {b["status"]: b["count"] for b in stats["backlogHealth"]}
     assert backlog["Overdue"] == 1 and backlog["Pending"] == volume["work"]["pending"] + volume["health"]["pending"]
@@ -132,4 +132,4 @@ def test_dashboard_aggregates_in_the_database(app, login, add_tasks):
         event.listen(db.engine, "before_cursor_execute", lambda *a: statements.append(a[2]))
         session.get("/api/stats/dashboard")
 
-    assert len(statements) <= 20  # a handful of aggregate queries, not one row per task
+    assert len(statements) <= 20
