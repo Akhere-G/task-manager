@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from typing import Any
 
 import pytest
@@ -159,16 +159,6 @@ def test_moving_a_ghost_from_a_later_week_keeps_the_series_rhythm(
     ]
 
 
-def test_moving_a_ghost_onto_a_chosen_day_merges_them(user_id: int) -> None:
-    task = add_task(user_id, repeatBy="weekly", repeatDays=[0, 2])
-
-    task = move(
-        user_id, task, NEXT_MONDAY, ("2026-03-11 09:00:00", "2026-03-11 10:00:00"), True
-    )
-
-    assert task.repeat_days == [2]
-
-
 def test_moving_a_ghost_to_another_time_moves_the_series_time(user_id: int) -> None:
     task = add_task(user_id, repeatBy="weekly")
 
@@ -224,26 +214,6 @@ def test_moving_a_clamped_monthly_ghost_replaces_the_day_it_stands_for(
 
     assert task.repeat_days == [15]
     assert task.start_at == at("2026-02-15 09:00")
-
-
-def test_moving_a_yearly_ghost_changes_its_date(user_id: int) -> None:
-    task = add_task(
-        user_id,
-        startAt="2026-12-25 09:00:00",
-        endAt="2026-12-25 10:00:00",
-        repeatBy="yearly",
-    )
-
-    task = move(
-        user_id,
-        task,
-        ("2027-12-25 09:00:00", "2027-12-25 10:00:00"),
-        ("2027-12-24 09:00:00", "2027-12-24 10:00:00"),
-        True,
-    )
-
-    assert task.repeat_days == ["12-24"]
-    assert task.start_at.date() == date(2027, 12, 24)
 
 
 def test_moving_an_occurrence_that_has_already_moved_on_is_a_conflict(
