@@ -8,7 +8,7 @@ os.environ.setdefault("DB_HOST", "127.0.0.1")
 os.environ.setdefault("DB_PORT", "3306")
 os.environ.setdefault("DB_USER", "root")
 os.environ.setdefault("DB_PASSWORD", "")
-os.environ["DB_NAME"] = "task_manager_test"
+os.environ["DB_NAME"] = os.environ.get("TEST_DB_NAME", "task_manager_test")
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-the-test-suite-only"
 os.environ["FRONTEND_URL"] = "http://localhost:5173"
 os.environ["JWT_COOKIE_SECURE"] = "False"
