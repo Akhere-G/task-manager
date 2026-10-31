@@ -20,6 +20,7 @@ os.environ["CONTACT_TO_EMAIL"] = "owner@example.com"
 
 import pytest
 from flask.testing import FlaskClient
+from hypothesis import settings
 from werkzeug.security import generate_password_hash
 
 import migrate
@@ -32,6 +33,10 @@ from tests.builders import DEFAULT_PASSWORD, task_body
 from tests.db import LOCAL_HOSTS, create_database, empty_tables
 
 DEFAULT_PASSWORD_HASH = generate_password_hash(DEFAULT_PASSWORD)
+
+settings.register_profile("dev", deadline=None)
+settings.register_profile("ci", deadline=None, derandomize=True, print_blob=True)
+settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "dev"))
 
 TEST_TYPE_BY_LAYER = {
     "utils": "unit",
