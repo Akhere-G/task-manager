@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import ForeignKey, String, DateTime
+from sqlalchemy import CHAR, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
@@ -20,9 +20,13 @@ class PasswordReset(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    token: Mapped[str | None] = mapped_column(String(255))
-    token_hash: Mapped[str | None] = mapped_column(String(64))
+    token_hash: Mapped[str | None] = mapped_column(CHAR(64))
     expires_at: Mapped[datetime] = mapped_column(DateTime)
+
+    __table_args__ = (
+        Index("idx_password_resets_token_hash", "token_hash"),
+        Index("idx_password_resets_expires", "expires_at"),
+    )
 
 
 class RefreshToken(Base):
@@ -30,7 +34,11 @@ class RefreshToken(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    token: Mapped[str | None] = mapped_column(String(255))
-    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    token_hash: Mapped[str | None] = mapped_column(CHAR(64))
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     replaced_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+    __table_args__ = (
+        Index("uq_refresh_tokens_token_hash", "token_hash", unique=True),
+        Index("idx_refresh_tokens_expires", "expires_at"),
+    )

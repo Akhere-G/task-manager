@@ -20,7 +20,7 @@ import pytest
 from flask.testing import FlaskClient
 from werkzeug.security import generate_password_hash
 
-import init_db
+import migrate
 from app.database import db
 from app.demo import DEMO_USER_EMAIL
 from app.extensions import limiter
@@ -56,7 +56,7 @@ def database():
     with conn.cursor() as cur:
         cur.execute(f"CREATE DATABASE IF NOT EXISTS `{os.environ['DB_NAME']}`")
     conn.close()
-    init_db.initialise_database()
+    migrate.run()
 
 
 class AjaxClient(FlaskClient):

@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy.dialects.mysql import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
@@ -10,15 +11,17 @@ class Task(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(Text)
-    category: Mapped[str] = mapped_column(String(50), server_default="General")
-    is_completed: Mapped[bool] = mapped_column(server_default="0")
-    start_at: Mapped[datetime] = mapped_column(DateTime)
-    end_at: Mapped[datetime] = mapped_column(DateTime)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.current_timestamp()
+    category: Mapped[str] = mapped_column(
+        String(50), server_default="General", nullable=True
     )
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime)
-    is_repeating: Mapped[bool] = mapped_column(server_default="0")
+    is_completed: Mapped[bool] = mapped_column(server_default="0", nullable=True)
+    start_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    end_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP, server_default=func.current_timestamp(), nullable=True
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    is_repeating: Mapped[bool] = mapped_column(server_default="0", nullable=True)
     repeat_by: Mapped[str | None] = mapped_column(
         Enum("daily", "weekly", "monthly", "yearly", name="repeat_by_enum")
     )
