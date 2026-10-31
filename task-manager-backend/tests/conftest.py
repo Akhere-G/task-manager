@@ -18,7 +18,6 @@ os.environ["MAIL_SEND_API_KEY"] = "test-key"
 os.environ["MAIL_SEND_EMAIL"] = "noreply@example.com"
 os.environ["CONTACT_TO_EMAIL"] = "owner@example.com"
 
-import pymysql
 import pytest
 from flask.testing import FlaskClient
 from werkzeug.security import generate_password_hash
@@ -29,16 +28,7 @@ from app.demo import DEMO_USER_EMAIL
 from app.extensions import limiter
 from app.main import create_app
 from app.models import User
-
-TABLES = [
-    "notification_subscriptions",
-    "notifications",
-    "refresh_tokens",
-    "password_resets",
-    "daily_briefs",
-    "tasks",
-    "users",
-]
+from tests.db import create_database, empty_tables
 
 DEFAULT_PASSWORD = "Sturdy-pass9"
 
@@ -70,22 +60,9 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(TEST_TYPE_BY_LAYER[layer])
 
 
-def _connection() -> pymysql.connections.Connection:
-    return pymysql.connect(
-        host=os.environ["DB_HOST"],
-        port=int(os.environ["DB_PORT"]),
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        autocommit=True,
-    )
-
-
 @pytest.fixture(scope="session")
 def database() -> None:
-    conn = _connection()
-    with conn.cursor() as cur:
-        cur.execute(f"CREATE DATABASE IF NOT EXISTS `{os.environ['DB_NAME']}`")
-    conn.close()
+    create_database(os.environ["DB_NAME"])
     migrate.run()
 
 
@@ -104,14 +81,7 @@ def app(database: None) -> Flask:
 
 @pytest.fixture
 def clean_tables(database: None) -> None:
-    conn = _connection()
-    with conn.cursor() as cur:
-        cur.execute(f"USE `{os.environ['DB_NAME']}`")
-        cur.execute("SET FOREIGN_KEY_CHECKS=0")
-        for table in TABLES:
-            cur.execute(f"TRUNCATE TABLE {table}")
-        cur.execute("SET FOREIGN_KEY_CHECKS=1")
-    conn.close()
+    empty_tables(os.environ["DB_NAME"])
 
 
 @pytest.fixture(autouse=True)

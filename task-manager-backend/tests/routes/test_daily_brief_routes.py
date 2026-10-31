@@ -8,7 +8,7 @@ from flask.testing import FlaskClient
 import app.services.ai_service as ai_service
 from app.database import db
 from app.models import DailyBrief
-from tests.conftest import _connection
+from tests.db import connect
 
 
 def stored_briefs(app: Flask) -> list[DailyBrief]:
@@ -57,9 +57,8 @@ def test_brief_created_by_a_parallel_request_is_returned_instead_of_an_error(
     def generate_while_another_request_wins(prompt: str) -> str:
         import os
 
-        conn = _connection()
+        conn = connect(os.environ["DB_NAME"])
         with conn.cursor() as cur:
-            cur.execute(f"USE `{os.environ['DB_NAME']}`")
             cur.execute(
                 "INSERT INTO daily_briefs (user_id, brief_text, generated_date) "
                 "SELECT id, 'Winner', %s FROM users LIMIT 1",
