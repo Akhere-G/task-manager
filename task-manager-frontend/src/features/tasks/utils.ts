@@ -10,7 +10,9 @@ import {
   endOfDay,
   parseISO,
 } from "date-fns";
+import type { CSSProperties } from "react";
 import type { Task } from "./types";
+import { calendarColoursDark, calendarColoursLight } from "./constants";
 import { Views, type Event, type View } from "react-big-calendar";
 
 export const formatDate = (dateStr?: string) => {
@@ -125,9 +127,26 @@ export function getEventClassName(
   const task = event.resource as Task;
   const statusClasses = task.isCompleted
     ? "!bg-slate-200 !text-slate-500 !line-through"
-    : "!bg-brand !text-text-inverse";
+    : "";
 
-  return `!border-none !shadow-sm !rounded-md !px-1 !py-1 !text-xs !font-medium transition-all ${statusClasses}`;
+  return `!border-none !shadow-sm !rounded-md !px-1 !py-1 !text-xs !font-bold transition-all ${statusClasses}`;
+}
+
+export function getEventStyle(
+  event: Event,
+  isMobile: boolean,
+  view: View,
+  darkMode: boolean,
+): CSSProperties {
+  if (isMobile && view === Views.MONTH) return {};
+
+  const task = event.resource as Task;
+  if (task.isCompleted) return {};
+
+  const palette = darkMode ? calendarColoursDark : calendarColoursLight;
+  const backgroundColor = palette[task.category] ?? palette["general"];
+
+  return { backgroundColor, color: "#ffffff" };
 }
 
 export function mapTasksToCalendarEvents(
