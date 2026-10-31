@@ -3,6 +3,7 @@ from typing import Any
 
 import pytest
 
+from app.models import Task
 from app.schemas.task_schema import TaskRescheduleSchema, TaskSchema, TaskUpdateSchema
 from tests.builders import MONDAY, TUESDAY, reschedule_body, task_body
 from tests.schemas.helpers import load_errors
@@ -132,3 +133,16 @@ def test_reschedule_rejects_bad_times_and_loose_flags(
 
 def test_reschedule_needs_every_field() -> None:
     assert set(load_errors(TaskRescheduleSchema(), {})) == set(RESCHEDULE)
+
+
+def test_saved_tasks_are_sent_as_not_ghosts() -> None:
+    saved = Task(
+        title="Gym", start_at=datetime(2026, 3, 2, 9), end_at=datetime(2026, 3, 2, 10)
+    )
+    ghost = Task(
+        title="Gym", start_at=datetime(2026, 3, 9, 9), end_at=datetime(2026, 3, 9, 10)
+    )
+    ghost.is_ghost = True
+
+    assert TaskSchema().dump(saved)["isGhost"] is False
+    assert TaskSchema().dump(ghost)["isGhost"] is True
