@@ -1,41 +1,45 @@
 import logging
 import os
 from datetime import timedelta
-from flask import Blueprint, request, jsonify
+
+from flask import Blueprint, Response, jsonify, request
+from flask.typing import ResponseReturnValue
 from flask_jwt_extended import (
     create_access_token,
     get_jwt_identity,
     jwt_required,
     verify_jwt_in_request,
 )
+
+from app.database import db
 from app.exceptions import (
     AlreadySignedIn,
     DemoUnavailable,
     InvalidCredentials,
 )
-from app.services.auth_service import (
-    create_user,
-    login_user,
-    get_user,
-    get_demo_user,
-    is_demo_user,
-    create_reset_token,
-    verify_reset_token,
-    update_password_and_clear_token,
-    validate_refresh_token,
-    delete_refresh_token,
-    create_session,
-    rotate_refresh_token,
-    purge_expired_sessions,
-)
-from app.database import db
 from app.extensions import email_only, ip_and_email, limiter
+from app.models import User
 from app.schemas.user_schema import (
     EmailSchema,
     LoginSchema,
     PasswordResetSchema,
     RegisterSchema,
     UserSchema,
+)
+from app.services.auth_service import (
+    create_reset_token,
+    create_session,
+    create_user,
+    delete_refresh_token,
+    get_demo_user,
+    get_user,
+    is_demo_user,
+    login_user,
+    purge_expired_sessions,
+    rotate_refresh_token,
+    update_password_and_clear_token,
+    validate_refresh_token,
+    verify_reset_token,
 )
 from app.services.mail_service import send_email
 from app.utils.cookies import (
@@ -49,7 +53,7 @@ auth_bp = Blueprint("auth", __name__)
 logger = logging.getLogger(__name__)
 
 
-def get_password_reset_html(reset_link):
+def get_password_reset_html(reset_link: str) -> str:
     return f"""
     <div style="background-color: #f8fafc; padding: 40px 20px; font-family: sans-serif;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 40px; text-align: center;">
@@ -66,11 +70,11 @@ def get_password_reset_html(reset_link):
     """
 
 
-def _access_token(user):
+def _access_token(user: User) -> str:
     return create_access_token(identity=str(user.id), expires_delta=timedelta(hours=24))
 
 
-def _session_response(user, message, status=200):
+def _session_response(user: User, message: str, status: int = 200) -> Response:
     response = jsonify({"message": message, "user": UserSchema().dump(user)})
     set_refresh_cookies(response, create_session(user.id))
     set_access_cookies(response, _access_token(user))
@@ -80,7 +84,7 @@ def _session_response(user, message, status=200):
 
 @auth_bp.route("/api/auth/register", methods=["POST"])
 @limiter.limit("5 per hour")
-def register():
+def register() -> ResponseReturnValue:
     data = RegisterSchema().load(get_json_body())
     user = create_user(
         data["first_name"], data["last_name"], data["email"], data["password"]
@@ -91,7 +95,7 @@ def register():
 @auth_bp.route("/api/auth/login", methods=["POST"])
 @limiter.limit("10 per minute")
 @limiter.limit("5 per 15 minutes", key_func=ip_and_email)
-def login():
+def login() -> ResponseReturnValue:
     data = LoginSchema().load(get_json_body())
     user = login_user(data["email"], data["password"])
     if not user:
@@ -108,7 +112,7 @@ def login():
 
 @auth_bp.route("/api/auth/demo", methods=["POST"])
 @limiter.limit("20 per hour")
-def demo_login():
+def demo_login() -> ResponseReturnValue:
     try:
         verify_jwt_in_request(optional=True)
         current_user_id = get_jwt_identity()
@@ -126,7 +130,7 @@ def demo_login():
 
 
 @auth_bp.route("/api/auth/logout", methods=["POST"])
-def logout():
+def logout() -> ResponseReturnValue:
     refresh_token = request.cookies.get("refresh_token")
     if refresh_token:
         delete_refresh_token(refresh_token)
@@ -137,7 +141,7 @@ def logout():
 
 @auth_bp.route("/api/auth/me", methods=["GET"])
 @jwt_required()
-def get_me():
+def get_me() -> ResponseReturnValue:
     current_user_id = get_jwt_identity()
     user = get_user(current_user_id)
     if user:
@@ -145,7 +149,7 @@ def get_me():
     return jsonify({"message": "An error occurred.", "user": None}), 400
 
 
-def send_password_reset_email(user, email, token):
+def send_password_reset_email(user: User, email: str, token: str) -> None:
     frontend_url = (os.getenv("FRONTEND_URL") or "").rstrip("/")
     if not frontend_url:
         raise RuntimeError("FRONTEND_URL is not configured")
@@ -161,7 +165,7 @@ def send_password_reset_email(user, email, token):
 @auth_bp.route("/api/auth/request-password-reset", methods=["POST"])
 @limiter.limit("3 per hour")
 @limiter.limit("3 per hour", key_func=email_only)
-def request_password_reset():
+def request_password_reset() -> ResponseReturnValue:
     email = EmailSchema().load(get_json_body())["email"]
     user = get_user(email=email)
 
@@ -179,7 +183,7 @@ def request_password_reset():
 
 @auth_bp.route("/api/auth/reset-password", methods=["POST"])
 @limiter.limit("10 per hour")
-def reset_password():
+def reset_password() -> ResponseReturnValue:
     data = PasswordResetSchema().load(get_json_body())
 
     user_id = verify_reset_token(data["token"])
@@ -194,7 +198,7 @@ def reset_password():
 
 @auth_bp.route("/api/auth/refresh", methods=["POST"])
 @limiter.limit("60 per minute")
-def refresh():
+def refresh() -> ResponseReturnValue:
     refresh_token = request.cookies.get("refresh_token")
 
     user = validate_refresh_token(refresh_token)

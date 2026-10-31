@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from marshmallow import fields, pre_load, validate
 
@@ -50,20 +51,22 @@ class DecomposeRequestSchema(CamelSchema):
             error=f"Description must be {MAX_DECOMPOSE_DESCRIPTION_LENGTH} characters or fewer.",
         ),
     )
-    category = fields.String(allow_none=True, validate=validate.OneOf(CATEGORIES, error="Invalid category."))
+    category = fields.String(
+        allow_none=True, validate=validate.OneOf(CATEGORIES, error="Invalid category.")
+    )
     start_at = fields.String(allow_none=True)
     end_at = fields.String(allow_none=True)
 
     @pre_load
-    def blank_category(self, data, **kwargs):
+    def blank_category(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         return {**data, "category": None} if data.get("category") == "" else data
 
 
-def _end_of_today():
+def _end_of_today() -> str:
     return utc_now().strftime("%Y-%m-%d 23:59:59")
 
 
-def _clean_recurrence(data):
+def _clean_recurrence(data: dict[str, Any]) -> dict[str, Any]:
     """Drop anything the model got wrong so the form always gets a usable pattern."""
     repeat_by = data.get("repeatBy")
     if repeat_by not in REPEAT_FREQUENCIES:
@@ -90,7 +93,8 @@ def _clean_recurrence(data):
         "isRepeating": True,
         "repeatBy": repeat_by,
         "repeatInterval": min(max(interval, 1), REPEAT_INTERVAL_LIMITS[repeat_by]),
-        "repeatDays": normalise_days(repeat_by, days if isinstance(days, list) else []) or None,
+        "repeatDays": normalise_days(repeat_by, days if isinstance(days, list) else [])
+        or None,
         "repeatUntil": until,
     }
 
@@ -110,7 +114,7 @@ class AiTaskSchema(CamelSchema):
     repeat_until = fields.String(allow_none=True)
 
     @pre_load
-    def repair(self, data, **kwargs):
+    def repair(self, data: Any, **kwargs: Any) -> Any:
         if not isinstance(data, dict):
             return data
         repaired = {**data, **_clean_recurrence(data)}
