@@ -2,7 +2,7 @@ import { getRateLimitMessage } from "../utils/errors";
 import { useState } from "react";
 import { FormInput } from "../components/ui";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { validateUser } from "../utils/validators";
+import { validateResetPassword } from "../features/auth/schemas";
 import axios from "axios";
 import { authService } from "../features/auth/api";
 
@@ -28,10 +28,7 @@ export default function ResetPassword() {
   const [serverError, setServerError] = useState("");
 
   const validateForm = (data: typeof formData) => {
-    const validationErrors = validateUser(
-      { ...data, email: "placeholder@test.com", firstName: "A", lastName: "B" },
-      true,
-    );
+    const validationErrors = validateResetPassword(data);
     setErrorMessages({
       password: validationErrors.password || "",
       confirmPassword: validationErrors.confirmPassword || "",

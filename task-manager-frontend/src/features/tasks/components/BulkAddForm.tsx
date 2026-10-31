@@ -1,6 +1,6 @@
 import Papa from "papaparse";
 import { useRef, useState, type ChangeEvent } from "react";
-import { validateTaskList } from "../../../utils/validators";
+import { validateTaskList } from "../schemas";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import useCreateAllTasks from "../hooks/useCreateAllTasks";
@@ -203,7 +203,8 @@ export default function BulkAddForm() {
             },
           );
 
-        const { hasErrors, allErrors } = validateTaskList(newTasks);
+        const allErrors = validateTaskList(newTasks);
+        const hasErrors = allErrors.some((err) => Object.keys(err).length > 0);
 
         if (hasErrors) {
           const taskErrorMessages = allErrors

@@ -4,7 +4,7 @@ import { FormInput } from "../components/ui";
 import axios from "axios";
 import type { LoginUserInput } from "../features/auth/types";
 import { useAuthContext } from "../context/AuthContext";
-import { validateUser, type UserData } from "../utils/validators";
+import { validateLogin } from "../features/auth/schemas";
 import { Link } from "react-router-dom";
 
 type ErrorMesageType = { [P in keyof LoginUserInput]: string } & {
@@ -30,8 +30,8 @@ export default function Login() {
 
   const { login } = useAuthContext();
 
-  const validateForm = (data: UserData) => {
-    setErrorMessages({ ...defaultErrorMessages, ...validateUser(data, false) });
+  const validateForm = (data: { email: string; password: string }) => {
+    setErrorMessages({ ...defaultErrorMessages, ...validateLogin(data) });
   };
 
   function handleChange(
