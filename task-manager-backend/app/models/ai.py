@@ -1,5 +1,6 @@
 from datetime import date, datetime
-from sqlalchemy import ForeignKey, UniqueConstraint, Text
+from sqlalchemy import ForeignKey, UniqueConstraint, Text, func
+from sqlalchemy.dialects.mysql import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 from datetime import timezone
@@ -13,6 +14,9 @@ class DailyBrief(Base):
     brief_text: Mapped[str] = mapped_column(Text)
     generated_date: Mapped[date]
     created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP,
+        server_default=func.current_timestamp(),
+        nullable=True,
         default=lambda: datetime.now(timezone.utc),
     )
 
