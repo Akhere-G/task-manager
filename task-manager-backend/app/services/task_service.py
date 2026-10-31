@@ -158,7 +158,7 @@ def _check_not_already_completed(task: Task, data: dict[str, Any]) -> None:
         and task.is_repeating
         and expected_start != task.start_at
     ):
-        raise TaskConflict(TaskSchema().dump(task))
+        raise TaskConflict(TaskSchema().dump(task))  # type: ignore
 
 
 def _sync_completion(task: Task, was_completed: bool) -> None:
@@ -216,7 +216,7 @@ def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     duration = new_end - new_start
 
     if not data["is_ghost"] and old_start != task.start_at:
-        raise TaskConflict(TaskSchema().dump(task))
+        raise TaskConflict(TaskSchema().dump(task))  # type: ignore
 
     if not task.is_repeating or not task.repeat_by:
         task.start_at = new_start

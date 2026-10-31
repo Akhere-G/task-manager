@@ -27,7 +27,7 @@ task_bp = Blueprint("tasks", __name__)
 @jwt_required()
 def list_tasks() -> ResponseReturnValue:
     query = TaskListQuerySchema().load(request.args)
-    return jsonify(TaskPageSchema().dump(get_all_tasks(get_jwt_identity(), query)))
+    return jsonify(TaskPageSchema().dump(get_all_tasks(get_jwt_identity(), query)))  # type: ignore
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["GET"])
@@ -66,7 +66,7 @@ def edit_task(task_id: int) -> ResponseReturnValue:
 def reschedule(task_id: int) -> ResponseReturnValue:
     data = TaskRescheduleSchema().load(get_json_body())
     return jsonify(
-        TaskSchema().dump(reschedule_task(get_jwt_identity(), task_id, data))
+        TaskSchema().dump(reschedule_task(get_jwt_identity(), task_id, data))  # type: ignore
     )
 
 

@@ -58,7 +58,7 @@ def register_error_handlers(app: Flask) -> None:
     @app.errorhandler(HTTPException)
     def handle_http_exception(error: HTTPException) -> ResponseReturnValue:
         if request.path.startswith("/api/"):
-            return jsonify({"error": error.description}), error.code
+            return jsonify({"error": error.description}), error.code  # type: ignore
 
         if error.code == 404 and request.method in ("GET", "HEAD"):
             try:
