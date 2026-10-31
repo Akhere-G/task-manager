@@ -61,3 +61,75 @@ def test_end_time_is_checked_against_the_stored_start_time(session, task_payload
 
     assert response.status_code == 400
     assert "endAt" in response.get_json()["errors"]
+
+
+def test_completing_without_a_timestamp_still_records_when(session, task_payload):
+    task_id = session.post("/api/tasks", json=task_payload()).get_json()["id"]
+
+    done = session.patch(f"/api/tasks/{task_id}", json={"isCompleted": True}).get_json()
+    assert done["isCompleted"] is True and done["completedAt"].endswith("Z")
+
+    undone = session.patch(f"/api/tasks/{task_id}", json={"isCompleted": False}).get_json()
+    assert undone["completedAt"] is None
+
+
+def test_bulk_import_fixes_completion_and_repeat_flags(session, task_payload):
+    response = session.post(
+        "/api/tasks/bulk",
+        json=[
+            task_payload(isCompleted=True),
+            task_payload(completedAt="2026-03-02 10:30:00"),
+            task_payload(repeatBy="weekly"),
+        ],
+    )
+    assert response.status_code == 201
+
+    by_completion = {t["isCompleted"]: t for t in all_tasks(session)}
+    assert by_completion[True]["completedAt"] is not None
+    assert by_completion[False]["completedAt"] is None
+    assert any(t["isRepeating"] for t in all_tasks(session))
+
+
+def test_bulk_validation_errors_are_listed_per_task(session, task_payload):
+    response = session.post(
+        "/api/tasks/bulk", json=[task_payload(), task_payload(category="nope", title="")]
+    )
+
+    assert response.status_code == 400
+    errors = response.get_json()["errors"]
+    assert errors[0] == {} and set(errors[1]) == {"title", "category"}
+
+
+def test_create_returns_the_stored_task(session, task_payload):
+    created = session.post("/api/tasks", json=task_payload(title="  Trim me  ")).get_json()
+
+    assert created["title"] == "Trim me"
+    assert created["startAt"] == "2026-03-02T10:00:00Z"
+    assert created["seriesId"] == created["id"]
+
+
+def test_list_filters_are_validated(session):
+    for query in ("page=0", "limit=500", "start_date=2026-03-01", "project_repeating=true"):
+        assert session.get(f"/api/tasks?{query}").status_code == 400
+    ok = session.get("/api/tasks?start_date=2026-03-01&end_date=2026-03-31&project_repeating=true")
+    assert ok.status_code == 200
+
+
+def test_missing_task_is_a_404(session):
+    assert session.get("/api/tasks/999").status_code == 404
+    assert session.patch("/api/tasks/999", json={"title": "x"}).status_code == 404
+    assert session.delete("/api/tasks/999").status_code == 404
+
+
+def test_projecting_a_repeating_task_adds_ghost_occurrences(session, task_payload):
+    task_id = create_daily_task(session, task_payload)
+
+    response = session.get(
+        "/api/tasks?start_date=2026-03-03&end_date=2026-03-05T23:59:59&project_repeating=true"
+    )
+
+    tasks = response.get_json()["tasks"]
+    ghosts = [t for t in tasks if t.get("isGhost")]
+    assert [g["startAt"][:10] for g in ghosts] == ["2026-03-03", "2026-03-04", "2026-03-05"]
+    assert {g["seriesId"] for g in ghosts} == {task_id}
+    assert all(g["id"].startswith(f"ghost_{task_id}_") for g in ghosts)
