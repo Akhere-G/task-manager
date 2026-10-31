@@ -51,6 +51,7 @@ TEST_TYPE_BY_LAYER = {
     "security": "security",
 }
 TEST_TYPES = {"unit", "property", "integration", "functional", "security"}
+DATABASE_FREE_TYPES = {"unit", "property"}
 
 
 def _test_type(item: pytest.Item) -> str | None:
@@ -79,7 +80,7 @@ def _connection() -> pymysql.connections.Connection:
     )
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def database() -> None:
     conn = _connection()
     with conn.cursor() as cur:
@@ -101,7 +102,7 @@ def app(database: None) -> Flask:
     return app
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def clean_tables(database: None) -> None:
     conn = _connection()
     with conn.cursor() as cur:
@@ -111,6 +112,12 @@ def clean_tables(database: None) -> None:
             cur.execute(f"TRUNCATE TABLE {table}")
         cur.execute("SET FOREIGN_KEY_CHECKS=1")
     conn.close()
+
+
+@pytest.fixture(autouse=True)
+def fresh_database(request: pytest.FixtureRequest) -> None:
+    if _test_type(request.node) not in DATABASE_FREE_TYPES:
+        request.getfixturevalue("clean_tables")
 
 
 @pytest.fixture(autouse=True)
