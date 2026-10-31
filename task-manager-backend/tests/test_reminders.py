@@ -1,24 +1,30 @@
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable, Iterator
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from unittest import mock
 
 import pytest
+from flask import Flask
 
 import app.run_reminders as run_reminders
 from app.database import db
 from app.models import Notification, NotificationSubscription, Task
 
 
-def now():
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+def now() -> datetime:
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 @pytest.fixture
-def user_with_subscription(app, make_user):
+def user_with_subscription(app: Flask, make_user: Callable[..., int]) -> int:
     user_id = make_user()
     with app.app_context():
         db.session.add(
             NotificationSubscription(
-                user_id=user_id, endpoint="https://push.example/abc", p256dh="k", auth="a"
+                user_id=user_id,
+                endpoint="https://push.example/abc",
+                p256dh="k",
+                auth="a",
             )
         )
         db.session.commit()
@@ -26,8 +32,8 @@ def user_with_subscription(app, make_user):
 
 
 @pytest.fixture
-def add_task(app):
-    def _add(user_id, **fields):
+def add_task(app: Flask) -> Callable[..., int]:
+    def _add(user_id: int, **fields: Any) -> int:
         start = fields.pop("start_at", now() + timedelta(minutes=10))
         with app.app_context():
             task = Task(
@@ -46,17 +52,22 @@ def add_task(app):
 
 
 @pytest.fixture
-def push():
+def push() -> Iterator[mock.MagicMock]:
     with mock.patch.object(run_reminders, "webpush") as webpush:
         yield webpush
 
 
-def notification_count(app):
+def notification_count(app: Flask) -> int:
     with app.app_context():
         return db.session.query(Notification).count()
 
 
-def test_each_upcoming_task_is_reminded_once(app, user_with_subscription, add_task, push):
+def test_each_upcoming_task_is_reminded_once(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+    push: mock.MagicMock,
+) -> None:
     add_task(user_with_subscription)
 
     run_reminders.check_task_reminders()
@@ -66,7 +77,12 @@ def test_each_upcoming_task_is_reminded_once(app, user_with_subscription, add_ta
     assert notification_count(app) == 1
 
 
-def test_completed_tasks_are_not_reminded(app, user_with_subscription, add_task, push):
+def test_completed_tasks_are_not_reminded(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+    push: mock.MagicMock,
+) -> None:
     add_task(user_with_subscription, is_completed=True)
 
     run_reminders.check_task_reminders()
@@ -75,7 +91,12 @@ def test_completed_tasks_are_not_reminded(app, user_with_subscription, add_task,
     assert notification_count(app) == 0
 
 
-def test_rescheduled_task_is_reminded_again(app, user_with_subscription, add_task, push):
+def test_rescheduled_task_is_reminded_again(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+    push: mock.MagicMock,
+) -> None:
     task_id = add_task(user_with_subscription)
     run_reminders.check_task_reminders()
 
@@ -88,7 +109,12 @@ def test_rescheduled_task_is_reminded_again(app, user_with_subscription, add_tas
     assert push.call_count == 2
 
 
-def test_message_has_no_none_when_task_has_no_description(app, user_with_subscription, add_task, push):
+def test_message_has_no_none_when_task_has_no_description(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+    push: mock.MagicMock,
+) -> None:
     add_task(user_with_subscription, description=None)
 
     run_reminders.check_task_reminders()

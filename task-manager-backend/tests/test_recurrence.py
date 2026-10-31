@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -26,7 +26,13 @@ LONDON = ZoneInfo("Europe/London")
         ("yearly", 1, ["02-29"], "2028-02-29 09:00", "2029-02-28 09:00"),
     ],
 )
-def test_next_then_previous_round_trips(repeat_by, interval, days, start, expected):
+def test_next_then_previous_round_trips(
+    repeat_by: str,
+    interval: int,
+    days: list[int | str] | None,
+    start: str,
+    expected: str,
+) -> None:
     start = datetime.fromisoformat(start)
     expected = datetime.fromisoformat(expected)
 
@@ -34,22 +40,22 @@ def test_next_then_previous_round_trips(repeat_by, interval, days, start, expect
     assert previous_occurrence(expected, repeat_by, interval, days) == start
 
 
-def test_local_time_of_day_survives_a_clock_change():
-    before = datetime(2026, 3, 28, 9, 0, tzinfo=timezone.utc)  # 09:00 GMT
+def test_local_time_of_day_survives_a_clock_change() -> None:
+    before = datetime(2026, 3, 28, 9, 0, tzinfo=UTC)  # 09:00 GMT
 
     after = next_occurrence(before, "daily", 1, None, LONDON)
 
-    assert after == datetime(2026, 3, 29, 8, 0, tzinfo=timezone.utc)  # 09:00 BST
+    assert after == datetime(2026, 3, 29, 8, 0, tzinfo=UTC)  # 09:00 BST
 
 
-def test_snap_moves_to_the_next_chosen_day_only_when_needed():
+def test_snap_moves_to_the_next_chosen_day_only_when_needed() -> None:
     monday = datetime(2026, 3, 2, 9, 0)
     assert snap_to_slot(monday, "weekly", 1, [0]) == monday
     assert snap_to_slot(monday, "weekly", 1, [2]) == datetime(2026, 3, 4, 9, 0)
     assert snap_to_slot(monday, "daily", 1, None) == monday
 
 
-def test_day_helpers():
+def test_day_helpers() -> None:
     assert normalise_days("weekly", [3, 3, 9, "x", True]) == [3]
     assert normalise_days("yearly", ["12-25", "02-30", "02-29"]) == ["02-29", "12-25"]
     assert normalise_days("daily", [1]) == []

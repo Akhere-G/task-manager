@@ -1,4 +1,7 @@
+from collections.abc import Callable
+
 import pytest
+from flask import Flask
 from sqlalchemy import func, select
 
 from app.database import db
@@ -7,7 +10,9 @@ from app.demo.seed import reset_demo_account
 from app.models import Task, User
 
 
-def test_reset_builds_the_demo_account_and_is_repeatable(app, make_demo_user):
+def test_reset_builds_the_demo_account_and_is_repeatable(
+    app: Flask, make_demo_user: Callable[[], int]
+) -> None:
     make_demo_user()
 
     first = reset_demo_account()
@@ -27,7 +32,9 @@ def test_reset_builds_the_demo_account_and_is_repeatable(app, make_demo_user):
         assert history and all(t.is_completed and not t.is_repeating for t in history)
 
 
-def test_reset_refuses_to_touch_a_real_account(app, make_user):
+def test_reset_refuses_to_touch_a_real_account(
+    app: Flask, make_user: Callable[..., int]
+) -> None:
     make_user(email=DEMO_USER_EMAIL, is_demo=False)
 
     with pytest.raises(RuntimeError):
