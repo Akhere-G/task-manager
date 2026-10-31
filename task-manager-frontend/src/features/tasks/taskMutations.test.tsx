@@ -1,30 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import MockAdapter from "axios-mock-adapter";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import apiClient from "../../services/api";
-import { makeTask, renderWithProviders } from "../../test/render";
+import { makeGhost, makeTask, renderWithProviders } from "../../test/render";
 import { taskService } from "./api";
 import TaskCard from "./components/TaskCard";
 import type { Task } from "./types";
+import { mockApi } from "../../test/api";
 
-let mock: MockAdapter;
+const mock = mockApi();
 let tasksOnServer: Task[];
 
 beforeEach(() => {
-  mock = new MockAdapter(apiClient);
   tasksOnServer = [];
   mock.onGet("/tasks").reply(() => [
     200,
     { tasks: tasksOnServer, totalTasks: tasksOnServer.length, totalPages: 1, currentPage: 1 },
   ]);
   mock.onGet("/stats/dashboard").reply(200, {});
-  vi.spyOn(console, "error").mockImplementation(() => {});
-});
-
-afterEach(() => {
-  mock.restore();
 });
 
 /** Stands in for the task list and stats screens that sit behind the same cache. */
@@ -94,13 +88,7 @@ describe("completing a task", () => {
   });
 
   it("completes the series, not the ghost id, and sends no stale-occurrence check", async () => {
-    const ghost = makeTask({
-      id: "ghost_1_20260303" as unknown as number,
-      isGhost: true,
-      seriesId: 1,
-      isRepeating: true,
-      repeatBy: "daily",
-    });
+    const ghost = makeGhost(1, "20260303");
     mock.onPatch("/tasks/1").reply(200, {});
     renderCard(ghost);
 
@@ -175,13 +163,7 @@ describe("skipping a recurring task", () => {
   it.fails("skips the series when the card is a calendar ghost", async () => {
     mock.onPatch(/\/tasks\/.*/).reply(200, {});
     renderCard(
-      makeTask({
-        id: "ghost_1_20260303" as unknown as number,
-        isGhost: true,
-        seriesId: 1,
-        isRepeating: true,
-        repeatBy: "daily",
-      }),
+      makeGhost(1, "20260303"),
     );
 
     await userEvent.click(screen.getByRole("button", { name: /Skip task/ }));

@@ -1,20 +1,10 @@
 import { screen, within } from "@testing-library/react";
-import MockAdapter from "axios-mock-adapter";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import apiClient from "../../../services/api";
+import { describe, expect, it } from "vitest";
 import { renderWithProviders } from "../../../test/render";
 import StatsOverview from "./StatsOverview";
+import { mockApi } from "../../../test/api";
 
-let mock: MockAdapter;
-
-beforeEach(() => {
-  mock = new MockAdapter(apiClient);
-  vi.spyOn(console, "error").mockImplementation(() => {});
-});
-
-afterEach(() => {
-  mock.restore();
-});
+const mock = mockApi();
 
 const days = (counts: number[]) =>
   counts.map((tasks, i) => ({ date: `2026-03-${String(i + 1).padStart(2, "0")}`, tasks }));
