@@ -14,14 +14,14 @@ load_dotenv()
 BASELINE = "0001"
 
 
-def _config():
+def _config() -> Config:
     root = Path(__file__).resolve().parent
     config = Config(str(root / "alembic.ini"))
     config.set_main_option("script_location", str(root / "migrations"))
     return config
 
 
-def _existing_tables():
+def _existing_tables() -> set[str]:
     engine = create_engine(build_database_url(), connect_args=build_connect_args())
     try:
         return set(inspect(engine).get_table_names())
@@ -29,7 +29,7 @@ def _existing_tables():
         engine.dispose()
 
 
-def run():
+def run() -> None:
     config = _config()
     tables = _existing_tables()
     # Databases built by the old init_db.py have the baseline schema but no

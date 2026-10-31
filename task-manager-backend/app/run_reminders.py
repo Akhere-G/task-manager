@@ -2,11 +2,11 @@ import json
 import logging
 import os
 from datetime import timedelta
-from typing import Dict
 
 from dotenv import load_dotenv
 from pywebpush import WebPushException, webpush
 from sqlalchemy import or_, select
+from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.models import Notification, NotificationSubscription, Task
@@ -17,19 +17,21 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
-VAPID_CLAIMS: Dict[str, str | int] = {"sub": "mailto:101akhere5@gmail.com"}
+VAPID_CLAIMS: dict[str, str | int] = {"sub": "mailto:101akhere5@gmail.com"}
 
 REMINDER_WINDOW = timedelta(minutes=30)
 PUSH_TIMEOUT_SECONDS = 10
 
 
-def reminder_body(task):
+def reminder_body(task: Task) -> str:
     if task.description:
         return f"{task.category} -- {task.description}"
     return task.category
 
 
-def send_push_to_user_subscription(session, user_id, title, message):
+def send_push_to_user_subscription(
+    session: Session, user_id: int, title: str, message: str
+) -> int:
     db_notif = Notification(user_id=user_id, title=title, message=message)
     session.add(db_notif)
     session.commit()
@@ -69,7 +71,7 @@ def send_push_to_user_subscription(session, user_id, title, message):
     return total_subscriptions
 
 
-def check_task_reminders():
+def check_task_reminders() -> None:
     session = SessionLocal()
     try:
         now = utc_now()
@@ -103,7 +105,9 @@ def check_task_reminders():
                 logger.exception("Could not send the reminder for task %s", task.id)
 
         logger.info(
-            "%s upcoming task(s), %s push(es) sent", len(upcoming_tasks), total_notifications
+            "%s upcoming task(s), %s push(es) sent",
+            len(upcoming_tasks),
+            total_notifications,
         )
     finally:
         session.close()
