@@ -100,10 +100,11 @@ def test_bulk_import_fixes_completion_and_repeat_flags(
     )
     assert response.status_code == 201
 
-    by_completion = {t["isCompleted"]: t for t in all_tasks(session)}
+    tasks = all_tasks(session)
+    by_completion = {t["isCompleted"]: t for t in tasks}
     assert by_completion[True]["completedAt"] is not None
     assert by_completion[False]["completedAt"] is None
-    assert any(t["isRepeating"] for t in all_tasks(session))
+    assert any(t["isRepeating"] for t in tasks)
 
 
 def test_bulk_validation_errors_are_listed_per_task(

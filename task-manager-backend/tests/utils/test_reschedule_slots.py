@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
+from app.utils.dates import as_naive_utc
 from app.utils.recurrence import RepeatDay, at_time_of, replace_slot
 
 LONDON = ZoneInfo("Europe/London")
@@ -36,11 +37,17 @@ def test_the_day_moved_from_is_swapped_for_the_day_moved_to(
     assert moved == expected
 
 
-def test_days_are_read_in_the_series_zone() -> None:
-    late_sunday_utc = datetime(2026, 7, 5, 23, 30)  # 00:30 Monday in London
-    tuesday_utc = datetime(2026, 7, 7, 8, 0)
+def in_london(*parts: int) -> datetime:
+    return as_naive_utc(datetime(*parts, tzinfo=LONDON))
 
-    assert replace_slot("weekly", [0], late_sunday_utc, tuesday_utc, LONDON) == [1]
+
+def test_days_are_read_in_the_series_zone() -> None:
+    monday_just_after_midnight = in_london(2026, 7, 6, 0, 30)
+    tuesday = in_london(2026, 7, 7, 9, 0)
+
+    moved = replace_slot("weekly", [0], monday_just_after_midnight, tuesday, LONDON)
+
+    assert moved == [1]
 
 
 def test_keeps_the_date_and_takes_the_other_time_of_day() -> None:
@@ -51,9 +58,9 @@ def test_keeps_the_date_and_takes_the_other_time_of_day() -> None:
 
 
 def test_time_of_day_is_kept_in_local_time_across_a_clock_change() -> None:
-    summer_start = datetime(2026, 3, 30, 8, 0)  # 09:00 BST
-    winter_other = datetime(2026, 3, 20, 14, 0)  # 14:00 GMT
+    summer_start = in_london(2026, 3, 30, 9, 0)
+    winter_other = in_london(2026, 3, 20, 14, 0)
 
     moved = at_time_of(summer_start, winter_other, LONDON)
 
-    assert moved == datetime(2026, 3, 30, 13, 0)  # 14:00 BST
+    assert moved == in_london(2026, 3, 30, 14, 0)

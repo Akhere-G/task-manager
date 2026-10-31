@@ -1,4 +1,5 @@
 import json
+from collections.abc import Callable
 from typing import Any
 from unittest import mock
 
@@ -32,7 +33,9 @@ GYM = {
         lambda text: f"```\n{text}\n```",
     ],
 )
-def test_parse_reads_json_with_or_without_code_fences(wrap: Any) -> None:
+def test_parse_reads_json_with_or_without_code_fences(
+    wrap: Callable[[str], str],
+) -> None:
     with mock.patch.object(
         ai_service, "get_generated_text", return_value=wrap(json.dumps(GYM))
     ):
