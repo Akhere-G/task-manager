@@ -209,3 +209,28 @@ def snap_to_slot(
     if start_day in _slots(repeat_by, _period_start(repeat_by, start_day), chosen):
         return start
     return next_occurrence(start, repeat_by, interval, chosen, zone)
+
+
+def replace_slot(
+    repeat_by: str,
+    days: Iterable[RepeatDay] | None,
+    old_start: datetime,
+    new_start: datetime,
+    zone: tzinfo = UTC,
+) -> list[RepeatDay]:
+    old_day = _to_local(old_start, zone).date()
+    period = _period_start(repeat_by, old_day)
+
+    new_days = []
+    for day in days or []:
+        if old_day not in _slots(repeat_by, period, [day]):
+            new_days.append(day)
+
+    new_days.extend(default_days(new_start, repeat_by, zone) or [])
+    return normalise_days(repeat_by, new_days)
+
+
+def at_time_of(start: datetime, other: datetime, zone: tzinfo = UTC) -> datetime:
+    day = _to_local(start, zone).date()
+    time_source = _to_local(other, zone)
+    return _from_local(_at_time_of(day, time_source, zone), start)
