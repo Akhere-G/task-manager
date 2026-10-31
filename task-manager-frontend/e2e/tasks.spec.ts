@@ -50,12 +50,12 @@ test.describe("task management", () => {
     expect((await signedIn.api.tasks()).map((t) => t.title)).toEqual(["Keep me"]);
   });
 
-  test("shows the server's validation message and creates nothing", async ({ page, signedIn }) => {
+  test("explains a missing title and creates nothing", async ({ page, signedIn }) => {
     await page.goto("/addtask");
 
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
-    await expect(page.getByText("Title must be 1 to 255 characters.")).toBeVisible();
+    await expect(page.getByText("Title is mandatory.")).toBeVisible();
     await expect(page).toHaveURL(/\/addtask/);
     expect(await signedIn.api.tasks()).toEqual([]);
   });

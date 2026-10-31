@@ -155,12 +155,12 @@ describe("TaskForm", () => {
     expect(submit.mock.calls[0][0]).toMatchObject({ startAt: "", endAt: "" });
   });
 
-  // Known gap: errors are only computed on change, so an untouched form is not checked.
-  it.fails("refuses to submit a completely empty form", async () => {
+  it("refuses to submit a completely empty form", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
 
     await userEvent.click(addButton());
 
+    expect(await screen.findByText("Title is mandatory.")).toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
   });
 });
