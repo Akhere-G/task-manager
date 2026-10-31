@@ -7,6 +7,13 @@ export interface GetTaskResult {
   totalPages: number;
   currentPage: number;
 }
+export interface RescheduleTaskInput {
+  previousStartAt: string;
+  previousEndAt: string;
+  startAt: string;
+  endAt: string;
+  isGhost: boolean;
+}
 interface DeleteTaskResult {
   id: string;
   message: string;
@@ -38,6 +45,16 @@ export const taskService = {
     },
   ): Promise<Task> => {
     const response = await apiClient.patch(`/tasks/${id}`, taskData);
+    return response.data;
+  },
+  reschedule: async (
+    id: number,
+    rescheduleData: RescheduleTaskInput,
+  ): Promise<Task> => {
+    const response = await apiClient.post(
+      `/tasks/${id}/reschedule`,
+      rescheduleData,
+    );
     return response.data;
   },
   delete: async (id: number): Promise<DeleteTaskResult> => {
