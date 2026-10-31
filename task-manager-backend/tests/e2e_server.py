@@ -3,9 +3,10 @@
     python -m tests.e2e_server        (from task-manager-backend)
 
 It only talks to a local MySQL server and only to the `task_manager_e2e` database,
-which it migrates and empties on every start. Every setting is set explicitly, so a
-developer's .env (which may point at a real database or real AI keys) is never used,
-and the AI providers are replaced with a deterministic stub.
+which it migrates and empties on every start. The database, secrets and AI settings
+are set explicitly, so a developer's .env cannot point it at a real database or real
+AI keys (other .env keys still load), and the AI providers are replaced with a
+deterministic stub.
 
 Connection settings: E2E_DB_HOST (default 127.0.0.1), E2E_DB_PORT (3306),
 E2E_DB_USER (root), E2E_DB_PASSWORD (empty), E2E_API_PORT (5001).
@@ -15,10 +16,9 @@ import json
 import os
 import sys
 
-from tests.db import create_database, empty_tables
+from tests.db import LOCAL_HOSTS, create_database, empty_tables
 
 E2E_DB_NAME = "task_manager_e2e"
-LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
 
 def configure_environment() -> None:
