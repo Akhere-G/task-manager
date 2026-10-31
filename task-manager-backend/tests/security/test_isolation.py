@@ -4,6 +4,8 @@ from typing import Any
 from flask import Flask
 from flask.testing import FlaskClient
 
+from tests.builders import reschedule_body
+
 
 def create_task(session: FlaskClient, payload: dict[str, Any]) -> int:
     response = session.post("/api/tasks", json=payload)
@@ -27,13 +29,10 @@ def test_user_cannot_touch_another_users_task(
         b.patch(f"/api/tasks/{task_id}", json={"title": "Hijacked"}).status_code == 404
     )
     assert b.delete(f"/api/tasks/{task_id}").status_code == 404
-    reschedule = {
-        "previousStartAt": "2026-03-02 10:00:00",
-        "previousEndAt": "2026-03-02 11:00:00",
-        "startAt": "2026-03-03 10:00:00",
-        "endAt": "2026-03-03 11:00:00",
-        "isGhost": False,
-    }
+    reschedule = reschedule_body(
+        ("2026-03-02 10:00:00", "2026-03-02 11:00:00"),
+        ("2026-03-03 10:00:00", "2026-03-03 11:00:00"),
+    )
     moved = b.post(f"/api/tasks/{task_id}/reschedule", json=reschedule)
     assert moved.status_code == 404
 

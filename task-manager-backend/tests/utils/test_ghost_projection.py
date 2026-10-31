@@ -3,25 +3,16 @@ from typing import Any
 
 import pytest
 
-from app.schemas.task_schema import TaskSchema
-from app.services.task_service import create_task
 from app.utils import task_utils
 from app.utils.dates import as_naive_utc
 from app.utils.task_utils import with_repeating
+from tests.builders import add_task
 
 pytestmark = pytest.mark.integration
 
 
 def add_daily_task(user_id: int, **overrides: Any) -> None:
-    body = {
-        "title": "Stretch",
-        "category": "health",
-        "startAt": "2026-03-02 09:00:00",
-        "endAt": "2026-03-02 09:15:00",
-        "repeatBy": "daily",
-        **overrides,
-    }
-    create_task(user_id, TaskSchema().load(body))
+    add_task(user_id, repeatBy="daily", **overrides)
 
 
 def ghost_days(user_id: int, view_start: datetime, view_end: datetime) -> list[date]:

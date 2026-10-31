@@ -28,9 +28,9 @@ from app.demo import DEMO_USER_EMAIL
 from app.extensions import limiter
 from app.main import create_app
 from app.models import User
+from tests.builders import DEFAULT_PASSWORD, task_body
 from tests.db import create_database, empty_tables
 
-DEFAULT_PASSWORD = "Sturdy-pass9"
 DEFAULT_PASSWORD_HASH = generate_password_hash(DEFAULT_PASSWORD)
 
 TEST_TYPE_BY_LAYER = {
@@ -151,18 +151,7 @@ def session(
 
 @pytest.fixture
 def task_payload() -> Callable[..., dict[str, Any]]:
-    def _payload(**overrides: Any) -> dict[str, Any]:
-        payload = {
-            "title": "Write report",
-            "description": "Quarterly numbers",
-            "category": "work",
-            "startAt": "2026-03-02 10:00:00",
-            "endAt": "2026-03-02 11:00:00",
-        }
-        payload.update(overrides)
-        return payload
-
-    return _payload
+    return task_body
 
 
 @pytest.fixture

@@ -3,16 +3,10 @@ from typing import Any
 import pytest
 
 from app.schemas.user_schema import LoginSchema, PasswordResetSchema, RegisterSchema
-from tests.conftest import DEFAULT_PASSWORD
+from tests.builders import DEFAULT_PASSWORD, register_body
 from tests.schemas.helpers import load_errors
 
-REGISTER = {
-    "firstName": "New",
-    "lastName": "Person",
-    "email": "new@example.com",
-    "password": DEFAULT_PASSWORD,
-    "confirmPassword": DEFAULT_PASSWORD,
-}
+REGISTER = register_body()
 
 
 @pytest.mark.parametrize(

@@ -5,20 +5,11 @@ from flask import Flask
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
-from tests.conftest import DEFAULT_PASSWORD
+from tests.builders import DEFAULT_PASSWORD, register_body
 
 
 def register(client: FlaskClient, email: str = "new@example.com") -> TestResponse:
-    return client.post(
-        "/api/auth/register",
-        json={
-            "firstName": "New",
-            "lastName": "Person",
-            "email": email,
-            "password": DEFAULT_PASSWORD,
-            "confirmPassword": DEFAULT_PASSWORD,
-        },
-    )
+    return client.post("/api/auth/register", json=register_body(email=email))
 
 
 def test_register_sets_session_and_me_works(client: FlaskClient) -> None:
@@ -63,16 +54,9 @@ def test_register_returns_every_field_error_as_400(client: FlaskClient) -> None:
 
 
 def test_register_stores_trimmed_names_and_email(client: FlaskClient) -> None:
-    response = client.post(
-        "/api/auth/register",
-        json={
-            "firstName": "  Ann ",
-            "lastName": "Person",
-            "email": " ann@example.com ",
-            "password": DEFAULT_PASSWORD,
-            "confirmPassword": DEFAULT_PASSWORD,
-        },
-    )
+    body = register_body(firstName="  Ann ", email=" ann@example.com ")
+
+    response = client.post("/api/auth/register", json=body)
 
     user = response.get_json()["user"]
     assert (user["firstName"], user["email"]) == ("Ann", "ann@example.com")

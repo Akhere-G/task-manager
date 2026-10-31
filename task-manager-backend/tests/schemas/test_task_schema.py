@@ -4,21 +4,11 @@ from typing import Any
 import pytest
 
 from app.schemas.task_schema import TaskRescheduleSchema, TaskSchema, TaskUpdateSchema
+from tests.builders import MONDAY, TUESDAY, reschedule_body, task_body
 from tests.schemas.helpers import load_errors
 
-TASK = {
-    "title": "Write report",
-    "category": "work",
-    "startAt": "2026-03-02 10:00:00",
-    "endAt": "2026-03-02 11:00:00",
-}
-RESCHEDULE = {
-    "previousStartAt": "2026-03-02 09:00:00",
-    "previousEndAt": "2026-03-02 10:00:00",
-    "startAt": "2026-03-03 09:00:00",
-    "endAt": "2026-03-03 10:00:00",
-    "isGhost": False,
-}
+TASK = task_body()
+RESCHEDULE = reschedule_body(MONDAY, TUESDAY)
 
 
 def test_a_task_is_loaded_as_naive_utc_and_starts_incomplete() -> None:
