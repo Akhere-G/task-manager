@@ -1,32 +1,33 @@
 import logging
 import os
-from flask import Flask, abort, request, send_from_directory
+
+from dotenv import load_dotenv
+from flask import Flask, Response, abort, request, send_from_directory
+from flask.typing import ResponseReturnValue
 from flask_compress import Compress
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from dotenv import load_dotenv
+from sqlalchemy import select, text
 from werkzeug.middleware.proxy_fix import ProxyFix
-
-from app.routes.task_routes import task_bp
-from app.routes.auth_routes import auth_bp
-from app.routes.stats_routes import stats_bp
-from app.routes.ai_routes import ai_bp
-from app.routes.mail_routes import mail_bp
-from app.routes.notifications import notification_bp
 
 from app.config import APP_REQUIRED, DB_REQUIRED, build_database_url, require_env
 from app.database import ENGINE_OPTIONS, db
 from app.errors import register_error_handlers
 from app.extensions import limiter
 from app.headers import register_response_headers
-from sqlalchemy import select, text
+from app.routes.ai_routes import ai_bp
+from app.routes.auth_routes import auth_bp
+from app.routes.mail_routes import mail_bp
+from app.routes.notifications import notification_bp
+from app.routes.stats_routes import stats_bp
+from app.routes.task_routes import task_bp
 
 load_dotenv()
 
 jwt = JWTManager()
 
 
-def create_app():
+def create_app() -> Flask:
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     static_folder_path = os.path.join(base_dir, "static")
 
@@ -58,7 +59,7 @@ def create_app():
     Compress(app)
 
     @app.before_request
-    def require_ajax_header():
+    def require_ajax_header() -> None:
         if (
             request.path.startswith("/api/")
             and request.method in ("POST", "PUT", "PATCH", "DELETE")
@@ -111,19 +112,19 @@ def create_app():
 
         @app.route("/health")
         @limiter.exempt
-        def health_check():
+        def health_check() -> ResponseReturnValue:
             return {"status": "healthy"}, 200
 
         @app.route("/api/keep-alive")
         @limiter.exempt
-        def keep_alive():
+        def keep_alive() -> ResponseReturnValue:
             db.session.execute(select(text("SELECT 1")))
             return "DB Poked", 200
 
         @app.route("/", defaults={"path": ""})
         @app.route("/<path:path>")
         @limiter.exempt
-        def serve(path: str):
+        def serve(path: str) -> Response:
             static_folder = app.static_folder or ""
             if path == "api" or path.startswith("api/"):
                 abort(404)

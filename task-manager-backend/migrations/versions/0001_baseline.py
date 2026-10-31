@@ -3,6 +3,7 @@
 Revision ID: 0001
 Revises:
 """
+
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import mysql
@@ -15,7 +16,7 @@ depends_on = None
 NOW = sa.text("CURRENT_TIMESTAMP")
 
 
-def upgrade():
+def upgrade() -> None:
     op.create_table(
         "users",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
@@ -53,7 +54,9 @@ def upgrade():
             ["user_id"], ["users.id"], name="fk_user", ondelete="CASCADE"
         ),
     )
-    op.create_index("idx_tasks_search", "tasks", ["title", "description"], mysql_prefix="FULLTEXT")
+    op.create_index(
+        "idx_tasks_search", "tasks", ["title", "description"], mysql_prefix="FULLTEXT"
+    )
     op.create_index("idx_tasks_user_end_at", "tasks", ["user_id", "end_at"])
     op.create_index(
         "idx_tasks_user_completed", "tasks", ["user_id", "is_completed", "completed_at"]
@@ -141,7 +144,7 @@ def upgrade():
     )
 
 
-def downgrade():
+def downgrade() -> None:
     op.execute("DROP TRIGGER IF EXISTS tr_ensure_completion_timestamp")
     for table in (
         "notification_subscriptions",

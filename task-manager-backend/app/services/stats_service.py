@@ -1,7 +1,19 @@
 from collections import Counter, defaultdict
-from datetime import timedelta
+from collections.abc import Sequence
+from datetime import datetime, timedelta
+from typing import Any
 
-from sqlalchemy import and_, case, desc, func, literal_column, select
+from sqlalchemy import (
+    ColumnElement,
+    Row,
+    Select,
+    and_,
+    case,
+    desc,
+    func,
+    literal_column,
+    select,
+)
 
 from app.constants import CATEGORIES
 from app.database import db
@@ -9,41 +21,47 @@ from app.models import Task
 from app.utils.dates import as_aware_utc, as_naive_utc, start_of_day, utc_now
 from app.utils.task_utils import with_repeating
 
+Stats = list[dict[str, Any]]
+
 TREND_DAYS = 366
 PROJECTION_DAYS = 30
 MAX_TURNAROUND_DAYS = 50
 ACCURACY_DAYS = 30
 OVERDUE_BUCKETS = ("< 3 Days", "1 Week", "1 Month", "3 Months", "+3 Months")
 
-DURATION_MINUTES = func.timestampdiff(literal_column("MINUTE"), Task.start_at, Task.end_at)
-DURATION_SECONDS = func.timestampdiff(literal_column("SECOND"), Task.start_at, Task.end_at)
+DURATION_MINUTES = func.timestampdiff(
+    literal_column("MINUTE"), Task.start_at, Task.end_at
+)
+DURATION_SECONDS = func.timestampdiff(
+    literal_column("SECOND"), Task.start_at, Task.end_at
+)
 COMPLETED_DATE = func.date(Task.completed_at)
 END_DATE = func.date(Task.end_at)
 
 
-def _rows(stmt):
+def _rows(stmt: Select[Any]) -> Sequence[Row[Any]]:
     return db.session.execute(stmt).all()
 
 
-def _count_if(condition):
+def _count_if(condition: ColumnElement[bool]) -> ColumnElement[int]:
     return func.coalesce(func.sum(case((condition, 1), else_=0)), 0)
 
 
-def _is_overdue(now):
+def _is_overdue(now: datetime) -> ColumnElement[bool]:
     return and_(Task.is_completed.is_(False), Task.end_at < now)
 
 
-def _is_pending(now):
+def _is_pending(now: datetime) -> ColumnElement[bool]:
     return and_(Task.is_completed.is_(False), Task.end_at >= now)
 
 
-def _upcoming_ghosts(user_id, now):
+def _upcoming_ghosts(user_id: int, now: datetime) -> list[Task]:
     view_end = now + timedelta(days=PROJECTION_DAYS)
     projected = with_repeating([], now, view_end, user_id)
     return [ghost for ghost in projected if not ghost.is_completed]
 
 
-def _productivity_trend(user_id, now):
+def _productivity_trend(user_id: int, now: datetime) -> Stats:
     first_day = now.date() - timedelta(days=TREND_DAYS - 1)
     rows = _rows(
         select(COMPLETED_DATE, func.count(), func.sum(DURATION_MINUTES))
@@ -60,11 +78,13 @@ def _productivity_trend(user_id, now):
     for offset in range(TREND_DAYS):
         day = first_day + timedelta(days=offset)
         tasks, time_spent = by_day.get(day, (0, 0))
-        trend.append({"date": day.isoformat(), "tasks": tasks, "time_spent": time_spent})
+        trend.append(
+            {"date": day.isoformat(), "tasks": tasks, "time_spent": time_spent}
+        )
     return trend
 
 
-def _time_spent(user_id):
+def _time_spent(user_id: int) -> Stats:
     minutes = func.sum(DURATION_MINUTES)
     rows = _rows(
         select(Task.category, minutes)
@@ -72,10 +92,12 @@ def _time_spent(user_id):
         .group_by(Task.category)
         .order_by(desc(minutes), Task.category)
     )
-    return [{"category": category, "time_spent": int(total)} for category, total in rows]
+    return [
+        {"category": category, "time_spent": int(total)} for category, total in rows
+    ]
 
 
-def _hourly_productivity(user_id):
+def _hourly_productivity(user_id: int) -> Stats:
     hour = func.hour(Task.completed_at)
     rows = _rows(
         select(hour, func.count())
@@ -86,7 +108,7 @@ def _hourly_productivity(user_id):
     return [{"hour": hour, "count": counts.get(hour, 0)} for hour in range(24)]
 
 
-def _turnaround_time(user_id):
+def _turnaround_time(user_id: int) -> Stats:
     days_taken = func.datediff(Task.completed_at, Task.created_at)
     rows = _rows(
         select(days_taken, func.count())
@@ -95,10 +117,12 @@ def _turnaround_time(user_id):
     )
     counts = dict(rows)
     shown_days = min(max(counts, default=0), MAX_TURNAROUND_DAYS) + 1
-    return [{"days_taken": days, "count": counts.get(days, 0)} for days in range(shown_days)]
+    return [
+        {"days_taken": days, "count": counts.get(days, 0)} for days in range(shown_days)
+    ]
 
 
-def _estimation_accuracy(user_id, now):
+def _estimation_accuracy(user_id: int, now: datetime) -> Stats:
     rows = _rows(
         select(Task.id, Task.title, Task.category, Task.end_at, Task.completed_at)
         .where(
@@ -121,7 +145,7 @@ def _estimation_accuracy(user_id, now):
     ]
 
 
-def _distribution_trend(user_id, now):
+def _distribution_trend(user_id: int, now: datetime) -> Stats:
     first_day = now.date() - timedelta(days=6)
     rows = _rows(
         select(COMPLETED_DATE, Task.category, func.count())
@@ -138,12 +162,14 @@ def _distribution_trend(user_id, now):
     trend = []
     for offset in range(7):
         day = first_day + timedelta(days=offset)
-        per_category = {category: counts.get((day, category), 0) for category in CATEGORIES}
+        per_category = {
+            category: counts.get((day, category), 0) for category in CATEGORIES
+        }
         trend.append({"date": day.isoformat(), **per_category})
     return trend
 
 
-def _category_volume(user_id, now, ghosts):
+def _category_volume(user_id: int, now: datetime, ghosts: list[Task]) -> Stats:
     rows = _rows(
         select(
             Task.category,
@@ -165,12 +191,16 @@ def _category_volume(user_id, now, ghosts):
         volume[category]["pending"] += count
 
     return [
-        {"category": category, **volume[category], "total": sum(volume[category].values())}
+        {
+            "category": category,
+            **volume[category],
+            "total": sum(volume[category].values()),
+        }
         for category in sorted(volume, reverse=True)
     ]
 
 
-def _backlog_health(volume):
+def _backlog_health(volume: Stats) -> Stats:
     return [
         {"status": "Completed", "count": sum(v["completed"] for v in volume)},
         {"status": "Overdue", "count": sum(v["overdue"] for v in volume)},
@@ -178,7 +208,7 @@ def _backlog_health(volume):
     ]
 
 
-def _overdue_distribution(user_id, now):
+def _overdue_distribution(user_id: int, now: datetime) -> Stats:
     days_late = func.timestampdiff(literal_column("DAY"), Task.end_at, now)
     bucket = case(
         (days_late <= 3, OVERDUE_BUCKETS[0]),
@@ -200,7 +230,7 @@ def _overdue_distribution(user_id, now):
     ]
 
 
-def _deadline_proximity(user_id, now, ghosts):
+def _deadline_proximity(user_id: int, now: datetime, ghosts: list[Task]) -> Stats:
     time_left = func.timestampdiff(literal_column("SECOND"), now, Task.end_at)
     rows = _rows(
         select(Task.category, func.sum(time_left), func.count())
@@ -223,7 +253,7 @@ def _deadline_proximity(user_id, now, ghosts):
     return sorted(scores, key=lambda s: s["score"], reverse=True)
 
 
-def _week_overview(user_id, now, ghosts):
+def _week_overview(user_id: int, now: datetime, ghosts: list[Task]) -> Stats:
     week_start = start_of_day(now.date())
     week_end = week_start + timedelta(days=7)
     rows = _rows(
@@ -256,7 +286,7 @@ def _week_overview(user_id, now, ghosts):
     ]
 
 
-def get_brief_stats(user_id):
+def get_brief_stats(user_id: int) -> dict[str, Stats]:
     now = utc_now()
     ghosts = _upcoming_ghosts(user_id, now)
     return {
@@ -265,7 +295,7 @@ def get_brief_stats(user_id):
     }
 
 
-def get_all_dashboard_stats(user_id):
+def get_all_dashboard_stats(user_id: int) -> dict[str, Stats]:
     now = utc_now()
     ghosts = _upcoming_ghosts(user_id, now)
     volume = _category_volume(user_id, now, ghosts)

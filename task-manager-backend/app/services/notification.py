@@ -1,12 +1,14 @@
-from sqlalchemy import delete, select
-from ..models import Notification, NotificationSubscription
-from ..database import db
+from sqlalchemy import ScalarResult, delete, select
 
+from ..database import db
+from ..models import Notification, NotificationSubscription
 
 MAX_SUBSCRIPTIONS_PER_USER = 10
 
 
-def get_notifications(user_id: int, limit: int = 50, before_id: int | None = None):
+def get_notifications(
+    user_id: int, limit: int = 50, before_id: int | None = None
+) -> ScalarResult[Notification]:
     stmt = select(Notification).where(Notification.user_id == user_id)
     if before_id is not None:
         stmt = stmt.where(Notification.id < before_id)
@@ -14,7 +16,7 @@ def get_notifications(user_id: int, limit: int = 50, before_id: int | None = Non
     return db.session.execute(stmt).scalars()
 
 
-def read_notifications(user_id: int, notification_id: int):
+def read_notifications(user_id: int, notification_id: int) -> Notification | None:
     stmt = select(Notification).where(
         Notification.id == notification_id, Notification.user_id == user_id
     )
@@ -30,7 +32,9 @@ def read_notifications(user_id: int, notification_id: int):
     return notificaiton
 
 
-def save_subscription(user_id: int, endpoint: str, p256dh: str, auth: str):
+def save_subscription(
+    user_id: int, endpoint: str, p256dh: str, auth: str
+) -> NotificationSubscription:
     stmt = select(NotificationSubscription).where(
         NotificationSubscription.endpoint == endpoint
     )
@@ -66,7 +70,7 @@ def save_subscription(user_id: int, endpoint: str, p256dh: str, auth: str):
     return subscription
 
 
-def delete_subscription(user_id: int, endpoint: str):
+def delete_subscription(user_id: int, endpoint: str) -> None:
     db.session.execute(
         delete(NotificationSubscription).where(
             NotificationSubscription.user_id == user_id,
