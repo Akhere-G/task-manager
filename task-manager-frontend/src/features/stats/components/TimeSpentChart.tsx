@@ -33,7 +33,7 @@ export default function TimeSpentChart() {
   const chartData = timeSpent?.map((data) => ({
     ...data,
     hours: Math.round(data.timeSpent / 60),
-    fill: categoryColours[data.category] || categoryColours["General"],
+    fill: categoryColours[data.category] || categoryColours["general"],
   }));
 
   if (chartData && chartData.length === 0) {

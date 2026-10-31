@@ -30,12 +30,14 @@ import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useUpdateTask from "../hooks/useUpdateTask";
+import { useTheme } from "../../users/ThemeContext";
 import { trackEvent } from "../../../services/analytics";
 
 import {
   getCalendarTaskId,
   getDayClassName,
   getEventClassName,
+  getEventStyle,
   mapTasksToCalendarEvents,
 } from "../utils";
 import MobileTaskSection from "./MobileTaskSelection";
@@ -65,6 +67,7 @@ export default function TaskCalendar({
   const [allTasks, setAllTasks] = useState(tasks);
   const { mutateAsync: updateTask } = useUpdateTask();
   const { openPopup } = useTaskContext();
+  const { darkMode } = useTheme();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
@@ -240,6 +243,7 @@ export default function TaskCalendar({
           }}
           eventPropGetter={(event: Event) => ({
             className: getEventClassName(event, isMobile, view),
+            style: getEventStyle(event, isMobile, view, darkMode),
           })}
         />
       </div>
