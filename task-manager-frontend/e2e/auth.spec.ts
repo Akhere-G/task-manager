@@ -46,7 +46,7 @@ test("rejects a wrong password", async ({ page, api }) => {
 });
 
 test("one user cannot open another user's task", async ({ browser, baseURL, signedIn, page }) => {
-  const taskId = await signedIn.api.createTask({
+  const taskId = await signedIn.createTask({
     title: "Private plan",
     startAt: "2026-03-11 09:00:00",
     endAt: "2026-03-11 10:00:00",

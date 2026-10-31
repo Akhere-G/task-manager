@@ -37,7 +37,7 @@ test("dragging a saved repeating task to the next day moves it without skipping 
   page,
   signedIn,
 }) => {
-  await signedIn.api.createTask(WEEKLY_STANDUP);
+  await signedIn.createTask(WEEKLY_STANDUP);
   await page.goto(weekOf("2026-03-09"));
   const standup = page.locator(".rbc-event").filter({ hasText: "Standup" });
   await expect(standup).toHaveCount(1);
@@ -45,7 +45,7 @@ test("dragging a saved repeating task to the next day moves it without skipping 
   await dragToNextDay(page, standup);
 
   await expect
-    .poll(async () => (await signedIn.api.tasks()).map((t) => [t.startAt, t.repeatDays]))
+    .poll(async () => (await signedIn.tasks()).map((t) => [t.startAt, t.repeatDays]))
     .toEqual([["2026-03-10T09:00:00Z", [1]]]);
 });
 
@@ -53,7 +53,7 @@ test("dragging a ghost moves the whole series to the new weekday", async ({
   page,
   signedIn,
 }) => {
-  await signedIn.api.createTask(WEEKLY_STANDUP);
+  await signedIn.createTask(WEEKLY_STANDUP);
   await page.goto(weekOf("2026-03-16"));
   const standup = page.locator(".rbc-event").filter({ hasText: "Standup" });
   await expect(standup).toHaveCount(1);
@@ -61,7 +61,7 @@ test("dragging a ghost moves the whole series to the new weekday", async ({
   await dragToNextDay(page, standup);
 
   await expect
-    .poll(async () => (await signedIn.api.tasks()).map((t) => [t.startAt, t.repeatDays]))
+    .poll(async () => (await signedIn.tasks()).map((t) => [t.startAt, t.repeatDays]))
     .toEqual([["2026-03-10T09:00:00Z", [1]]]);
   await page.reload();
   await expect(standup).toHaveCount(1);

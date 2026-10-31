@@ -68,7 +68,7 @@ export class Api {
   }
 }
 
-export const test = base.extend<{ api: Api; signedIn: { email: string; api: Api } }>({
+export const test = base.extend<{ api: Api; signedIn: Api }>({
   // Analytics is not under test and must never send real events from a test run.
   context: async ({ context }, provide) => {
     await context.route(/posthog\.com/, (route) => route.abort());
@@ -78,8 +78,8 @@ export const test = base.extend<{ api: Api; signedIn: { email: string; api: Api 
     await provide(new Api(context.request));
   },
   signedIn: async ({ api }, provide) => {
-    const email = await api.register();
-    await provide({ email, api });
+    await api.register();
+    await provide(api);
   },
 });
 
