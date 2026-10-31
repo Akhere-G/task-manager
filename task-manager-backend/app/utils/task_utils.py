@@ -1,9 +1,17 @@
 import re
-from datetime import datetime, date, timezone
+from datetime import date
 from sqlalchemy import select, func, or_, text
 from app.database import db
 from app.models import Task
-from app.utils.recurrence import get_zone, next_occurrence
+from app.utils.dates import (
+    as_aware_utc,
+    end_of_day,
+    get_zone,
+    parse_iso,
+    start_of_day,
+    utc_now,
+)
+from app.utils.recurrence import next_occurrence
 from dateutil import parser
 
 
@@ -63,12 +71,8 @@ def build_task_filters(user_id, query):
         clauses.append(Task.is_completed == val)
 
     if start_date and end_date:
-        start_dt = datetime.combine(
-            parser.isoparse(str(start_date)).date(), datetime.min.time()
-        )
-        end_dt = datetime.combine(
-            parser.isoparse(str(end_date)).date(), datetime.max.time()
-        )
+        start_dt = start_of_day(parser.isoparse(str(start_date)).date())
+        end_dt = end_of_day(parser.isoparse(str(end_date)).date())
         clauses.append(Task.end_at.between(start_dt, end_dt))
 
     if duration in ["short_tasks", "long_tasks"]:
@@ -88,8 +92,8 @@ MAX_GHOSTS = 5000
 
 def with_repeating(tasks, view_start, view_end, user_id, additional_clauses=None):
     ghost_count = 0
-    view_start = view_start.replace(tzinfo=timezone.utc)
-    view_end = view_end.replace(tzinfo=timezone.utc)
+    view_start = as_aware_utc(view_start)
+    view_end = as_aware_utc(view_end)
     clauses = [
         Task.user_id == user_id,
         Task.is_repeating,
@@ -110,16 +114,13 @@ def with_repeating(tasks, view_start, view_end, user_id, additional_clauses=None
             )
             return next_start, next_start + (end - start)
 
-        instance_start = task.start_at.replace(tzinfo=timezone.utc)
-        instance_end = task.end_at.replace(tzinfo=timezone.utc)
-        repeat_until = task.repeat_until
-        task_start_at = task.start_at.replace(tzinfo=timezone.utc)
+        instance_start = as_aware_utc(task.start_at)
+        instance_end = as_aware_utc(task.end_at)
+        task_start_at = instance_start
 
-        if repeat_until and isinstance(repeat_until, date):
-            repeat_until = datetime.combine(repeat_until, datetime.max.time()).replace(
-                tzinfo=timezone.utc
-            )
-        if not repeat_until:
+        if task.repeat_until:
+            repeat_until = as_aware_utc(end_of_day(task.repeat_until))
+        else:
             repeat_until = view_end
 
         while instance_start < view_start:
@@ -174,14 +175,11 @@ def check_should_repeat(old_task, updated_task):
         repeat_until_val = updated_task.get("repeat_until")
 
         if isinstance(repeat_until_val, str):
-            repeat_until_val = datetime.strptime(repeat_until_val, "%Y-%m-%d").date()
+            repeat_until_val = date.fromisoformat(repeat_until_val)
         if isinstance(repeat_until_val, date):
-            repeat_until_val = datetime.combine(repeat_until_val, datetime.max.time())
+            repeat_until_val = end_of_day(repeat_until_val)
 
-        start_at = updated_task.get("start_at")
-
-        if isinstance(start_at, str):
-            start_at = parser.isoparse(start_at)
+        start_at = parse_iso(updated_task.get("start_at"))
 
         next_start = next_occurrence(
             start_at,
@@ -206,7 +204,7 @@ def handle_repeat_task(user_id, original_task):
         user_id=user_id,
         series_id=original_task["id"],
         is_completed=True,
-        completed_at=original_task["completed_at"] or datetime.now(timezone.utc),
+        completed_at=original_task["completed_at"] or utc_now(),
         created_at=original_task["created_at"],
     )
     db.session.add(history_task)
@@ -230,5 +228,5 @@ def handle_repeat_task(user_id, original_task):
         current_task.is_completed = False
         current_task.completed_at = None
         current_task.series_id = current_task.id
-        current_task.created_at = datetime.now(timezone.utc)
+        current_task.created_at = utc_now()
 

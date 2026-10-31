@@ -1,19 +1,13 @@
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from marshmallow import Schema, fields, pre_load, validate
+from marshmallow import fields, validate
+from marshmallow_sqlalchemy import auto_field
+
 from ..models import Notification
-import re
+from .base import CamelAutoSchema, CamelSchema
 
 
-class NotificationSchema(SQLAlchemyAutoSchema):
-    class Meta:
+class NotificationSchema(CamelAutoSchema):
+    class Meta(CamelAutoSchema.Meta):
         model = Notification
-
-    @pre_load
-    def camel_to_snake(self, data, many, partial, **kwargs):
-        return {self._to_snake(k): v for k, v in data.items()}
-
-    def _to_snake(self, s):
-        return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
 
     id = auto_field(dump_only=True)
     user_id = auto_field(dump_only=True)
@@ -33,7 +27,7 @@ class NotificationSchema(SQLAlchemyAutoSchema):
     is_read = auto_field()
 
 
-class SubscriptionKeysSchema(Schema):
+class SubscriptionKeysSchema(CamelSchema):
     p256dh = fields.String(
         required=True,
         validate=validate.Length(max=255),
@@ -50,14 +44,7 @@ class SubscriptionKeysSchema(Schema):
     )
 
 
-class SubscriptionCreateSchema(Schema):
-    @pre_load
-    def camel_to_snake(self, data, many, partial, **kwargs):
-        return {self._to_snake(k): v for k, v in data.items()}
-
-    def _to_snake(self, s):
-        return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
-
+class SubscriptionCreateSchema(CamelSchema):
     endpoint = fields.String(
         required=True,
         validate=[

@@ -1,5 +1,6 @@
-from datetime import datetime, date, timezone
 import re
+
+from app.utils.dates import to_iso_z
 
 
 def to_snake_case(s):
@@ -30,12 +31,4 @@ def format_json_response(data):
             new_dict[new_key] = format_json_response(value)
         return new_dict
 
-    if isinstance(data, (datetime, date)):
-        if isinstance(data, datetime):
-            if data.tzinfo is None:
-                data = data.replace(tzinfo=timezone.utc)
-            return data.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-
-        return data.isoformat()
-
-    return data
+    return to_iso_z(data)
