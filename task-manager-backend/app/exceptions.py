@@ -1,0 +1,73 @@
+"""Domain errors. Each one carries its own message and HTTP status; a single
+handler in `app.errors` turns any `AppError` into the JSON response."""
+
+
+class AppError(Exception):
+    status_code = 400
+    message = "Something went wrong."
+    field = None
+
+    def __init__(self, message=None, *, field=None, **extra):
+        self.message = message or self.message
+        self.field = field or self.field
+        self.extra = extra
+        super().__init__(self.message)
+
+    def to_dict(self):
+        if self.field:
+            return {"errors": {self.field: self.message}}
+        return {"error": self.message, **self.extra}
+
+
+class NotFoundError(AppError):
+    status_code = 404
+    message = "Not found."
+
+
+class TaskNotFound(NotFoundError):
+    message = "Task not found."
+
+
+class TaskConflict(AppError):
+    status_code = 409
+    message = "This task was already updated."
+
+    def __init__(self, task):
+        super().__init__(task=task)
+
+
+class InvalidTaskTimes(AppError):
+    field = "endAt"
+    message = "End time must be after the start time."
+
+
+class EmailTaken(AppError):
+    field = "general"
+    message = "Could not register. Try again or try and sign in."
+
+
+class InvalidCredentials(AppError):
+    field = "general"
+    message = "Invalid credentials."
+
+
+class AlreadySignedIn(AppError):
+    status_code = 409
+    field = "general"
+    message = "Already signed in."
+
+
+class DemoUnavailable(AppError):
+    status_code = 503
+    field = "general"
+    message = "The demo is temporarily unavailable."
+
+
+class DemoForbidden(AppError):
+    status_code = 403
+    message = "Not available in demo mode."
+
+
+class AIUnavailable(AppError):
+    status_code = 502
+    message = "The AI service could not complete that request."

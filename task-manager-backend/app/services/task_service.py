@@ -1,26 +1,26 @@
 from dataclasses import replace
-from datetime import date, datetime, timezone
+from datetime import date
 
+from app.constants import MAX_TASKS_PER_REQUEST
 from app.database import db
+from app.exceptions import InvalidTaskTimes, TaskConflict
 from app.models import Task
 from app.services.task_query import TaskQuery
 from app.utils.formatters import to_snake_case
 from app.utils.serializers import task_to_dict
+from app.utils.dates import as_naive_utc, get_zone, parse_iso, utc_now
 from app.utils.recurrence import (
     default_days,
-    get_zone,
     next_occurrence,
     normalise_days,
     snap_to_slot,
 )
-from app.utils.validators import MAX_TASKS_PER_REQUEST
 from app.utils.task_utils import (
     build_task_filters,
     check_should_repeat,
     handle_repeat_task,
     with_repeating,
 )
-from dateutil import parser
 from sqlalchemy import asc, desc, func, select
 
 
@@ -65,11 +65,8 @@ def get_all_tasks(user_id, query=TaskQuery()):
 
     if query.project_repeating:
 
-        def parse_date(d):
-            return parser.isoparse(d) if isinstance(d, str) else d
-
-        start = parse_date(query.start_date)
-        end = parse_date(query.end_date)
+        start = parse_iso(query.start_date)
+        end = parse_iso(query.end_date)
 
         base_clauses = build_task_filters(
             user_id, replace(query, start_date=None, end_date=None)
@@ -129,8 +126,8 @@ def create_task(user_id, data):
         if data.get("description")
         else None,
         category=str(data.get("category", "General")).strip(),
-        start_at=_as_naive_utc(data.get("startAt")),
-        end_at=_as_naive_utc(data.get("endAt")),
+        start_at=as_naive_utc(data.get("startAt")),
+        end_at=as_naive_utc(data.get("endAt")),
         is_repeating=bool(data.get("isRepeating")),
         repeat_by=data.get("repeatBy"),
         repeat_until=data.get("repeatUntil"),
@@ -156,8 +153,8 @@ def create_tasks_from_list(user_id, tasks):
             title=t.get("title"),
             description=t.get("description").strip() if t.get("description") else None,
             category=t.get("category", "General"),
-            start_at=_as_naive_utc(t.get("startAt")),
-            end_at=_as_naive_utc(t.get("endAt")),
+            start_at=as_naive_utc(t.get("startAt")),
+            end_at=as_naive_utc(t.get("endAt")),
             user_id=user_id,
             is_completed=bool(t.get("isCompleted")),
             completed_at=t.get("completedAt"),
@@ -183,19 +180,6 @@ def create_tasks_from_list(user_id, tasks):
     return len(inserted_tasks)
 
 
-class TaskValidationError(Exception):
-    def __init__(self, field, message):
-        super().__init__(message)
-        self.field = field
-        self.message = message
-
-
-class TaskConflict(Exception):
-    def __init__(self, task):
-        super().__init__("The task has changed since it was loaded.")
-        self.task = task
-
-
 UPDATABLE_FIELDS = [
     "title",
     "description",
@@ -219,14 +203,6 @@ RECURRENCE_FIELDS = {
     "repeat_timezone",
     "start_at",
 }
-
-
-def _as_naive_utc(value):
-    if isinstance(value, str):
-        value = parser.isoparse(value)
-    if value.tzinfo is not None:
-        value = value.astimezone(timezone.utc).replace(tzinfo=None)
-    return value
 
 
 def _task_state(task):
@@ -262,10 +238,10 @@ def update_task(user_id, task_id, data: dict):
     old_task_dict = _task_state(task)
     incoming = {to_snake_case(k): v for k, v in data.items()}
 
-    start = _as_naive_utc(incoming.get("start_at") or task.start_at)
-    end = _as_naive_utc(incoming.get("end_at") or task.end_at)
+    start = as_naive_utc(incoming.get("start_at") or task.start_at)
+    end = as_naive_utc(incoming.get("end_at") or task.end_at)
     if end <= start:
-        raise TaskValidationError("endAt", "End time must be after the start time.")
+        raise InvalidTaskTimes()
 
     expected_start = incoming.get("expected_start_at")
     completing = bool(incoming.get("is_completed")) and not task.is_completed
@@ -273,7 +249,7 @@ def update_task(user_id, task_id, data: dict):
         expected_start
         and completing
         and task.is_repeating
-        and _as_naive_utc(expected_start) != task.start_at
+        and as_naive_utc(expected_start) != task.start_at
     ):
         raise TaskConflict(old_task_dict)
 
@@ -283,13 +259,13 @@ def update_task(user_id, task_id, data: dict):
             value = bool(v) if key in ["is_completed", "is_repeating"] else value
             setattr(task, key, value)
     if task.is_completed and not old_task_dict["is_completed"]:
-        task.completed_at = datetime.now(timezone.utc)
+        task.completed_at = utc_now()
 
     elif not task.is_completed and old_task_dict["is_completed"]:
         task.completed_at = None
 
-    task.start_at = _as_naive_utc(task.start_at)
-    task.end_at = _as_naive_utc(task.end_at)
+    task.start_at = as_naive_utc(task.start_at)
+    task.end_at = as_naive_utc(task.end_at)
 
     if "repeat_by" in incoming and "repeat_days" not in incoming:
         task.repeat_days = None

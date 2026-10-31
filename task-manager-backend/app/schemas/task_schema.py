@@ -1,19 +1,13 @@
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from marshmallow import pre_load, validates_schema, ValidationError
+from marshmallow import ValidationError, validates_schema
+from marshmallow_sqlalchemy import auto_field
+
 from ..models import Task
-import re
+from .base import CamelAutoSchema
 
 
-class TaskSchema(SQLAlchemyAutoSchema):
-    class Meta:
+class TaskSchema(CamelAutoSchema):
+    class Meta(CamelAutoSchema.Meta):
         model = Task
-
-    @pre_load
-    def camel_to_snake(self, data, many, partial, **kwargs):
-        return {self._to_snake(k): v for k, v in data.items()}
-
-    def _to_snake(self, s):
-        return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
 
     id = auto_field(dump_only=True)
     user_id = auto_field(dump_only=True)

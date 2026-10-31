@@ -1,9 +1,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from marshmallow import ValidationError
-from typing import cast, Any
 
 from app.services import notification as notification_service
+from app.exceptions import DemoForbidden
 from app.services.auth_service import is_demo_user
 from app.utils.http import get_json_body
 from app.schemas.notification_schema import (
@@ -50,13 +49,9 @@ def save_subscription_route():
     user_id = get_jwt_identity()
 
     if is_demo_user(user_id):
-        return jsonify({"error": "Not available in demo mode."}), 403
+        raise DemoForbidden()
 
-    try:
-        raw_data = SubscriptionCreateSchema().load(get_json_body())
-        data = cast(dict[str, Any], raw_data)
-    except ValidationError as err:
-        return jsonify({"errors": err.messages}), 400
+    data = SubscriptionCreateSchema().load(get_json_body())
 
     notification_service.save_subscription(
         user_id=user_id,

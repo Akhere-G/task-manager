@@ -2,7 +2,6 @@ import json
 import logging
 import os
 from datetime import datetime, date, timezone
-from zoneinfo import ZoneInfo
 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -10,13 +9,15 @@ from google import genai
 from google.genai import types
 from groq import Groq
 
+from app.constants import CATEGORIES, REPEAT_FREQUENCIES, REPEAT_INTERVAL_LIMITS
 from app.database import db
 from app.models import DailyBrief
 
 from app.services.stats_service import get_brief_stats
 from app.services.task_query import TaskQuery
 from app.services.task_service import get_all_tasks
-from app.utils.recurrence import REPEAT_FREQUENCIES, REPEAT_INTERVAL_LIMITS, normalise_days
+from app.utils.dates import local_today
+from app.utils.recurrence import normalise_days
 
 logger = logging.getLogger(__name__)
 
@@ -31,20 +32,6 @@ FALLBACK_BRIEF = (
     "I've had a bit of a wobble fetching your brief. "
     "Looking at your list though, you've got this. Onwards!"
 )
-
-allowed_categories = [
-    "work",
-    "home",
-    "chores",
-    "life-admin",
-    "health",
-    "self-care",
-    "social",
-    "hobbies",
-    "learning",
-    "finance",
-    "general",
-]
 
 
 def get_generated_text(prompt):
@@ -77,14 +64,6 @@ def get_generated_text(prompt):
     except Exception as exc:
         logger.warning("Groq request failed: %s", type(exc).__name__)
         raise Exception("All AI providers failed.")
-
-
-def local_today(timezone_name):
-    try:
-        zone = ZoneInfo(timezone_name) if timezone_name else timezone.utc
-    except Exception:
-        zone = timezone.utc
-    return datetime.now(zone).date()
 
 
 def generate_daily_brief(user_id, timezone_name=None):
@@ -231,7 +210,7 @@ def parse_task_with_ai(user_input):
     Return ONLY a JSON object, with no other comments with these keys:
     - title: (string)
     - description: (string or null), put any extra information here
-    - category: (MUST be one of: {", ".join(allowed_categories)})
+    - category: (MUST be one of: {", ".join(CATEGORIES)})
     - startAt: Datetime (MUST be present), use YYYY-MM-DD HH:MM. Should be set to any date time mention. If no time mentioned, use {today_str} 00:00.
     - endAt: Datetime use YYYY-MM-DD HH:MM (MUST be present). Should be after startAt but on the same day. If no time mentioned, if a duration was mentioned, add that to the start date and set this to that. Otherwise set to an hour after start at.
     - isRepeating: boolean. True if task is daily/every day, weekly, monthly, yearly or repeated
@@ -250,7 +229,7 @@ def parse_task_with_ai(user_input):
 
     try:
         parsed_data = json.loads(clean_json)
-        if parsed_data.get("category") not in allowed_categories:
+        if parsed_data.get("category") not in CATEGORIES:
             parsed_data["category"] = "general"
         if not parsed_data.get("startAt"):
             parsed_data["startAt"] = datetime.now(timezone.utc).strftime(
@@ -282,7 +261,7 @@ def decompose_task(title, description, category, start_at, end_at):
     Return only a json list of objects of this format
     - title: (string)
     - description: (string or null)
-    - category: (MUST be one of: {", ".join(allowed_categories)})
+    - category: (MUST be one of: {", ".join(CATEGORIES)})
     - startAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is {today}. If no time mentioned, default to end of day 00:00)
     - endAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, If no due date mentioned, default to end of day 23:59)
     """
