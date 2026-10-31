@@ -5,7 +5,7 @@ from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
 import app.routes.auth_routes as auth_routes
-from tests.conftest import DEFAULT_PASSWORD
+from tests.builders import DEFAULT_PASSWORD
 
 
 def request_reset(client: FlaskClient, email: str) -> TestResponse:

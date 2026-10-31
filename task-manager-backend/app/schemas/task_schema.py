@@ -48,7 +48,7 @@ class TaskSchema(CamelAutoSchema):
     id = fields.Raw(dump_only=True)
     user_id = auto_field(dump_only=True)
     series_id = auto_field(dump_only=True)
-    is_ghost = fields.Boolean(dump_only=True)
+    is_ghost = fields.Boolean(dump_only=True, dump_default=False)
 
     title = StrippedString(
         required=True,

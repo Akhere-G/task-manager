@@ -9,14 +9,6 @@ from flask.testing import FlaskClient
 
 
 @pytest.fixture
-def session(
-    make_user: Callable[..., int], login: Callable[..., FlaskClient]
-) -> FlaskClient:
-    make_user()
-    return login()
-
-
-@pytest.fixture
 def new_york_server_time(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setenv("TZ", "America/New_York")
     time.tzset()
@@ -160,7 +152,7 @@ def test_dashboard_aggregates_in_the_database(
     from app.utils.dates import utc_now
 
     now = utc_now()
-    for i in range(30):
+    for _ in range(30):
         add_tasks(
             title="t",
             category="work",

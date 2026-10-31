@@ -4,6 +4,8 @@ from typing import Any
 from flask import Flask
 from flask.testing import FlaskClient
 
+from tests.builders import reschedule_body
+
 
 def create_task(session: FlaskClient, payload: dict[str, Any]) -> int:
     response = session.post("/api/tasks", json=payload)
@@ -27,10 +29,17 @@ def test_user_cannot_touch_another_users_task(
         b.patch(f"/api/tasks/{task_id}", json={"title": "Hijacked"}).status_code == 404
     )
     assert b.delete(f"/api/tasks/{task_id}").status_code == 404
+    reschedule = reschedule_body(
+        ("2026-03-02 10:00:00", "2026-03-02 11:00:00"),
+        ("2026-03-03 10:00:00", "2026-03-03 11:00:00"),
+    )
+    moved = b.post(f"/api/tasks/{task_id}/reschedule", json=reschedule)
+    assert moved.status_code == 404
 
     own = a.get(f"/api/tasks/{task_id}")
     assert own.status_code == 200
     assert own.get_json()["title"] == "Write report"
+    assert own.get_json()["startAt"] == "2026-03-02T10:00:00Z"
 
 
 def test_task_list_only_returns_own_tasks(
@@ -89,4 +98,5 @@ def test_cannot_read_another_users_notification(
 def test_requests_without_login_are_rejected(client: FlaskClient) -> None:
     assert client.get("/api/tasks").status_code == 401
     assert client.post("/api/tasks", json={}).status_code == 401
+    assert client.post("/api/tasks/1/reschedule", json={}).status_code == 401
     assert client.get("/api/stats/dashboard").status_code == 401

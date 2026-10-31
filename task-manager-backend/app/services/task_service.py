@@ -210,24 +210,24 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
 
 def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task = get_task(user_id, task_id, lock=True)
-    old_start = data["previous_start_at"]
+    previous_start = data["previous_start_at"]
     new_start = data["start_at"]
     new_end = data["end_at"]
     duration = new_end - new_start
 
-    if not data["is_ghost"] and old_start != task.start_at:
+    if not data["is_ghost"] and previous_start != task.start_at:
         raise TaskConflict(TaskSchema().dump(task))  # type: ignore
 
     if not task.is_repeating or not task.repeat_by:
         task.start_at = new_start
         task.end_at = new_end
     elif not task.repeat_days:
-        task.start_at = task.start_at + (new_start - old_start)
+        task.start_at = task.start_at + (new_start - previous_start)
         task.end_at = task.start_at + duration
     else:
         zone = get_zone(task.repeat_timezone)
         task.repeat_days = replace_slot(
-            task.repeat_by, task.repeat_days, old_start, new_start, zone
+            task.repeat_by, task.repeat_days, previous_start, new_start, zone
         )
         if data["is_ghost"]:
             task.start_at = at_time_of(task.start_at, new_start, zone)

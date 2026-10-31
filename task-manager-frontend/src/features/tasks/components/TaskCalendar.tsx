@@ -127,7 +127,6 @@ export default function TaskCalendar({
     } catch (err) {
       setAllTasks(prev);
       console.error("Failed to update task date", err);
-      throw err;
     }
   };
 
