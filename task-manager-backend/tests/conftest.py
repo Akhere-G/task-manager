@@ -31,6 +31,7 @@ from app.models import User
 from tests.db import create_database, empty_tables
 
 DEFAULT_PASSWORD = "Sturdy-pass9"
+DEFAULT_PASSWORD_HASH = generate_password_hash(DEFAULT_PASSWORD)
 
 TEST_TYPE_BY_LAYER = {
     "utils": "unit",
@@ -92,6 +93,12 @@ def client(app: Flask) -> FlaskClient:
     return app.test_client()
 
 
+def _password_hash(password: str) -> str:
+    if password == DEFAULT_PASSWORD:
+        return DEFAULT_PASSWORD_HASH
+    return generate_password_hash(password)
+
+
 @pytest.fixture
 def make_user(app: Flask) -> Callable[..., int]:
     def _make_user(
@@ -104,7 +111,7 @@ def make_user(app: Flask) -> Callable[..., int]:
                 first_name="Test",
                 last_name="User",
                 email=email,
-                password_hash=generate_password_hash(password),
+                password_hash=_password_hash(password),
                 is_demo=is_demo,
             )
             db.session.add(user)
