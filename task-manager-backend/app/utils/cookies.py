@@ -17,22 +17,18 @@ def _attributes():
     }
 
 
-def set_access_cookies(response, access_token):
+def _set_cookie(response, name, token, max_age):
     response.set_cookie(
-        ACCESS_COOKIE,
-        access_token,
-        max_age=int(ACCESS_MAX_AGE.total_seconds()),
-        **_attributes(),
+        name, token, max_age=int(max_age.total_seconds()), **_attributes()
     )
+
+
+def set_access_cookies(response, access_token):
+    _set_cookie(response, ACCESS_COOKIE, access_token, ACCESS_MAX_AGE)
 
 
 def set_refresh_cookies(response, refresh_token):
-    response.set_cookie(
-        REFRESH_COOKIE,
-        refresh_token,
-        max_age=int(REFRESH_MAX_AGE.total_seconds()),
-        **_attributes(),
-    )
+    _set_cookie(response, REFRESH_COOKIE, refresh_token, REFRESH_MAX_AGE)
 
 
 def clear_auth_cookies(response):

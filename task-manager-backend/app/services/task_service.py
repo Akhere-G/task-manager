@@ -9,16 +9,12 @@ from app.models import Task
 from app.schemas.task_schema import TaskSchema
 from app.services.task_query import TaskQuery
 from app.utils.dates import get_zone, parse_iso, utc_now
-from app.utils.recurrence import (
-    default_days,
-    next_occurrence,
-    normalise_days,
-    snap_to_slot,
-)
+from app.utils.recurrence import default_days, normalise_days, snap_to_slot
 from app.utils.task_utils import (
-    build_task_filters,
-    check_should_repeat,
+    build_task_clauses,
+    next_task_start,
     roll_series,
+    should_roll_series,
     snapshot,
     with_repeating,
 )
@@ -60,12 +56,12 @@ def _project_repeating(user_id, query, tasks):
         parse_iso(query.start_date),
         parse_iso(query.end_date),
         user_id,
-        build_task_filters(user_id, unranged),
+        build_task_clauses(user_id, unranged),
     )
 
 
 def get_all_tasks(user_id, query=TaskQuery()):
-    clauses = build_task_filters(user_id, query)
+    clauses = build_task_clauses(user_id, query)
     total = db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
     limit = _page_size(query, total)
     page = max(query.page or 1, 1)
@@ -169,13 +165,7 @@ def _sync_completion(task, was_completed):
 
 
 def _skip_occurrence(task):
-    next_start = next_occurrence(
-        task.start_at,
-        task.repeat_by,
-        task.repeat_interval,
-        task.repeat_days,
-        get_zone(task.repeat_timezone),
-    )
+    next_start = next_task_start(task)
     task.end_at = next_start + (task.end_at - task.start_at)
     task.start_at = next_start
 
@@ -206,7 +196,7 @@ def update_task(user_id, task_id, data):
         _skip_occurrence(task)
     db.session.flush()
 
-    if check_should_repeat(before, task):
+    if should_roll_series(task, before):
         roll_series(task, before)
         db.session.flush()
 
