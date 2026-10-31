@@ -29,6 +29,7 @@ def test_state_changing_requests_need_the_ajax_header(
     del session.environ_base["HTTP_X_REQUESTED_WITH"]
 
     assert session.post("/api/auth/logout").status_code == 403
+    assert session.post("/api/tasks/1/reschedule", json={}).status_code == 403
     assert session.get("/api/auth/me").status_code == 200
 
     session.environ_base["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
