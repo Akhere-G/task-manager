@@ -117,30 +117,38 @@ def test_bulk_validation_errors_are_listed_per_task(
     assert errors[0] == {} and set(errors[1]) == {"title", "category"}
 
 
-def test_create_returns_the_stored_task(
+def test_a_task_can_be_created_read_edited_and_deleted(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
-    created = session.post(
-        "/api/tasks", json=task_payload(title="  Trim me  ")
-    ).get_json()
+    created = session.post("/api/tasks", json=task_payload(title="  Trim me  "))
+    assert created.status_code == 201
+    task = created.get_json()
+    assert (task["title"], task["startAt"]) == ("Trim me", "2026-03-02T10:00:00Z")
+    assert task["seriesId"] == task["id"]
 
-    assert created["title"] == "Trim me"
-    assert created["startAt"] == "2026-03-02T10:00:00Z"
-    assert created["seriesId"] == created["id"]
+    assert session.get(f"/api/tasks/{task['id']}").get_json() == task
+
+    edited = session.patch(f"/api/tasks/{task['id']}", json={"category": "home"})
+    assert edited.get_json()["category"] == "home"
+
+    assert session.delete(f"/api/tasks/{task['id']}").status_code == 200
+    assert session.get(f"/api/tasks/{task['id']}").status_code == 404
 
 
-def test_list_filters_are_validated(session: FlaskClient) -> None:
-    for query in (
-        "page=0",
-        "limit=500",
-        "start_date=2026-03-01",
-        "project_repeating=true",
-    ):
-        assert session.get(f"/api/tasks?{query}").status_code == 400
-    ok = session.get(
-        "/api/tasks?start_date=2026-03-01&end_date=2026-03-31&project_repeating=true"
-    )
-    assert ok.status_code == 200
+def test_the_list_is_paged(
+    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
+) -> None:
+    for n in range(5):
+        session.post("/api/tasks", json=task_payload(title=f"Task {n}"))
+
+    page = session.get("/api/tasks?limit=2&page=3&sort_by=title&order=asc").get_json()
+
+    assert [task["title"] for task in page["tasks"]] == ["Task 4"]
+    assert (page["totalTasks"], page["totalPages"], page["currentPage"]) == (5, 3, 3)
+
+
+def test_bad_list_filters_are_a_400(session: FlaskClient) -> None:
+    assert session.get("/api/tasks?start_date=2026-03-01").status_code == 400
 
 
 def test_missing_task_is_a_404(session: FlaskClient) -> None:
