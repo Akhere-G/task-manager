@@ -5,6 +5,7 @@ __pycache__/
 .env
 db_backups/
 .pytest_cache/
+.hypothesis/
 
 # --- Node / Frontend ---
 node_modules/
