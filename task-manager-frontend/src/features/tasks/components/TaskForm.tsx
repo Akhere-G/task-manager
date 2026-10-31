@@ -303,7 +303,7 @@ export default function TaskForm({
         const errors: Partial<ErrorMesageType> = err.response?.data?.errors;
         setErrorMessages({ ...defaultErrorMessages, ...errors });
       } else {
-        setErrorMessages({ ...errorMessages, general: "Could not send data" });
+        setErrorMessages({ ...errors, general: "Could not send data" });
       }
     } finally {
       setIsloading(false);

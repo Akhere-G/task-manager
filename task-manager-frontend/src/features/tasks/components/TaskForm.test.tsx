@@ -132,6 +132,21 @@ describe("TaskForm", () => {
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
   });
 
+  it("drops the server's earlier field errors when the next attempt fails differently", async () => {
+    submit
+      .mockRejectedValueOnce(badRequest(400, { errors: { title: "Title is mandatory." } }))
+      .mockRejectedValueOnce(badRequest(500, {}));
+    renderWithProviders(<TaskForm submitAction={submit} />);
+    await fillValidTask();
+
+    await userEvent.click(addButton());
+    expect(await screen.findByText("Title is mandatory.")).toBeInTheDocument();
+    await userEvent.click(addButton());
+
+    expect(await screen.findByText("Could not send data")).toBeInTheDocument();
+    expect(screen.queryByText("Title is mandatory.")).not.toBeInTheDocument();
+  });
+
   it("pre-fills an existing task for editing", () => {
     const task = makeTask({ title: "Existing", description: "Notes", category: "home" });
     renderWithProviders(
