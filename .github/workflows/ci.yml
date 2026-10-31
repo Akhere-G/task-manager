@@ -47,7 +47,7 @@ jobs:
       DB_PORT: "3306"
       DB_USER: root
       DB_PASSWORD: ""
-      DB_NAME: task_manager_test
+      HYPOTHESIS_PROFILE: ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
