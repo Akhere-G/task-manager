@@ -62,7 +62,6 @@ def _ask_groq(prompt):
 
 
 def get_generated_text(prompt):
-    """Gemini first, Groq if that fails or returns nothing."""
     for name, ask in (("Gemini", _ask_gemini), ("Groq", _ask_groq)):
         try:
             if text := ask(prompt):
@@ -73,7 +72,6 @@ def get_generated_text(prompt):
 
 
 def _extract_json(raw):
-    """The JSON in a model reply, which may be wrapped in a markdown code fence."""
     text = (raw or "").strip()
     if "```" in text:
         text = text.split("```")[1].strip()
@@ -81,8 +79,6 @@ def _extract_json(raw):
             text = text[4:].strip()
     return json.loads(text)
 
-
-# --- Daily brief ---------------------------------------------------------
 
 
 def _find_brief(user_id, day):
@@ -144,7 +140,6 @@ def _brief_prompt(day, tasks, stats):
 
 
 def generate_daily_brief(user_id, timezone_name=None):
-    """The brief for the user's local day and whether it is the fallback text."""
     try:
         day = local_today(timezone_name)
         if existing := _find_brief(user_id, day):
@@ -166,8 +161,6 @@ def generate_daily_brief(user_id, timezone_name=None):
         logger.warning("Could not generate the daily brief: %s", type(err).__name__)
         return FALLBACK_BRIEF, True
 
-
-# --- Task parsing and decomposition ----------------------------------------
 
 
 def _parse_prompt(user_input, now):
@@ -206,7 +199,6 @@ def _decompose_prompt(title, description, category, start_at, end_at):
 
 
 def parse_task_with_ai(user_input):
-    """Task fields for the add-task form; the raw text becomes the task if parsing fails."""
     now = datetime.now(timezone.utc)
     reply = get_generated_text(_parse_prompt(user_input, now))
     try:
@@ -223,7 +215,6 @@ def parse_task_with_ai(user_input):
 
 
 def decompose_task(title, description, category, start_at, end_at):
-    """Subtasks for the task, or an empty list when the model gives nothing usable."""
     try:
         reply = get_generated_text(
             _decompose_prompt(title, description, category, start_at, end_at)

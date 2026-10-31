@@ -39,8 +39,6 @@ def _validate_zone(name):
 
 
 class TaskSchema(CamelAutoSchema):
-    """Create (full) and update (`partial=True`) payloads, and task responses."""
-
     class Meta(CamelAutoSchema.Meta):
         model = Task
         exclude = ("reminded_for_start_at",)
@@ -129,7 +127,6 @@ class TaskSchema(CamelAutoSchema):
 
     @post_load
     def normalise_state(self, data, **kwargs):
-        """Keep the redundant fields consistent so callers never have to."""
         if data.get("repeat_by"):
             data["is_repeating"] = True
         if data.get("description") == "":
@@ -145,8 +142,6 @@ class TaskSchema(CamelAutoSchema):
 
 
 class TaskUpdateSchema(TaskSchema):
-    """PATCH payloads: every field optional, plus two instructions that are not columns."""
-
     class Meta(TaskSchema.Meta):
         dump_only = ("created_at",)
 
@@ -158,8 +153,6 @@ class TaskUpdateSchema(TaskSchema):
 
 
 class TaskListQuerySchema(Schema):
-    """Query-string filters (already snake_case, except `q`). Loads into a `TaskQuery`."""
-
     class Meta:
         unknown = EXCLUDE
 
