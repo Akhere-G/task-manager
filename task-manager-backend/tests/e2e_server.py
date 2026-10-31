@@ -15,7 +15,7 @@ import json
 import os
 import sys
 
-import pymysql
+from tests.db import create_database, empty_tables
 
 E2E_DB_NAME = "task_manager_e2e"
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
@@ -46,37 +46,13 @@ def configure_environment() -> None:
     )
 
 
-def _connect(database: str | None = None) -> pymysql.connections.Connection:
-    return pymysql.connect(
-        host=os.environ["DB_HOST"],
-        port=int(os.environ["DB_PORT"]),
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        database=database,
-        autocommit=True,
-    )
-
-
 def reset_database() -> None:
     # Imported late: app modules read the environment set by configure_environment.
     import migrate
 
-    connection = _connect()
-    with connection.cursor() as cursor:
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{E2E_DB_NAME}`")
-    connection.close()
-
+    create_database(E2E_DB_NAME)
     migrate.run()
-
-    connection = _connect(E2E_DB_NAME)
-    with connection.cursor() as cursor:
-        cursor.execute("SHOW TABLES")
-        tables = [row[0] for row in cursor.fetchall() if row[0] != "alembic_version"]
-        cursor.execute("SET FOREIGN_KEY_CHECKS=0")
-        for table in tables:
-            cursor.execute(f"TRUNCATE TABLE `{table}`")
-        cursor.execute("SET FOREIGN_KEY_CHECKS=1")
-    connection.close()
+    empty_tables(E2E_DB_NAME)
 
 
 def _stub_reply(prompt: str) -> str:
