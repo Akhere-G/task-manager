@@ -1,6 +1,7 @@
 from dataclasses import replace
+from typing import Any
 
-from sqlalchemy import asc, desc, func, select
+from sqlalchemy import UnaryExpression, asc, desc, func, select
 
 from app.constants import MAX_TASKS_PER_REQUEST
 from app.database import db
@@ -9,22 +10,17 @@ from app.models import Task
 from app.schemas.task_schema import TaskSchema
 from app.services.task_query import TaskQuery
 from app.utils.dates import get_zone, parse_iso, utc_now
-from app.utils.recurrence import (
-    default_days,
-    next_occurrence,
-    normalise_days,
-    snap_to_slot,
-)
+from app.utils.recurrence import default_days, normalise_days, snap_to_slot
 from app.utils.task_utils import (
-    build_task_filters,
-    check_should_repeat,
+    build_task_clauses,
+    next_task_start,
     roll_series,
+    should_roll_series,
     snapshot,
     with_repeating,
 )
 
-# Instructions in an update payload that are not columns.
-COMMAND_FIELDS = {"expected_start_at", "skip_occurrence"}
+NON_COLUMN_FIELDS = {"expected_start_at", "skip_occurrence"}
 RECURRENCE_FIELDS = {
     "repeat_by",
     "repeat_interval",
@@ -34,7 +30,7 @@ RECURRENCE_FIELDS = {
 }
 
 
-def _sort_clause(query):
+def _sort_clause(query: TaskQuery) -> UnaryExpression[Any]:
     duration = func.timestampdiff(
         func.literal_column("MINUTE"), Task.start_at, Task.end_at
     )
@@ -48,25 +44,26 @@ def _sort_clause(query):
     return desc(column) if query.order == "desc" else asc(column)
 
 
-def _page_size(query, total):
+def _page_size(query: TaskQuery, total: int) -> int:
     return max(query.limit or min(total, MAX_TASKS_PER_REQUEST), 1)
 
 
-def _project_repeating(user_id, query, tasks):
-    """Add a ghost for every occurrence of a repeating task in the query's date range."""
+def _project_repeating(user_id: int, query: TaskQuery, tasks: list[Task]) -> list[Task]:
     unranged = replace(query, start_date=None, end_date=None)
     return with_repeating(
         tasks,
         parse_iso(query.start_date),
         parse_iso(query.end_date),
         user_id,
-        build_task_filters(user_id, unranged),
+        build_task_clauses(user_id, unranged),
     )
 
 
-def get_all_tasks(user_id, query=TaskQuery()):
-    clauses = build_task_filters(user_id, query)
-    total = db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
+def get_all_tasks(user_id: int, query: TaskQuery = TaskQuery()) -> dict[str, Any]:
+    clauses = build_task_clauses(user_id, query)
+    total = (
+        db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
+    )
     limit = _page_size(query, total)
     page = max(query.page or 1, 1)
 
@@ -91,7 +88,7 @@ def get_all_tasks(user_id, query=TaskQuery()):
     }
 
 
-def get_task(user_id, task_id, lock=False):
+def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
     stmt = select(Task).where(Task.user_id == user_id, Task.id == task_id)
     task = db.session.scalar(stmt.with_for_update() if lock else stmt)
     if task is None:
@@ -99,8 +96,7 @@ def get_task(user_id, task_id, lock=False):
     return task
 
 
-def _apply_recurrence(task):
-    """Fill in and normalise the recurrence fields so the series starts on a chosen day."""
+def _apply_recurrence(task: Task) -> None:
     if not task.is_repeating or not task.repeat_by:
         task.repeat_interval = 1
         task.repeat_days = None
@@ -124,8 +120,7 @@ def _apply_recurrence(task):
         task.start_at = snapped
 
 
-def create_tasks(user_id, items):
-    """Insert tasks built from validated `TaskSchema` data; each starts its own series."""
+def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
     tasks = [Task(**item, user_id=user_id) for item in items]
     for task in tasks:
         _apply_recurrence(task)
@@ -137,19 +132,18 @@ def create_tasks(user_id, items):
     return tasks
 
 
-def create_task(user_id, data):
+def create_task(user_id: int, data: dict[str, Any]) -> Task:
     return create_tasks(user_id, [data])[0]
 
 
-def _check_times(task, data):
+def _check_times(task: Task, data: dict[str, Any]) -> None:
     start = data.get("start_at", task.start_at)
     end = data.get("end_at", task.end_at)
     if end <= start:
         raise InvalidTaskTimes()
 
 
-def _check_not_already_completed(task, data):
-    """Completing an occurrence that has already moved on is a stale request."""
+def _check_not_already_completed(task: Task, data: dict[str, Any]) -> None:
     expected_start = data.get("expected_start_at")
     completing = data.get("is_completed") and not task.is_completed
     if (
@@ -161,26 +155,20 @@ def _check_not_already_completed(task, data):
         raise TaskConflict(TaskSchema().dump(task))
 
 
-def _sync_completion(task, was_completed):
+def _sync_completion(task: Task, was_completed: bool) -> None:
     if task.is_completed and not was_completed:
         task.completed_at = utc_now()
     elif not task.is_completed and was_completed:
         task.completed_at = None
 
 
-def _skip_occurrence(task):
-    next_start = next_occurrence(
-        task.start_at,
-        task.repeat_by,
-        task.repeat_interval,
-        task.repeat_days,
-        get_zone(task.repeat_timezone),
-    )
+def _skip_occurrence(task: Task) -> None:
+    next_start = next_task_start(task)
     task.end_at = next_start + (task.end_at - task.start_at)
     task.start_at = next_start
 
 
-def update_task(user_id, task_id, data):
+def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task = get_task(user_id, task_id, lock=True)
     before = snapshot(task)
 
@@ -188,7 +176,7 @@ def update_task(user_id, task_id, data):
     _check_not_already_completed(task, data)
 
     for field, value in data.items():
-        if field not in COMMAND_FIELDS:
+        if field not in NON_COLUMN_FIELDS:
             setattr(task, field, value)
     _sync_completion(task, before.is_completed)
 
@@ -206,7 +194,7 @@ def update_task(user_id, task_id, data):
         _skip_occurrence(task)
     db.session.flush()
 
-    if check_should_repeat(before, task):
+    if should_roll_series(task, before):
         roll_series(task, before)
         db.session.flush()
 
@@ -214,6 +202,6 @@ def update_task(user_id, task_id, data):
     return task
 
 
-def delete_task(user_id, task_id):
+def delete_task(user_id: int, task_id: int) -> None:
     db.session.delete(get_task(user_id, task_id))
     db.session.commit()

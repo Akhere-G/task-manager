@@ -3,6 +3,7 @@
 Revision ID: 0003
 Revises: 0002
 """
+
 from alembic import op
 
 revision = "0003"
@@ -11,7 +12,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     op.execute("UPDATE tasks SET completed_at = NULL WHERE is_completed = 0")
     op.execute(
         "UPDATE tasks SET completed_at = COALESCE(completed_at, NOW()) "
@@ -20,7 +21,7 @@ def upgrade():
     op.execute("DROP TRIGGER IF EXISTS tr_ensure_completion_timestamp")
 
 
-def downgrade():
+def downgrade() -> None:
     op.execute(
         """
         CREATE TRIGGER tr_ensure_completion_timestamp

@@ -1,4 +1,7 @@
-from flask import jsonify, request, send_from_directory
+from typing import Any
+
+from flask import Flask, jsonify, request, send_from_directory
+from flask.typing import ResponseReturnValue
 from flask_limiter.errors import RateLimitExceeded
 from marshmallow import ValidationError
 from werkzeug.exceptions import HTTPException, NotFound
@@ -7,7 +10,9 @@ from app.exceptions import AppError
 from app.utils.formatters import format_json_response
 
 
-def flatten_validation_errors(messages):
+def flatten_validation_errors(
+    messages: dict[Any, Any] | list[str],
+) -> dict[str, Any] | list[Any]:
     """Marshmallow's `{field: [msg, ...]}` as `{field: msg}`.
 
     Errors from a many=True load are keyed by index and become a list with one
@@ -21,24 +26,26 @@ def flatten_validation_errors(messages):
             for index in range(max(messages) + 1)
         ]
 
-    flat = {}
+    flat: dict[str, Any] = {}
     for field, value in messages.items():
         key = "general" if field == "_schema" else field
-        flat[key] = value[0] if isinstance(value, list) else flatten_validation_errors(value)
+        flat[key] = (
+            value[0] if isinstance(value, list) else flatten_validation_errors(value)
+        )
     return flat
 
 
-def register_error_handlers(app):
+def register_error_handlers(app: Flask) -> None:
     @app.errorhandler(AppError)
-    def handle_app_error(error):
+    def handle_app_error(error: AppError) -> ResponseReturnValue:
         return jsonify(format_json_response(error.to_dict())), error.status_code
 
     @app.errorhandler(ValidationError)
-    def handle_validation_error(error):
+    def handle_validation_error(error: ValidationError) -> ResponseReturnValue:
         return jsonify({"errors": flatten_validation_errors(error.messages)}), 400
 
     @app.errorhandler(RateLimitExceeded)
-    def handle_rate_limit(error):
+    def handle_rate_limit(error: RateLimitExceeded) -> ResponseReturnValue:
         response = jsonify({"error": "Too many requests. Please try again later."})
         response.status_code = 429
         try:
@@ -49,7 +56,7 @@ def register_error_handlers(app):
         return response
 
     @app.errorhandler(HTTPException)
-    def handle_http_exception(error):
+    def handle_http_exception(error: HTTPException) -> ResponseReturnValue:
         if request.path.startswith("/api/"):
             return jsonify({"error": error.description}), error.code
 
@@ -62,6 +69,6 @@ def register_error_handlers(app):
         return error
 
     @app.errorhandler(Exception)
-    def handle_unexpected_exception(error):
+    def handle_unexpected_exception(error: Exception) -> ResponseReturnValue:
         app.logger.exception("Unhandled error on %s %s", request.method, request.path)
         return jsonify({"error": "Internal server error"}), 500

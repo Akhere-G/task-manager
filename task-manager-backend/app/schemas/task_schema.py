@@ -1,3 +1,5 @@
+from typing import Any
+
 from marshmallow import (
     EXCLUDE,
     Schema,
@@ -29,18 +31,16 @@ BLANK_TO_NONE = ("description", "repeatBy", "repeatUntil", "repeatTimezone")
 STRICT_BOOL = {"truthy": {True}, "falsy": {False}}
 
 
-def _is_int(value):
+def _is_int(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
-def _validate_zone(name):
-    if not is_valid_zone(name):
+def _validate_zone(zone_name: str | None) -> None:
+    if not is_valid_zone(zone_name):
         raise ValidationError("Repeat time zone is not a valid time zone.")
 
 
 class TaskSchema(CamelAutoSchema):
-    """Create (full) and update (`partial=True`) payloads, and task responses."""
-
     class Meta(CamelAutoSchema.Meta):
         model = Task
         exclude = ("reminded_for_start_at",)
@@ -52,7 +52,9 @@ class TaskSchema(CamelAutoSchema):
 
     title = StrippedString(
         required=True,
-        validate=validate.Length(min=1, max=255, error="Title must be 1 to 255 characters."),
+        validate=validate.Length(
+            min=1, max=255, error="Title must be 1 to 255 characters."
+        ),
         error_messages={"required": "Title is required."},
     )
     description = StrippedString(allow_none=True)
@@ -63,13 +65,19 @@ class TaskSchema(CamelAutoSchema):
         ),
         error_messages={"required": "Category is required."},
     )
-    start_at = UtcDateTime(required=True, error_messages={"required": "Start time is required."})
-    end_at = UtcDateTime(required=True, error_messages={"required": "End time is required."})
+    start_at = UtcDateTime(
+        required=True, error_messages={"required": "Start time is required."}
+    )
+    end_at = UtcDateTime(
+        required=True, error_messages={"required": "End time is required."}
+    )
     created_at = UtcDateTime()
     is_completed = fields.Boolean(**STRICT_BOOL)
     completed_at = UtcDateTime(allow_none=True)
     is_repeating = fields.Boolean(**STRICT_BOOL)
-    repeat_by = fields.String(allow_none=True, validate=validate.OneOf(REPEAT_FREQUENCIES))
+    repeat_by = fields.String(
+        allow_none=True, validate=validate.OneOf(REPEAT_FREQUENCIES)
+    )
     repeat_until = auto_field()
     repeat_interval = fields.Integer(strict=True, allow_none=True)
     repeat_days = fields.List(fields.Raw(), allow_none=True)
@@ -79,11 +87,13 @@ class TaskSchema(CamelAutoSchema):
     )
 
     @pre_load
-    def blank_to_none(self, data, **kwargs):
-        return {k: None if v == "" and k in BLANK_TO_NONE else v for k, v in data.items()}
+    def blank_to_none(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+        return {
+            k: None if v == "" and k in BLANK_TO_NONE else v for k, v in data.items()
+        }
 
     @validates_schema
-    def validate_times(self, data, **kwargs):
+    def validate_times(self, data: dict[str, Any], **kwargs: Any) -> None:
         start, end = data.get("start_at"), data.get("end_at")
         if start and end and end <= start:
             raise ValidationError(
@@ -91,7 +101,7 @@ class TaskSchema(CamelAutoSchema):
             )
 
     @validates_schema
-    def validate_recurrence(self, data, **kwargs):
+    def validate_recurrence(self, data: dict[str, Any], **kwargs: Any) -> None:
         repeat_by = data.get("repeat_by")
         if data.get("is_repeating") and not repeat_by:
             raise ValidationError(
@@ -100,7 +110,9 @@ class TaskSchema(CamelAutoSchema):
 
         interval = data.get("repeat_interval")
         if interval is not None:
-            limit = REPEAT_INTERVAL_LIMITS.get(repeat_by, max(REPEAT_INTERVAL_LIMITS.values()))
+            limit = REPEAT_INTERVAL_LIMITS.get(
+                repeat_by, max(REPEAT_INTERVAL_LIMITS.values())
+            )
             if not 1 <= interval <= limit:
                 raise ValidationError(
                     f"Repeat interval must be between 1 and {limit}.",
@@ -112,7 +124,7 @@ class TaskSchema(CamelAutoSchema):
             raise ValidationError(message, field_name="repeat_days")
 
     @staticmethod
-    def _repeat_days_error(repeat_by, days):
+    def _repeat_days_error(repeat_by: str | None, days: list[Any]) -> str | None:
         if repeat_by == "daily":
             return "Daily tasks do not use repeat days."
         if not days and repeat_by:
@@ -121,15 +133,16 @@ class TaskSchema(CamelAutoSchema):
             return "Repeat days must not contain duplicates."
         if repeat_by == "weekly" and not all(_is_int(d) and 0 <= d <= 6 for d in days):
             return "Weekly repeat days must be weekdays (0 to 6)."
-        if repeat_by == "monthly" and not all(_is_int(d) and 1 <= d <= 31 for d in days):
+        if repeat_by == "monthly" and not all(
+            _is_int(d) and 1 <= d <= 31 for d in days
+        ):
             return "Monthly repeat days must be between 1 and 31."
         if repeat_by == "yearly" and not all(is_valid_month_day(d) for d in days):
             return "Yearly repeat days must be dates formatted MM-DD."
         return None
 
     @post_load
-    def normalise_state(self, data, **kwargs):
-        """Keep the redundant fields consistent so callers never have to."""
+    def normalise_state(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         if data.get("repeat_by"):
             data["is_repeating"] = True
         if data.get("description") == "":
@@ -145,21 +158,17 @@ class TaskSchema(CamelAutoSchema):
 
 
 class TaskUpdateSchema(TaskSchema):
-    """PATCH payloads: every field optional, plus two instructions that are not columns."""
-
     class Meta(TaskSchema.Meta):
         dump_only = ("created_at",)
 
     expected_start_at = UtcDateTime(load_only=True)
     skip_occurrence = fields.Boolean(load_only=True)
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(partial=True, **kwargs)
 
 
 class TaskListQuerySchema(Schema):
-    """Query-string filters (already snake_case, except `q`). Loads into a `TaskQuery`."""
-
     class Meta:
         unknown = EXCLUDE
 
@@ -176,18 +185,21 @@ class TaskListQuerySchema(Schema):
     project_repeating = fields.Boolean(load_default=False)
 
     @pre_load
-    def drop_blanks(self, data, **kwargs):
+    def drop_blanks(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         return {k: v for k, v in data.items() if v != ""}
 
     @validates_schema
-    def validate_dates(self, data, **kwargs):
+    def validate_dates(self, data: dict[str, Any], **kwargs: Any) -> None:
         start, end = data.get("start_date"), data.get("end_date")
         if (start is None) != (end is None):
             raise ValidationError(
-                "start_date and end_date must be provided together.", field_name="start_date"
+                "start_date and end_date must be provided together.",
+                field_name="start_date",
             )
         if start and end and end < start:
-            raise ValidationError("end_date must not be before start_date.", field_name="end_date")
+            raise ValidationError(
+                "end_date must not be before start_date.", field_name="end_date"
+            )
 
         if data["project_repeating"]:
             if not start:
@@ -202,7 +214,7 @@ class TaskListQuerySchema(Schema):
                 )
 
     @post_load
-    def to_query(self, data, **kwargs):
+    def to_query(self, data: dict[str, Any], **kwargs: Any) -> TaskQuery:
         return TaskQuery(**data)
 
 

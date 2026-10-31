@@ -3,8 +3,14 @@ import os
 from mailersend import EmailBuilder, MailerSendClient  # type: ignore
 
 
-def send_email(*, sender_name, to, subject, html, reply_to=None):
-    """Send one HTML email. `to` and `reply_to` are `(address, name)` pairs."""
+def send_email(
+    *,
+    sender_name: str,
+    to: tuple[str, str],
+    subject: str,
+    html: str,
+    reply_to: tuple[str, str] | None = None,
+) -> None:
     builder = (
         EmailBuilder()
         .from_email(os.getenv("MAIL_SEND_EMAIL"), sender_name)

@@ -1,3 +1,7 @@
+from collections.abc import Callable, Mapping
+from datetime import datetime
+from typing import Any
+
 from dateutil import parser
 from marshmallow import ValidationError, fields, validate
 
@@ -5,16 +9,26 @@ from app.utils.dates import as_naive_utc, to_iso_z
 
 
 class StrippedString(fields.String):
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: str | None,
+        data: Mapping[str, Any] | None,
+        **kwargs: Any,
+    ) -> str:
         return super()._deserialize(value, attr, data, **kwargs).strip()
 
 
 class IsoDateTime(fields.DateTime):
-    """Accepts anything `dateutil.parser.isoparse` does, e.g. `2026-03-02 10:00`."""
-
     default_error_messages = {"invalid": "Invalid date. Use ISO format."}
 
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: str | None,
+        data: Mapping[str, Any] | None,
+        **kwargs: Any,
+    ) -> datetime:
         if not isinstance(value, str):
             raise self.make_error("invalid")
         try:
@@ -24,46 +38,57 @@ class IsoDateTime(fields.DateTime):
 
 
 class UtcDateTime(IsoDateTime):
-    """Naive UTC in the database, ISO 8601 with a trailing Z on the way out."""
-
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: str | None,
+        data: Mapping[str, Any] | None,
+        **kwargs: Any,
+    ) -> datetime:
         return as_naive_utc(super()._deserialize(value, attr, data, **kwargs))
 
-    def _serialize(self, value, attr, obj, **kwargs):
+    def _serialize(
+        self, value: datetime | None, attr: str | None, obj: Any, **kwargs: Any
+    ) -> str | None:
         return None if value is None else to_iso_z(value)
 
 
 EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
 
 
-def not_blank(message):
-    def validator(value):
+def not_blank(message: str) -> Callable[[str], None]:
+    def validator(value: str) -> None:
         if not value.strip():
             raise ValidationError(message)
 
     return validator
 
 
-def no_line_breaks(message):
-    def validator(value):
+def no_line_breaks(message: str) -> Callable[[str], None]:
+    def validator(value: str) -> None:
         if "\r" in value or "\n" in value:
             raise ValidationError(message)
 
     return validator
 
 
-def text(name, max_length, *, min_length=1, required=None, min_message=None, **kwargs):
-    """A required, stripped string with the messages used across the API.
-
-    `required` is shown when the field is missing or blank; `min_message` when it is
-    shorter than `min_length`.
-    """
+def text(
+    name: str,
+    max_length: int,
+    *,
+    min_length: int = 1,
+    required: str | None = None,
+    min_message: str | None = None,
+    **kwargs: Any,
+) -> StrippedString:
     required = required or f"{name} is required."
     validators = [not_blank(required)]
     if min_length > 1:
         validators.append(validate.Length(min=min_length, error=min_message))
     validators.append(
-        validate.Length(max=max_length, error=f"{name} must be {max_length} characters or less.")
+        validate.Length(
+            max=max_length, error=f"{name} must be {max_length} characters or less."
+        )
     )
     return StrippedString(
         required=True,
@@ -73,7 +98,7 @@ def text(name, max_length, *, min_length=1, required=None, min_message=None, **k
     )
 
 
-def email(max_length):
+def email(max_length: int) -> StrippedString:
     return text(
         "Email",
         max_length,

@@ -3,9 +3,15 @@
 import json
 import random
 import secrets
-from datetime import date, datetime, time, timedelta
+from collections.abc import Iterator
+from datetime import date, datetime, time, timedelta, tzinfo
 from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
+
+from dateutil.relativedelta import relativedelta
+from sqlalchemy import delete, select
+from werkzeug.security import generate_password_hash
 
 from app.database import SessionLocal, engine
 from app.demo import DEMO_USER_EMAIL
@@ -20,23 +26,26 @@ from app.models import (
 )
 from app.utils.dates import as_aware_utc, as_naive_utc, utc_now
 from app.utils.recurrence import default_days, previous_occurrence
-from dateutil.relativedelta import relativedelta
-from sqlalchemy import delete, select
-from werkzeug.security import generate_password_hash
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "demo_data.json"
 WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-CLEARED_MODELS = (Notification, NotificationSubscription, DailyBrief, PasswordReset, Task)
+CLEARED_MODELS = (
+    Notification,
+    NotificationSubscription,
+    DailyBrief,
+    PasswordReset,
+    Task,
+)
 
 
-def resolve_time(spec, now, tz):
+def resolve_time(spec: str, now: datetime, tz: tzinfo) -> datetime:
     """Turn "D-3 09:00", "W-1 wed 19:00", "next mon 10:00", "next 07:00" or
     "next dom 1 09:00" into a naive UTC datetime relative to `now`."""
     today = as_aware_utc(now).astimezone(tz).date()
     monday = today - timedelta(days=today.weekday())
     head, *rest = spec.split()
 
-    def at(day):
+    def at(day: date) -> datetime:
         hour, minute = map(int, rest[-1].split(":"))
         return as_naive_utc(datetime.combine(day, time(hour, minute), tzinfo=tz))
 
@@ -60,8 +69,7 @@ def resolve_time(spec, now, tz):
     return next(c for c in map(at, days) if c > now)
 
 
-def step_back(value, repeat, n, tz):
-    """The occurrence `n` steps before `value`, the inverse of what completing a task does."""
+def step_back(value: datetime, repeat: dict[str, Any], n: int, tz: tzinfo) -> datetime:
     for _ in range(n):
         value = previous_occurrence(
             value, repeat["by"], repeat.get("interval", 1), repeat.get("days"), tz
@@ -69,7 +77,9 @@ def step_back(value, repeat, n, tz):
     return value
 
 
-def repeat_columns(repeat, start, tz_name, now):
+def repeat_columns(
+    repeat: dict[str, Any] | None, start: datetime, tz_name: str, now: datetime
+) -> dict[str, Any]:
     if not repeat:
         return {}
     tz = ZoneInfo(tz_name)
@@ -80,13 +90,21 @@ def repeat_columns(repeat, start, tz_name, now):
         "repeat_interval": repeat.get("interval", 1),
         "repeat_days": repeat.get("days") or default_days(start, repeat["by"], tz),
         "repeat_timezone": tz_name,
-        "repeat_until": resolve_time(f"{until} 12:00", now, tz).date() if until else None,
+        "repeat_until": resolve_time(f"{until} 12:00", now, tz).date()
+        if until
+        else None,
     }
 
 
-def build_history(item, start, length, common, now, tz, rng):
-    """Completed past occurrences, newest first, like the app writes when a recurring
-    task is completed."""
+def build_history(
+    item: dict[str, Any],
+    start: datetime,
+    length: timedelta,
+    common: dict[str, Any],
+    now: datetime,
+    tz: tzinfo,
+    rng: random.Random,
+) -> list[Task]:
     h = item["history"]
     rows = []
     for n in sorted(h["n"]):
@@ -112,8 +130,9 @@ def build_history(item, start, length, common, now, tz, rng):
     return rows
 
 
-def build_series(fixture, now):
-    """For each fixture task: the task itself and its completed history."""
+def build_series(
+    fixture: dict[str, Any], now: datetime
+) -> Iterator[tuple[Task, list[Task]]]:
     tz_name = fixture["timezone"]
     tz = ZoneInfo(tz_name)
     rng = random.Random(fixture["seed"])
@@ -125,7 +144,11 @@ def build_series(fixture, now):
         start = resolve_time(item["start"], now, tz)
         length = timedelta(minutes=item["mins"])
         common = {k: item.get(k) for k in ("title", "description", "category")}
-        history = build_history(item, start, length, common, now, tz, rng) if "history" in item else []
+        history = (
+            build_history(item, start, length, common, now, tz, rng)
+            if "history" in item
+            else []
+        )
 
         created = item.get("created")
         done = item.get("done")
@@ -133,7 +156,9 @@ def build_series(fixture, now):
             **common,
             start_at=start,
             end_at=start + length,
-            created_at=resolve_time(created, now, tz) if created else history[0].completed_at,
+            created_at=resolve_time(created, now, tz)
+            if created
+            else history[0].completed_at,
             completed_at=resolve_time(done, now, tz) if done else None,
             is_completed=bool(done),
             **repeat_columns(item.get("repeat"), start, tz_name, now),
@@ -141,7 +166,7 @@ def build_series(fixture, now):
         yield task, history
 
 
-def reset_demo_account(now=None):
+def reset_demo_account(now: datetime | None = None) -> int:
     now = now or utc_now()
     fixture = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
     series = list(build_series(fixture, now))

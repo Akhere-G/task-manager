@@ -17,9 +17,9 @@ COMMON_PASSWORDS = frozenset(
     winter2020 winter2021 winter2022 winter2023 winter2024 winter2025
     spring2024 spring2025 autumn2024 autumn2025 qwer1234 1234qwer 12345abc 123456abc
     abc123abc password2024 password2025 password2023 passw0rd123
-    """.split()
+    """.split()  # noqa: SIM905
 )
 
 
-def is_common_password(password):
+def is_common_password(password: str) -> bool:
     return password.lower() in COMMON_PASSWORDS

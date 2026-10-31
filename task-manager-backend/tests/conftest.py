@@ -1,4 +1,8 @@
 import os
+from collections.abc import Callable, Iterator
+from typing import Any
+
+from flask import Flask
 
 os.environ.setdefault("DB_HOST", "127.0.0.1")
 os.environ.setdefault("DB_PORT", "3306")
@@ -16,7 +20,6 @@ os.environ["CONTACT_TO_EMAIL"] = "owner@example.com"
 
 import pymysql
 import pytest
-
 from flask.testing import FlaskClient
 from werkzeug.security import generate_password_hash
 
@@ -40,7 +43,7 @@ TABLES = [
 DEFAULT_PASSWORD = "Sturdy-pass9"
 
 
-def _connection():
+def _connection() -> pymysql.connections.Connection:
     return pymysql.connect(
         host=os.environ["DB_HOST"],
         port=int(os.environ["DB_PORT"]),
@@ -51,7 +54,7 @@ def _connection():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def database():
+def database() -> None:
     conn = _connection()
     with conn.cursor() as cur:
         cur.execute(f"CREATE DATABASE IF NOT EXISTS `{os.environ['DB_NAME']}`")
@@ -60,20 +63,20 @@ def database():
 
 
 class AjaxClient(FlaskClient):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.environ_base["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
 
 
 @pytest.fixture(scope="session")
-def app(database):
+def app(database: None) -> Flask:
     app = create_app()
     app.test_client_class = AjaxClient
     return app
 
 
 @pytest.fixture(autouse=True)
-def clean_tables(database):
+def clean_tables(database: None) -> None:
     conn = _connection()
     with conn.cursor() as cur:
         cur.execute(f"USE `{os.environ['DB_NAME']}`")
@@ -85,20 +88,24 @@ def clean_tables(database):
 
 
 @pytest.fixture(autouse=True)
-def reset_rate_limits():
+def reset_rate_limits() -> Iterator[None]:
     if limiter.initialized:
         limiter.reset()
     yield
 
 
 @pytest.fixture
-def client(app):
+def client(app: Flask) -> FlaskClient:
     return app.test_client()
 
 
 @pytest.fixture
-def make_user(app):
-    def _make_user(email="user@example.com", password=DEFAULT_PASSWORD, is_demo=False):
+def make_user(app: Flask) -> Callable[..., int]:
+    def _make_user(
+        email: str = "user@example.com",
+        password: str = DEFAULT_PASSWORD,
+        is_demo: bool = False,
+    ) -> int:
         with app.app_context():
             user = User(
                 first_name="Test",
@@ -115,13 +122,15 @@ def make_user(app):
 
 
 @pytest.fixture
-def make_demo_user(make_user):
+def make_demo_user(make_user: Callable[..., int]) -> Callable[[], int]:
     return lambda: make_user(email=DEMO_USER_EMAIL, is_demo=True)
 
 
 @pytest.fixture
-def login(app):
-    def _login(email="user@example.com", password=DEFAULT_PASSWORD):
+def login(app: Flask) -> Callable[..., FlaskClient]:
+    def _login(
+        email: str = "user@example.com", password: str = DEFAULT_PASSWORD
+    ) -> FlaskClient:
         client = app.test_client()
         response = client.post(
             "/api/auth/login", json={"email": email, "password": password}
@@ -133,8 +142,8 @@ def login(app):
 
 
 @pytest.fixture
-def task_payload():
-    def _payload(**overrides):
+def task_payload() -> Callable[..., dict[str, Any]]:
+    def _payload(**overrides: Any) -> dict[str, Any]:
         payload = {
             "title": "Write report",
             "description": "Quarterly numbers",

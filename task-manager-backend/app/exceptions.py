@@ -1,5 +1,4 @@
-"""Domain errors. Each one carries its own message and HTTP status; a single
-handler in `app.errors` turns any `AppError` into the JSON response."""
+from typing import Any
 
 
 class AppError(Exception):
@@ -7,13 +6,15 @@ class AppError(Exception):
     message = "Something went wrong."
     field = None
 
-    def __init__(self, message=None, *, field=None, **extra):
+    def __init__(
+        self, message: str | None = None, *, field: str | None = None, **extra: Any
+    ) -> None:
         self.message = message or self.message
         self.field = field or self.field
         self.extra = extra
         super().__init__(self.message)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         if self.field:
             return {"errors": {self.field: self.message}}
         return {"error": self.message, **self.extra}
@@ -27,7 +28,7 @@ class NotFoundError(AppError):
 class TaskNotFound(NotFoundError):
     message = "No task with that id exists."
 
-    def __init__(self, task_id=None):
+    def __init__(self, task_id: int | None = None) -> None:
         super().__init__(f"No task with the id {task_id} exists." if task_id else None)
 
 
@@ -35,7 +36,7 @@ class TaskConflict(AppError):
     status_code = 409
     message = "This task was already updated."
 
-    def __init__(self, task):
+    def __init__(self, task: dict[str, Any]) -> None:
         super().__init__(task=task)
 
 
