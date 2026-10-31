@@ -1,6 +1,7 @@
 from ..database import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, DateTime
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, func
+from sqlalchemy.dialects.mysql import TIMESTAMP
 from datetime import datetime, timezone
 
 
@@ -12,9 +13,14 @@ class Notification(Base):
     )
     title: Mapped[str] = mapped_column(String(255))
     message: Mapped[str] = mapped_column(Text)
-    is_read: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_read: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0", nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        TIMESTAMP,
+        default=lambda: datetime.now(timezone.utc),
+        server_default=func.current_timestamp(),
+        nullable=True,
     )
 
 
@@ -26,5 +32,8 @@ class NotificationSubscription(Base):
     p256dh: Mapped[str] = mapped_column(String(255))
     auth: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        TIMESTAMP,
+        default=lambda: datetime.now(timezone.utc),
+        server_default=func.current_timestamp(),
+        nullable=True,
     )

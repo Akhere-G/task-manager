@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-python init_db.py
+python migrate.py
 
 exec gunicorn \
   --bind "0.0.0.0:${PORT:-8080}" \
