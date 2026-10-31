@@ -61,7 +61,6 @@ def resolve_time(spec, now, tz):
 
 
 def step_back(value, repeat, n, tz):
-    """The occurrence `n` steps before `value`, the inverse of what completing a task does."""
     for _ in range(n):
         value = previous_occurrence(
             value, repeat["by"], repeat.get("interval", 1), repeat.get("days"), tz
@@ -85,8 +84,6 @@ def repeat_columns(repeat, start, tz_name, now):
 
 
 def build_history(item, start, length, common, now, tz, rng):
-    """Completed past occurrences, newest first, like the app writes when a recurring
-    task is completed."""
     h = item["history"]
     rows = []
     for n in sorted(h["n"]):
@@ -113,7 +110,6 @@ def build_history(item, start, length, common, now, tz, rng):
 
 
 def build_series(fixture, now):
-    """For each fixture task: the task itself and its completed history."""
     tz_name = fixture["timezone"]
     tz = ZoneInfo(tz_name)
     rng = random.Random(fixture["seed"])

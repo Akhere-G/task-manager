@@ -1,7 +1,3 @@
-"""Domain errors. Each one carries its own message and HTTP status; a single
-handler in `app.errors` turns any `AppError` into the JSON response."""
-
-
 class AppError(Exception):
     status_code = 400
     message = "Something went wrong."

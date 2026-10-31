@@ -10,8 +10,6 @@ class StrippedString(fields.String):
 
 
 class IsoDateTime(fields.DateTime):
-    """Accepts anything `dateutil.parser.isoparse` does, e.g. `2026-03-02 10:00`."""
-
     default_error_messages = {"invalid": "Invalid date. Use ISO format."}
 
     def _deserialize(self, value, attr, data, **kwargs):
@@ -24,8 +22,6 @@ class IsoDateTime(fields.DateTime):
 
 
 class UtcDateTime(IsoDateTime):
-    """Naive UTC in the database, ISO 8601 with a trailing Z on the way out."""
-
     def _deserialize(self, value, attr, data, **kwargs):
         return as_naive_utc(super()._deserialize(value, attr, data, **kwargs))
 
@@ -53,11 +49,6 @@ def no_line_breaks(message):
 
 
 def text(name, max_length, *, min_length=1, required=None, min_message=None, **kwargs):
-    """A required, stripped string with the messages used across the API.
-
-    `required` is shown when the field is missing or blank; `min_message` when it is
-    shorter than `min_length`.
-    """
     required = required or f"{name} is required."
     validators = [not_blank(required)]
     if min_length > 1:

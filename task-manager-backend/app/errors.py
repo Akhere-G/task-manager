@@ -24,7 +24,9 @@ def flatten_validation_errors(messages):
     flat = {}
     for field, value in messages.items():
         key = "general" if field == "_schema" else field
-        flat[key] = value[0] if isinstance(value, list) else flatten_validation_errors(value)
+        flat[key] = (
+            value[0] if isinstance(value, list) else flatten_validation_errors(value)
+        )
     return flat
 
 

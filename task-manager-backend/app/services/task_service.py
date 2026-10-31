@@ -19,8 +19,7 @@ from app.utils.task_utils import (
     with_repeating,
 )
 
-# Instructions in an update payload that are not columns.
-COMMAND_FIELDS = {"expected_start_at", "skip_occurrence"}
+NON_COLUMN_FIELDS = {"expected_start_at", "skip_occurrence"}
 RECURRENCE_FIELDS = {
     "repeat_by",
     "repeat_interval",
@@ -49,7 +48,6 @@ def _page_size(query, total):
 
 
 def _project_repeating(user_id, query, tasks):
-    """Add a ghost for every occurrence of a repeating task in the query's date range."""
     unranged = replace(query, start_date=None, end_date=None)
     return with_repeating(
         tasks,
@@ -96,7 +94,6 @@ def get_task(user_id, task_id, lock=False):
 
 
 def _apply_recurrence(task):
-    """Fill in and normalise the recurrence fields so the series starts on a chosen day."""
     if not task.is_repeating or not task.repeat_by:
         task.repeat_interval = 1
         task.repeat_days = None
@@ -121,7 +118,6 @@ def _apply_recurrence(task):
 
 
 def create_tasks(user_id, items):
-    """Insert tasks built from validated `TaskSchema` data; each starts its own series."""
     tasks = [Task(**item, user_id=user_id) for item in items]
     for task in tasks:
         _apply_recurrence(task)
@@ -145,7 +141,6 @@ def _check_times(task, data):
 
 
 def _check_not_already_completed(task, data):
-    """Completing an occurrence that has already moved on is a stale request."""
     expected_start = data.get("expected_start_at")
     completing = data.get("is_completed") and not task.is_completed
     if (
@@ -178,7 +173,7 @@ def update_task(user_id, task_id, data):
     _check_not_already_completed(task, data)
 
     for field, value in data.items():
-        if field not in COMMAND_FIELDS:
+        if field not in NON_COLUMN_FIELDS:
             setattr(task, field, value)
     _sync_completion(task, before.is_completed)
 

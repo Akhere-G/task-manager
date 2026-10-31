@@ -71,7 +71,6 @@ def _access_token(user):
 
 
 def _session_response(user, message, status=200):
-    """A response carrying the user and fresh access and refresh cookies."""
     response = jsonify({"message": message, "user": UserSchema().dump(user)})
     set_refresh_cookies(response, create_session(user.id))
     set_access_cookies(response, _access_token(user))
