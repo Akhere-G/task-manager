@@ -72,9 +72,9 @@ class TaskSchema(CamelAutoSchema):
         required=True, error_messages={"required": "End time is required."}
     )
     created_at = UtcDateTime()
-    is_completed = fields.Boolean(**STRICT_BOOL)
+    is_completed = fields.Boolean(**STRICT_BOOL)  # type: ignore
     completed_at = UtcDateTime(allow_none=True)
-    is_repeating = fields.Boolean(**STRICT_BOOL)
+    is_repeating = fields.Boolean(**STRICT_BOOL)  # type: ignore
     repeat_by = fields.String(
         allow_none=True, validate=validate.OneOf(REPEAT_FREQUENCIES)
     )
@@ -111,7 +111,8 @@ class TaskSchema(CamelAutoSchema):
         interval = data.get("repeat_interval")
         if interval is not None:
             limit = REPEAT_INTERVAL_LIMITS.get(
-                repeat_by, max(REPEAT_INTERVAL_LIMITS.values())
+                repeat_by,  # type: ignore
+                max(REPEAT_INTERVAL_LIMITS.values()),  # type: ignore
             )
             if not 1 <= interval <= limit:
                 raise ValidationError(
@@ -166,6 +167,25 @@ class TaskUpdateSchema(TaskSchema):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(partial=True, **kwargs)
+
+
+class TaskRescheduleSchema(CamelSchema):
+    previous_start_at = UtcDateTime(required=True)
+    previous_end_at = UtcDateTime(required=True)
+    start_at = UtcDateTime(required=True)
+    end_at = UtcDateTime(required=True)
+    is_ghost = fields.Boolean(required=True, **STRICT_BOOL)  # type: ignore
+
+    @validates_schema
+    def validate_times(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if data["previous_end_at"] <= data["previous_start_at"]:
+            raise ValidationError(
+                "End time must be after the start time.", field_name="previous_end_at"
+            )
+        if data["end_at"] <= data["start_at"]:
+            raise ValidationError(
+                "End time must be after the start time.", field_name="end_at"
+            )
 
 
 class TaskListQuerySchema(Schema):

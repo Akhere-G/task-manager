@@ -94,7 +94,7 @@ def _date_range_clause(
         return None
     start = parse_iso(start_date)
     end = parse_iso(end_date)
-    return Task.end_at.between(start_of_day(start.date()), end_of_day(end.date()))
+    return Task.end_at.between(start_of_day(start.date()), end_of_day(end.date()))  # type: ignore
 
 
 def _duration_clause(duration: str | None) -> Clause | None:
@@ -133,7 +133,7 @@ def snapshot(task: Task) -> Task:
 def next_task_start(task: Task) -> datetime:
     return next_occurrence(
         task.start_at,
-        task.repeat_by,
+        task.repeat_by,  # type: ignore
         task.repeat_interval,
         task.repeat_days,
         get_zone(task.repeat_timezone),
@@ -147,8 +147,8 @@ def _ghost(task: Task, start: datetime, end: datetime) -> Task:
         end_at=end,
         series_id=task.id,
     )
-    ghost.id = f"ghost_{task.id}_{start:%Y%m%d}"
-    ghost.is_ghost = True
+    ghost.id = f"ghost_{task.id}_{start:%Y%m%d}"  # type: ignore
+    ghost.is_ghost = True  # type: ignore
     return ghost
 
 
@@ -159,7 +159,11 @@ def _occurrences(
 
     def advance(start: datetime, end: datetime) -> tuple[datetime, datetime]:
         next_start = next_occurrence(
-            start, task.repeat_by, task.repeat_interval, task.repeat_days, zone
+            start,
+            task.repeat_by,  # type: ignore
+            task.repeat_interval,
+            task.repeat_days,
+            zone,
         )
         return next_start, next_start + (end - start)
 
@@ -185,11 +189,14 @@ def _occurrences(
 
 def with_repeating(
     tasks: list[Task],
-    view_start: datetime,
-    view_end: datetime,
+    view_start: datetime | None,
+    view_end: datetime | None,
     user_id: int,
     clauses: Iterable[Clause] = (),
 ) -> list[Task]:
+    if view_start is None or view_end is None:
+        print("View Start or view end was none. Could not repeat tasks")
+        return tasks
     view_start = as_aware_utc(view_start)
     view_end = as_aware_utc(view_end)
     repeating_tasks = db.session.scalars(
