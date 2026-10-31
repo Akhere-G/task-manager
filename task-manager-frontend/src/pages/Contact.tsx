@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Send } from "lucide-react";
 import { isAxiosError } from "axios";
 import { FormInput } from "../components/ui";
-import { validateContactRequest, type ContactData } from "../utils/validators";
+import { validateContact } from "../features/contact/schemas";
 import { contactService, type ContactEnquiry } from "../features/contact/api";
 
 export default function ContactPage() {
@@ -38,10 +38,10 @@ export default function ContactPage() {
     general: "",
   };
 
-  const validateForm = (data: ContactData) => {
+  const validateForm = (data: typeof formData) => {
     setErrorMessages({
       ...defaultErrorMessages,
-      ...validateContactRequest(data),
+      ...validateContact(data),
     });
   };
 
@@ -106,7 +106,8 @@ export default function ContactPage() {
       } else {
         setErrorMessages((prev) => ({
           ...prev,
-          general: getRateLimitMessage(error) ?? "Sorry! Something went wrong...",
+          general:
+            getRateLimitMessage(error) ?? "Sorry! Something went wrong...",
         }));
       }
     }
