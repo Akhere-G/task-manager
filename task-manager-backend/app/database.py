@@ -16,7 +16,7 @@ def build_connect_args() -> dict[str, Any]:
     args = {"connect_timeout": 10, "read_timeout": 30, "write_timeout": 30}
     ca = ssl_ca_path()
     if ca:
-        args["ssl"] = {"ca": ca}
+        args["ssl"] = {"ca": ca}  # type: ignore
     return args
 
 

@@ -195,16 +195,16 @@ def create_session(user_id: int) -> str:
     return token
 
 
-def rotate_refresh_token(old_token: str, user_id: int) -> str | None:
+def rotate_refresh_token(old_token: str | None, user_id: int) -> str | None:
     claimed = db.session.execute(
         update(RefreshToken)
         .where(
-            RefreshToken.token_hash == hash_token(old_token),
+            RefreshToken.token_hash == hash_token(old_token or ""),
             RefreshToken.replaced_at.is_(None),
         )
         .values(replaced_at=datetime.now(UTC))
     )
-    if claimed.rowcount != 1:
+    if claimed.rowcount != 1:  # type: ignore
         db.session.rollback()
         return None
 

@@ -87,7 +87,10 @@ def _session_response(user: User, message: str, status: int = 200) -> Response:
 def register() -> ResponseReturnValue:
     data = RegisterSchema().load(get_json_body())
     user = create_user(
-        data["first_name"], data["last_name"], data["email"], data["password"]
+        data["first_name"],  # type: ignore
+        data["last_name"],  # type: ignore
+        data["email"],  # type: ignore
+        data["password"],  # type: ignore
     )
     return _session_response(user, "User registered and logged in successfully.", 201)
 
@@ -97,7 +100,7 @@ def register() -> ResponseReturnValue:
 @limiter.limit("5 per 15 minutes", key_func=ip_and_email)
 def login() -> ResponseReturnValue:
     data = LoginSchema().load(get_json_body())
-    user = login_user(data["email"], data["password"])
+    user = login_user(data["email"], data["password"])  # type: ignore
     if not user:
         raise InvalidCredentials()
 
@@ -166,7 +169,7 @@ def send_password_reset_email(user: User, email: str, token: str) -> None:
 @limiter.limit("3 per hour")
 @limiter.limit("3 per hour", key_func=email_only)
 def request_password_reset() -> ResponseReturnValue:
-    email = EmailSchema().load(get_json_body())["email"]
+    email = EmailSchema().load(get_json_body())["email"]  # type: ignore
     user = get_user(email=email)
 
     if user and not user.is_demo:
@@ -186,11 +189,11 @@ def request_password_reset() -> ResponseReturnValue:
 def reset_password() -> ResponseReturnValue:
     data = PasswordResetSchema().load(get_json_body())
 
-    user_id = verify_reset_token(data["token"])
+    user_id = verify_reset_token(data["token"])  # type: ignore
     if not user_id:
         return jsonify({"message": "Invalid or expired reset link"}), 400
 
-    if not update_password_and_clear_token(user_id, data["token"], data["password"]):
+    if not update_password_and_clear_token(user_id, data["token"], data["password"]):  # type: ignore
         return jsonify({"message": "Could not update password"}), 500
 
     return jsonify({"message": "Password updated successfully"})
