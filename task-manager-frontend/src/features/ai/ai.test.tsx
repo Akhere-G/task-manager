@@ -1,22 +1,12 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import MockAdapter from "axios-mock-adapter";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import apiClient from "../../services/api";
+import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/render";
 import AiAddTaskForm from "./components/AiAddTaskForm";
 import DailyBrief from "./components/DailyBrief";
+import { mockApi } from "../../test/api";
 
-let mock: MockAdapter;
-
-beforeEach(() => {
-  mock = new MockAdapter(apiClient);
-  vi.spyOn(console, "error").mockImplementation(() => {});
-});
-
-afterEach(() => {
-  mock.restore();
-});
+const mock = mockApi();
 
 describe("natural-language quick add", () => {
   const parsed = {
@@ -108,7 +98,7 @@ describe("daily brief", () => {
     mock.onGet("/ai/daily-brief").reply(500);
     renderWithProviders(<DailyBrief />);
 
-    expect(await screen.findByText("Error loading brief...", {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByText("Error loading brief...")).toBeInTheDocument();
   });
 
   it("renders nothing when the brief is empty", async () => {

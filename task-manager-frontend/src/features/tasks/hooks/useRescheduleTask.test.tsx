@@ -1,29 +1,15 @@
-import { QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
-import MockAdapter from "axios-mock-adapter";
-import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import apiClient from "../../../services/api";
-import { makeQueryClient, makeTask } from "../../../test/render";
+import { waitFor } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { makeQueryClient, makeTask, renderHookWithProviders } from "../../../test/render";
 import useRescheduleTask from "./useRescheduleTask";
+import { mockApi } from "../../../test/api";
 
-let mock: MockAdapter;
-
-beforeEach(() => {
-  mock = new MockAdapter(apiClient);
-});
-
-afterEach(() => {
-  mock.restore();
-});
+const mock = mockApi();
 
 function renderReschedule() {
   const queryClient = makeQueryClient();
   queryClient.setQueryData(["tasks", "calendar"], []);
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
-  return { queryClient, ...renderHook(() => useRescheduleTask(), { wrapper }) };
+  return renderHookWithProviders(() => useRescheduleTask(), { queryClient });
 }
 
 const MOVE = {

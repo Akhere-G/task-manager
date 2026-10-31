@@ -1,10 +1,9 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import MockAdapter from "axios-mock-adapter";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import apiClient from "../../../services/api";
-import { makeTask, renderWithProviders } from "../../../test/render";
+import { describe, expect, it, vi } from "vitest";
+import { makeGhost, makeTask, renderWithProviders } from "../../../test/render";
 import type { Task } from "../types";
+import { mockApi } from "../../../test/api";
 
 type StubProps = {
   events: { id: number | string; title: string; start: Date; end: Date }[];
@@ -43,16 +42,7 @@ vi.mock("react-big-calendar/lib/addons/dragAndDrop", () => ({
 
 const { default: TaskCalendar } = await import("./TaskCalendar");
 
-let mock: MockAdapter;
-
-beforeEach(() => {
-  mock = new MockAdapter(apiClient);
-  vi.spyOn(console, "error").mockImplementation(() => {});
-});
-
-afterEach(() => {
-  mock.restore();
-});
+const mock = mockApi();
 
 function renderCalendar(tasks: Task[]) {
   renderWithProviders(
@@ -94,10 +84,7 @@ describe("rescheduling on the calendar", () => {
 
   it("moves a ghost by rescheduling its series", async () => {
     mock.onPost("/tasks/4/reschedule").reply(200, {});
-    const ghost = makeTask({
-      id: "ghost_4_20260309" as unknown as number,
-      seriesId: 4,
-      isGhost: true,
+    const ghost = makeGhost(4, "20260309", {
       startAt: "2026-03-09T09:00:00Z",
       endAt: "2026-03-09T10:00:00Z",
     });

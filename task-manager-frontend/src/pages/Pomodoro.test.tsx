@@ -1,22 +1,12 @@
 import { Route, Routes } from "react-router-dom";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import MockAdapter from "axios-mock-adapter";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import apiClient from "../services/api";
+import { describe, expect, it } from "vitest";
 import { makeTask, renderWithProviders } from "../test/render";
 import Pomodoro from "./Pomodoro";
+import { mockApi } from "../test/api";
 
-let mock: MockAdapter;
-
-beforeEach(() => {
-  mock = new MockAdapter(apiClient);
-  vi.spyOn(console, "error").mockImplementation(() => {});
-});
-
-afterEach(() => {
-  mock.restore();
-});
+const mock = mockApi();
 
 function renderPomodoro(taskId = "1") {
   return renderWithProviders(

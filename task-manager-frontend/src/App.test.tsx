@@ -1,16 +1,10 @@
-import { QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import MockAdapter from "axios-mock-adapter";
 import { Suspense } from "react";
-import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
-import AuthContextProvider from "./context/AuthContext";
-import TaskContextProvider from "./context/TaskContext";
-import { ThemeProvider } from "./features/users/ThemeContext";
-import apiClient from "./services/api";
-import { makeQueryClient } from "./test/render";
+import { renderWithProviders } from "./test/render";
+import { mockApi } from "./test/api";
 
 vi.mock("./features/notifications/components/NotificationsPrompt", () => ({
   default: () => null,
@@ -34,7 +28,7 @@ const user = { id: 1, firstName: "Test", lastName: "User", email: "user@example.
 const TASKS = /^\/tasks(\?.*)?$/;
 const taskRequests = () => mock.history.get.filter((r) => r.url?.startsWith("/tasks"));
 
-let mock: MockAdapter;
+const mock = mockApi();
 
 // App loads its pages lazily. Importing them once up front keeps the tests below about routing
 // rather than about how quickly a cold module graph loads on a busy machine.
@@ -52,32 +46,17 @@ beforeAll(async () => {
 }, 120_000);
 
 beforeEach(() => {
-  mock = new MockAdapter(apiClient);
-  vi.spyOn(console, "error").mockImplementation(() => {});
   mock.onGet(TASKS).reply(200, { tasks: [], totalTasks: 0, totalPages: 1, currentPage: 1 });
   mock.onGet("/ai/daily-brief").reply(200, { brief: "" });
   mock.onGet("/stats/dashboard").reply(200, {});
 });
 
-afterEach(() => {
-  mock.restore();
-});
-
 function renderApp(path: string) {
-  return render(
-    <QueryClientProvider client={makeQueryClient()}>
-      <MemoryRouter initialEntries={[path]}>
-        <AuthContextProvider>
-          <TaskContextProvider>
-            <ThemeProvider>
-              <Suspense fallback={<p>loading…</p>}>
-                <App />
-              </Suspense>
-            </ThemeProvider>
-          </TaskContextProvider>
-        </AuthContextProvider>
-      </MemoryRouter>
-    </QueryClientProvider>,
+  return renderWithProviders(
+    <Suspense fallback={<p>loading…</p>}>
+      <App />
+    </Suspense>,
+    { route: path, withAuth: true },
   );
 }
 
