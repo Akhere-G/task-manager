@@ -29,7 +29,7 @@ from app.extensions import limiter
 from app.main import create_app
 from app.models import User
 from tests.builders import DEFAULT_PASSWORD, task_body
-from tests.db import create_database, empty_tables
+from tests.db import LOCAL_HOSTS, create_database, empty_tables
 
 DEFAULT_PASSWORD_HASH = generate_password_hash(DEFAULT_PASSWORD)
 
@@ -52,8 +52,15 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(layer_type)
 
 
+def _refuse_unsafe_database() -> None:
+    host, name = os.environ["DB_HOST"], os.environ["DB_NAME"]
+    if host not in LOCAL_HOSTS or not name.endswith("_test"):
+        pytest.exit(f"Refusing to empty {name} on {host}: use a local *_test database.")
+
+
 @pytest.fixture(scope="session")
 def database() -> None:
+    _refuse_unsafe_database()
     create_database(os.environ["DB_NAME"])
     migrate.run()
 

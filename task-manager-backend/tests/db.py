@@ -3,6 +3,7 @@ import os
 import pymysql
 
 SCHEMA_TABLES = {"alembic_version"}
+LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
 
 def connect(database: str | None = None) -> pymysql.connections.Connection:
