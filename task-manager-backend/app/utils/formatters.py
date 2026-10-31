@@ -1,34 +1,19 @@
-import re
-
 from app.utils.dates import to_iso_z
 
 
-def to_snake_case(s):
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
-
-
-def to_camel_case(snake_str):
-    """Converts a snake_case string to camelCase."""
-    components = snake_str.split("_")
-
-    return components[0] + "".join(x.title() for x in components[1:])
+def to_camel_case(snake_case):
+    first, *rest = snake_case.split("_")
+    return first + "".join(word.title() for word in rest)
 
 
 def format_json_response(data):
-    """
-    Recursively converts dictionary keys from snake_case to camelCase.
-    Handles nested dictionaries and lists of dictionaries.
-    """
     if data is None:
         return None
     if isinstance(data, list):
-        return [format_json_response(i) for i in data]
-
+        return [format_json_response(item) for item in data]
     if isinstance(data, dict):
-        new_dict = {}
-        for key, value in data.items():
-            new_key = to_camel_case(key)
-            new_dict[new_key] = format_json_response(value)
-        return new_dict
-
+        return {
+            to_camel_case(key): format_json_response(value)
+            for key, value in data.items()
+        }
     return to_iso_z(data)
