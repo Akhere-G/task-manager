@@ -16,6 +16,15 @@ export interface TaskInput {
   repeatUntil?: string;
 }
 
+export interface StoredTask {
+  id: number;
+  title: string;
+  isCompleted: boolean;
+  isRepeating: boolean;
+  startAt: string;
+  repeatDays: (number | string)[] | null;
+}
+
 /** Thin client for setting up and checking data through the real API. */
 export class Api {
   private readonly request: APIRequestContext;
@@ -50,7 +59,7 @@ export class Api {
     return (await response.json()).id;
   }
 
-  async tasks(): Promise<{ id: number; title: string; isCompleted: boolean; isRepeating: boolean }[]> {
+  async tasks(): Promise<StoredTask[]> {
     const response = await this.request.get(`${API}/tasks?is_completed=all`, {
       headers: this.headers,
     });
