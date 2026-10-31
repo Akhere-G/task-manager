@@ -40,24 +40,15 @@ TEST_TYPE_BY_LAYER = {
     "routes": "functional",
     "security": "security",
 }
-TEST_TYPES = {"unit", "property", "integration", "functional", "security"}
-DATABASE_FREE_TYPES = {"unit", "property"}
-
-
-def _test_type(item: pytest.Item) -> str | None:
-    for marker in item.iter_markers():
-        if marker.name in TEST_TYPES:
-            return marker.name
-    return None
+TEST_TYPES = {*TEST_TYPE_BY_LAYER.values(), "property"}
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
-        if _test_type(item):
-            continue
-        layer = item.path.parent.name
-        if layer in TEST_TYPE_BY_LAYER:
-            item.add_marker(TEST_TYPE_BY_LAYER[layer])
+        layer_type = TEST_TYPE_BY_LAYER.get(item.path.parent.name)
+        has_type = any(item.get_closest_marker(name) for name in TEST_TYPES)
+        if layer_type and not has_type:
+            item.add_marker(layer_type)
 
 
 @pytest.fixture(scope="session")
@@ -73,7 +64,7 @@ class AjaxClient(FlaskClient):
 
 
 @pytest.fixture(scope="session")
-def app(database: None) -> Flask:
+def flask_app(database: None) -> Flask:
     app = create_app()
     app.test_client_class = AjaxClient
     return app
@@ -84,10 +75,9 @@ def clean_tables(database: None) -> None:
     empty_tables(os.environ["DB_NAME"])
 
 
-@pytest.fixture(autouse=True)
-def fresh_database(request: pytest.FixtureRequest) -> None:
-    if _test_type(request.node) not in DATABASE_FREE_TYPES:
-        request.getfixturevalue("clean_tables")
+@pytest.fixture
+def app(flask_app: Flask, clean_tables: None) -> Flask:
+    return flask_app
 
 
 @pytest.fixture(autouse=True)
