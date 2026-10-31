@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterator
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from typing import Any
 from unittest import mock
 
@@ -9,10 +9,7 @@ from flask import Flask
 import app.run_reminders as run_reminders
 from app.database import db
 from app.models import Notification, NotificationSubscription, Task
-
-
-def now() -> datetime:
-    return datetime.now(UTC).replace(tzinfo=None)
+from app.utils.dates import utc_now
 
 
 @pytest.fixture
@@ -34,7 +31,7 @@ def user_with_subscription(app: Flask, make_user: Callable[..., int]) -> int:
 @pytest.fixture
 def add_task(app: Flask) -> Callable[..., int]:
     def _add(user_id: int, **fields: Any) -> int:
-        start = fields.pop("start_at", now() + timedelta(minutes=10))
+        start = fields.pop("start_at", utc_now() + timedelta(minutes=10))
         with app.app_context():
             task = Task(
                 user_id=user_id,
@@ -102,7 +99,7 @@ def test_rescheduled_task_is_reminded_again(
 
     with app.app_context():
         task = db.session.get(Task, task_id)
-        task.start_at = now() + timedelta(minutes=20)
+        task.start_at = utc_now() + timedelta(minutes=20)
         db.session.commit()
     run_reminders.check_task_reminders()
 

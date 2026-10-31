@@ -8,7 +8,7 @@ os.environ.setdefault("DB_HOST", "127.0.0.1")
 os.environ.setdefault("DB_PORT", "3306")
 os.environ.setdefault("DB_USER", "root")
 os.environ.setdefault("DB_PASSWORD", "")
-os.environ["DB_NAME"] = "task_manager_test"
+os.environ["DB_NAME"] = os.environ.get("TEST_DB_NAME", "task_manager_test")
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-the-test-suite-only"
 os.environ["FRONTEND_URL"] = "http://localhost:5173"
 os.environ["JWT_COOKIE_SECURE"] = "False"
@@ -18,9 +18,9 @@ os.environ["MAIL_SEND_API_KEY"] = "test-key"
 os.environ["MAIL_SEND_EMAIL"] = "noreply@example.com"
 os.environ["CONTACT_TO_EMAIL"] = "owner@example.com"
 
-import pymysql
 import pytest
 from flask.testing import FlaskClient
+from hypothesis import settings
 from werkzeug.security import generate_password_hash
 
 import migrate
@@ -29,36 +29,44 @@ from app.demo import DEMO_USER_EMAIL
 from app.extensions import limiter
 from app.main import create_app
 from app.models import User
+from tests.builders import DEFAULT_PASSWORD, task_body
+from tests.db import LOCAL_HOSTS, create_database, empty_tables
 
-TABLES = [
-    "notification_subscriptions",
-    "notifications",
-    "refresh_tokens",
-    "password_resets",
-    "daily_briefs",
-    "tasks",
-    "users",
-]
+DEFAULT_PASSWORD_HASH = generate_password_hash(DEFAULT_PASSWORD)
 
-DEFAULT_PASSWORD = "Sturdy-pass9"
+settings.register_profile("dev", deadline=None)
+settings.register_profile("ci", deadline=None, derandomize=True, print_blob=True)
+settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "dev"))
 
-
-def _connection() -> pymysql.connections.Connection:
-    return pymysql.connect(
-        host=os.environ["DB_HOST"],
-        port=int(os.environ["DB_PORT"]),
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        autocommit=True,
-    )
+TEST_TYPE_BY_LAYER = {
+    "utils": "unit",
+    "schemas": "unit",
+    "models": "integration",
+    "services": "integration",
+    "routes": "functional",
+    "security": "security",
+}
+TEST_TYPES = {*TEST_TYPE_BY_LAYER.values(), "property"}
 
 
-@pytest.fixture(scope="session", autouse=True)
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    for item in items:
+        layer_type = TEST_TYPE_BY_LAYER.get(item.path.parent.name)
+        has_type = any(item.get_closest_marker(name) for name in TEST_TYPES)
+        if layer_type and not has_type:
+            item.add_marker(layer_type)
+
+
+def _refuse_unsafe_database() -> None:
+    host, name = os.environ["DB_HOST"], os.environ["DB_NAME"]
+    if host not in LOCAL_HOSTS or not name.endswith("_test"):
+        pytest.exit(f"Refusing to empty {name} on {host}: use a local *_test database.")
+
+
+@pytest.fixture(scope="session")
 def database() -> None:
-    conn = _connection()
-    with conn.cursor() as cur:
-        cur.execute(f"CREATE DATABASE IF NOT EXISTS `{os.environ['DB_NAME']}`")
-    conn.close()
+    _refuse_unsafe_database()
+    create_database(os.environ["DB_NAME"])
     migrate.run()
 
 
@@ -69,22 +77,20 @@ class AjaxClient(FlaskClient):
 
 
 @pytest.fixture(scope="session")
-def app(database: None) -> Flask:
+def flask_app(database: None) -> Flask:
     app = create_app()
     app.test_client_class = AjaxClient
     return app
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def clean_tables(database: None) -> None:
-    conn = _connection()
-    with conn.cursor() as cur:
-        cur.execute(f"USE `{os.environ['DB_NAME']}`")
-        cur.execute("SET FOREIGN_KEY_CHECKS=0")
-        for table in TABLES:
-            cur.execute(f"TRUNCATE TABLE {table}")
-        cur.execute("SET FOREIGN_KEY_CHECKS=1")
-    conn.close()
+    empty_tables(os.environ["DB_NAME"])
+
+
+@pytest.fixture
+def app(flask_app: Flask, clean_tables: None) -> Flask:
+    return flask_app
 
 
 @pytest.fixture(autouse=True)
@@ -99,6 +105,12 @@ def client(app: Flask) -> FlaskClient:
     return app.test_client()
 
 
+def _password_hash(password: str) -> str:
+    if password == DEFAULT_PASSWORD:
+        return DEFAULT_PASSWORD_HASH
+    return generate_password_hash(password)
+
+
 @pytest.fixture
 def make_user(app: Flask) -> Callable[..., int]:
     def _make_user(
@@ -111,7 +123,7 @@ def make_user(app: Flask) -> Callable[..., int]:
                 first_name="Test",
                 last_name="User",
                 email=email,
-                password_hash=generate_password_hash(password),
+                password_hash=_password_hash(password),
                 is_demo=is_demo,
             )
             db.session.add(user)
@@ -142,16 +154,25 @@ def login(app: Flask) -> Callable[..., FlaskClient]:
 
 
 @pytest.fixture
-def task_payload() -> Callable[..., dict[str, Any]]:
-    def _payload(**overrides: Any) -> dict[str, Any]:
-        payload = {
-            "title": "Write report",
-            "description": "Quarterly numbers",
-            "category": "work",
-            "startAt": "2026-03-02 10:00:00",
-            "endAt": "2026-03-02 11:00:00",
-        }
-        payload.update(overrides)
-        return payload
+def session(
+    make_user: Callable[..., int], login: Callable[..., FlaskClient]
+) -> FlaskClient:
+    make_user()
+    return login()
 
-    return _payload
+
+@pytest.fixture
+def task_payload() -> Callable[..., dict[str, Any]]:
+    return task_body
+
+
+@pytest.fixture
+def app_context(app: Flask) -> Iterator[None]:
+    with app.app_context():
+        yield
+        db.session.rollback()
+
+
+@pytest.fixture
+def user_id(make_user: Callable[..., int], app_context: None) -> int:
+    return make_user()

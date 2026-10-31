@@ -214,16 +214,16 @@ def snap_to_slot(
 def replace_slot(
     repeat_by: str,
     days: Iterable[RepeatDay] | None,
-    old_start: datetime,
+    previous_start: datetime,
     new_start: datetime,
     zone: tzinfo = UTC,
 ) -> list[RepeatDay]:
-    old_day = _to_local(old_start, zone).date()
-    period = _period_start(repeat_by, old_day)
+    previous_day = _to_local(previous_start, zone).date()
+    period = _period_start(repeat_by, previous_day)
 
     new_days = []
     for day in days or []:
-        if old_day not in _slots(repeat_by, period, [day]):
+        if previous_day not in _slots(repeat_by, period, [day]):
             new_days.append(day)
 
     new_days.extend(default_days(new_start, repeat_by, zone) or [])

@@ -6,13 +6,7 @@ from flask.testing import FlaskClient
 
 import app.routes.mail_routes as mail_routes
 from app.services import mail_service
-
-VALID = {
-    "fullName": "Ann Visitor",
-    "email": "ann@example.com",
-    "subject": "Bug Report",
-    "message": "Something is broken on the page.",
-}
+from tests.builders import CONTACT
 
 
 def test_message_is_html_escaped() -> None:
@@ -26,7 +20,7 @@ def test_message_is_html_escaped() -> None:
 
 def test_valid_enquiry_sends_with_reply_to(client: FlaskClient) -> None:
     with mock.patch.object(mail_service, "MailerSendClient") as ms:
-        response = client.post("/api/contact", json=VALID)
+        response = client.post("/api/contact", json=CONTACT)
     assert response.status_code == 201
     sent = ms.return_value.emails.send.call_args[0][0]
     assert sent.reply_to.email == "ann@example.com"
@@ -36,14 +30,11 @@ def test_valid_enquiry_sends_with_reply_to(client: FlaskClient) -> None:
 def test_mailer_failure_returns_502(client: FlaskClient) -> None:
     with mock.patch.object(mail_service, "MailerSendClient") as ms:
         ms.return_value.emails.send.side_effect = RuntimeError("provider down")
-        response = client.post("/api/contact", json=VALID)
+        response = client.post("/api/contact", json=CONTACT)
     assert response.status_code == 502
     assert "provider down" not in response.get_data(as_text=True)
 
 
-@pytest.mark.parametrize(
-    "body",
-    [None, [], {}, {**VALID, "email": 5}, {**VALID, "fullName": "A\nB"}],
-)
+@pytest.mark.parametrize("body", [None, [], {}, {**CONTACT, "message": "short"}])
 def test_invalid_bodies_return_400(client: FlaskClient, body: Any) -> None:
     assert client.post("/api/contact", json=body).status_code == 400

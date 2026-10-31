@@ -1,21 +1,12 @@
 from collections.abc import Callable
 from typing import Any
 
-import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
 from app.database import db
 from app.models import Notification, NotificationSubscription
-
-
-@pytest.fixture
-def session(
-    make_user: Callable[..., int], login: Callable[..., FlaskClient]
-) -> FlaskClient:
-    make_user()
-    return login()
 
 
 def subscribe(client: FlaskClient, n: int = 1, **overrides: Any) -> TestResponse:
@@ -44,6 +35,24 @@ def test_notifications_come_newest_first_and_can_be_paged(
     ).get_json()
     assert [n["title"] for n in older] == ["N4", "N3", "N2"]
     assert session.get("/api/notifications?limit=1000").status_code == 400
+
+
+def test_reading_a_notification_marks_it_read(
+    app: Flask, make_user: Callable[..., int], login: Callable[..., FlaskClient]
+) -> None:
+    user_id = make_user()
+    session = login()
+    with app.app_context():
+        note = Notification(user_id=user_id, title="Reminder", message="Soon")
+        db.session.add(note)
+        db.session.commit()
+        note_id = note.id
+
+    response = session.patch(f"/api/notifications/{note_id}/read")
+
+    assert response.status_code == 200
+    assert response.get_json()["isRead"] is True
+    assert session.get("/api/notifications").get_json()[0]["isRead"] is True
 
 
 def test_subscription_must_be_a_short_https_url(session: FlaskClient) -> None:
