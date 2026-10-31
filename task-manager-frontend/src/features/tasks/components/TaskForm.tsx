@@ -269,7 +269,9 @@ export default function TaskForm({
       repeatUntil: true,
     });
 
-    const invalidFields = Object.entries(errorMessages)
+    const errors = { ...defaultErrorMessages, ...validateTask(formState) };
+    setErrorMessages(errors);
+    const invalidFields = Object.entries(errors)
       .filter(([k, v]) => v !== "" && k !== "general")
       .map(([k]) => k);
     if (invalidFields.length > 0) {
