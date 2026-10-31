@@ -5,7 +5,7 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import type { RegisterUserInput } from "../features/auth/types";
 import { useAuthContext } from "../context/AuthContext";
-import { validateUser, type UserData } from "../utils/validators";
+import { validateRegister } from "../features/auth/schemas";
 
 type ErrorMesageType = { [P in keyof RegisterUserInput]: string } & {
   general: string;
@@ -38,8 +38,8 @@ export default function Register() {
 
   const { register } = useAuthContext();
 
-  const validateForm = (data: UserData) => {
-    setErrorMessages({ ...defaultErrorMessages, ...validateUser(data, true) });
+  const validateForm = (data: typeof formData) => {
+    setErrorMessages({ ...defaultErrorMessages, ...validateRegister(data) });
   };
 
   function handleChange(

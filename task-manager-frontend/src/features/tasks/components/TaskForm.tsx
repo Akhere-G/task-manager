@@ -6,7 +6,7 @@ import {
 } from "../../../features/tasks/types";
 import FormInput from "../../../components/ui/FormInput";
 import axios from "axios";
-import { validateTask, type TaskData } from "../../../utils/validators";
+import { validateTask } from "../schemas";
 import { trackEvent } from "../../../services/analytics";
 import { addHours, addMilliseconds, format, isValid } from "date-fns";
 import { formatForInput } from "../../../utils/formators";
@@ -164,10 +164,10 @@ export default function TaskForm({
       });
   }, [initialData]);
 
-  const validateForm = (data: TaskData) => {
+  const validateForm = (data: CreateTaskInput) => {
     setErrorMessages({
       ...defaultErrorMessages,
-      ...validateTask(data, !!initialData),
+      ...validateTask(data),
     });
   };
 

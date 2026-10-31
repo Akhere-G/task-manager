@@ -5,7 +5,7 @@ import TaskCard from "../features/tasks/components/TaskCard";
 import type { CreateTaskInput, Task } from "../features/tasks/types";
 import useGetTask from "../features/tasks/hooks/useGetTask";
 import axios from "axios";
-import type { TaskError } from "../utils/validators";
+import type { TaskError } from "../features/tasks/schemas";
 import { ErrorState, LoadingState, Popup } from "../components/ui";
 import { TaskForm } from "../features/tasks/components";
 import { PopupModes, useTaskContext } from "../context/TaskContext";
@@ -39,7 +39,9 @@ export default function DecomposeTask() {
     trackEvent("ai_task_breakdown_requested");
     try {
       const { tasks } = await aiService.decomposeTask(parentTask);
-      trackEvent("ai_task_breakdown_succeeded", { subtask_count: tasks.length });
+      trackEvent("ai_task_breakdown_succeeded", {
+        subtask_count: tasks.length,
+      });
       const formattedTasks: Task[] = tasks.map((task, id) => ({
         ...task,
         id,
