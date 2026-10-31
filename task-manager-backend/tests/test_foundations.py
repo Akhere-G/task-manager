@@ -43,7 +43,7 @@ def test_app_error_payloads():
 
 def test_camel_schema_and_flattened_errors():
     with pytest.raises(ValidationError) as single:
-        TaskSchema().load({"title": "x", "startAt": "2026-03-02T10:00", "endAt": "2026-03-02T09:00"})
+        TaskSchema().load({"title": "x", "category": "work", "startAt": "2026-03-02T10:00", "endAt": "2026-03-02T09:00"})
     assert flatten_validation_errors(single.value.messages) == {
         "endAt": "End time must be after the start time."
     }
