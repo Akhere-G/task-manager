@@ -25,7 +25,10 @@ class NotFoundError(AppError):
 
 
 class TaskNotFound(NotFoundError):
-    message = "Task not found."
+    message = "No task with that id exists."
+
+    def __init__(self, task_id=None):
+        super().__init__(f"No task with the id {task_id} exists." if task_id else None)
 
 
 class TaskConflict(AppError):
