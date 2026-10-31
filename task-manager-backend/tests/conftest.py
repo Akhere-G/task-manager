@@ -42,6 +42,32 @@ TABLES = [
 
 DEFAULT_PASSWORD = "Sturdy-pass9"
 
+TEST_TYPE_BY_LAYER = {
+    "utils": "unit",
+    "schemas": "unit",
+    "models": "integration",
+    "services": "integration",
+    "routes": "functional",
+    "security": "security",
+}
+TEST_TYPES = {"unit", "property", "integration", "functional", "security"}
+
+
+def _test_type(item: pytest.Item) -> str | None:
+    for marker in item.iter_markers():
+        if marker.name in TEST_TYPES:
+            return marker.name
+    return None
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    for item in items:
+        if _test_type(item):
+            continue
+        layer = item.path.parent.name
+        if layer in TEST_TYPE_BY_LAYER:
+            item.add_marker(TEST_TYPE_BY_LAYER[layer])
+
 
 def _connection() -> pymysql.connections.Connection:
     return pymysql.connect(
