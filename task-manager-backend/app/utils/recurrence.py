@@ -209,22 +209,33 @@ def snap_to_slot(start, repeat_by, interval, days, tz=UTC):
     return next_occurrence(start, repeat_by, interval, chosen, tz)
 
 
+
 def _lands_on(day, start, repeat_by, tz):
-    """Whether chosen day `day` falls on `start`'s local date (after clamping)."""
     local = _to_local(start, tz)
+    if repeat_by == "weekly":
+        return day == local.weekday()
     if repeat_by == "monthly":
-        return min(day, monthrange(local.year, local.month)[1]) == local.day
+        last_day = monthrange(local.year, local.month)[1]
+        return min(day, last_day) == local.day
     if repeat_by == "yearly":
-        return _year_slots([day], local.year) == [(local.month, local.day)]
-    return day == local.weekday()
+        month, month_day = _parse_month_day(day)
+        last_day = monthrange(local.year, month)[1]
+        return month == local.month and min(month_day, last_day) == local.day
+    return False
 
 
 def replace_slot(repeat_by, days, old_start, new_start, tz=UTC):
-    """`days` with the day `old_start` fell on swapped for the day of `new_start`."""
-    kept = [d for d in days or [] if not _lands_on(d, old_start, repeat_by, tz)]
-    return normalise_days(repeat_by, [*kept, *default_days(new_start, repeat_by, tz)])
+    new_days = []
+    for day in days or []:
+        if not _lands_on(day, old_start, repeat_by, tz):
+            new_days.append(day)
+
+    new_day = default_days(new_start, repeat_by, tz)[0]
+    new_days.append(new_day)
+    return normalise_days(repeat_by, new_days)
 
 
 def at_time_of(start, other, tz=UTC):
-    """`start`'s local date at `other`'s local time of day."""
-    return _from_local(_at(_to_local(start, tz).date(), _to_local(other, tz), tz), start)
+    day = _to_local(start, tz).date()
+    time_source = _to_local(other, tz)
+    return _from_local(_at(day, time_source, tz), start)

@@ -158,8 +158,6 @@ class TaskUpdateSchema(TaskSchema):
 
 
 class TaskRescheduleSchema(CamelSchema):
-    """A calendar drag or resize: the occurrence's times before and after the move."""
-
     previous_start_at = UtcDateTime(required=True)
     previous_end_at = UtcDateTime(required=True)
     start_at = UtcDateTime(required=True)
@@ -168,11 +166,14 @@ class TaskRescheduleSchema(CamelSchema):
 
     @validates_schema
     def validate_times(self, data, **kwargs):
-        for start, end in (("previous_start_at", "previous_end_at"), ("start_at", "end_at")):
-            if data[end] <= data[start]:
-                raise ValidationError(
-                    "End time must be after the start time.", field_name=end
-                )
+        if data["previous_end_at"] <= data["previous_start_at"]:
+            raise ValidationError(
+                "End time must be after the start time.", field_name="previous_end_at"
+            )
+        if data["end_at"] <= data["start_at"]:
+            raise ValidationError(
+                "End time must be after the start time.", field_name="end_at"
+            )
 
 
 class TaskListQuerySchema(Schema):
