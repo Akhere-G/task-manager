@@ -1,12 +1,14 @@
+from typing import Any
+
 from app.utils.dates import to_iso_z
 
 
-def to_camel_case(snake_case):
+def to_camel_case(snake_case: str) -> str:
     first, *rest = snake_case.split("_")
     return first + "".join(word.title() for word in rest)
 
 
-def format_json_response(data):
+def format_json_response(data: Any) -> Any:
     if data is None:
         return None
     if isinstance(data, list):

@@ -21,5 +21,5 @@ COMMON_PASSWORDS = frozenset(
 )
 
 
-def is_common_password(password):
+def is_common_password(password: str) -> bool:
     return password.lower() in COMMON_PASSWORDS

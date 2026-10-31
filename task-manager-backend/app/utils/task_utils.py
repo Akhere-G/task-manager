@@ -1,6 +1,9 @@
 import re
+from collections.abc import Iterable, Iterator
+from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import func, or_, select, text
+from sqlalchemy import ColumnElement, TextClause, func, or_, select, text
 
 from app.database import db
 from app.models import Task
@@ -13,6 +16,11 @@ from app.utils.dates import (
     utc_now,
 )
 from app.utils.recurrence import next_occurrence
+
+if TYPE_CHECKING:
+    from app.services.task_query import TaskQuery
+
+Clause = ColumnElement[bool] | TextClause
 
 MAX_SEARCH_LENGTH = 100
 MAX_SEARCH_TERMS = 8
@@ -37,7 +45,7 @@ GHOST_COPIED_FIELDS = (
 )
 
 
-def parse_search(search):
+def parse_search(search: str | None) -> tuple[str, str] | None:
     """Full-text search only indexes terms of FULLTEXT_MIN_TERM_LENGTH or more, so
     shorter terms fall back to LIKE."""
     cleaned = " ".join(str(search or "").split())[:MAX_SEARCH_LENGTH]
@@ -49,14 +57,14 @@ def parse_search(search):
     return "like", cleaned
 
 
-def _fulltext_clause(value):
+def _fulltext_clause(value: str) -> TextClause:
     table = Task.__tablename__
     return text(
         f"MATCH({table}.title, {table}.description) AGAINST(:search IN BOOLEAN MODE)"
     ).bindparams(search=value)
 
 
-def _like_clause(value):
+def _like_clause(value: str) -> ColumnElement[bool]:
     escaped = value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     pattern = f"%{escaped}%"
     return or_(
@@ -65,7 +73,7 @@ def _like_clause(value):
     )
 
 
-def build_search_clause(search):
+def build_search_clause(search: str | None) -> Clause | None:
     plan = parse_search(search)
     if plan is None:
         return None
@@ -73,13 +81,15 @@ def build_search_clause(search):
     return _fulltext_clause(value) if mode == "fulltext" else _like_clause(value)
 
 
-def _completion_clause(is_completed):
+def _completion_clause(is_completed: str | bool | None) -> Clause | None:
     if is_completed is None or is_completed == "all":
         return None
     return Task.is_completed == (str(is_completed).lower() == "true")
 
 
-def _date_range_clause(start_date, end_date):
+def _date_range_clause(
+    start_date: str | datetime | None, end_date: str | datetime | None
+) -> Clause | None:
     if not start_date or not end_date:
         return None
     start = parse_iso(start_date)
@@ -87,7 +97,7 @@ def _date_range_clause(start_date, end_date):
     return Task.end_at.between(start_of_day(start.date()), end_of_day(end.date()))
 
 
-def _duration_clause(duration):
+def _duration_clause(duration: str | None) -> Clause | None:
     minutes = func.timestampdiff(
         func.literal_column("MINUTE"), Task.start_at, Task.end_at
     )
@@ -98,8 +108,8 @@ def _duration_clause(duration):
     return None
 
 
-def build_task_clauses(user_id, query):
-    clauses = [Task.user_id == user_id]
+def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
+    clauses: list[Clause] = [Task.user_id == user_id]
     if query.category and query.category != "all":
         clauses.append(Task.category == query.category)
 
@@ -115,12 +125,12 @@ def build_task_clauses(user_id, query):
     return clauses
 
 
-def snapshot(task):
+def snapshot(task: Task) -> Task:
     column_names = Task.__table__.columns.keys()
     return Task(**{name: getattr(task, name) for name in column_names})
 
 
-def next_task_start(task):
+def next_task_start(task: Task) -> datetime:
     return next_occurrence(
         task.start_at,
         task.repeat_by,
@@ -130,7 +140,7 @@ def next_task_start(task):
     )
 
 
-def _ghost(task, start, end):
+def _ghost(task: Task, start: datetime, end: datetime) -> Task:
     ghost = Task(
         **{name: getattr(task, name) for name in GHOST_COPIED_FIELDS},
         start_at=start,
@@ -142,10 +152,12 @@ def _ghost(task, start, end):
     return ghost
 
 
-def _occurrences(task, view_start, view_end):
+def _occurrences(
+    task: Task, view_start: datetime, view_end: datetime
+) -> Iterator[tuple[datetime, datetime]]:
     zone = get_zone(task.repeat_timezone)
 
-    def advance(start, end):
+    def advance(start: datetime, end: datetime) -> tuple[datetime, datetime]:
         next_start = next_occurrence(
             start, task.repeat_by, task.repeat_interval, task.repeat_days, zone
         )
@@ -172,12 +184,12 @@ def _occurrences(task, view_start, view_end):
 
 
 def with_repeating(
-    tasks,
-    view_start,
-    view_end,
-    user_id,
-    clauses=(),
-):
+    tasks: list[Task],
+    view_start: datetime,
+    view_end: datetime,
+    user_id: int,
+    clauses: Iterable[Clause] = (),
+) -> list[Task]:
     view_start = as_aware_utc(view_start)
     view_end = as_aware_utc(view_end)
     repeating_tasks = db.session.scalars(
@@ -198,7 +210,7 @@ def with_repeating(
     return [*tasks, *ghosts]
 
 
-def should_roll_series(task, before):
+def should_roll_series(task: Task, before: Task) -> bool:
     if not (task.is_repeating and task.is_completed and not before.is_completed):
         return False
     if not task.repeat_until:
@@ -206,7 +218,7 @@ def should_roll_series(task, before):
     return end_of_day(task.repeat_until) >= next_task_start(task)
 
 
-def _save_completed_occurrence(before):
+def _save_completed_occurrence(before: Task) -> None:
     db.session.add(
         Task(
             title=before.title,
@@ -224,7 +236,7 @@ def _save_completed_occurrence(before):
     )
 
 
-def _move_to_next_occurrence(task, before):
+def _move_to_next_occurrence(task: Task, before: Task) -> None:
     next_start = next_task_start(before)
     task.start_at = next_start
     task.end_at = next_start + (before.end_at - before.start_at)
@@ -234,6 +246,6 @@ def _move_to_next_occurrence(task, before):
     task.created_at = utc_now()
 
 
-def roll_series(task, before):
+def roll_series(task: Task, before: Task) -> None:
     _save_completed_occurrence(before)
     _move_to_next_occurrence(task, before)
