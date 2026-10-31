@@ -120,7 +120,7 @@ export default function TaskCalendar({
           previousEndAt: task.endAt,
           startAt,
           endAt,
-          isGhost: task.isGhost,
+          isGhost: task.isGhost ?? false,
         },
       });
       trackEvent("calendar_task_rescheduled");
