@@ -3,6 +3,7 @@ import logging
 import os
 
 from flask import Blueprint, jsonify
+from flask.typing import ResponseReturnValue
 
 from app.exceptions import EnquiryNotSent
 from app.extensions import limiter
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 SENDER_NAME = "TaskFlow Contact Form"
 
 
-def enquiry_html(full_name, email, subject, message):
+def enquiry_html(full_name: str, email: str, subject: str, message: str) -> str:
     full_name, email, subject, message = (
         html.escape(value, quote=True) for value in (full_name, email, subject, message)
     )
@@ -48,7 +49,7 @@ mail_bp = Blueprint("contact", __name__)
 
 @mail_bp.route("/api/contact", methods=["POST"])
 @limiter.limit("3 per hour")
-def handle_contact():
+def handle_contact() -> ResponseReturnValue:
     data = ContactSchema().load(get_json_body())
 
     try:

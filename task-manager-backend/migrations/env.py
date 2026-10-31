@@ -12,7 +12,7 @@ config = context.config
 target_metadata = Base.metadata
 
 
-def run_migrations_offline():
+def run_migrations_offline() -> None:
     context.configure(
         url=build_database_url().render_as_string(hide_password=False),
         target_metadata=target_metadata,
@@ -23,7 +23,7 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def run_migrations_online():
+def run_migrations_online() -> None:
     engine = create_engine(
         build_database_url(),
         poolclass=pool.NullPool,

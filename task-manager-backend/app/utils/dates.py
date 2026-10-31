@@ -1,50 +1,44 @@
-"""Date and time helpers shared across the backend.
+"""The database stores naive UTC datetimes."""
 
-The database stores naive UTC datetimes, so most helpers convert between that and
-timezone-aware values.
-"""
-
-from datetime import date, datetime, time, timezone
+from datetime import UTC, date, datetime, time, tzinfo
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from dateutil import parser
 
-UTC = timezone.utc
+ZONE_ERRORS = (KeyError, ValueError, OSError)
 
 
-def utc_now():
-    """The current time as a naive UTC datetime, the way the database stores it."""
+def utc_now() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
 
 
-def parse_iso(value):
-    """A datetime from an ISO string; datetimes and None pass through."""
+def parse_iso(value: str | datetime | None) -> datetime | None:
     return parser.isoparse(value) if isinstance(value, str) else value
 
 
-def as_naive_utc(value):
-    """A naive UTC datetime from an ISO string or any datetime."""
-    value = parse_iso(value)
+def as_naive_utc(value: str | datetime) -> datetime:
+    value = parser.isoparse(value) if isinstance(value, str) else value
     if value.tzinfo is not None:
         value = value.astimezone(UTC).replace(tzinfo=None)
     return value
 
 
-def as_aware_utc(value):
-    """An aware UTC datetime; naive values are taken to be UTC already."""
-    return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+def as_aware_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
-def start_of_day(day):
+def start_of_day(day: date) -> datetime:
     return datetime.combine(day, time.min)
 
 
-def end_of_day(day):
+def end_of_day(day: date) -> datetime:
     return datetime.combine(day, time.max)
 
 
-def to_iso_z(value):
-    """ISO 8601 in UTC with a trailing Z for datetimes; plain ISO for dates."""
+def to_iso_z(value: Any) -> Any:
     if isinstance(value, datetime):
         return as_aware_utc(value).isoformat().replace("+00:00", "Z")
     if isinstance(value, date):
@@ -52,25 +46,24 @@ def to_iso_z(value):
     return value
 
 
-def get_zone(name):
-    """The zone for an IANA name, or UTC when it is missing or unknown."""
-    if not name:
+def get_zone(zone_name: str | None) -> tzinfo:
+    if not zone_name:
         return UTC
     try:
-        return ZoneInfo(name)
-    except (KeyError, ValueError, OSError):
+        return ZoneInfo(zone_name)
+    except ZONE_ERRORS:
         return UTC
 
 
-def is_valid_zone(name):
-    if not isinstance(name, str) or not name:
+def is_valid_zone(zone_name: object) -> bool:
+    if not isinstance(zone_name, str) or not zone_name:
         return False
     try:
-        ZoneInfo(name)
-    except (KeyError, ValueError, OSError):
+        ZoneInfo(zone_name)
+    except ZONE_ERRORS:
         return False
     return True
 
 
-def local_today(zone_name):
+def local_today(zone_name: str | None) -> date:
     return datetime.now(get_zone(zone_name)).date()

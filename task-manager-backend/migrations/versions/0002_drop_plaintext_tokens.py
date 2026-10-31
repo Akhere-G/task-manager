@@ -3,6 +3,7 @@
 Revision ID: 0002
 Revises: 0001
 """
+
 import sqlalchemy as sa
 from alembic import op
 
@@ -12,11 +13,11 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     op.drop_column("refresh_tokens", "token")
     op.drop_column("password_resets", "token")
 
 
-def downgrade():
+def downgrade() -> None:
     op.add_column("password_resets", sa.Column("token", sa.String(255), nullable=True))
     op.add_column("refresh_tokens", sa.Column("token", sa.String(255), nullable=True))

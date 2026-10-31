@@ -1,21 +1,20 @@
 import json
 import logging
 import os
-from datetime import date, datetime, timezone
-
-from marshmallow import ValidationError
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from datetime import UTC, date, datetime
+from typing import Any
 
 from google import genai
 from google.genai import types
 from groq import Groq
+from marshmallow import ValidationError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.constants import CATEGORIES
 from app.database import db
 from app.exceptions import AIUnavailable
-from app.models import DailyBrief
+from app.models import DailyBrief, Task
 from app.schemas.ai_schema import AiTaskSchema
-
 from app.services.stats_service import get_brief_stats
 from app.services.task_query import TaskQuery
 from app.services.task_service import get_all_tasks
@@ -36,7 +35,7 @@ FALLBACK_BRIEF = (
 )
 
 
-def _ask_gemini(prompt):
+def _ask_gemini(prompt: str) -> str | None:
     client = genai.Client(
         api_key=os.getenv("GEMINI_API_KEY"),
         http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_MS),
@@ -49,7 +48,7 @@ def _ask_gemini(prompt):
     return response.text
 
 
-def _ask_groq(prompt):
+def _ask_groq(prompt: str) -> str | None:
     completion = Groq(api_key=os.getenv("GROQ_API_KEY")).chat.completions.create(
         model=GROQ_MODEL,
         messages=[
@@ -61,8 +60,7 @@ def _ask_groq(prompt):
     return completion.choices[0].message.content
 
 
-def get_generated_text(prompt):
-    """Gemini first, Groq if that fails or returns nothing."""
+def get_generated_text(prompt: str) -> str:
     for name, ask in (("Gemini", _ask_gemini), ("Groq", _ask_groq)):
         try:
             if text := ask(prompt):
@@ -72,8 +70,7 @@ def get_generated_text(prompt):
     raise AIUnavailable()
 
 
-def _extract_json(raw):
-    """The JSON in a model reply, which may be wrapped in a markdown code fence."""
+def _extract_json(raw: str | None) -> Any:
     text = (raw or "").strip()
     if "```" in text:
         text = text.split("```")[1].strip()
@@ -82,10 +79,7 @@ def _extract_json(raw):
     return json.loads(text)
 
 
-# --- Daily brief ---------------------------------------------------------
-
-
-def _find_brief(user_id, day):
+def _find_brief(user_id: int, day: date) -> DailyBrief | None:
     return db.session.scalar(
         db.select(DailyBrief).where(
             DailyBrief.user_id == user_id, DailyBrief.generated_date == day
@@ -93,22 +87,26 @@ def _find_brief(user_id, day):
     )
 
 
-def _store_brief(user_id, day, text):
+def _store_brief(user_id: int, day: date, text: str) -> str:
     """Save the brief; if a parallel request saved one first, return that instead."""
     db.session.add(DailyBrief(user_id=user_id, brief_text=text, generated_date=day))
     try:
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
-        return db.session.execute(
-            db.select(DailyBrief).where(
-                DailyBrief.user_id == user_id, DailyBrief.generated_date == day
+        return (
+            db.session.execute(
+                db.select(DailyBrief).where(
+                    DailyBrief.user_id == user_id, DailyBrief.generated_date == day
+                )
             )
-        ).scalar_one().brief_text
+            .scalar_one()
+            .brief_text
+        )
     return text
 
 
-def _brief_prompt(day, tasks, stats):
+def _brief_prompt(day: date, tasks: list[Task], stats: dict[str, Any]) -> str:
     completed_this_week = sum(d["tasks"] for d in stats["productivity"][-7:])
     average = completed_this_week / 7
     minutes_today = sum(
@@ -143,8 +141,9 @@ def _brief_prompt(day, tasks, stats):
     """
 
 
-def generate_daily_brief(user_id, timezone_name=None):
-    """The brief for the user's local day and whether it is the fallback text."""
+def generate_daily_brief(
+    user_id: int, timezone_name: str | None = None
+) -> tuple[str, bool]:
     try:
         day = local_today(timezone_name)
         if existing := _find_brief(user_id, day):
@@ -167,10 +166,7 @@ def generate_daily_brief(user_id, timezone_name=None):
         return FALLBACK_BRIEF, True
 
 
-# --- Task parsing and decomposition ----------------------------------------
-
-
-def _parse_prompt(user_input, now):
+def _parse_prompt(user_input: str, now: datetime) -> str:
     return f"""
     Current Date and Time: {now.strftime("%Y-%m-%d %H:%M:%S")}
     Extract task details from: "{user_input}"
@@ -192,7 +188,13 @@ def _parse_prompt(user_input, now):
     """
 
 
-def _decompose_prompt(title, description, category, start_at, end_at):
+def _decompose_prompt(
+    title: str,
+    description: str,
+    category: str,
+    start_at: str | datetime,
+    end_at: str | datetime,
+) -> str:
     return f"""
     Decompose this task into 3-7 substasks that will help the user complete the task.
     - {title} ({category}, {description}, {start_at} to {end_at})
@@ -205,9 +207,8 @@ def _decompose_prompt(title, description, category, start_at, end_at):
     """
 
 
-def parse_task_with_ai(user_input):
-    """Task fields for the add-task form; the raw text becomes the task if parsing fails."""
-    now = datetime.now(timezone.utc)
+def parse_task_with_ai(user_input: str) -> dict[str, Any]:
+    now = datetime.now(UTC)
     reply = get_generated_text(_parse_prompt(user_input, now))
     try:
         schema = AiTaskSchema()
@@ -222,8 +223,13 @@ def parse_task_with_ai(user_input):
         }
 
 
-def decompose_task(title, description, category, start_at, end_at):
-    """Subtasks for the task, or an empty list when the model gives nothing usable."""
+def decompose_task(
+    title: str,
+    description: str,
+    category: str,
+    start_at: str | datetime,
+    end_at: str | datetime,
+) -> list[dict[str, Any]]:
     try:
         reply = get_generated_text(
             _decompose_prompt(title, description, category, start_at, end_at)

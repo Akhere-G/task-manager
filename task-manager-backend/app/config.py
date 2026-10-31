@@ -1,4 +1,5 @@
 import os
+from collections.abc import Iterable
 from pathlib import Path
 
 from sqlalchemy.engine import URL
@@ -11,7 +12,7 @@ APP_REQUIRED = ["JWT_SECRET_KEY", "FRONTEND_URL"]
 MAY_BE_EMPTY = {"DB_PASSWORD"}
 
 
-def missing_env(names):
+def missing_env(names: Iterable[str]) -> list[str]:
     missing = []
     for name in names:
         value = os.getenv(name)
@@ -20,7 +21,7 @@ def missing_env(names):
     return missing
 
 
-def require_env(names):
+def require_env(names: Iterable[str]) -> None:
     missing = missing_env(names)
     if missing:
         raise RuntimeError(
@@ -28,7 +29,7 @@ def require_env(names):
         )
 
 
-def build_database_url():
+def build_database_url() -> URL:
     require_env(DB_REQUIRED)
     return URL.create(
         "mysql+pymysql",
@@ -40,7 +41,7 @@ def build_database_url():
     )
 
 
-def ssl_ca_path():
+def ssl_ca_path() -> str | None:
     configured = os.getenv("DB_SSL_CA")
     if not configured:
         return None
@@ -50,6 +51,7 @@ def ssl_ca_path():
     if not path.is_file():
         raise RuntimeError("DB_SSL_CA does not point to an existing file")
     return str(path)
+
 
 AI_DAILY_LIMIT = 30
 AI_DAILY_LIMIT_DEMO = 60

@@ -1,21 +1,22 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask.typing import ResponseReturnValue
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from app.services import notification as notification_service
 from app.exceptions import DemoForbidden
-from app.services.auth_service import is_demo_user
-from app.utils.http import get_json_body
 from app.schemas.notification_schema import (
     NotificationSchema,
     SubscriptionCreateSchema,
 )
+from app.services import notification as notification_service
+from app.services.auth_service import is_demo_user
+from app.utils.http import get_json_body
 
 notification_bp = Blueprint("notifications", __name__)
 
 
 @notification_bp.route("/api/notifications", methods=["GET"])
 @jwt_required()
-def get_notifications_route():
+def get_notifications_route() -> ResponseReturnValue:
     user_id = get_jwt_identity()
 
     limit = request.args.get("limit", default=50, type=int)
@@ -32,7 +33,7 @@ def get_notifications_route():
     "/api/notifications/<int:notification_id>/read", methods=["PATCH"]
 )
 @jwt_required()
-def read_notification(notification_id):
+def read_notification(notification_id: int) -> ResponseReturnValue:
     user_id = get_jwt_identity()
 
     notification = notification_service.read_notifications(user_id, notification_id)
@@ -45,7 +46,7 @@ def read_notification(notification_id):
 
 @notification_bp.route("/api/notifications/subscribe", methods=["POST"])
 @jwt_required()
-def save_subscription_route():
+def save_subscription_route() -> ResponseReturnValue:
     user_id = get_jwt_identity()
 
     if is_demo_user(user_id):
@@ -65,7 +66,7 @@ def save_subscription_route():
 
 @notification_bp.route("/api/notifications/subscribe", methods=["DELETE"])
 @jwt_required()
-def delete_subscription_route():
+def delete_subscription_route() -> ResponseReturnValue:
     user_id = get_jwt_identity()
     endpoint = get_json_body().get("endpoint")
 

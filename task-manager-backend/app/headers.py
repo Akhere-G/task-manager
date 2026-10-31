@@ -1,4 +1,4 @@
-from flask import request
+from flask import Flask, Response, request
 
 CSP_REPORT_ONLY = (
     "default-src 'self'; "
@@ -20,9 +20,9 @@ REVALIDATED_FILES = {
 }
 
 
-def register_response_headers(app):
+def register_response_headers(app: Flask) -> None:
     @app.after_request
-    def set_response_headers(response):
+    def set_response_headers(response: Response) -> Response:
         path = request.path
 
         if path.startswith("/api/"):

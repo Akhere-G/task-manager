@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.formatters import format_json_response
+from flask.typing import ResponseReturnValue
+from flask_jwt_extended import get_jwt_identity, jwt_required
+
 from app.services.stats_service import get_all_dashboard_stats
+from app.utils.formatters import format_json_response
 
 stats_bp = Blueprint(
     "stats",
@@ -11,11 +13,7 @@ stats_bp = Blueprint(
 
 @stats_bp.route("/api/stats/dashboard", methods=["GET"])
 @jwt_required()
-def fetch_dashboard_data():
-    """
-    Unified endpoint to fetch all dashboard statistics in a single request.
-    Reduces database connection overhead and improves frontend load performance.
-    """
+def fetch_dashboard_data() -> ResponseReturnValue:
     user_id = get_jwt_identity()
 
     stats_data = get_all_dashboard_stats(user_id)
