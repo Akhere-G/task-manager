@@ -1,14 +1,14 @@
 from dataclasses import replace
-from datetime import date
+
+from sqlalchemy import asc, desc, func, select
 
 from app.constants import MAX_TASKS_PER_REQUEST
 from app.database import db
-from app.exceptions import InvalidTaskTimes, TaskConflict
+from app.exceptions import InvalidTaskTimes, TaskConflict, TaskNotFound
 from app.models import Task
+from app.schemas.task_schema import TaskSchema
 from app.services.task_query import TaskQuery
-from app.utils.formatters import to_snake_case
-from app.utils.serializers import task_to_dict
-from app.utils.dates import as_naive_utc, get_zone, parse_iso, utc_now
+from app.utils.dates import get_zone, parse_iso, utc_now
 from app.utils.recurrence import (
     default_days,
     next_occurrence,
@@ -18,80 +18,85 @@ from app.utils.recurrence import (
 from app.utils.task_utils import (
     build_task_filters,
     check_should_repeat,
-    handle_repeat_task,
+    roll_series,
+    snapshot,
     with_repeating,
 )
-from sqlalchemy import asc, desc, func, select
+
+# Instructions in an update payload that are not columns.
+COMMAND_FIELDS = {"expected_start_at", "skip_occurrence"}
+RECURRENCE_FIELDS = {
+    "repeat_by",
+    "repeat_interval",
+    "repeat_days",
+    "repeat_timezone",
+    "start_at",
+}
+
+
+def _sort_clause(query):
+    duration = func.timestampdiff(
+        func.literal_column("MINUTE"), Task.start_at, Task.end_at
+    )
+    columns = {
+        "created_at": Task.created_at,
+        "title": Task.title,
+        "start_at": Task.start_at,
+        "duration": duration,
+    }
+    column = columns.get(query.sort_by, Task.created_at)  # type: ignore
+    return desc(column) if query.order == "desc" else asc(column)
+
+
+def _page_size(query, total):
+    return max(query.limit or min(total, MAX_TASKS_PER_REQUEST), 1)
+
+
+def _project_repeating(user_id, query, tasks):
+    """Add a ghost for every occurrence of a repeating task in the query's date range."""
+    unranged = replace(query, start_date=None, end_date=None)
+    return with_repeating(
+        tasks,
+        parse_iso(query.start_date),
+        parse_iso(query.end_date),
+        user_id,
+        build_task_filters(user_id, unranged),
+    )
 
 
 def get_all_tasks(user_id, query=TaskQuery()):
     clauses = build_task_filters(user_id, query)
-
-    total_count = (
-        db.session.execute(
-            select(func.count()).select_from(Task).where(*clauses)
-        ).scalar()
-        or 0
-    )
-
-    sort_map = {
-        "created_at": Task.created_at,
-        "title": Task.title,
-        "start_at": Task.start_at,
-        "duration": func.timestampdiff(
-            func.literal_column("MINUTE"), Task.start_at, Task.end_at
-        ),
-    }
-    sort_field = sort_map.get(query.sort_by, Task.created_at)  # type: ignore
-    order_expr = desc(sort_field) if query.order == "desc" else asc(sort_field)
-
-    page = max(int(query.page or 1), 1)
-    limit = query.limit
-    if limit is None:
-        limit = min(total_count, MAX_TASKS_PER_REQUEST)
-    limit = max(int(limit), 1)
-    offset = limit * (page - 1)
+    total = db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
+    limit = _page_size(query, total)
+    page = max(query.page or 1, 1)
 
     stmt = (
         select(Task)
         .where(*clauses)
-        .order_by(order_expr, Task.id)
+        .order_by(_sort_clause(query), Task.id)
         .limit(limit)
-        .offset(offset)
+        .offset(limit * (page - 1))
     )
-    tracked_tasks = db.session.execute(stmt).scalars().all()
-
-    tasks = [task_to_dict(t) for t in tracked_tasks]
+    tasks = list(db.session.scalars(stmt))
 
     if query.project_repeating:
-
-        start = parse_iso(query.start_date)
-        end = parse_iso(query.end_date)
-
-        base_clauses = build_task_filters(
-            user_id, replace(query, start_date=None, end_date=None)
-        )
-
-        tasks = with_repeating(tasks, start, end, user_id, base_clauses)
-        total_count = len(tasks)
+        tasks = _project_repeating(user_id, query, tasks)
+        total = len(tasks)
 
     return {
         "tasks": tasks,
-        "total_tasks": total_count,
-        "total_pages": (total_count + limit - 1) // limit if limit > 0 else 1,
+        "total_tasks": total,
+        "total_pages": (total + limit - 1) // limit,
         "current_page": page,
     }
 
 
-def get_task(user_id, task_id):
-    task = db.session.execute(
-        select(Task).where(Task.user_id == user_id, Task.id == task_id)
-    ).scalar_one_or_none()
-
-    if not task:
-        return None
-
-    return task_to_dict(task)
+def get_task(user_id, task_id, lock=False):
+    stmt = select(Task).where(Task.user_id == user_id, Task.id == task_id)
+    task = db.session.scalar(stmt.with_for_update() if lock else stmt)
+    if task is None:
+        raise TaskNotFound(task_id)
+    return task
 
 
 def _apply_recurrence(task):
@@ -119,192 +124,96 @@ def _apply_recurrence(task):
         task.start_at = snapped
 
 
+def create_tasks(user_id, items):
+    """Insert tasks built from validated `TaskSchema` data; each starts its own series."""
+    tasks = [Task(**item, user_id=user_id) for item in items]
+    for task in tasks:
+        _apply_recurrence(task)
+    db.session.add_all(tasks)
+    db.session.flush()
+    for task in tasks:
+        task.series_id = task.id
+    db.session.commit()
+    return tasks
+
+
 def create_task(user_id, data):
-    new_task = Task(
-        title=data.get("title", "").strip(),
-        description=data.get("description").strip()
-        if data.get("description")
-        else None,
-        category=str(data.get("category", "General")).strip(),
-        start_at=as_naive_utc(data.get("startAt")),
-        end_at=as_naive_utc(data.get("endAt")),
-        is_repeating=bool(data.get("isRepeating")),
-        repeat_by=data.get("repeatBy"),
-        repeat_until=data.get("repeatUntil"),
-        repeat_interval=data.get("repeatInterval") or 1,
-        repeat_days=data.get("repeatDays"),
-        repeat_timezone=data.get("repeatTimezone"),
-        user_id=user_id,
-    )
-    _apply_recurrence(new_task)
-    db.session.add(new_task)
-    db.session.flush()
-
-    new_task.series_id = new_task.id
-    db.session.commit()
-
-    return new_task.id
+    return create_tasks(user_id, [data])[0]
 
 
-def create_tasks_from_list(user_id, tasks):
-    inserted_tasks = []
-    for t in tasks:
-        new_task = Task(
-            title=t.get("title"),
-            description=t.get("description").strip() if t.get("description") else None,
-            category=t.get("category", "General"),
-            start_at=as_naive_utc(t.get("startAt")),
-            end_at=as_naive_utc(t.get("endAt")),
-            user_id=user_id,
-            is_completed=bool(t.get("isCompleted")),
-            completed_at=t.get("completedAt"),
-            is_repeating=bool(t.get("repeatBy")),
-            repeat_by=t.get("repeatBy"),
-            repeat_until=t.get("repeatUntil"),
-            repeat_interval=t.get("repeatInterval") or 1,
-            repeat_days=t.get("repeatDays"),
-            repeat_timezone=t.get("repeatTimezone"),
-            created_at=t.get("createdAt") or date.today(),
-        )
-        _apply_recurrence(new_task)
-        db.session.add(new_task)
-        inserted_tasks.append(new_task)
-
-    db.session.flush()
-
-    for t in inserted_tasks:
-        if t.series_id is None:
-            t.series_id = t.id
-
-    db.session.commit()
-    return len(inserted_tasks)
-
-
-UPDATABLE_FIELDS = [
-    "title",
-    "description",
-    "category",
-    "start_at",
-    "end_at",
-    "is_completed",
-    "completed_at",
-    "is_repeating",
-    "repeat_by",
-    "repeat_until",
-    "repeat_interval",
-    "repeat_days",
-    "repeat_timezone",
-]
-
-RECURRENCE_FIELDS = {
-    "repeat_by",
-    "repeat_interval",
-    "repeat_days",
-    "repeat_timezone",
-    "start_at",
-}
-
-
-def _task_state(task):
-    return {
-        "id": task.id,
-        "title": task.title,
-        "description": task.description,
-        "category": task.category,
-        "is_completed": task.is_completed,
-        "completed_at": task.completed_at,
-        "start_at": task.start_at,
-        "end_at": task.end_at,
-        "is_repeating": task.is_repeating,
-        "repeat_by": task.repeat_by,
-        "repeat_until": task.repeat_until,
-        "repeat_interval": task.repeat_interval,
-        "repeat_days": task.repeat_days,
-        "repeat_timezone": task.repeat_timezone,
-        "created_at": task.created_at,
-    }
-
-
-def update_task(user_id, task_id, data: dict):
-    task = db.session.execute(
-        select(Task)
-        .where(Task.id == task_id, Task.user_id == user_id)
-        .with_for_update()
-    ).scalar_one_or_none()
-
-    if not task:
-        return None
-
-    old_task_dict = _task_state(task)
-    incoming = {to_snake_case(k): v for k, v in data.items()}
-
-    start = as_naive_utc(incoming.get("start_at") or task.start_at)
-    end = as_naive_utc(incoming.get("end_at") or task.end_at)
+def _check_times(task, data):
+    start = data.get("start_at", task.start_at)
+    end = data.get("end_at", task.end_at)
     if end <= start:
         raise InvalidTaskTimes()
 
-    expected_start = incoming.get("expected_start_at")
-    completing = bool(incoming.get("is_completed")) and not task.is_completed
+
+def _check_not_already_completed(task, data):
+    """Completing an occurrence that has already moved on is a stale request."""
+    expected_start = data.get("expected_start_at")
+    completing = data.get("is_completed") and not task.is_completed
     if (
         expected_start
         and completing
         and task.is_repeating
-        and as_naive_utc(expected_start) != task.start_at
+        and expected_start != task.start_at
     ):
-        raise TaskConflict(old_task_dict)
+        raise TaskConflict(TaskSchema().dump(task))
 
-    for key, v in incoming.items():
-        if key in UPDATABLE_FIELDS:
-            value = v.strip() if isinstance(v, str) else v
-            value = bool(v) if key in ["is_completed", "is_repeating"] else value
-            setattr(task, key, value)
-    if task.is_completed and not old_task_dict["is_completed"]:
+
+def _sync_completion(task, was_completed):
+    if task.is_completed and not was_completed:
         task.completed_at = utc_now()
-
-    elif not task.is_completed and old_task_dict["is_completed"]:
+    elif not task.is_completed and was_completed:
         task.completed_at = None
 
-    task.start_at = as_naive_utc(task.start_at)
-    task.end_at = as_naive_utc(task.end_at)
 
-    if "repeat_by" in incoming and "repeat_days" not in incoming:
+def _skip_occurrence(task):
+    next_start = next_occurrence(
+        task.start_at,
+        task.repeat_by,
+        task.repeat_interval,
+        task.repeat_days,
+        get_zone(task.repeat_timezone),
+    )
+    task.end_at = next_start + (task.end_at - task.start_at)
+    task.start_at = next_start
+
+
+def update_task(user_id, task_id, data):
+    task = get_task(user_id, task_id, lock=True)
+    before = snapshot(task)
+
+    _check_times(task, data)
+    _check_not_already_completed(task, data)
+
+    for field, value in data.items():
+        if field not in COMMAND_FIELDS:
+            setattr(task, field, value)
+    _sync_completion(task, before.is_completed)
+
+    if "repeat_by" in data and "repeat_days" not in data:
         task.repeat_days = None
-    if RECURRENCE_FIELDS & incoming.keys() or not task.is_repeating:
+    if RECURRENCE_FIELDS & data.keys() or not task.is_repeating:
         _apply_recurrence(task)
 
     if (
-        incoming.get("skip_occurrence")
+        data.get("skip_occurrence")
         and task.is_repeating
         and task.repeat_by
         and not task.is_completed
     ):
-        next_start = next_occurrence(
-            task.start_at,
-            task.repeat_by,
-            task.repeat_interval,
-            task.repeat_days,
-            get_zone(task.repeat_timezone),
-        )
-        task.end_at = next_start + (task.end_at - task.start_at)
-        task.start_at = next_start
+        _skip_occurrence(task)
     db.session.flush()
 
-    if check_should_repeat(old_task_dict, _task_state(task)):
-        handle_repeat_task(user_id, old_task_dict)
+    if check_should_repeat(before, task):
+        roll_series(task, before)
         db.session.flush()
 
-    result = _task_state(task)
     db.session.commit()
-    return result
+    return task
 
 
 def delete_task(user_id, task_id):
-    task = db.session.execute(
-        select(Task).where(Task.user_id == user_id, Task.id == task_id)
-    ).scalar_one_or_none()
-
-    if task:
-        db.session.delete(task)
-        db.session.commit()
-        return task_id
-    return None
+    db.session.delete(get_task(user_id, task_id))
+    db.session.commit()
