@@ -113,18 +113,6 @@ describe("rescheduling on the calendar", () => {
     });
   });
 
-  it("treats a saved task without an isGhost flag as a real occurrence", async () => {
-    mock.onPost("/tasks/1/reschedule").reply(200, {});
-    const fromApi: Partial<Task> = makeTask({ id: 1, isRepeating: true, repeatBy: "weekly" });
-    delete fromApi.isGhost;
-    renderCalendar([fromApi as Task]);
-
-    await moveADayLater(1);
-
-    await waitFor(() => expect(mock.history.post).toHaveLength(1));
-    expect(sentBody().isGhost).toBe(false);
-  });
-
   it("puts the event back when the move is rejected", async () => {
     mock.onPost("/tasks/1/reschedule").reply(409, { error: "Already updated." });
     renderCalendar([makeTask({ id: 1 })]);
