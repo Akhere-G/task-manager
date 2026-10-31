@@ -14,34 +14,11 @@ as UTC and returned naive; aware datetimes are returned as aware UTC.
 """
 
 from calendar import monthrange
-from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta
 
-UTC = timezone.utc
+from app.utils.dates import UTC
 
-REPEAT_FREQUENCIES = ("daily", "weekly", "monthly", "yearly")
-REPEAT_INTERVAL_LIMITS = {"daily": 365, "weekly": 52, "monthly": 24, "yearly": 10}
 LEAP_YEAR = 2024
-
-
-def get_zone(name):
-    """The zone for an IANA name, or UTC when it is missing or unknown."""
-    if not name:
-        return UTC
-    try:
-        return ZoneInfo(name)
-    except (KeyError, ValueError, OSError):
-        return UTC
-
-
-def is_valid_zone(name):
-    if not isinstance(name, str) or not name:
-        return False
-    try:
-        ZoneInfo(name)
-    except (KeyError, ValueError, OSError):
-        return False
-    return True
 
 
 def _to_local(value, tz):

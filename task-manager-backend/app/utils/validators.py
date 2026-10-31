@@ -3,26 +3,19 @@ import re
 from dateutil import parser
 
 from app.utils.common_passwords import is_common_password
-from app.utils.recurrence import (
+from app.constants import (
+    CATEGORIES as VALID_CATEGORIES,
+    MAX_DECOMPOSE_DESCRIPTION_LENGTH,
+    MAX_DECOMPOSE_TITLE_LENGTH,
+    MAX_PAGE_SIZE,
+    MAX_PARSE_TEXT_LENGTH,
+    MAX_PROJECTION_DAYS,
     REPEAT_INTERVAL_LIMITS,
-    is_valid_month_day,
-    is_valid_zone,
 )
+from app.utils.dates import is_valid_zone
+from app.utils.recurrence import is_valid_month_day
 
 
-VALID_CATEGORIES = [
-    "work",
-    "home",
-    "chores",
-    "life-admin",
-    "health",
-    "self-care",
-    "social",
-    "hobbies",
-    "learning",
-    "finance",
-    "general",
-]
 
 
 def validate_task(data, is_update=False):
@@ -301,11 +294,6 @@ def validate_password(password):
     return None
 
 
-MAX_PAGE_SIZE = 200
-MAX_TASKS_PER_REQUEST = 2000
-MAX_PROJECTION_DAYS = 400
-
-
 def parse_list_params(args):
     errors = {}
 
@@ -376,11 +364,6 @@ def parse_list_params(args):
         "project_repeating": project_repeating,
     }
     return params, errors
-
-
-MAX_PARSE_TEXT_LENGTH = 500
-MAX_DECOMPOSE_TITLE_LENGTH = 255
-MAX_DECOMPOSE_DESCRIPTION_LENGTH = 2000
 
 
 def validate_parse_task(data):

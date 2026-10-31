@@ -8,8 +8,6 @@ from app.utils.validators import (
 )
 from app.services.task_query import TaskQuery
 from app.services.task_service import (
-    TaskConflict,
-    TaskValidationError,
     get_all_tasks,
     create_task,
     update_task,
@@ -18,7 +16,7 @@ from app.services.task_service import (
     get_task,
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime, timezone
+from app.utils.dates import utc_now
 
 task_bp = Blueprint("tasks", __name__)
 
@@ -85,9 +83,7 @@ def add_task_list():
         comp_at = task.get("completedAt")
 
         if is_comp and not comp_at:
-            task["completedAt"] = datetime.now(timezone.utc).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
+            task["completedAt"] = utc_now().strftime("%Y-%m-%d %H:%M:%S")
         elif not is_comp:
             task["completedAt"] = None
 
@@ -115,17 +111,7 @@ def edit_task(task_id):
     if errors:
         return jsonify({"errors": errors}), 400
 
-    try:
-        updated_result = update_task(user_id, task_id, data)
-    except TaskValidationError as error:
-        return jsonify({"errors": {error.field: error.message}}), 400
-    except TaskConflict as conflict:
-        return jsonify(
-            {
-                "error": "This task was already updated.",
-                "task": format_json_response(conflict.task),
-            }
-        ), 409
+    updated_result = update_task(user_id, task_id, data)
 
     if updated_result is None:
         return jsonify({"error": f"No task with the id {task_id} exists."}), 404

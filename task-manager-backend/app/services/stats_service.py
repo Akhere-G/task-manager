@@ -1,7 +1,9 @@
 from app.database import db
 from datetime import datetime, timedelta, timezone
 from app.services.task_service import with_repeating
+from app.constants import CATEGORIES
 from app.models import Task
+from app.utils.dates import as_aware_utc
 from app.utils.serializers import task_to_dict
 
 
@@ -54,7 +56,7 @@ def _get_backlog_health(tasks):
     counts = {"Completed": 0, "Overdue": 0, "Pending": 0}
     now = datetime.now(timezone.utc)
     for task in tasks:
-        end_at = task["end_at"].replace(tzinfo=timezone.utc)
+        end_at = as_aware_utc(task["end_at"])
         if task["is_completed"]:
             counts["Completed"] += 1
         elif end_at < now:
@@ -70,7 +72,7 @@ def _get_category_volume(tasks):
     now = datetime.now(timezone.utc)
 
     for t in tasks:
-        end_at = t["end_at"].replace(tzinfo=timezone.utc)
+        end_at = as_aware_utc(t["end_at"])
 
         cat = t["category"] or "General"
         if cat not in volume_map:
@@ -108,7 +110,7 @@ def _get_overdue_distribution(tasks):
 
     now = datetime.now(timezone.utc)
     for t in tasks:
-        end_at = t["end_at"].replace(tzinfo=timezone.utc)
+        end_at = as_aware_utc(t["end_at"])
 
         if not t["is_completed"] and end_at < now:
             days_diff = (now - end_at).days
@@ -131,7 +133,7 @@ def _get_deadline_proximity(tasks):
     now = datetime.now(timezone.utc)
 
     for t in tasks:
-        end_at = t["end_at"].replace(tzinfo=timezone.utc)
+        end_at = as_aware_utc(t["end_at"])
 
         if t["is_completed"]:
             continue
@@ -187,11 +189,11 @@ def _get_estimation_accuracy(tasks):
     accuracy_data = []
     for t in tasks:
         completed_at = (
-            t["completed_at"].replace(tzinfo=timezone.utc)
+            as_aware_utc(t["completed_at"])
             if t["completed_at"]
             else None
         )
-        end_at = t["end_at"].replace(tzinfo=timezone.utc)
+        end_at = as_aware_utc(t["end_at"])
 
         if t["is_completed"] and completed_at and completed_at > threshold_date:
             variance = (end_at - completed_at).total_seconds() / 60.0
@@ -222,8 +224,8 @@ def _get_week_overview(tasks):
         if task["is_completed"]:
             continue
 
-        task_end = task["end_at"].replace(tzinfo=timezone.utc)
-        task_start = task["start_at"].replace(tzinfo=timezone.utc)
+        task_end = as_aware_utc(task["end_at"])
+        task_start = as_aware_utc(task["start_at"])
 
         if view_start <= task_end < view_end:
             index = task_end.date()
@@ -250,26 +252,12 @@ def _get_week_overview(tasks):
 
 
 def _get_distribution_trend(tasks):
-    categories = [
-        "work",
-        "home",
-        "chores",
-        "life-admin",
-        "health",
-        "self-care",
-        "social",
-        "hobbies",
-        "learning",
-        "finance",
-        "general",
-    ]
-
     today = datetime.now(timezone.utc).date()
     results = {}
 
     for i in range(7):
         day = (today - timedelta(days=i)).isoformat()
-        results[day] = {cat: 0 for cat in categories}
+        results[day] = dict.fromkeys(CATEGORIES, 0)
         results[day]["date"] = day
 
     for t in tasks:

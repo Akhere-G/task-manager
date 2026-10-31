@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import Dict
 
 from dotenv import load_dotenv
@@ -10,6 +10,7 @@ from sqlalchemy import or_, select
 
 from app.database import SessionLocal
 from app.models import Notification, NotificationSubscription, Task
+from app.utils.dates import utc_now
 
 load_dotenv()
 
@@ -71,7 +72,7 @@ def send_push_to_user_subscription(session, user_id, title, message):
 def check_task_reminders():
     session = SessionLocal()
     try:
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = utc_now()
 
         stmt = select(Task).where(
             Task.is_completed.is_(False),

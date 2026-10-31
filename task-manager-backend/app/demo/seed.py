@@ -19,6 +19,7 @@ from app.models import (
     Task,
     User,
 )
+from app.utils.dates import utc_now
 from app.utils.recurrence import default_days, previous_occurrence
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import delete, select
@@ -146,7 +147,7 @@ def build_rows(fixture, now):
 
 
 def reset_demo_account(now=None):
-    now = now or datetime.now(timezone.utc).replace(tzinfo=None)
+    now = now or utc_now()
     fixture = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
     rows = build_rows(fixture, now)
 
