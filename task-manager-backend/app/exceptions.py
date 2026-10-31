@@ -74,3 +74,8 @@ class DemoForbidden(AppError):
 class AIUnavailable(AppError):
     status_code = 502
     message = "The AI service could not complete that request."
+
+
+class EnquiryNotSent(AppError):
+    status_code = 502
+    message = "Enquiry could not be sent"
