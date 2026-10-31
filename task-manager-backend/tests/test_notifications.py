@@ -1,21 +1,12 @@
 from collections.abc import Callable
 from typing import Any
 
-import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
 from app.database import db
 from app.models import Notification, NotificationSubscription
-
-
-@pytest.fixture
-def session(
-    make_user: Callable[..., int], login: Callable[..., FlaskClient]
-) -> FlaskClient:
-    make_user()
-    return login()
 
 
 def subscribe(client: FlaskClient, n: int = 1, **overrides: Any) -> TestResponse:
