@@ -1,23 +1,25 @@
 import json
 import logging
 import os
-from datetime import datetime, date, timezone
+from datetime import date, datetime, timezone
 
+from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from google import genai
 from google.genai import types
 from groq import Groq
 
-from app.constants import CATEGORIES, REPEAT_FREQUENCIES, REPEAT_INTERVAL_LIMITS
+from app.constants import CATEGORIES
 from app.database import db
+from app.exceptions import AIUnavailable
 from app.models import DailyBrief
+from app.schemas.ai_schema import AiTaskSchema
 
 from app.services.stats_service import get_brief_stats
 from app.services.task_query import TaskQuery
 from app.services.task_service import get_all_tasks
 from app.utils.dates import local_today
-from app.utils.recurrence import normalise_days
 
 logger = logging.getLogger(__name__)
 
@@ -34,182 +36,149 @@ FALLBACK_BRIEF = (
 )
 
 
-def get_generated_text(prompt):
-    try:
-        client_gemini = genai.Client(
-            api_key=os.getenv("GEMINI_API_KEY"),
-            http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_MS),
-        )
-        response = client_gemini.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
-        )
-        if response.text:
-            return response.text
-    except Exception as exc:
-        logger.warning("Gemini request failed: %s", type(exc).__name__)
+def _ask_gemini(prompt):
+    client = genai.Client(
+        api_key=os.getenv("GEMINI_API_KEY"),
+        http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_MS),
+    )
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
+    )
+    return response.text
 
-    try:
-        client_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
-        completion = client_groq.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt},
-            ],
-            timeout=10.0,
+
+def _ask_groq(prompt):
+    completion = Groq(api_key=os.getenv("GROQ_API_KEY")).chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        timeout=10.0,
+    )
+    return completion.choices[0].message.content
+
+
+def get_generated_text(prompt):
+    """Gemini first, Groq if that fails or returns nothing."""
+    for name, ask in (("Gemini", _ask_gemini), ("Groq", _ask_groq)):
+        try:
+            if text := ask(prompt):
+                return text
+        except Exception as exc:
+            logger.warning("%s request failed: %s", name, type(exc).__name__)
+    raise AIUnavailable()
+
+
+def _extract_json(raw):
+    """The JSON in a model reply, which may be wrapped in a markdown code fence."""
+    text = (raw or "").strip()
+    if "```" in text:
+        text = text.split("```")[1].strip()
+        if text.lower().startswith("json"):
+            text = text[4:].strip()
+    return json.loads(text)
+
+
+# --- Daily brief ---------------------------------------------------------
+
+
+def _find_brief(user_id, day):
+    return db.session.scalar(
+        db.select(DailyBrief).where(
+            DailyBrief.user_id == user_id, DailyBrief.generated_date == day
         )
-        return completion.choices[0].message.content
-    except Exception as exc:
-        logger.warning("Groq request failed: %s", type(exc).__name__)
-        raise Exception("All AI providers failed.")
+    )
+
+
+def _store_brief(user_id, day, text):
+    """Save the brief; if a parallel request saved one first, return that instead."""
+    db.session.add(DailyBrief(user_id=user_id, brief_text=text, generated_date=day))
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return db.session.execute(
+            db.select(DailyBrief).where(
+                DailyBrief.user_id == user_id, DailyBrief.generated_date == day
+            )
+        ).scalar_one().brief_text
+    return text
+
+
+def _brief_prompt(day, tasks, stats):
+    completed_this_week = sum(d["tasks"] for d in stats["productivity"][-7:])
+    average = completed_this_week / 7
+    minutes_today = sum(
+        int((t.end_at - t.start_at).total_seconds() / 60)
+        for t in tasks
+        if t.start_at and t.end_at
+    )
+    volume = "\n".join(
+        f"- {v['category']}: {v['pending']} pending, {v['overdue']} overdue"
+        for v in stats["categoryVolume"]
+    )
+    schedule = "\n".join(
+        f"- {t.title} ({t.category}, {t.start_at} - {t.end_at})" for t in tasks
+    )
+
+    return f"""
+    Persona: Encouraging, positive and grounded productivity coach.
+    Date: {day.strftime("%A, %d %B")}
+    Recent Productivity: {completed_this_week} completed this week. Avg {average:.1f}/day.
+    Current Volume:
+    {volume}
+
+    Today's Schedule ({minutes_today}m):
+    {schedule or "No tasks scheduled."}
+
+    Instructions:
+    1. Give a 'Vibe Check'.
+    2. Identify the 'Main Event'.
+    3. Address high overdue counts.
+    4. Compare today's workload to the {average:.1f} average.
+    5. Under 125 words, British English, Markdown format.
+    """
 
 
 def generate_daily_brief(user_id, timezone_name=None):
+    """The brief for the user's local day and whether it is the fallback text."""
     try:
-        today = local_today(timezone_name)
-        today_str = today.strftime("%Y-%m-%d")
+        day = local_today(timezone_name)
+        if existing := _find_brief(user_id, day):
+            return existing.brief_text, False
 
-        existing_brief = db.session.execute(
-            db.select(DailyBrief).where(
-                DailyBrief.user_id == user_id, DailyBrief.generated_date == today
-            )
-        ).scalar_one_or_none()
-
-        if existing_brief:
-            return existing_brief.brief_text, False
-
-        today_data = get_all_tasks(
+        todays_tasks = get_all_tasks(
             user_id,
             TaskQuery(
-                start_date=today_str,
-                end_date=today_str,
+                start_date=day.isoformat(),
+                end_date=day.isoformat(),
                 is_completed=False,
                 project_repeating=True,
             ),
-        )
-        today_tasks = today_data["tasks"]
-        stats = get_brief_stats(user_id)
-
-        recent_productivity = stats.get("productivity", [])[-7:]
-        total_completed_week = sum(d["tasks"] for d in recent_productivity)
-        avg_daily_completion = (
-            total_completed_week / 7 if total_completed_week > 0 else 0
-        )
-
-        volume_summary = "\n".join(
-            [
-                f"- {v['category']}: {v['pending']} pending, {v['overdue']} overdue"
-                for v in stats.get("categoryVolume", [])
-            ]
-        )
-
-        total_mins_today = 0
-        for t in today_tasks:
-            if t.start_at and t.end_at:
-                delta = t.end_at - t.start_at
-                total_mins_today += int(delta.total_seconds() / 60)
-
-        task_list_str = "\n".join(
-            [
-                f"- {t.title} ({t.category}, {t.start_at} - {t.end_at})"
-                for t in today_tasks
-            ]
-        )
-
-        prompt = f"""
-        Persona: Encouraging, positive and grounded productivity coach.
-        Date: {today.strftime("%A, %d %B")}
-        Recent Productivity: {total_completed_week} completed this week. Avg {avg_daily_completion:.1f}/day.
-        Current Volume: 
-        {volume_summary}
-        
-        Today's Schedule ({total_mins_today}m): 
-        {task_list_str if task_list_str else "No tasks scheduled."}
-
-        Instructions:
-        1. Give a 'Vibe Check'.
-        2. Identify the 'Main Event'.
-        3. Address high overdue counts.
-        4. Compare today's workload to the {avg_daily_completion:.1f} average.
-        5. Under 125 words, British English, Markdown format.
-        """
-
-        generated_text = get_generated_text(prompt)
-
-        new_brief = DailyBrief(
-            user_id=user_id, brief_text=generated_text, generated_date=today
-        )
-        db.session.add(new_brief)
-        try:
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            stored = db.session.execute(
-                db.select(DailyBrief).where(
-                    DailyBrief.user_id == user_id, DailyBrief.generated_date == today
-                )
-            ).scalar_one()
-            return stored.brief_text, False
-
-        return generated_text, False
-
+        )["tasks"]
+        prompt = _brief_prompt(day, todays_tasks, get_brief_stats(user_id))
+        return _store_brief(user_id, day, get_generated_text(prompt)), False
     except (Exception, SQLAlchemyError) as err:
         db.session.rollback()
         logger.warning("Could not generate the daily brief: %s", type(err).__name__)
         return FALLBACK_BRIEF, True
 
 
-def clean_recurrence(parsed):
-    """Drop anything the model got wrong so the form always gets a usable pattern."""
-    repeat_by = parsed.get("repeatBy")
-    if repeat_by not in REPEAT_FREQUENCIES:
-        parsed.update(
-            isRepeating=False,
-            repeatBy=None,
-            repeatInterval=1,
-            repeatDays=None,
-            repeatUntil=None,
-        )
-        return parsed
-
-    try:
-        interval = int(parsed.get("repeatInterval") or 1)
-    except (TypeError, ValueError):
-        interval = 1
-    interval = min(max(interval, 1), REPEAT_INTERVAL_LIMITS[repeat_by])
-
-    days = parsed.get("repeatDays")
-    days = normalise_days(repeat_by, days if isinstance(days, list) else []) or None
-
-    until = parsed.get("repeatUntil")
-    try:
-        datetime.strptime(str(until), "%Y-%m-%d")
-    except ValueError:
-        until = None
-
-    parsed.update(
-        isRepeating=True,
-        repeatInterval=interval,
-        repeatDays=days,
-        repeatUntil=until,
-    )
-    return parsed
+# --- Task parsing and decomposition ----------------------------------------
 
 
-def parse_task_with_ai(user_input):
-    now = datetime.now(timezone.utc)
-    today_str = now.strftime("%Y-%m-%d")
-
-    prompt = f"""
+def _parse_prompt(user_input, now):
+    return f"""
     Current Date and Time: {now.strftime("%Y-%m-%d %H:%M:%S")}
     Extract task details from: "{user_input}"
     Return ONLY a JSON object, with no other comments with these keys:
     - title: (string)
     - description: (string or null), put any extra information here
     - category: (MUST be one of: {", ".join(CATEGORIES)})
-    - startAt: Datetime (MUST be present), use YYYY-MM-DD HH:MM. Should be set to any date time mention. If no time mentioned, use {today_str} 00:00.
+    - startAt: Datetime (MUST be present), use YYYY-MM-DD HH:MM. Should be set to any date time mention. If no time mentioned, use {now:%Y-%m-%d} 00:00.
     - endAt: Datetime use YYYY-MM-DD HH:MM (MUST be present). Should be after startAt but on the same day. If no time mentioned, if a duration was mentioned, add that to the start date and set this to that. Otherwise set to an hour after start at.
     - isRepeating: boolean. True if task is daily/every day, weekly, monthly, yearly or repeated
     - repeatBy: ENUM ("daily", "weekly", "monthly", "yearly") or null. For repeating tasks: Identify the frequency mentioned.
@@ -222,62 +191,44 @@ def parse_task_with_ai(user_input):
     - repeatUntil DATE or Null. use YYYY-MM-DD. For repeating tasks: Identify the end date mentioned.
     """
 
-    raw_json = get_generated_text(prompt) or ""
-    clean_json = raw_json.replace("```json", "").replace("```", "").strip()
 
-    try:
-        parsed_data = json.loads(clean_json)
-        if parsed_data.get("category") not in CATEGORIES:
-            parsed_data["category"] = "general"
-        if not parsed_data.get("startAt"):
-            parsed_data["startAt"] = datetime.now(timezone.utc).strftime(
-                "%Y-%m-%d 23:59:59"
-            )
-        if not parsed_data.get("endAt"):
-            parsed_data["endAt"] = datetime.now(timezone.utc).strftime(
-                "%Y-%m-%d 23:59:59"
-            )
-        return clean_recurrence(parsed_data)
-    except Exception:
-        return {
-            "title": user_input[:50],
-            "description": user_input,
-            "category": "general",
-            "startAt": f"{today_str} 00:00",
-            "endAt": f"{today_str} 23:59",
-        }
-
-
-def decompose_task(title, description, category, start_at, end_at):
-    today = date.today().strftime("%Y-%m-%d")
-
-    task_details = f"- {title} ({category}, {description}, {start_at} to {end_at})"
-
-    prompt = f"""
+def _decompose_prompt(title, description, category, start_at, end_at):
+    return f"""
     Decompose this task into 3-7 substasks that will help the user complete the task.
-    {task_details}
+    - {title} ({category}, {description}, {start_at} to {end_at})
     Return only a json list of objects of this format
     - title: (string)
     - description: (string or null)
     - category: (MUST be one of: {", ".join(CATEGORIES)})
-    - startAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is {today}. If no time mentioned, default to end of day 00:00)
+    - startAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is {date.today():%Y-%m-%d}. If no time mentioned, default to end of day 00:00)
     - endAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, If no due date mentioned, default to end of day 23:59)
     """
+
+
+def parse_task_with_ai(user_input):
+    """Task fields for the add-task form; the raw text becomes the task if parsing fails."""
+    now = datetime.now(timezone.utc)
+    reply = get_generated_text(_parse_prompt(user_input, now))
     try:
-        raw_json = get_generated_text(prompt) or ""
-        clean_json = raw_json.strip()
+        schema = AiTaskSchema()
+        return schema.dump(schema.load(_extract_json(reply)))
+    except (ValueError, ValidationError):
+        return {
+            "title": user_input[:50],
+            "description": user_input,
+            "category": "general",
+            "startAt": f"{now:%Y-%m-%d} 00:00",
+            "endAt": f"{now:%Y-%m-%d} 23:59",
+        }
 
-        if "```" in clean_json:
-            parts = clean_json.split("```")
-            clean_json = parts[1].strip()
 
-            if clean_json.lower().startswith("json"):
-                clean_json = clean_json[4:].strip()
-
-        tasks = json.loads(clean_json)
-
-        if not isinstance(tasks, list):
-            return []
-        return tasks
-    except Exception:
+def decompose_task(title, description, category, start_at, end_at):
+    """Subtasks for the task, or an empty list when the model gives nothing usable."""
+    try:
+        reply = get_generated_text(
+            _decompose_prompt(title, description, category, start_at, end_at)
+        )
+        schema = AiTaskSchema(many=True)
+        return schema.dump(schema.load(_extract_json(reply)))
+    except (AIUnavailable, ValueError, ValidationError):
         return []

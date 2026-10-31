@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 import app.routes.mail_routes as mail_routes
+from app.services import mail_service
 
 VALID = {
     "fullName": "Ann Visitor",
@@ -13,7 +14,7 @@ VALID = {
 
 
 def test_message_is_html_escaped():
-    html = mail_routes.send_enquiry_email(
+    html = mail_routes.enquiry_html(
         "<b>Ann</b>", "a@b.co", "Hi", "<script>alert(1)</script>"
     )
     assert "<script>" not in html
@@ -22,7 +23,7 @@ def test_message_is_html_escaped():
 
 
 def test_valid_enquiry_sends_with_reply_to(client):
-    with mock.patch.object(mail_routes, "MailerSendClient") as ms:
+    with mock.patch.object(mail_service, "MailerSendClient") as ms:
         response = client.post("/api/contact", json=VALID)
     assert response.status_code == 201
     sent = ms.return_value.emails.send.call_args[0][0]
@@ -31,7 +32,7 @@ def test_valid_enquiry_sends_with_reply_to(client):
 
 
 def test_mailer_failure_returns_502(client):
-    with mock.patch.object(mail_routes, "MailerSendClient") as ms:
+    with mock.patch.object(mail_service, "MailerSendClient") as ms:
         ms.return_value.emails.send.side_effect = RuntimeError("provider down")
         response = client.post("/api/contact", json=VALID)
     assert response.status_code == 502

@@ -1,6 +1,6 @@
 from unittest import mock
 
-import app.routes.mail_routes as mail_routes
+from app.services import mail_service
 
 
 def login(client, email="user@example.com", ip="198.51.100.1"):
@@ -35,6 +35,6 @@ def test_contact_form_is_limited(client):
         "subject": "Bug Report",
         "message": "Something is broken here.",
     }
-    with mock.patch.object(mail_routes, "MailerSendClient"):
+    with mock.patch.object(mail_service, "MailerSendClient"):
         codes = [client.post("/api/contact", json=body).status_code for _ in range(4)]
     assert codes == [201, 201, 201, 429]
