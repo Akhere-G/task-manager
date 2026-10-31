@@ -10,9 +10,11 @@ from app.schemas.task_schema import TaskSchema
 from app.services.task_query import TaskQuery
 from app.utils.dates import get_zone, parse_iso, utc_now
 from app.utils.recurrence import (
+    at_time_of,
     default_days,
     next_occurrence,
     normalise_days,
+    replace_slot,
     snap_to_slot,
 )
 from app.utils.task_utils import (
@@ -209,6 +211,36 @@ def update_task(user_id, task_id, data):
     if check_should_repeat(before, task):
         roll_series(task, before)
         db.session.flush()
+
+    db.session.commit()
+    return task
+
+
+def reschedule_task(user_id, task_id, data):
+    """Move one occurrence on the calendar, rewriting the series so it lands there.
+
+    Only the occurrence's day (weekday, day of the month or MM-DD) and time move, so
+    a ghost dropped in another week lands on that weekday in the series' own rhythm.
+    """
+    task = get_task(user_id, task_id, lock=True)
+    old_start, start, end = data["previous_start_at"], data["start_at"], data["end_at"]
+
+    if not data["is_ghost"] and old_start != task.start_at:
+        raise TaskConflict(TaskSchema().dump(task))
+
+    if not task.is_repeating or not task.repeat_by:
+        task.start_at, task.end_at = start, end
+    elif not task.repeat_days:
+        task.start_at += start - old_start
+        task.end_at = task.start_at + (end - start)
+    else:
+        zone = get_zone(task.repeat_timezone)
+        task.repeat_days = replace_slot(
+            task.repeat_by, task.repeat_days, old_start, start, zone
+        )
+        task.start_at = at_time_of(task.start_at, start, zone) if data["is_ghost"] else start
+        task.end_at = task.start_at + (end - start)
+        _apply_recurrence(task)
 
     db.session.commit()
     return task
