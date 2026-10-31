@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import TaskContextProvider from "../context/TaskContext";
+import { ThemeProvider } from "../features/users/ThemeContext";
 import type { Task } from "../features/tasks/types";
 
 export function makeQueryClient() {
@@ -51,7 +52,9 @@ export function renderWithProviders(
           initialEntries={history ?? [route]}
           initialIndex={(history?.length ?? 1) - 1}
         >
-          <TaskContextProvider>{children}</TaskContextProvider>
+          <ThemeProvider>
+            <TaskContextProvider>{children}</TaskContextProvider>
+          </ThemeProvider>
         </MemoryRouter>
       </QueryClientProvider>
     );
