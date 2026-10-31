@@ -5,6 +5,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from app.schemas.task_schema import (
     TaskListQuerySchema,
     TaskPageSchema,
+    TaskRescheduleSchema,
     TaskSchema,
     TaskUpdateSchema,
 )
@@ -14,6 +15,7 @@ from app.services.task_service import (
     delete_task,
     get_all_tasks,
     get_task,
+    reschedule_task,
     update_task,
 )
 from app.utils.http import get_json_body
@@ -57,6 +59,15 @@ def add_task_list() -> ResponseReturnValue:
 def edit_task(task_id: int) -> ResponseReturnValue:
     data = TaskUpdateSchema().load(get_json_body())
     return jsonify(TaskSchema().dump(update_task(get_jwt_identity(), task_id, data)))
+
+
+@task_bp.route("/api/tasks/<int:task_id>/reschedule", methods=["POST"])
+@jwt_required()
+def reschedule(task_id: int) -> ResponseReturnValue:
+    data = TaskRescheduleSchema().load(get_json_body())
+    return jsonify(
+        TaskSchema().dump(reschedule_task(get_jwt_identity(), task_id, data))
+    )
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["DELETE"])

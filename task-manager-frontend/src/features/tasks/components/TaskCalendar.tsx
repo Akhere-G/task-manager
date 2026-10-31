@@ -29,7 +29,7 @@ import EventCard from "./EventCard";
 import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import useUpdateTask from "../hooks/useUpdateTask";
+import useRescheduleTask from "../hooks/useRescheduleTask";
 import { useTheme } from "../../users/ThemeContext";
 import { trackEvent } from "../../../services/analytics";
 
@@ -65,7 +65,7 @@ export default function TaskCalendar({
   setCurrentDate,
 }: TaskCalendarProps) {
   const [allTasks, setAllTasks] = useState(tasks);
-  const { mutateAsync: updateTask } = useUpdateTask();
+  const { mutateAsync: rescheduleTask } = useRescheduleTask();
   const { openPopup } = useTaskContext();
   const { darkMode } = useTheme();
 
@@ -105,7 +105,6 @@ export default function TaskCalendar({
   );
 
   const handleTaskDateChange = async (task: Task, start: Date, end: Date) => {
-    if (task.isGhost) return;
     const prev = allTasks;
     const startAt = format(start, "yyyy-MM-dd HH:mm:ss");
     const endAt = format(end, "yyyy-MM-dd HH:mm:ss");
@@ -114,11 +113,14 @@ export default function TaskCalendar({
       prev.map((t) => (t.id === task.id ? { ...t, startAt, endAt } : t)),
     );
     try {
-      await updateTask({
+      await rescheduleTask({
         id: getCalendarTaskId(task),
-        newTaskData: {
+        rescheduleData: {
+          previousStartAt: task.startAt,
+          previousEndAt: task.endAt,
           startAt,
           endAt,
+          isGhost: task.isGhost,
         },
       });
       trackEvent("calendar_task_rescheduled");
