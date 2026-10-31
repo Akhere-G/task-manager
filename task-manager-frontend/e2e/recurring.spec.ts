@@ -8,7 +8,7 @@ test("a recurring task is projected onto the calendar without being saved", asyn
   signedIn,
 }) => {
   await page.clock.setFixedTime(TODAY);
-  await signedIn.api.createTask({
+  await signedIn.createTask({
     title: "Standup",
     startAt: "2026-03-09 09:00:00",
     endAt: "2026-03-09 09:15:00",
@@ -23,7 +23,7 @@ test("a recurring task is projected onto the calendar without being saved", asyn
   await expect(events).toHaveCount(5);
   await page.reload();
   await expect(events).toHaveCount(5);
-  expect(await signedIn.api.tasks()).toHaveLength(1);
+  expect(await signedIn.tasks()).toHaveLength(1);
 });
 
 test("completing a recurring task moves it on and never duplicates occurrences", async ({
@@ -31,7 +31,7 @@ test("completing a recurring task moves it on and never duplicates occurrences",
   signedIn,
 }) => {
   await page.clock.setFixedTime(TODAY);
-  await signedIn.api.createTask({
+  await signedIn.createTask({
     title: "Standup",
     startAt: "2026-03-09 09:00:00",
     endAt: "2026-03-09 09:15:00",
@@ -48,7 +48,7 @@ test("completing a recurring task moves it on and never duplicates occurrences",
   // The completed occurrence leaves the open-task calendar; the series continues from the 10th.
   await expect(events).toHaveCount(4);
   await expect
-    .poll(async () => (await signedIn.api.tasks()).map((t) => [t.isCompleted, t.isRepeating]).sort())
+    .poll(async () => (await signedIn.tasks()).map((t) => [t.isCompleted, t.isRepeating]).sort())
     .toEqual([
       [false, true],
       [true, false],
@@ -56,5 +56,5 @@ test("completing a recurring task moves it on and never duplicates occurrences",
 
   await page.reload();
   await expect(events).toHaveCount(4);
-  expect(await signedIn.api.tasks()).toHaveLength(2);
+  expect(await signedIn.tasks()).toHaveLength(2);
 });

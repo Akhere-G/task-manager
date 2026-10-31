@@ -5,7 +5,7 @@ test("working through a Pomodoro session completes the task and updates the stat
   signedIn,
 }) => {
   await page.clock.setFixedTime(new Date("2026-03-11T12:00:00Z"));
-  await signedIn.api.createTask({
+  await signedIn.createTask({
     title: "Deep work",
     startAt: "2026-03-11 13:00:00",
     endAt: "2026-03-11 14:00:00",
@@ -26,7 +26,7 @@ test("working through a Pomodoro session completes the task and updates the stat
 
   await expect(page.getByRole("button", { name: "Add new task" })).toBeVisible();
   await expect
-    .poll(async () => (await signedIn.api.tasks()).map((t) => t.isCompleted))
+    .poll(async () => (await signedIn.tasks()).map((t) => t.isCompleted))
     .toEqual([true]);
 
   await page.goto("/stats");

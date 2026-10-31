@@ -25,17 +25,17 @@ test.describe("task management", () => {
 
     await expect(card(page, "Write quarterly report")).toBeHidden();
     await expect
-      .poll(async () => (await signedIn.api.tasks()).map((t) => [t.title, t.isCompleted]))
+      .poll(async () => (await signedIn.tasks()).map((t) => [t.title, t.isCompleted]))
       .toEqual([["Write quarterly report", true]]);
   });
 
   test("deletes a task after confirming", async ({ page, signedIn }) => {
-    await signedIn.api.createTask({
+    await signedIn.createTask({
       title: "Water the plants",
       startAt: "2026-03-11 09:00:00",
       endAt: "2026-03-11 09:30:00",
     });
-    await signedIn.api.createTask({
+    await signedIn.createTask({
       title: "Keep me",
       startAt: "2026-03-11 10:00:00",
       endAt: "2026-03-11 10:30:00",
@@ -47,7 +47,7 @@ test.describe("task management", () => {
 
     await expect(card(page, "Water the plants")).toBeHidden();
     await expect(card(page, "Keep me")).toBeVisible();
-    expect((await signedIn.api.tasks()).map((t) => t.title)).toEqual(["Keep me"]);
+    expect((await signedIn.tasks()).map((t) => t.title)).toEqual(["Keep me"]);
   });
 
   test("explains a missing title and creates nothing", async ({ page, signedIn }) => {
@@ -57,7 +57,7 @@ test.describe("task management", () => {
 
     await expect(page.getByText("Title is mandatory.")).toBeVisible();
     await expect(page).toHaveURL(/\/addtask/);
-    expect(await signedIn.api.tasks()).toEqual([]);
+    expect(await signedIn.tasks()).toEqual([]);
   });
 
   test("keeps the form and says so when the server fails", async ({ page, signedIn }) => {
@@ -74,7 +74,7 @@ test.describe("task management", () => {
 
     await expect(page.getByText("Could not send data")).toBeVisible();
     await expect(page.getByLabel("Title")).toHaveValue("Will not save");
-    expect(await signedIn.api.tasks()).toEqual([]);
+    expect(await signedIn.tasks()).toEqual([]);
   });
 
   test("quick-add turns a sentence into a task the user can review and save", async ({
@@ -91,7 +91,7 @@ test.describe("task management", () => {
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
     await expect
-      .poll(async () => (await signedIn.api.tasks()).map((t) => t.title))
+      .poll(async () => (await signedIn.tasks()).map((t) => t.title))
       .toEqual(["Dentist appointment"]);
   });
 });
