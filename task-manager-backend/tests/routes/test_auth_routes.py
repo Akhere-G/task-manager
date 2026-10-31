@@ -1,10 +1,10 @@
 from collections.abc import Callable
-from datetime import UTC
 
 from flask import Flask
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
+from app.utils.dates import utc_now
 from tests.builders import DEFAULT_PASSWORD, register_body
 
 
@@ -123,7 +123,7 @@ def test_old_token_still_works_briefly_but_does_not_rotate_again(
 def test_old_token_is_rejected_after_the_grace_window(
     app: Flask, make_user: Callable[..., int], login: Callable[..., FlaskClient]
 ) -> None:
-    from datetime import datetime, timedelta
+    from datetime import timedelta
 
     from app.database import db
     from app.models import RefreshToken
@@ -136,7 +136,7 @@ def test_old_token_is_rejected_after_the_grace_window(
 
     with app.app_context():
         row = db.session.query(RefreshToken).filter_by(token_hash=hash_token(old)).one()
-        row.replaced_at = datetime.now(UTC).replace(tzinfo=None) - timedelta(seconds=30)
+        row.replaced_at = utc_now() - timedelta(seconds=30)
         db.session.commit()
 
     other_tab = app.test_client()
@@ -161,13 +161,13 @@ def test_logout_invalidates_refresh_token(
 def test_login_removes_expired_sessions(
     app: Flask, make_user: Callable[..., int], login: Callable[..., FlaskClient]
 ) -> None:
-    from datetime import datetime, timedelta
+    from datetime import timedelta
 
     from app.database import db
     from app.models import RefreshToken
 
     user_id = make_user()
-    yesterday = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=1)
+    yesterday = utc_now() - timedelta(days=1)
     with app.app_context():
         db.session.add(
             RefreshToken(user_id=user_id, token_hash="e" * 64, expires_at=yesterday)

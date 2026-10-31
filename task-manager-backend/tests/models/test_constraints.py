@@ -17,7 +17,6 @@ from app.models import (
 )
 
 START = datetime(2026, 3, 2, 9, 0)
-USER_ROWS = (Task, RefreshToken, PasswordReset, Notification, NotificationSubscription)
 
 
 def add_task(user_id: int, **overrides: Any) -> Task:
@@ -74,7 +73,15 @@ def test_deleting_a_user_deletes_everything_they_own(user_id: int) -> None:
     db.session.delete(db.session.get(User, user_id))
     db.session.commit()
 
-    for model in (*USER_ROWS, DailyBrief):
+    owned = (
+        Task,
+        RefreshToken,
+        PasswordReset,
+        Notification,
+        NotificationSubscription,
+        DailyBrief,
+    )
+    for model in owned:
         assert count(model) == 0, model.__name__
 
 
