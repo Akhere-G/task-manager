@@ -14,7 +14,7 @@ as UTC and returned naive; aware datetimes are returned as aware UTC.
 """
 
 from calendar import monthrange
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from app.utils.dates import UTC
 
@@ -34,44 +34,37 @@ def _from_local(local, like):
 
 def _at(day, local, tz):
     """`day` at the wall-clock time of `local`, in `tz`."""
-    return datetime(
-        day.year,
-        day.month,
-        day.day,
-        local.hour,
-        local.minute,
-        local.second,
-        local.microsecond,
-        tzinfo=tz,
-    )
+    return datetime.combine(day, local.timetz().replace(tzinfo=None), tzinfo=tz)
 
 
-def _parse_month_day(text):
-    month, day = text.split("-")
-    return int(month), int(day)
+def _is_int(value, low, high):
+    return isinstance(value, int) and not isinstance(value, bool) and low <= value <= high
 
 
 def is_valid_month_day(text):
     if not isinstance(text, str) or len(text) != 5 or text[2] != "-":
         return False
     try:
-        month, day = _parse_month_day(text)
+        month, day = map(int, text.split("-"))
         return 1 <= day <= monthrange(LEAP_YEAR, month)[1]
     except ValueError:
         return False
 
 
+_DAY_VALIDATORS = {
+    "weekly": lambda day: _is_int(day, 0, 6),
+    "monthly": lambda day: _is_int(day, 1, 31),
+    "yearly": is_valid_month_day,
+}
+
+
+def is_valid_day(repeat_by, day):
+    return _DAY_VALIDATORS[repeat_by](day) if repeat_by in _DAY_VALIDATORS else False
+
+
 def normalise_days(repeat_by, days):
     """Sorted, de-duplicated, in-range days for the frequency. Empty list if none."""
-    if repeat_by == "weekly":
-        valid = {d for d in days or [] if isinstance(d, int) and 0 <= d <= 6}
-        return sorted(valid)
-    if repeat_by == "monthly":
-        valid = {d for d in days or [] if isinstance(d, int) and 1 <= d <= 31}
-        return sorted(valid)
-    if repeat_by == "yearly":
-        return sorted({d for d in days or [] if is_valid_month_day(d)})
-    return []
+    return sorted({d for d in days or [] if is_valid_day(repeat_by, d)})
 
 
 def default_days(start, repeat_by, tz=UTC):
@@ -86,124 +79,86 @@ def default_days(start, repeat_by, tz=UTC):
     return None
 
 
-def _month_slots(days, year, month):
-    last = monthrange(year, month)[1]
-    return sorted({min(d, last) for d in days})
-
-
-def _year_slots(days, year):
-    slots = set()
-    for text in days:
-        month, day = _parse_month_day(text)
-        slots.add((month, min(day, monthrange(year, month)[1])))
-    return sorted(slots)
-
-
 def _days_for(start, repeat_by, days, tz):
     return normalise_days(repeat_by, days) or default_days(start, repeat_by, tz) or []
 
 
-def _shift_month(year, month, delta):
-    year, month0 = divmod(year * 12 + (month - 1) + delta, 12)
-    return year, month0 + 1
+# A "period" is the cycle the chosen days sit in, named by its first day: the Monday
+# of a week, the 1st of a month or 1 January. Intervals count periods.
+
+
+def _period_start(repeat_by, day):
+    if repeat_by == "weekly":
+        return day - timedelta(days=day.weekday())
+    if repeat_by == "monthly":
+        return day.replace(day=1)
+    return day.replace(month=1, day=1)
+
+
+def _shift_period(repeat_by, start, count):
+    if repeat_by == "weekly":
+        return start + timedelta(weeks=count)
+    if repeat_by == "monthly":
+        years, month0 = divmod(start.year * 12 + start.month - 1 + count, 12)
+        return date(years, month0 + 1, 1)
+    return date(start.year + count, 1, 1)
+
+
+def _slots(repeat_by, period, days):
+    """The chosen days of one period as sorted dates, clamped to the month's length."""
+    if repeat_by == "weekly":
+        slots = {period + timedelta(days=d) for d in days}
+    elif repeat_by == "monthly":
+        last = monthrange(period.year, period.month)[1]
+        slots = {period.replace(day=min(d, last)) for d in days}
+    else:
+        slots = set()
+        for text in days:
+            month, day = map(int, text.split("-"))
+            slots.add(date(period.year, month, min(day, monthrange(period.year, month)[1])))
+    return sorted(slots)
+
+
+def _step(start, repeat_by, interval, days, tz, direction):
+    """The occurrence after (`direction` 1) or before (-1) `start`, keeping its local time."""
+    interval = max(int(interval or 1), 1)
+    local = _to_local(start, tz)
+    today = local.date()
+
+    if repeat_by in _DAY_VALIDATORS:
+        chosen = _days_for(start, repeat_by, days, tz)
+        period = _period_start(repeat_by, today)
+        slots = [
+            d
+            for d in _slots(repeat_by, period, chosen)
+            if (d - today) * direction > timedelta(0)
+        ]
+        if not slots:
+            other = _shift_period(repeat_by, period, interval * direction)
+            slots = _slots(repeat_by, other, chosen)
+        day = slots[0] if direction > 0 else slots[-1]
+    else:
+        day = today + timedelta(days=interval * direction)
+
+    return _from_local(_at(day, local, tz), start)
 
 
 def next_occurrence(start, repeat_by, interval, days, tz=UTC):
     """The occurrence after `start`, keeping its local time of day."""
-    interval = max(int(interval or 1), 1)
-    local = _to_local(start, tz)
-    today = local.date()
-
-    if repeat_by == "weekly":
-        chosen = _days_for(start, repeat_by, days, tz)
-        weekday = local.weekday()
-        later = [d for d in chosen if d > weekday]
-        if later:
-            day = today + timedelta(days=later[0] - weekday)
-        else:
-            monday = today - timedelta(days=weekday)
-            day = monday + timedelta(weeks=interval, days=chosen[0])
-    elif repeat_by == "monthly":
-        chosen = _days_for(start, repeat_by, days, tz)
-        later = [d for d in _month_slots(chosen, today.year, today.month) if d > today.day]
-        if later:
-            day = today.replace(day=later[0])
-        else:
-            year, month = _shift_month(today.year, today.month, interval)
-            day = today.replace(
-                year=year, month=month, day=_month_slots(chosen, year, month)[0]
-            )
-    elif repeat_by == "yearly":
-        chosen = _days_for(start, repeat_by, days, tz)
-        later = [s for s in _year_slots(chosen, today.year) if s > (today.month, today.day)]
-        if later:
-            month, month_day = later[0]
-            day = today.replace(month=month, day=month_day)
-        else:
-            year = today.year + interval
-            month, month_day = _year_slots(chosen, year)[0]
-            day = today.replace(year=year, month=month, day=month_day)
-    else:
-        day = today + timedelta(days=interval)
-
-    return _from_local(_at(day, local, tz), start)
+    return _step(start, repeat_by, interval, days, tz, 1)
 
 
 def previous_occurrence(start, repeat_by, interval, days, tz=UTC):
     """The occurrence before `start`, keeping its local time of day."""
-    interval = max(int(interval or 1), 1)
-    local = _to_local(start, tz)
-    today = local.date()
-
-    if repeat_by == "weekly":
-        chosen = _days_for(start, repeat_by, days, tz)
-        weekday = local.weekday()
-        earlier = [d for d in chosen if d < weekday]
-        if earlier:
-            day = today - timedelta(days=weekday - earlier[-1])
-        else:
-            monday = today - timedelta(days=weekday)
-            day = monday - timedelta(weeks=interval) + timedelta(days=chosen[-1])
-    elif repeat_by == "monthly":
-        chosen = _days_for(start, repeat_by, days, tz)
-        earlier = [d for d in _month_slots(chosen, today.year, today.month) if d < today.day]
-        if earlier:
-            day = today.replace(day=earlier[-1])
-        else:
-            year, month = _shift_month(today.year, today.month, -interval)
-            day = today.replace(
-                year=year, month=month, day=_month_slots(chosen, year, month)[-1]
-            )
-    elif repeat_by == "yearly":
-        chosen = _days_for(start, repeat_by, days, tz)
-        earlier = [s for s in _year_slots(chosen, today.year) if s < (today.month, today.day)]
-        if earlier:
-            month, month_day = earlier[-1]
-            day = today.replace(month=month, day=month_day)
-        else:
-            year = today.year - interval
-            month, month_day = _year_slots(chosen, year)[-1]
-            day = today.replace(year=year, month=month, day=month_day)
-    else:
-        day = today - timedelta(days=interval)
-
-    return _from_local(_at(day, local, tz), start)
-
-
-def _on_slot(start, repeat_by, days, tz):
-    local = _to_local(start, tz)
-    if repeat_by == "weekly":
-        return local.weekday() in days
-    if repeat_by == "monthly":
-        return local.day in _month_slots(days, local.year, local.month)
-    if repeat_by == "yearly":
-        return (local.month, local.day) in _year_slots(days, local.year)
-    return True
+    return _step(start, repeat_by, interval, days, tz, -1)
 
 
 def snap_to_slot(start, repeat_by, interval, days, tz=UTC):
     """`start` if it is on a chosen day, otherwise the next chosen day after it."""
+    if repeat_by not in _DAY_VALIDATORS:
+        return start
     chosen = _days_for(start, repeat_by, days, tz)
-    if repeat_by == "daily" or _on_slot(start, repeat_by, chosen, tz):
+    today = _to_local(start, tz).date()
+    if today in _slots(repeat_by, _period_start(repeat_by, today), chosen):
         return start
     return next_occurrence(start, repeat_by, interval, chosen, tz)
