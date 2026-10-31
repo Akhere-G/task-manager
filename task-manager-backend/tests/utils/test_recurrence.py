@@ -55,9 +55,15 @@ def test_snap_moves_to_the_next_chosen_day_only_when_needed() -> None:
     assert snap_to_slot(monday, "daily", 1, None) == monday
 
 
-def test_day_helpers() -> None:
+def test_days_are_sorted_deduplicated_and_validated() -> None:
     assert normalise_days("weekly", [3, 3, 9, "x", True]) == [3]
     assert normalise_days("yearly", ["12-25", "02-30", "02-29"]) == ["02-29", "12-25"]
     assert normalise_days("daily", [1]) == []
-    assert default_days(datetime(2026, 3, 2, 9, 0), "weekly") == [0]
-    assert default_days(datetime(2026, 3, 2, 9, 0), "yearly") == ["03-02"]
+
+
+def test_default_day_is_the_starts_own_day() -> None:
+    monday = datetime(2026, 3, 2, 9, 0)
+    assert default_days(monday, "weekly") == [0]
+    assert default_days(monday, "monthly") == [2]
+    assert default_days(monday, "yearly") == ["03-02"]
+    assert default_days(monday, "daily") is None
