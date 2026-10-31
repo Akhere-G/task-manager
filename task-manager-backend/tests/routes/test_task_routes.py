@@ -4,6 +4,8 @@ from typing import Any
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
 
+from tests.builders import MONDAY, TUESDAY, Slot, reschedule_body
+
 
 def create_daily_task(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
@@ -178,26 +180,11 @@ def test_projecting_a_repeating_task_adds_ghost_occurrences(
 
 
 def reschedule(
-    session: FlaskClient,
-    task_id: int,
-    previous: tuple[str, str],
-    new: tuple[str, str],
-    is_ghost: bool = False,
+    session: FlaskClient, task_id: int, previous: Slot, new: Slot
 ) -> TestResponse:
     return session.post(
-        f"/api/tasks/{task_id}/reschedule",
-        json={
-            "previousStartAt": previous[0],
-            "previousEndAt": previous[1],
-            "startAt": new[0],
-            "endAt": new[1],
-            "isGhost": is_ghost,
-        },
+        f"/api/tasks/{task_id}/reschedule", json=reschedule_body(previous, new)
     )
-
-
-MONDAY = ("2026-03-02 09:00:00", "2026-03-02 10:00:00")
-TUESDAY = ("2026-03-03 09:00:00", "2026-03-03 10:00:00")
 
 
 def test_reschedule_returns_the_moved_task(

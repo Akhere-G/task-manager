@@ -1,14 +1,8 @@
 import pytest
 
 from app.schemas.contact_schema import ContactSchema
+from tests.builders import CONTACT
 from tests.schemas.helpers import load_errors
-
-VALID = {
-    "fullName": "Ann Visitor",
-    "email": "ann@example.com",
-    "subject": "Bug Report",
-    "message": "Something is broken on the page.",
-}
 
 
 @pytest.mark.parametrize(
@@ -26,4 +20,4 @@ VALID = {
     ],
 )
 def test_enquiry_rules(override: dict[str, object], field: str, message: str) -> None:
-    assert load_errors(ContactSchema(), {**VALID, **override}) == {field: message}
+    assert load_errors(ContactSchema(), {**CONTACT, **override}) == {field: message}

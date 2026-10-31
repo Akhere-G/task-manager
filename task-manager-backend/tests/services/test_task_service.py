@@ -8,50 +8,23 @@ from app.models import Task
 from app.schemas.task_schema import (
     TaskListQuerySchema,
     TaskRescheduleSchema,
-    TaskSchema,
     TaskUpdateSchema,
 )
 from app.services.task_service import (
-    create_task,
     get_all_tasks,
     reschedule_task,
     update_task,
 )
 from app.utils.dates import as_naive_utc
-
-MONDAY = ("2026-03-02 09:00:00", "2026-03-02 10:00:00")
-NEXT_MONDAY = ("2026-03-09 09:00:00", "2026-03-09 10:00:00")
-
-
-def add_task(user_id: int, **overrides: Any) -> Task:
-    body = {
-        "title": "Gym",
-        "category": "health",
-        "startAt": MONDAY[0],
-        "endAt": MONDAY[1],
-        **overrides,
-    }
-    return create_task(user_id, TaskSchema().load(body))
+from tests.builders import MONDAY, NEXT_MONDAY, Slot, add_task, reschedule_body
 
 
 def edit(user_id: int, task: Task, **changes: Any) -> Task:
     return update_task(user_id, task.id, TaskUpdateSchema().load(changes))
 
 
-def move(
-    user_id: int,
-    task: Task,
-    previous: tuple[str, str],
-    new: tuple[str, str],
-    is_ghost: bool,
-) -> Task:
-    body = {
-        "previousStartAt": previous[0],
-        "previousEndAt": previous[1],
-        "startAt": new[0],
-        "endAt": new[1],
-        "isGhost": is_ghost,
-    }
+def move(user_id: int, task: Task, previous: Slot, new: Slot, is_ghost: bool) -> Task:
+    body = reschedule_body(previous, new, is_ghost)
     return reschedule_task(user_id, task.id, TaskRescheduleSchema().load(body))
 
 
