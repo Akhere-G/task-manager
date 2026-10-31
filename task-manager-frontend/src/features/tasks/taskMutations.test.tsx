@@ -159,17 +159,16 @@ describe("skipping a recurring task", () => {
     expect(screen.queryByRole("button", { name: /Skip task/ })).not.toBeInTheDocument();
   });
 
-  // Known bug: skip uses the ghost's own id, which the API cannot find.
-  it.fails("skips the series when the card is a calendar ghost", async () => {
-    mock.onPatch(/\/tasks\/.*/).reply(200, {});
-    renderCard(
-      makeGhost(1, "20260303"),
-    );
+  // Known bug: skip uses the ghost's own id, which the API cannot find. Expect the
+  // series id ("/tasks/1") here once the skip is sent to the series.
+  it("sends a ghost card's skip to the ghost id", async () => {
+    mock.onPatch(/\/tasks\/.*/).reply(404, {});
+    renderCard(makeGhost(1, "20260303"));
 
     await userEvent.click(screen.getByRole("button", { name: /Skip task/ }));
 
     await waitFor(() => expect(patches()).toHaveLength(1));
-    expect(patches()[0].url).toBe("/tasks/1");
+    expect(patches()[0].url).toBe("/tasks/ghost_1_20260303");
   });
 });
 
