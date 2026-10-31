@@ -175,6 +175,14 @@ def login(app: Flask) -> Callable[..., FlaskClient]:
 
 
 @pytest.fixture
+def session(
+    make_user: Callable[..., int], login: Callable[..., FlaskClient]
+) -> FlaskClient:
+    make_user()
+    return login()
+
+
+@pytest.fixture
 def task_payload() -> Callable[..., dict[str, Any]]:
     def _payload(**overrides: Any) -> dict[str, Any]:
         payload = {

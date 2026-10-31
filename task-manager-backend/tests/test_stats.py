@@ -9,14 +9,6 @@ from flask.testing import FlaskClient
 
 
 @pytest.fixture
-def session(
-    make_user: Callable[..., int], login: Callable[..., FlaskClient]
-) -> FlaskClient:
-    make_user()
-    return login()
-
-
-@pytest.fixture
 def new_york_server_time(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setenv("TZ", "America/New_York")
     time.tzset()

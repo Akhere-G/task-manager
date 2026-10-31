@@ -1,9 +1,7 @@
-from collections.abc import Callable
 from datetime import datetime
 from unittest import mock
 from zoneinfo import ZoneInfo
 
-import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
@@ -11,14 +9,6 @@ import app.services.ai_service as ai_service
 from app.database import db
 from app.models import DailyBrief
 from tests.conftest import _connection
-
-
-@pytest.fixture
-def session(
-    make_user: Callable[..., int], login: Callable[..., FlaskClient]
-) -> FlaskClient:
-    make_user()
-    return login()
 
 
 def stored_briefs(app: Flask) -> list[DailyBrief]:

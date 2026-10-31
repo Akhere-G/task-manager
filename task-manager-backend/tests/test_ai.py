@@ -9,14 +9,6 @@ import app.routes.ai_routes as ai_routes
 from app import config
 
 
-@pytest.fixture
-def session(
-    make_user: Callable[..., int], login: Callable[..., FlaskClient]
-) -> FlaskClient:
-    make_user()
-    return login()
-
-
 @pytest.fixture(autouse=True)
 def fake_ai() -> Iterator[tuple[mock.MagicMock, mock.MagicMock]]:
     with (

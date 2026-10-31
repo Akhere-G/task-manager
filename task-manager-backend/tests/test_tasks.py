@@ -1,17 +1,8 @@
 from collections.abc import Callable
 from typing import Any
 
-import pytest
 from flask.testing import FlaskClient
 from werkzeug.test import TestResponse
-
-
-@pytest.fixture
-def session(
-    make_user: Callable[..., int], login: Callable[..., FlaskClient]
-) -> FlaskClient:
-    make_user()
-    return login()
 
 
 def create_daily_task(
