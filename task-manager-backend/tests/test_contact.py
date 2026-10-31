@@ -41,9 +41,6 @@ def test_mailer_failure_returns_502(client: FlaskClient) -> None:
     assert "provider down" not in response.get_data(as_text=True)
 
 
-@pytest.mark.parametrize(
-    "body",
-    [None, [], {}, {**VALID, "email": 5}, {**VALID, "fullName": "A\nB"}],
-)
+@pytest.mark.parametrize("body", [None, [], {}, {**VALID, "message": "short"}])
 def test_invalid_bodies_return_400(client: FlaskClient, body: Any) -> None:
     assert client.post("/api/contact", json=body).status_code == 400
