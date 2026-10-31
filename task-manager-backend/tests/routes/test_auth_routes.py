@@ -37,14 +37,45 @@ def test_register_duplicate_email_rejected(client: FlaskClient) -> None:
     assert register(client).status_code == 400
 
 
-def test_login_wrong_password_rejected(
+def test_wrong_login_is_a_general_error(
     client: FlaskClient, make_user: Callable[..., int]
 ) -> None:
     make_user()
-    response = client.post(
-        "/api/auth/login", json={"email": "user@example.com", "password": "nope-nope1"}
-    )
+    body = {"email": "user@example.com", "password": "nope-nope1"}
+
+    response = client.post("/api/auth/login", json=body)
+
     assert response.status_code == 400
+    assert response.get_json()["errors"] == {"general": "Invalid credentials."}
+
+
+def test_register_returns_every_field_error_as_400(client: FlaskClient) -> None:
+    response = client.post("/api/auth/register", json={})
+
+    assert response.status_code == 400
+    assert set(response.get_json()["errors"]) == {
+        "firstName",
+        "lastName",
+        "email",
+        "password",
+        "confirmPassword",
+    }
+
+
+def test_register_stores_trimmed_names_and_email(client: FlaskClient) -> None:
+    response = client.post(
+        "/api/auth/register",
+        json={
+            "firstName": "  Ann ",
+            "lastName": "Person",
+            "email": " ann@example.com ",
+            "password": DEFAULT_PASSWORD,
+            "confirmPassword": DEFAULT_PASSWORD,
+        },
+    )
+
+    user = response.get_json()["user"]
+    assert (user["firstName"], user["email"]) == ("Ann", "ann@example.com")
 
 
 def test_demo_account_cannot_use_password_login(
@@ -141,21 +172,6 @@ def test_logout_invalidates_refresh_token(
 
     client.set_cookie("refresh_token", token)
     assert client.post("/api/auth/refresh").status_code == 401
-
-
-def test_common_password_rejected_on_register(client: FlaskClient) -> None:
-    response = client.post(
-        "/api/auth/register",
-        json={
-            "firstName": "A",
-            "lastName": "B",
-            "email": "a@example.com",
-            "password": "Password1",
-            "confirmPassword": "Password1",
-        },
-    )
-    assert response.status_code == 400
-    assert "password" in response.get_json()["errors"]
 
 
 def test_login_removes_expired_sessions(

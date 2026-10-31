@@ -152,7 +152,7 @@ def test_dashboard_aggregates_in_the_database(
     from app.utils.dates import utc_now
 
     now = utc_now()
-    for i in range(30):
+    for _ in range(30):
         add_tasks(
             title="t",
             category="work",
