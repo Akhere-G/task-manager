@@ -1,13 +1,15 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.services.ai_service import (
-    generate_daily_brief,
-    parse_task_with_ai,
-    decompose_task,
-)
+from flask.typing import ResponseReturnValue
+from flask_jwt_extended import get_jwt_identity, jwt_required
+
 from app.exceptions import AIUnavailable
 from app.extensions import ai_daily_limit, limiter, user_key
 from app.schemas.ai_schema import DecomposeRequestSchema, ParseTaskRequestSchema
+from app.services.ai_service import (
+    decompose_task,
+    generate_daily_brief,
+    parse_task_with_ai,
+)
 from app.utils.http import get_json_body
 
 ai_bp = Blueprint("ai", __name__)
@@ -15,7 +17,7 @@ ai_bp = Blueprint("ai", __name__)
 
 @ai_bp.route("/api/ai/daily-brief", methods=["GET"])
 @jwt_required()
-def get_daily_brief_route():
+def get_daily_brief_route() -> ResponseReturnValue:
     user_id = get_jwt_identity()
 
     brief_text, is_fallback = generate_daily_brief(user_id, request.args.get("tz"))
@@ -27,7 +29,7 @@ def get_daily_brief_route():
 @jwt_required()
 @limiter.limit("10 per hour")
 @limiter.limit(ai_daily_limit, key_func=user_key, scope="ai-daily")
-def parse_task_route():
+def parse_task_route() -> ResponseReturnValue:
     data = ParseTaskRequestSchema().load(get_json_body())
     return jsonify(parse_task_with_ai(data["text"]))
 
@@ -36,7 +38,7 @@ def parse_task_route():
 @jwt_required()
 @limiter.limit("10 per hour")
 @limiter.limit(ai_daily_limit, key_func=user_key, scope="ai-daily")
-def decompose_task_route():
+def decompose_task_route() -> ResponseReturnValue:
     data = DecomposeRequestSchema().load(get_json_body())
 
     tasks = decompose_task(
