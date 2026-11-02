@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 from sqlalchemy import func, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from app.database import db
 from app.models import (
@@ -50,6 +50,7 @@ def test_a_new_task_gets_the_database_defaults(user_id: int) -> None:
     task = add_task(user_id)
 
     assert task.category == "General"
+    assert task.priority == 4
     assert task.is_completed is False
     assert task.is_repeating is False
     assert task.repeat_interval == 1
@@ -114,3 +115,10 @@ def test_a_user_has_at_most_one_brief_per_day(user_id: int) -> None:
 
     with pytest.raises(IntegrityError):
         db.session.commit()
+
+
+@pytest.mark.parametrize("priority", [0, 5])
+def test_priority_must_be_one_to_four(user_id: int, priority: int) -> None:
+    with pytest.raises((IntegrityError, OperationalError)):
+        add_task(user_id, priority=priority)
+    db.session.rollback()

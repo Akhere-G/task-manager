@@ -16,6 +16,7 @@ from app.constants import (
     CATEGORIES,
     MAX_PAGE_SIZE,
     MAX_PROJECTION_DAYS,
+    PRIORITIES,
     REPEAT_FREQUENCIES,
     REPEAT_INTERVAL_LIMITS,
 )
@@ -33,6 +34,13 @@ STRICT_BOOL = {"truthy": {True}, "falsy": {False}}
 
 def _is_int(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _parse_priorities(value: str) -> tuple[int, ...] | None:
+    parts = [part.strip() for part in value.split(",")]
+    if not all(part.isdigit() and int(part) in PRIORITIES for part in parts):
+        return None
+    return tuple(sorted({int(part) for part in parts}))
 
 
 def _validate_zone(zone_name: str | None) -> None:
@@ -64,6 +72,10 @@ class TaskSchema(CamelAutoSchema):
             CATEGORIES, error="Invalid category. Must be one of: {choices}."
         ),
         error_messages={"required": "Category is required."},
+    )
+    priority = fields.Integer(
+        strict=True,
+        validate=validate.OneOf(PRIORITIES, error="Priority must be between 1 and 4."),
     )
     start_at = UtcDateTime(
         required=True, error_messages={"required": "Start time is required."}
@@ -193,6 +205,7 @@ class TaskListQuerySchema(Schema):
         unknown = EXCLUDE
 
     category = fields.String()
+    priority = fields.String()
     search = fields.String(data_key="q")
     duration = fields.String()
     is_completed = fields.String()
@@ -233,8 +246,18 @@ class TaskListQuerySchema(Schema):
                     field_name="project_repeating",
                 )
 
+    @validates_schema
+    def validate_priority(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if "priority" in data and _parse_priorities(data["priority"]) is None:
+            raise ValidationError(
+                "priority must be a comma-separated list of 1 to 4.",
+                field_name="priority",
+            )
+
     @post_load
     def to_query(self, data: dict[str, Any], **kwargs: Any) -> TaskQuery:
+        if "priority" in data:
+            data["priority"] = _parse_priorities(data["priority"])
         return TaskQuery(**data)
 
 

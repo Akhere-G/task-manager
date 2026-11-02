@@ -10,6 +10,7 @@ export const uniqueEmail = (label = "user") =>
 export interface TaskInput {
   title: string;
   category?: string;
+  priority?: number;
   startAt: string;
   endAt: string;
   repeatBy?: string;
@@ -19,6 +20,7 @@ export interface TaskInput {
 export interface StoredTask {
   id: number;
   title: string;
+  priority: number;
   isCompleted: boolean;
   isRepeating: boolean;
   startAt: string;

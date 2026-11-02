@@ -36,7 +36,7 @@ RECURRENCE_FIELDS = {
 }
 
 
-def _sort_clause(query: TaskQuery) -> UnaryExpression[Any]:
+def _sort_clauses(query: TaskQuery) -> list[UnaryExpression[Any]]:
     duration = func.timestampdiff(
         func.literal_column("MINUTE"), Task.start_at, Task.end_at
     )
@@ -45,9 +45,14 @@ def _sort_clause(query: TaskQuery) -> UnaryExpression[Any]:
         "title": Task.title,
         "start_at": Task.start_at,
         "duration": duration,
+        "priority": Task.priority,
     }
     column = columns.get(query.sort_by, Task.created_at)  # type: ignore
-    return desc(column) if query.order == "desc" else asc(column)
+    direction = desc if query.order == "desc" else asc
+    clauses = [direction(column)]
+    if query.sort_by == "priority":
+        clauses.append(asc(Task.start_at))
+    return clauses
 
 
 def _page_size(query: TaskQuery, total: int) -> int:
@@ -76,7 +81,7 @@ def get_all_tasks(user_id: int, query: TaskQuery = TaskQuery()) -> dict[str, Any
     stmt = (
         select(Task)
         .where(*clauses)
-        .order_by(_sort_clause(query), Task.id)
+        .order_by(*_sort_clauses(query), Task.id)
         .limit(limit)
         .offset(limit * (page - 1))
     )

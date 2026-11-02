@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 const defaultFilters = {
   search: "",
   category: "",
+  priority: "",
   duration: "",
   isCompleted: "false",
   dueDate: "calendar_view",

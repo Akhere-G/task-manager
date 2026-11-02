@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import Any
 
 import pytest
+from sqlalchemy import select
 
+from app.database import db
 from app.exceptions import TaskConflict
 from app.models import Task
 from app.schemas.task_schema import (
@@ -72,6 +74,20 @@ def test_skipping_moves_to_the_next_occurrence(user_id: int) -> None:
 
     assert task.start_at == at("2026-03-05 09:00")
     assert task.is_completed is False
+
+
+def test_completing_an_occurrence_keeps_its_priority_in_the_history(
+    user_id: int,
+) -> None:
+    task = add_task(user_id, repeatBy="daily", priority=1)
+
+    task = edit(user_id, task, isCompleted=True)
+
+    history = db.session.scalars(
+        select(Task).where(Task.series_id == task.id, Task.id != task.id)
+    ).all()
+    assert [row.priority for row in history] == [1]
+    assert task.priority == 1
 
 
 def test_completing_the_last_occurrence_ends_the_series(user_id: int) -> None:
