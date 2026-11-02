@@ -1,8 +1,14 @@
 import apiClient from "../../services/api";
-import type { CreateTaskInput, Task } from "./types";
+import type { CreateTaskInput, Task, TrashedTask } from "./types";
 
 export interface GetTaskResult {
   tasks: Task[];
+  totalTasks: number;
+  totalPages: number;
+  currentPage: number;
+}
+export interface GetTrashResult {
+  tasks: TrashedTask[];
   totalTasks: number;
   totalPages: number;
   currentPage: number;
@@ -59,6 +65,16 @@ export const taskService = {
   },
   delete: async (id: number): Promise<DeleteTaskResult> => {
     const response = await apiClient.delete(`/tasks/${id}`);
+    return response.data;
+  },
+  getTrash: async (page: number): Promise<GetTrashResult> => {
+    const response = await apiClient.get<GetTrashResult>("/tasks/trash", {
+      params: { page },
+    });
+    return response.data;
+  },
+  restore: async (id: number): Promise<TrashedTask> => {
+    const response = await apiClient.post(`/tasks/${id}/restore`);
     return response.data;
   },
 };

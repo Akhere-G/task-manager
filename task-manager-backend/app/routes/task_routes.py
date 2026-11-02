@@ -8,6 +8,9 @@ from app.schemas.task_schema import (
     TaskRescheduleSchema,
     TaskSchema,
     TaskUpdateSchema,
+    TrashedTaskSchema,
+    TrashPageSchema,
+    TrashQuerySchema,
 )
 from app.services.task_service import (
     create_task,
@@ -15,7 +18,9 @@ from app.services.task_service import (
     delete_task,
     get_all_tasks,
     get_task,
+    get_trash,
     reschedule_task,
+    restore_task,
     update_task,
 )
 from app.utils.http import get_json_body
@@ -28,6 +33,19 @@ task_bp = Blueprint("tasks", __name__)
 def list_tasks() -> ResponseReturnValue:
     query = TaskListQuerySchema().load(request.args)
     return jsonify(TaskPageSchema().dump(get_all_tasks(get_jwt_identity(), query)))  # type: ignore
+
+
+@task_bp.route("/api/tasks/trash", methods=["GET"])
+@jwt_required()
+def list_trash() -> ResponseReturnValue:
+    query = TrashQuerySchema().load(request.args)
+    return jsonify(TrashPageSchema().dump(get_trash(get_jwt_identity(), **query)))
+
+
+@task_bp.route("/api/tasks/<int:task_id>/restore", methods=["POST"])
+@jwt_required()
+def restore(task_id: int) -> ResponseReturnValue:
+    return jsonify(TrashedTaskSchema().dump(restore_task(get_jwt_identity(), task_id)))
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["GET"])

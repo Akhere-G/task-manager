@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Any
 
 from marshmallow import (
@@ -19,10 +20,11 @@ from app.constants import (
     PRIORITIES,
     REPEAT_FREQUENCIES,
     REPEAT_INTERVAL_LIMITS,
+    TRASH_RETENTION_DAYS,
 )
 from app.models import Task
 from app.services.task_query import TaskQuery
-from app.utils.dates import is_valid_zone, utc_now
+from app.utils.dates import is_valid_zone, to_iso_z, utc_now
 from app.utils.recurrence import is_valid_month_day
 
 from .base import CamelAutoSchema, CamelSchema
@@ -51,7 +53,7 @@ def _validate_zone(zone_name: str | None) -> None:
 class TaskSchema(CamelAutoSchema):
     class Meta(CamelAutoSchema.Meta):
         model = Task
-        exclude = ("reminded_for_start_at",)
+        exclude = ("reminded_for_start_at", "is_deleted", "deleted_at")
 
     id = fields.Raw(dump_only=True)
     user_id = auto_field(dump_only=True)
@@ -259,6 +261,36 @@ class TaskListQuerySchema(Schema):
         if "priority" in data:
             data["priority"] = _parse_priorities(data["priority"])
         return TaskQuery(**data)
+
+
+class TrashedTaskSchema(TaskSchema):
+    deleted_at = UtcDateTime(dump_only=True)
+    purge_at = fields.Method("get_purge_at", dump_only=True)
+
+    class Meta(TaskSchema.Meta):
+        exclude = ("reminded_for_start_at", "is_deleted")
+
+    def get_purge_at(self, task: Task) -> str | None:
+        if task.deleted_at is None:
+            return None
+        return to_iso_z(task.deleted_at + timedelta(days=TRASH_RETENTION_DAYS))
+
+
+class TrashPageSchema(CamelSchema):
+    tasks = fields.Nested(TrashedTaskSchema, many=True)
+    total_tasks = fields.Integer()
+    total_pages = fields.Integer()
+    current_page = fields.Integer()
+
+
+class TrashQuerySchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    page = fields.Integer(load_default=1, validate=validate.Range(min=1))
+    limit = fields.Integer(
+        load_default=20, validate=validate.Range(min=1, max=MAX_PAGE_SIZE)
+    )
 
 
 class TaskPageSchema(CamelSchema):

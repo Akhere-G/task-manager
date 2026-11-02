@@ -52,7 +52,7 @@ routes or services.
   directly.
 - **Queries.** SQLAlchemy 2.0 style only: `select(...)` with `db.session.scalar`,
   `scalars` or `execute`. No legacy `Model.query`. Every task query is scoped by
-  `Task.user_id == user_id`.
+  `live_tasks_of(user_id)` (the user's tasks that are not in the trash).
 - **Errors.** Raise an `AppError` subclass from `app/exceptions.py`; never build error
   JSON in a route. Add a new subclass rather than passing ad-hoc messages around.
 - **Requests and responses.** Read bodies with `get_json_body()`, validate with a
@@ -83,6 +83,9 @@ routes or services.
 | view_start / view_end | The datetime range a calendar request covers.                          |
 | before          | A detached copy of a task taken before an update.                             |
 | clauses         | A list of SQLAlchemy `where` conditions.                                      |
+| trash           | Soft-deleted tasks (`is_deleted`), kept for `TRASH_RETENTION_DAYS`.          |
+| restore         | Taking a task out of the trash.                                               |
+| purge           | Hard-deleting a user's trash older than the retention when they create a task. |
 
 ## Commands
 

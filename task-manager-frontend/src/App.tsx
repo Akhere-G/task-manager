@@ -26,6 +26,7 @@ const Home = lazy(() => import("./pages/Home"));
 const Contact = lazy(() => import("./pages/Contact"));
 const AddTask = lazy(() => import("./pages/AddTask"));
 const About = lazy(() => import("./pages/About"));
+const Trash = lazy(() => import("./pages/Trash"));
 
 function App() {
   const { isAuthenticated, logout, user } = useAuthContext();
@@ -62,7 +63,10 @@ function App() {
     navLinks.unshift(...loggedOutRoutes);
   }
 
-  const accountLinks = [{ title: "Settings", path: "/settings" }];
+  const accountLinks = [
+    { title: "Trash", path: "/trash" },
+    { title: "Settings", path: "/settings" },
+  ];
 
   return (
     <div className="min-h-screen bg-canvas flex flex-col">
@@ -133,6 +137,14 @@ function App() {
               element={
                 <ProtectedRoute redirect={!isAuthenticated}>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/trash"
+              element={
+                <ProtectedRoute redirect={!isAuthenticated}>
+                  <Trash />
                 </ProtectedRoute>
               }
             />
