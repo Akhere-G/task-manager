@@ -23,6 +23,11 @@ export interface Task {
   seriesId: number;
 }
 
+export interface TrashedTask extends Task {
+  deletedAt: string;
+  purgeAt: string;
+}
+
 export type CreateTaskInput = Omit<
   Task,
   "id" | "createdAt" | "isCompleted" | "completedAt" | "isGhost" | "seriesId"

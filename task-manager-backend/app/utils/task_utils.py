@@ -3,7 +3,7 @@ from collections.abc import Iterable, Iterator
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ColumnElement, TextClause, func, or_, select, text
+from sqlalchemy import ColumnElement, TextClause, and_, func, or_, select, text
 
 from app.database import db
 from app.models import Task
@@ -44,6 +44,10 @@ GHOST_COPIED_FIELDS = (
     "repeat_timezone",
     "user_id",
 )
+
+
+def live_tasks_of(user_id: int) -> ColumnElement[bool]:
+    return and_(Task.user_id == user_id, Task.is_deleted.is_(False))
 
 
 def parse_search(search: str | None) -> tuple[str, str] | None:
@@ -110,7 +114,7 @@ def _duration_clause(duration: str | None) -> Clause | None:
 
 
 def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
-    clauses: list[Clause] = [Task.user_id == user_id]
+    clauses: list[Clause] = [live_tasks_of(user_id)]
     if query.category and query.category != "all":
         clauses.append(Task.category == query.category)
     if query.priority:
@@ -204,7 +208,7 @@ def with_repeating(
     view_end = as_aware_utc(view_end)
     repeating_tasks = db.session.scalars(
         select(Task).where(
-            Task.user_id == user_id,
+            live_tasks_of(user_id),
             Task.is_repeating,
             or_(Task.repeat_until.is_(None), Task.repeat_until >= view_start),
             *clauses,

@@ -49,7 +49,7 @@ function TaskPopups({
           }}
           actionText="Delete Task"
         >
-          {`Delete task '${selectedTask.title}'?`}
+          {`Delete task '${selectedTask.title}'? You can restore it from Trash for 30 days.`}
         </Popup>
       );
     case PopupModes.Edit:

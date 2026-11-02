@@ -1,9 +1,10 @@
 from dataclasses import replace
+from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import UnaryExpression, asc, desc, func, select
+from sqlalchemy import UnaryExpression, asc, delete, desc, func, select
 
-from app.constants import MAX_TASKS_PER_REQUEST
+from app.constants import MAX_TASKS_PER_REQUEST, TRASH_RETENTION_DAYS
 from app.database import db
 from app.exceptions import InvalidTaskTimes, TaskConflict, TaskNotFound
 from app.models import Task
@@ -19,6 +20,7 @@ from app.utils.recurrence import (
 )
 from app.utils.task_utils import (
     build_task_clauses,
+    live_tasks_of,
     next_task_start,
     roll_series,
     should_roll_series,
@@ -27,6 +29,7 @@ from app.utils.task_utils import (
 )
 
 NON_COLUMN_FIELDS = {"expected_start_at", "skip_occurrence"}
+TRASH_RETENTION = timedelta(days=TRASH_RETENTION_DAYS)
 RECURRENCE_FIELDS = {
     "repeat_by",
     "repeat_interval",
@@ -100,7 +103,7 @@ def get_all_tasks(user_id: int, query: TaskQuery = TaskQuery()) -> dict[str, Any
 
 
 def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
-    stmt = select(Task).where(Task.user_id == user_id, Task.id == task_id)
+    stmt = select(Task).where(live_tasks_of(user_id), Task.id == task_id)
     task = db.session.scalar(stmt.with_for_update() if lock else stmt)
     if task is None:
         raise TaskNotFound(task_id)
@@ -131,7 +134,19 @@ def _apply_recurrence(task: Task) -> None:
         task.start_at = snapped
 
 
+def _purge_expired_trash(user_id: int) -> None:
+    expired_before = utc_now() - TRASH_RETENTION
+    db.session.execute(
+        delete(Task).where(
+            Task.user_id == user_id,
+            Task.is_deleted,
+            Task.deleted_at < expired_before,
+        )
+    )
+
+
 def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
+    _purge_expired_trash(user_id)
     tasks = [Task(**item, user_id=user_id) for item in items]
     for task in tasks:
         _apply_recurrence(task)
@@ -246,5 +261,39 @@ def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
 
 
 def delete_task(user_id: int, task_id: int) -> None:
-    db.session.delete(get_task(user_id, task_id))
+    task = get_task(user_id, task_id)
+    task.is_deleted = True
+    task.deleted_at = utc_now()
     db.session.commit()
+
+
+def get_trash(user_id: int, page: int, limit: int) -> dict[str, Any]:
+    clauses = (Task.user_id == user_id, Task.is_deleted)
+    total = (
+        db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
+    )
+    stmt = (
+        select(Task)
+        .where(*clauses)
+        .order_by(desc(Task.deleted_at), desc(Task.id))
+        .limit(limit)
+        .offset(limit * (page - 1))
+    )
+    return {
+        "tasks": list(db.session.scalars(stmt)),
+        "total_tasks": total,
+        "total_pages": (total + limit - 1) // limit,
+        "current_page": page,
+    }
+
+
+def restore_task(user_id: int, task_id: int) -> Task:
+    task = db.session.scalar(
+        select(Task).where(Task.user_id == user_id, Task.id == task_id, Task.is_deleted)
+    )
+    if task is None:
+        raise TaskNotFound(task_id)
+    task.is_deleted = False
+    task.deleted_at = None
+    db.session.commit()
+    return task
