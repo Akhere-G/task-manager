@@ -102,8 +102,8 @@ export default function TaskCalendar({
     [allTasks, isMobile, view],
   );
 
-  const tasksForSelectedDay = allTasks.filter((t) =>
-    isSameDay(new Date(t.startAt), currentDate),
+  const tasksForSelectedDay = allTasks.filter(
+    (t) => !!t.startAt && isSameDay(new Date(t.startAt), currentDate),
   );
 
   const handleTaskDateChange = async (task: Task, start: Date, end: Date) => {
@@ -118,8 +118,8 @@ export default function TaskCalendar({
       await rescheduleTask({
         id: getCalendarTaskId(task),
         rescheduleData: {
-          previousStartAt: task.startAt,
-          previousEndAt: task.endAt,
+          previousStartAt: task.startAt ?? startAt,
+          previousEndAt: task.endAt ?? endAt,
           startAt,
           endAt,
           isGhost: task.isGhost ?? false,
@@ -145,7 +145,7 @@ export default function TaskCalendar({
   };
 
   function onDropFromOutside(day: DragFromOutsideItemArgs) {
-    if (!draggedEvent) return;
+    if (!draggedEvent?.startAt || !draggedEvent.endAt) return;
 
     const startAt = new Date(draggedEvent.startAt);
     const endAt = new Date(draggedEvent.endAt);

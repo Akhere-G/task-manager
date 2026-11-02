@@ -8,7 +8,11 @@ import {
   projectTree,
 } from "./utils";
 
-const project = (id: number, name: string, parentId: number | null = null): Project => ({
+const project = (
+  id: number,
+  name: string,
+  parentId: number | null = null,
+): Project => ({
   id,
   name,
   colour: `#00000${id}`,
@@ -25,13 +29,20 @@ const projects = [
 
 describe("project helpers", () => {
   it("orders the tree depth first with indented option names", () => {
-    expect(projectTree(projects).map((n) => [n.project.name, n.depth])).toEqual([
-      ["Work", 0],
-      ["Reports", 1],
-      ["Weekly", 2],
-      ["Home", 0],
+    expect(projectTree(projects).map((n) => [n.project.name, n.depth])).toEqual(
+      [
+        ["Work", 0],
+        ["Reports", 1],
+        ["Weekly", 2],
+        ["Home", 0],
+      ],
+    );
+    expect(projectOptions(projects).map((o) => o.value)).toEqual([
+      "1",
+      "2",
+      "3",
+      "4",
     ]);
-    expect(projectOptions(projects).map((o) => o.value)).toEqual(["1", "2", "3", "4"]);
   });
 
   it("builds the full path and finds the colour", () => {

@@ -39,11 +39,11 @@ export default function SettingsPage() {
 
     const getCompletedAt = (
       completedAt: string | null,
-      endAt: string,
+      endAt: string | null,
       isCompleted: boolean,
     ) => {
       if (isCompleted && !completedAt) {
-        return endAt;
+        return endAt ?? "";
       }
       return completedAt ? completedAt : "";
     };
@@ -68,8 +68,8 @@ export default function SettingsPage() {
         projectPath(projects, projectId) ?? "",
         `P${priority ?? 4}`,
         description,
-        startAt,
-        endAt,
+        startAt ?? "",
+        endAt ?? "",
         repeatBy ?? "",
         repeatUntil ? repeatUntil : "",
         repeatBy ? (repeatInterval ?? 1) : "",

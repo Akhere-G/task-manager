@@ -6,12 +6,20 @@ import { renderWithProviders } from "../../test/render";
 import ProjectSettings from "./ProjectSettings";
 
 const mock = mockApi();
-const work = { id: 1, name: "Work", colour: "#6366f1", parentId: null, position: 0 };
+const work = {
+  id: 1,
+  name: "Work",
+  colour: "#6366f1",
+  parentId: null,
+  position: 0,
+};
 
 describe("ProjectSettings", () => {
   it("creates a sub-project under the chosen parent", async () => {
     mock.onGet("/projects").reply(200, { projects: [work] });
-    mock.onPost("/projects").reply(201, { ...work, id: 2, name: "Reports", parentId: 1 });
+    mock
+      .onPost("/projects")
+      .reply(201, { ...work, id: 2, name: "Reports", parentId: 1 });
     renderWithProviders(<ProjectSettings />);
     await screen.findByRole("button", { name: "Edit Work" });
 
@@ -28,9 +36,9 @@ describe("ProjectSettings", () => {
 
   it("shows the server's message when the name is taken", async () => {
     mock.onGet("/projects").reply(200, { projects: [work] });
-    mock
-      .onPost("/projects")
-      .reply(409, { errors: { name: "You already have a project with that name here." } });
+    mock.onPost("/projects").reply(409, {
+      errors: { name: "You already have a project with that name here." },
+    });
     renderWithProviders(<ProjectSettings />);
     await screen.findByRole("button", { name: "Edit Work" });
 
@@ -47,14 +55,18 @@ describe("ProjectSettings", () => {
     mock.onPatch("/projects/1").reply(200, { ...work, name: "Job" });
     renderWithProviders(<ProjectSettings />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Edit Work" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Edit Work" }),
+    );
     const [name] = screen.getAllByLabelText("Project name");
     await userEvent.clear(name);
     await userEvent.type(name, "Job");
     await userEvent.click(screen.getByRole("button", { name: "Save project" }));
 
     await waitFor(() => expect(mock.history.patch).toHaveLength(1));
-    expect(JSON.parse(mock.history.patch[0].data)).toMatchObject({ name: "Job" });
+    expect(JSON.parse(mock.history.patch[0].data)).toMatchObject({
+      name: "Job",
+    });
   });
 
   it("deletes after confirming", async () => {
@@ -63,7 +75,9 @@ describe("ProjectSettings", () => {
     window.confirm = () => true;
     renderWithProviders(<ProjectSettings />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Delete Work" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Delete Work" }),
+    );
 
     await waitFor(() => expect(mock.history.delete).toHaveLength(1));
   });

@@ -32,8 +32,7 @@ function toRows(days: DistributionTrendData[]) {
   const rows: Row[] = days.map((day) => {
     const row: Row = { date: day.date };
     names.forEach((name, index) => {
-      row[`s${index}`] =
-        day.counts.find((c) => c.project === name)?.count ?? 0;
+      row[`s${index}`] = day.counts.find((c) => c.project === name)?.count ?? 0;
     });
     return row;
   });
@@ -162,7 +161,10 @@ export default function DistributionTrendChart() {
               fill={colourFor(name)}
               isAnimationActive={true}
               animationDuration={500}
-              data={rows.map((row) => ({ ...row, [key]: hidden ? 0 : row[key] }))}
+              data={rows.map((row) => ({
+                ...row,
+                [key]: hidden ? 0 : row[key],
+              }))}
               fillOpacity={hidden ? 0 : 0.6}
               strokeOpacity={hidden ? 0 : 1}
             />

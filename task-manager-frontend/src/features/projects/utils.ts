@@ -1,4 +1,8 @@
-import { DEFAULT_PROJECT_COLOUR, MAX_PROJECT_DEPTH, type Project } from "./types";
+import {
+  DEFAULT_PROJECT_COLOUR,
+  MAX_PROJECT_DEPTH,
+  type Project,
+} from "./types";
 
 export interface ProjectNode {
   project: Project;
@@ -41,7 +45,9 @@ export function projectPath(
   projectId: number | null | undefined,
 ): string | null {
   if (projectId == null) return null;
-  return projectTree(projects).find((n) => n.project.id === projectId)?.path ?? null;
+  return (
+    projectTree(projects).find((n) => n.project.id === projectId)?.path ?? null
+  );
 }
 
 export function projectColour(
@@ -58,7 +64,10 @@ export function subtreeHeight(projects: Project[], projectId: number): number {
   return 1 + Math.max(0, ...kids.map((k) => subtreeHeight(projects, k.id)));
 }
 
-export function descendantIds(projects: Project[], projectId: number): number[] {
+export function descendantIds(
+  projects: Project[],
+  projectId: number,
+): number[] {
   const kids = projects.filter((p) => p.parentId === projectId);
   return kids.flatMap((k) => [k.id, ...descendantIds(projects, k.id)]);
 }
@@ -72,6 +81,7 @@ export function allowedParents(projects: Project[], projectId: number | null) {
   const blocked = new Set([projectId, ...descendantIds(projects, projectId)]);
   const height = subtreeHeight(projects, projectId);
   return nodes.filter(
-    (n) => !blocked.has(n.project.id) && n.depth + 1 + height <= MAX_PROJECT_DEPTH,
+    (n) =>
+      !blocked.has(n.project.id) && n.depth + 1 + height <= MAX_PROJECT_DEPTH,
   );
 }

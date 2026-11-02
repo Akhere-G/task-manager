@@ -1,12 +1,18 @@
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import UnaryExpression, asc, delete, desc, func, select
+from sqlalchemy import UnaryExpression, asc, delete, desc, func, literal_column, select
 
 from app.constants import MAX_TASKS_PER_REQUEST, TRASH_RETENTION_DAYS
 from app.database import db
-from app.exceptions import InvalidTaskTimes, TaskConflict, TaskNotFound
+from app.exceptions import (
+    IncompleteTaskDates,
+    InvalidTaskTimes,
+    TaskConflict,
+    TaskNotFound,
+    UndatedRepeatingTask,
+)
 from app.models import Task
 from app.schemas.task_schema import TaskSchema
 from app.services.label_service import (
@@ -46,9 +52,7 @@ RECURRENCE_FIELDS = {
 
 
 def _sort_clauses(query: TaskQuery) -> list[UnaryExpression[Any]]:
-    duration = func.timestampdiff(
-        func.literal_column("MINUTE"), Task.start_at, Task.end_at
-    )
+    duration = func.timestampdiff(literal_column("MINUTE"), Task.start_at, Task.end_at)
     columns = {
         "created_at": Task.created_at,
         "title": Task.title,
@@ -59,6 +63,8 @@ def _sort_clauses(query: TaskQuery) -> list[UnaryExpression[Any]]:
     column = columns.get(query.sort_by, Task.created_at)  # type: ignore
     direction = desc if query.order == "desc" else asc
     clauses = [direction(column)]
+    if query.sort_by in ("start_at", "duration"):
+        clauses.insert(0, column.is_(None))
     if query.sort_by == "priority":
         clauses.append(asc(Task.start_at))
     return clauses
@@ -159,6 +165,12 @@ def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
     label_ids = [item.pop("label_ids", []) for item in items]
     for ids in label_ids:
         ensure_labels_belong_to(user_id, ids)
+    for item in items:
+        _check_dates(
+            item.get("start_at"),
+            item.get("end_at"),
+            item.get("is_repeating") or item.get("repeat_by"),
+        )
     _purge_expired_trash(user_id)
     tasks = [Task(**item, user_id=user_id) for item in items]
     for task in tasks:
@@ -177,11 +189,25 @@ def create_task(user_id: int, data: dict[str, Any]) -> Task:
     return create_tasks(user_id, [data])[0]
 
 
-def _check_times(task: Task, data: dict[str, Any]) -> None:
-    start = data.get("start_at", task.start_at)
-    end = data.get("end_at", task.end_at)
-    if end <= start:
+def _check_dates(
+    start: datetime | None, end: datetime | None, is_repeating: bool | None
+) -> None:
+    if (start is None) != (end is None):
+        raise IncompleteTaskDates()
+    if start is None:
+        if is_repeating:
+            raise UndatedRepeatingTask()
+        return
+    if end <= start:  # type: ignore
         raise InvalidTaskTimes()
+
+
+def _check_times(task: Task, data: dict[str, Any]) -> None:
+    _check_dates(
+        data.get("start_at", task.start_at),
+        data.get("end_at", task.end_at),
+        data.get("is_repeating", task.is_repeating) or data.get("repeat_by"),
+    )
 
 
 def _check_not_already_completed(task: Task, data: dict[str, Any]) -> None:

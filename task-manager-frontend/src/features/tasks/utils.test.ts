@@ -53,6 +53,21 @@ describe("calculateDateRange", () => {
   });
 });
 
+describe("undated tasks", () => {
+  it("are labelled and kept off the calendar", () => {
+    const undated = makeTask({ id: 2, startAt: null, endAt: null });
+    expect(formatDateRange(null, null)).toBe("No date");
+    expect(
+      mapTasksToCalendarEvents(
+        [undated, makeTask({ id: 3 })],
+        false,
+        Views.WEEK,
+      ).map((event) => event.id),
+    ).toEqual([3]);
+    expect(mapTasksToCalendarEvents([undated], true, Views.MONTH)).toEqual([]);
+  });
+});
+
 describe("formatDateRange", () => {
   it("shows only times for a task today", () => {
     expect(

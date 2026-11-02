@@ -1,4 +1,5 @@
 from datetime import date, datetime
+
 from sqlalchemy import (
     JSON,
     CheckConstraint,
@@ -33,8 +34,8 @@ class Task(Base):
         SmallInteger, default=DEFAULT_PRIORITY, server_default=str(DEFAULT_PRIORITY)
     )
     is_completed: Mapped[bool] = mapped_column(server_default="0", nullable=True)
-    start_at: Mapped[datetime] = mapped_column(TIMESTAMP)
-    end_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    start_at: Mapped[datetime | None] = mapped_column(TIMESTAMP, nullable=True)
+    end_at: Mapped[datetime | None] = mapped_column(TIMESTAMP, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP, server_default=func.current_timestamp(), nullable=True
     )

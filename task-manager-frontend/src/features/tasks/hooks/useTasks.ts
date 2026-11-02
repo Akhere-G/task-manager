@@ -9,6 +9,7 @@ import { trackEvent } from "../../../services/analytics";
 export interface TaskFilters {
   search: string;
   project: string;
+  view: string;
   label: string;
   priority: string;
   duration: string;
@@ -32,9 +33,10 @@ interface UseTasksProps {
   enabled?: boolean;
 }
 
-const getDefaultFilters = (): TaskFilters => ({
+export const getDefaultFilters = (): TaskFilters => ({
   search: "",
   project: "",
+  view: "",
   label: "",
   priority: "",
   duration: "",
@@ -48,6 +50,7 @@ const getDefaultFilters = (): TaskFilters => ({
 const apiParamMap: Record<string, string> = {
   search: "q",
   project: "project",
+  view: "view",
   label: "label",
   priority: "priority",
   duration: "duration",
@@ -94,6 +97,8 @@ export const useTasks = ({
   const filters = {
     search: searchInput,
     project: searchParams.get("project") ?? defaultFilters.project,
+    // The URL's own `view` param is the calendar layout, so this one is page-owned.
+    view: defaultFilters.view,
     label: searchParams.get("label") ?? defaultFilters.label,
     priority: searchParams.get("priority") ?? defaultFilters.priority,
     duration: searchParams.get("duration") ?? defaultFilters.duration,
