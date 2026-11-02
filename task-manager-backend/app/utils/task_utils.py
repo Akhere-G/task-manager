@@ -32,6 +32,7 @@ GHOST_COPIED_FIELDS = (
     "title",
     "description",
     "category",
+    "priority",
     "is_completed",
     "created_at",
     "completed_at",
@@ -112,6 +113,8 @@ def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
     clauses: list[Clause] = [Task.user_id == user_id]
     if query.category and query.category != "all":
         clauses.append(Task.category == query.category)
+    if query.priority:
+        clauses.append(Task.priority.in_(query.priority))
 
     optional_clauses = (
         build_search_clause(query.search),
@@ -231,6 +234,7 @@ def _save_completed_occurrence(before: Task) -> None:
             title=before.title,
             description=before.description,
             category=before.category,
+            priority=before.priority,
             start_at=before.start_at,
             end_at=before.end_at,
             is_repeating=False,

@@ -55,3 +55,11 @@ def test_projection_is_capped(user_id: int, monkeypatch: pytest.MonkeyPatch) -> 
     days = ghost_days(user_id, datetime(2026, 3, 1), datetime(2026, 3, 31))
 
     assert len(days) == 3
+
+
+def test_ghosts_keep_the_series_priority(user_id: int) -> None:
+    add_daily_task(user_id, priority=2)
+
+    ghosts = with_repeating([], datetime(2026, 3, 3), datetime(2026, 3, 4), user_id)
+
+    assert {ghost.priority for ghost in ghosts} == {2}

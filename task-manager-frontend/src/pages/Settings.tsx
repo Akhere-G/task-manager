@@ -18,6 +18,7 @@ export default function SettingsPage() {
     const headers = [
       "Title",
       "Category",
+      "Priority",
       "Description",
       "Start At",
       "End At",
@@ -45,6 +46,7 @@ export default function SettingsPage() {
       ({
         title,
         category,
+        priority,
         description,
         startAt,
         endAt,
@@ -59,6 +61,7 @@ export default function SettingsPage() {
       }) => [
         title,
         category,
+        `P${priority ?? 4}`,
         description,
         startAt,
         endAt,

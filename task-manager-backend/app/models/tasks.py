@@ -1,7 +1,20 @@
 from datetime import date, datetime
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy import (
+    JSON,
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    SmallInteger,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.mysql import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
+
+from app.constants import DEFAULT_PRIORITY
 from app.database import Base
 
 
@@ -13,6 +26,9 @@ class Task(Base):
     description: Mapped[str | None] = mapped_column(Text)
     category: Mapped[str] = mapped_column(
         String(50), server_default="General", nullable=True
+    )
+    priority: Mapped[int] = mapped_column(
+        SmallInteger, default=DEFAULT_PRIORITY, server_default=str(DEFAULT_PRIORITY)
     )
     is_completed: Mapped[bool] = mapped_column(server_default="0", nullable=True)
     start_at: Mapped[datetime] = mapped_column(TIMESTAMP)
@@ -37,4 +53,5 @@ class Task(Base):
         Index("idx_tasks_search", "title", "description", mysql_prefix="FULLTEXT"),
         Index("idx_tasks_user_end_at", "user_id", "end_at"),
         Index("idx_tasks_user_completed", "user_id", "is_completed", "completed_at"),
+        CheckConstraint("priority BETWEEN 1 AND 4", name="ck_tasks_priority"),
     )

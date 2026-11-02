@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import useCreateAllTasks from "../hooks/useCreateAllTasks";
 import { trackEvent } from "../../../services/analytics";
 import { parseRepeatDays, parseRepeatInterval } from "../recurrence";
+import { parsePriority } from "../utils";
 
 function getDescription(task: Record<string, string>) {
   const rawDescription = task.Description || task.description;
@@ -107,6 +108,7 @@ export default function BulkAddForm() {
             category: (task.Category || task.category || "general")
               .trim()
               .toLowerCase(),
+            priority: parsePriority(task.Priority || task.priority),
             description: getDescription(task),
             startAt:
               task["Start At"] ||

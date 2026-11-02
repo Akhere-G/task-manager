@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   categories,
+  DEFAULT_PRIORITY,
   type CreateTaskInput,
   type Task,
 } from "../../../features/tasks/types";
@@ -11,6 +12,7 @@ import { trackEvent } from "../../../services/analytics";
 import { addHours, addMilliseconds, format, isValid } from "date-fns";
 import { formatForInput } from "../../../utils/formators";
 import RecurrencePicker from "./RecurrencePicker";
+import { priorityOptions } from "../constants";
 import { REPEAT_LIMITS, defaultDays, getBrowserTimeZone } from "../recurrence";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
@@ -72,6 +74,7 @@ export default function TaskForm({
   const [formState, setFormState] = useState<CreateTaskInput>({
     title: "",
     category: "",
+    priority: DEFAULT_PRIORITY,
     description: "",
     ...getDefaultTimes(),
     isRepeating: false,
@@ -85,6 +88,7 @@ export default function TaskForm({
   const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
     title: "",
     category: "",
+    priority: "",
     description: "",
     startAt: "",
     endAt: "",
@@ -110,6 +114,7 @@ export default function TaskForm({
   const defaultErrorMessages = {
     title: "",
     category: "",
+    priority: "",
     description: "",
     startAt: "",
     endAt: "",
@@ -177,7 +182,10 @@ export default function TaskForm({
     >,
   ) {
     const { name, value } = e.target;
-    const newFormState = { ...formState, [name]: value };
+    const newFormState = {
+      ...formState,
+      [name]: name === "priority" ? Number(value) : value,
+    };
     if (name === "repeatBy") {
       Object.assign(
         newFormState,
@@ -337,6 +345,14 @@ export default function TaskForm({
         options={options}
         touched={touched.category}
         handleBlur={handleBlur}
+      />
+      <FormInput
+        label="Priority"
+        name="priority"
+        value={String(formState.priority ?? DEFAULT_PRIORITY)}
+        handleChange={handleChange}
+        errorMessage={errorMessages.priority}
+        options={priorityOptions}
       />
       <FormInput
         label="Description"

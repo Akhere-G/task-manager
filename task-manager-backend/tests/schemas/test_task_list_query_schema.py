@@ -44,3 +44,14 @@ def test_a_bounded_range_can_project_repeating_tasks() -> None:
     )
 
     assert query.project_repeating is True
+
+
+def test_priorities_are_read_as_a_sorted_set() -> None:
+    query = TaskListQuerySchema().load({"priority": "3, 1,3"})
+
+    assert query.priority == (1, 3)
+
+
+@pytest.mark.parametrize("priority", ["0", "5", "high", "1,", "1;2"])
+def test_bad_priorities_are_rejected(priority: str) -> None:
+    assert "priority" in load_errors(TaskListQuerySchema(), {"priority": priority})

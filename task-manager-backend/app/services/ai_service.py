@@ -10,7 +10,7 @@ from groq import Groq
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from app.constants import CATEGORIES
+from app.constants import CATEGORIES, DEFAULT_PRIORITY
 from app.database import db
 from app.exceptions import AIUnavailable
 from app.models import DailyBrief, Task
@@ -119,7 +119,8 @@ def _brief_prompt(day: date, tasks: list[Task], stats: dict[str, Any]) -> str:
         for v in stats["categoryVolume"]
     )
     schedule = "\n".join(
-        f"- {t.title} ({t.category}, {t.start_at} - {t.end_at})" for t in tasks
+        f"- {t.title} (P{t.priority}, {t.category}, {t.start_at} - {t.end_at})"
+        for t in tasks
     )
 
     return f"""
@@ -174,6 +175,7 @@ def _parse_prompt(user_input: str, now: datetime) -> str:
     - title: (string)
     - description: (string or null), put any extra information here
     - category: (MUST be one of: {", ".join(CATEGORIES)})
+    - priority: integer 1 (urgent) to 4 (none), default 4. "p1" to "p4" set it.
     - startAt: Datetime (MUST be present), use YYYY-MM-DD HH:MM. Should be set to any date time mention. If no time mentioned, use {now:%Y-%m-%d} 00:00.
     - endAt: Datetime use YYYY-MM-DD HH:MM (MUST be present). Should be after startAt but on the same day. If no time mentioned, if a duration was mentioned, add that to the start date and set this to that. Otherwise set to an hour after start at.
     - isRepeating: boolean. True if task is daily/every day, weekly, monthly, yearly or repeated
@@ -218,6 +220,7 @@ def parse_task_with_ai(user_input: str) -> dict[str, Any]:
             "title": user_input[:50],
             "description": user_input,
             "category": "general",
+            "priority": DEFAULT_PRIORITY,
             "startAt": f"{now:%Y-%m-%d} 00:00",
             "endAt": f"{now:%Y-%m-%d} 23:59",
         }

@@ -146,3 +146,18 @@ def test_saved_tasks_are_sent_as_not_ghosts() -> None:
 
     assert TaskSchema().dump(saved)["isGhost"] is False
     assert TaskSchema().dump(ghost)["isGhost"] is True
+
+
+def test_priority_is_left_to_the_database_default_when_missing() -> None:
+    assert "priority" not in TaskSchema().load(TASK)
+
+
+@pytest.mark.parametrize("priority", [0, 5, "1", True, 2.5])
+def test_priority_must_be_a_whole_number_from_one_to_four(priority: Any) -> None:
+    errors = load_errors(TaskSchema(), {**TASK, "priority": priority})
+
+    assert "priority" in errors
+
+
+def test_priority_can_be_changed_on_its_own() -> None:
+    assert TaskUpdateSchema().load({"priority": 1}) == {"priority": 1}

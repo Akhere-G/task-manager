@@ -13,6 +13,7 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import delete, select
 from werkzeug.security import generate_password_hash
 
+from app.constants import DEFAULT_PRIORITY
 from app.database import SessionLocal, engine
 from app.demo import DEMO_USER_EMAIL
 from app.models import (
@@ -144,6 +145,7 @@ def build_series(
         start = resolve_time(item["start"], now, tz)
         length = timedelta(minutes=item["mins"])
         common = {k: item.get(k) for k in ("title", "description", "category")}
+        common["priority"] = item.get("priority", DEFAULT_PRIORITY)
         history = (
             build_history(item, start, length, common, now, tz, rng)
             if "history" in item

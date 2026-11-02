@@ -5,9 +5,11 @@ from marshmallow import fields, pre_load, validate
 
 from app.constants import (
     CATEGORIES,
+    DEFAULT_PRIORITY,
     MAX_DECOMPOSE_DESCRIPTION_LENGTH,
     MAX_DECOMPOSE_TITLE_LENGTH,
     MAX_PARSE_TEXT_LENGTH,
+    PRIORITIES,
     REPEAT_FREQUENCIES,
     REPEAT_INTERVAL_LIMITS,
 )
@@ -105,6 +107,7 @@ class AiTaskSchema(CamelSchema):
     title = fields.String(required=True)
     description = fields.String(allow_none=True)
     category = fields.String()
+    priority = fields.Raw()
     start_at = fields.String(load_default=_end_of_today)
     end_at = fields.String(load_default=_end_of_today)
     is_repeating = fields.Boolean()
@@ -120,6 +123,8 @@ class AiTaskSchema(CamelSchema):
         repaired = {**data, **_clean_recurrence(data)}
         if repaired.get("category") not in CATEGORIES:
             repaired["category"] = "general"
+        if repaired.get("priority") not in PRIORITIES:
+            repaired["priority"] = DEFAULT_PRIORITY
         for key in ("startAt", "endAt"):
             if not repaired.get(key):
                 repaired.pop(key, None)

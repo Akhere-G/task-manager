@@ -33,6 +33,12 @@ export const taskSchema = z
       .min(1, "Title is mandatory.")
       .max(255, "Title must be under 255 characters."),
     description: z.string().nullish(),
+    priority: z
+      .number()
+      .int()
+      .min(1, "Priority must be between 1 and 4.")
+      .max(4, "Priority must be between 1 and 4.")
+      .optional(),
     startAt: dateField("Start At"),
     endAt: dateField("End At"),
     category: z
