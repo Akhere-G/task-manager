@@ -57,6 +57,21 @@ class ProjectCycle(AppError):
     message = "A project cannot be moved inside itself."
 
 
+class LabelNotFound(NotFoundError):
+    message = "No label with that id exists."
+
+
+class InvalidLabel(AppError):
+    field = "labelIds"
+    message = "Choose your own labels."
+
+
+class LabelNameTaken(AppError):
+    status_code = 409
+    field = "name"
+    message = "You already have a label with that name."
+
+
 class TaskConflict(AppError):
     status_code = 409
     message = "This task was already updated."

@@ -24,7 +24,9 @@ afterEach(() => {
 
 describe("getCalendarTaskId", () => {
   it("edits the series for a ghost and the task itself otherwise", () => {
-    expect(getCalendarTaskId(makeTask({ id: 7, seriesId: 3, isGhost: true }))).toBe(3);
+    expect(
+      getCalendarTaskId(makeTask({ id: 7, seriesId: 3, isGhost: true })),
+    ).toBe(3);
     expect(getCalendarTaskId(makeTask({ id: 7, seriesId: 3 }))).toBe(7);
   });
 });
@@ -53,23 +55,36 @@ describe("calculateDateRange", () => {
 
 describe("formatDateRange", () => {
   it("shows only times for a task today", () => {
-    expect(formatDateRange("2026-03-11T09:00:00Z", "2026-03-11T10:30:00Z")).toBe(
-      "09:00 - 10:30",
-    );
+    expect(
+      formatDateRange("2026-03-11T09:00:00Z", "2026-03-11T10:30:00Z"),
+    ).toBe("09:00 - 10:30");
   });
 
   it("adds the year for a task in another year", () => {
-    expect(formatDateRange("2027-01-05T09:00:00Z", "2027-01-05T10:00:00Z")).toBe(
-      "5 Jan 27, 09:00 - 10:00",
-    );
+    expect(
+      formatDateRange("2027-01-05T09:00:00Z", "2027-01-05T10:00:00Z"),
+    ).toBe("5 Jan 27, 09:00 - 10:00");
   });
 });
 
 describe("mapTasksToCalendarEvents", () => {
   const tasks = [
-    makeTask({ id: 1, startAt: "2026-03-11T09:00:00Z", endAt: "2026-03-11T10:00:00Z" }),
-    makeTask({ id: 2, startAt: "2026-03-11T14:00:00Z", endAt: "2026-03-11T15:00:00Z" }),
-    makeTask({ id: 3, title: "", startAt: "2026-03-12T09:00:00Z", endAt: "2026-03-12T10:00:00Z" }),
+    makeTask({
+      id: 1,
+      startAt: "2026-03-11T09:00:00Z",
+      endAt: "2026-03-11T10:00:00Z",
+    }),
+    makeTask({
+      id: 2,
+      startAt: "2026-03-11T14:00:00Z",
+      endAt: "2026-03-11T15:00:00Z",
+    }),
+    makeTask({
+      id: 3,
+      title: "",
+      startAt: "2026-03-12T09:00:00Z",
+      endAt: "2026-03-12T10:00:00Z",
+    }),
   ];
 
   it("makes one timed event per task, keeping the task for drag and drop", () => {
@@ -100,9 +115,12 @@ describe("parsePriority", () => {
     expect(parsePriority(cell)).toBe(expected);
   });
 
-  it.each(["", "0", "5", "high", "P12", undefined])("treats %j as P4", (cell) => {
-    expect(parsePriority(cell)).toBe(4);
-  });
+  it.each(["", "0", "5", "high", "P12", undefined])(
+    "treats %j as P4",
+    (cell) => {
+      expect(parsePriority(cell)).toBe(4);
+    },
+  );
 });
 
 describe("daysUntilPurge", () => {

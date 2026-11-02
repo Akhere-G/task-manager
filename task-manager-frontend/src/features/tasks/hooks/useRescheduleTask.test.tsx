@@ -1,6 +1,10 @@
 import { waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { makeQueryClient, makeTask, renderHookWithProviders } from "../../../test/render";
+import {
+  makeQueryClient,
+  makeTask,
+  renderHookWithProviders,
+} from "../../../test/render";
 import useRescheduleTask from "./useRescheduleTask";
 import { mockApi } from "../../../test/api";
 
@@ -37,7 +41,9 @@ describe("useRescheduleTask", () => {
   });
 
   it("refetches tasks after a move, even when it fails", async () => {
-    mock.onPost("/tasks/3/reschedule").reply(409, { error: "Already updated." });
+    mock
+      .onPost("/tasks/3/reschedule")
+      .reply(409, { error: "Already updated." });
     const { result, queryClient } = renderReschedule();
 
     await expect(
@@ -45,7 +51,9 @@ describe("useRescheduleTask", () => {
     ).rejects.toBeDefined();
 
     await waitFor(() =>
-      expect(queryClient.getQueryState(["tasks", "calendar"])?.isInvalidated).toBe(true),
+      expect(
+        queryClient.getQueryState(["tasks", "calendar"])?.isInvalidated,
+      ).toBe(true),
     );
   });
 });

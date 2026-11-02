@@ -141,3 +141,25 @@ def test_user_cannot_use_or_change_another_users_project(
     moved = b.patch(f"/api/tasks/{own}", json={"projectId": project_id})
     assert moved.status_code == 400
     assert a.get("/api/projects").get_json()["projects"][0]["name"] == "Secret"
+
+
+def test_user_cannot_use_or_change_another_users_label(
+    make_user: Callable[..., int],
+    login: Callable[..., FlaskClient],
+    task_payload: Callable[..., dict[str, Any]],
+) -> None:
+    make_user("a@example.com")
+    make_user("b@example.com")
+    a = login("a@example.com")
+    b = login("b@example.com")
+    label_id = a.post("/api/labels", json={"name": "Secret"}).get_json()["id"]
+
+    assert b.get("/api/labels").get_json()["labels"] == []
+    assert b.patch(f"/api/labels/{label_id}", json={"name": "X"}).status_code == 404
+    assert b.delete(f"/api/labels/{label_id}").status_code == 404
+    assigned = b.post("/api/tasks", json=task_payload(labelIds=[label_id]))
+    assert assigned.status_code == 400
+    own = create_task(b, task_payload())
+    moved = b.patch(f"/api/tasks/{own}", json={"labelIds": [label_id]})
+    assert moved.status_code == 400
+    assert a.get("/api/labels").get_json()["labels"][0]["name"] == "Secret"

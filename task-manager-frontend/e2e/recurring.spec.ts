@@ -48,7 +48,11 @@ test("completing a recurring task moves it on and never duplicates occurrences",
   // The completed occurrence leaves the open-task calendar; the series continues from the 10th.
   await expect(events).toHaveCount(4);
   await expect
-    .poll(async () => (await signedIn.tasks()).map((t) => [t.isCompleted, t.isRepeating]).sort())
+    .poll(async () =>
+      (await signedIn.tasks())
+        .map((t) => [t.isCompleted, t.isRepeating])
+        .sort(),
+    )
     .toEqual([
       [false, true],
       [true, false],

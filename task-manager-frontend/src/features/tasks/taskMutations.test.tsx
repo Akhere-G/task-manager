@@ -14,10 +14,17 @@ let tasksOnServer: Task[];
 
 beforeEach(() => {
   tasksOnServer = [];
-  mock.onGet("/tasks").reply(() => [
-    200,
-    { tasks: tasksOnServer, totalTasks: tasksOnServer.length, totalPages: 1, currentPage: 1 },
-  ]);
+  mock
+    .onGet("/tasks")
+    .reply(() => [
+      200,
+      {
+        tasks: tasksOnServer,
+        totalTasks: tasksOnServer.length,
+        totalPages: 1,
+        currentPage: 1,
+      },
+    ]);
   mock.onGet("/stats/dashboard").reply(200, {});
 });
 
@@ -42,7 +49,8 @@ function CachedScreens() {
   );
 }
 
-const gets = (url: string) => mock.history.get.filter((r) => r.url === url).length;
+const gets = (url: string) =>
+  mock.history.get.filter((r) => r.url === url).length;
 const patches = () => mock.history.patch;
 
 function renderCard(task: Task) {
@@ -65,7 +73,9 @@ describe("completing a task", () => {
     renderCard(task);
     expect(await screen.findByText("Write report (open)")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Mark task as completed" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Mark task as completed" }),
+    );
 
     expect(await screen.findByText("Write report (done)")).toBeInTheDocument();
     expect(patches()).toHaveLength(1);
@@ -81,10 +91,14 @@ describe("completing a task", () => {
     mock.onPatch("/tasks/1").reply(200, task);
     renderCard(task);
 
-    await userEvent.click(screen.getByRole("button", { name: "Mark task as completed" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Mark task as completed" }),
+    );
 
     await waitFor(() => expect(patches()).toHaveLength(1));
-    expect(JSON.parse(patches()[0].data).expectedStartAt).toBe("2026-03-02 09:00:00");
+    expect(JSON.parse(patches()[0].data).expectedStartAt).toBe(
+      "2026-03-02 09:00:00",
+    );
   });
 
   it("completes the series, not the ghost id, and sends no stale-occurrence check", async () => {
@@ -92,7 +106,9 @@ describe("completing a task", () => {
     mock.onPatch("/tasks/1").reply(200, {});
     renderCard(ghost);
 
-    await userEvent.click(screen.getByRole("button", { name: "Mark task as completed" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Mark task as completed" }),
+    );
 
     await waitFor(() => expect(patches()).toHaveLength(1));
     expect(patches()[0].url).toBe("/tasks/1");
@@ -107,7 +123,9 @@ describe("completing a task", () => {
       return [200, {}];
     });
     renderCard(makeTask());
-    const button = screen.getByRole("button", { name: "Mark task as completed" });
+    const button = screen.getByRole("button", {
+      name: "Mark task as completed",
+    });
 
     await userEvent.click(button);
     await userEvent.click(button);
@@ -122,17 +140,23 @@ describe("completing a task", () => {
     renderCard(makeTask());
     expect(await screen.findByText("Write report (open)")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Mark task as completed" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Mark task as completed" }),
+    );
 
     await waitFor(() => expect(gets("/tasks")).toBe(2));
     expect(screen.getByText("Write report (open)")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Mark task as completed" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Mark task as completed" }),
+    ).toBeEnabled();
   });
 
   it("can be tried again after a failure", async () => {
     mock.onPatch("/tasks/1").replyOnce(500).onPatch("/tasks/1").reply(200, {});
     renderCard(makeTask());
-    const button = screen.getByRole("button", { name: "Mark task as completed" });
+    const button = screen.getByRole("button", {
+      name: "Mark task as completed",
+    });
 
     await userEvent.click(button);
     await waitFor(() => expect(patches()).toHaveLength(1));
@@ -147,7 +171,9 @@ describe("skipping a recurring task", () => {
     mock.onPatch("/tasks/1").reply(200, {});
     renderCard(makeTask({ isRepeating: true, repeatBy: "weekly" }));
 
-    await userEvent.click(screen.getByRole("button", { name: "Skip task: Write report" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Skip task: Write report" }),
+    );
 
     await waitFor(() => expect(patches()).toHaveLength(1));
     expect(JSON.parse(patches()[0].data)).toEqual({ skipOccurrence: true });
@@ -156,7 +182,9 @@ describe("skipping a recurring task", () => {
 
   it("offers no skip button for a one-off task", () => {
     renderCard(makeTask());
-    expect(screen.queryByRole("button", { name: /Skip task/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Skip task/ }),
+    ).not.toBeInTheDocument();
   });
 
   // Known bug: skip uses the ghost's own id, which the API cannot find. Expect the
@@ -174,18 +202,30 @@ describe("skipping a recurring task", () => {
 
 describe("card actions", () => {
   it("hides start and skip once a task is completed", () => {
-    renderCard(makeTask({ isCompleted: true, isRepeating: true, repeatBy: "daily" }));
+    renderCard(
+      makeTask({ isCompleted: true, isRepeating: true, repeatBy: "daily" }),
+    );
 
-    expect(screen.getByRole("button", { name: "Mark task as pending" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Start task/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Skip task/ })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Mark task as pending" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Start task/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Skip task/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("reopens a completed task with a null completion time", async () => {
     mock.onPatch("/tasks/1").reply(200, {});
-    renderCard(makeTask({ isCompleted: true, completedAt: "2026-03-02T09:30:00Z" }));
+    renderCard(
+      makeTask({ isCompleted: true, completedAt: "2026-03-02T09:30:00Z" }),
+    );
 
-    await userEvent.click(screen.getByRole("button", { name: "Mark task as pending" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Mark task as pending" }),
+    );
 
     await waitFor(() => expect(patches()).toHaveLength(1));
     const body = JSON.parse(patches()[0].data);

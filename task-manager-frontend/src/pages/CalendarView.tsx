@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 const defaultFilters = {
   search: "",
   project: "",
+  label: "",
   priority: "",
   duration: "",
   isCompleted: "false",
