@@ -23,7 +23,6 @@ def task_body(**overrides: Any) -> dict[str, Any]:
     return {
         "title": "Write report",
         "description": "Quarterly numbers",
-        "category": "work",
         "startAt": "2026-03-02 10:00:00",
         "endAt": "2026-03-02 11:00:00",
         **overrides,

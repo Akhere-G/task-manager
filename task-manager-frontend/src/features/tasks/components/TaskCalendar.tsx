@@ -41,6 +41,7 @@ import {
   mapTasksToCalendarEvents,
 } from "../utils";
 import MobileTaskSection from "./MobileTaskSelection";
+import useProjects from "../../projects/hooks/useProjects";
 
 const locales = { "en-GB": enGB };
 const localizer = dateFnsLocalizer({
@@ -68,6 +69,7 @@ export default function TaskCalendar({
   const { mutateAsync: rescheduleTask } = useRescheduleTask();
   const { openPopup } = useTaskContext();
   const { darkMode } = useTheme();
+  const { data: projects = [] } = useProjects();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
@@ -244,7 +246,7 @@ export default function TaskCalendar({
           }}
           eventPropGetter={(event: Event) => ({
             className: getEventClassName(event, isMobile, view),
-            style: getEventStyle(event, isMobile, view, darkMode),
+            style: getEventStyle(event, isMobile, view, darkMode, projects),
           })}
         />
       </div>

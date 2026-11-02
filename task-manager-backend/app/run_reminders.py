@@ -8,8 +8,9 @@ from pywebpush import WebPushException, webpush
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.constants import INBOX_NAME
 from app.database import SessionLocal
-from app.models import Notification, NotificationSubscription, Task
+from app.models import Notification, NotificationSubscription, Project, Task
 from app.utils.dates import utc_now
 
 load_dotenv()
@@ -23,10 +24,17 @@ REMINDER_WINDOW = timedelta(minutes=30)
 PUSH_TIMEOUT_SECONDS = 10
 
 
-def reminder_body(task: Task) -> str:
+def reminder_body(task: Task, project_name: str) -> str:
     if task.description:
-        return f"{task.category} -- {task.description}"
-    return task.category
+        return f"{project_name} -- {task.description}"
+    return project_name
+
+
+def _project_name(session: Session, task: Task) -> str:
+    if task.project_id is None:
+        return INBOX_NAME
+    project = session.get(Project, task.project_id)
+    return project.name if project else INBOX_NAME
 
 
 def send_push_to_user_subscription(
@@ -97,7 +105,7 @@ def check_task_reminders() -> None:
                     session=session,
                     user_id=task.user_id,
                     title=f"{task.title} starting in {minutes} minute{suffix}!",
-                    message=reminder_body(task),
+                    message=reminder_body(task, _project_name(session, task)),
                 )
                 task.reminded_for_start_at = task.start_at
                 session.commit()

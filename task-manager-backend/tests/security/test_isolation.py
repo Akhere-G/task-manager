@@ -117,3 +117,27 @@ def test_user_cannot_see_or_restore_another_users_trash(
     assert b.get("/api/tasks/trash").get_json()["tasks"] == []
     assert b.post(f"/api/tasks/{task_id}/restore").status_code == 404
     assert len(a.get("/api/tasks/trash").get_json()["tasks"]) == 1
+
+
+def test_user_cannot_use_or_change_another_users_project(
+    make_user: Callable[..., int],
+    login: Callable[..., FlaskClient],
+    task_payload: Callable[..., dict[str, Any]],
+) -> None:
+    make_user("a@example.com")
+    make_user("b@example.com")
+    a = login("a@example.com")
+    b = login("b@example.com")
+    project_id = a.post("/api/projects", json={"name": "Secret"}).get_json()["id"]
+
+    assert b.get("/api/projects").get_json()["projects"] == []
+    assert b.patch(f"/api/projects/{project_id}", json={"name": "X"}).status_code == 404
+    assert b.delete(f"/api/projects/{project_id}").status_code == 404
+    nested = b.post("/api/projects", json={"name": "Mine", "parentId": project_id})
+    assert nested.status_code == 400
+    assigned = b.post("/api/tasks", json=task_payload(projectId=project_id))
+    assert assigned.status_code == 400
+    own = create_task(b, task_payload())
+    moved = b.patch(f"/api/tasks/{own}", json={"projectId": project_id})
+    assert moved.status_code == 400
+    assert a.get("/api/projects").get_json()["projects"][0]["name"] == "Secret"

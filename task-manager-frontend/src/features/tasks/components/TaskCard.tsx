@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ProjectLabel from "../../projects/ProjectLabel";
 import type { Task } from "../types";
 import {
   Trash2,
@@ -56,7 +57,7 @@ function TaskCard({
     seriesId,
     isGhost,
     title,
-    category,
+    projectId,
     priority,
     description,
     isCompleted,
@@ -128,7 +129,7 @@ function TaskCard({
         <div className="flex justify-between items-start">
           <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-brand">
             <PriorityFlag priority={priority} size={12} />
-            {category?.replace("-", " ")}
+            <ProjectLabel projectId={projectId} />
           </span>
           {isOverdue && <AlertCircle className="mr-1.5 w-4 h-4 text-failure" />}
         </div>

@@ -9,7 +9,7 @@ export const uniqueEmail = (label = "user") =>
 
 export interface TaskInput {
   title: string;
-  category?: string;
+  projectId?: number | null;
   priority?: number;
   startAt: string;
   endAt: string;
@@ -21,6 +21,7 @@ export interface StoredTask {
   id: number;
   title: string;
   priority: number;
+  projectId: number | null;
   isCompleted: boolean;
   isRepeating: boolean;
   startAt: string;
@@ -55,10 +56,28 @@ export class Api {
   async createTask(task: TaskInput): Promise<number> {
     const response = await this.request.post(`${API}/tasks`, {
       headers: this.headers,
-      data: { category: "work", ...task },
+      data: task,
     });
     expect(response.status(), await response.text()).toBe(201);
     return (await response.json()).id;
+  }
+
+  async createProject(name: string, parentId: number | null = null): Promise<number> {
+    const response = await this.request.post(`${API}/projects`, {
+      headers: this.headers,
+      data: { name, parentId },
+    });
+    expect(response.status(), await response.text()).toBe(201);
+    return (await response.json()).id;
+  }
+
+  async projectIdByName(name: string): Promise<number> {
+    const response = await this.request.get(`${API}/projects`, { headers: this.headers });
+    expect(response.status()).toBe(200);
+    const projects: { id: number; name: string }[] = (await response.json()).projects;
+    const project = projects.find((p) => p.name === name);
+    expect(project, `project ${name}`).toBeDefined();
+    return project?.id ?? 0;
   }
 
   async tasks(): Promise<StoredTask[]> {

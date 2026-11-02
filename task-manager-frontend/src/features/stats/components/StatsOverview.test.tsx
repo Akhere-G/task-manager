@@ -17,13 +17,13 @@ function stats(overrides = {}) {
       { status: "Overdue", count: 1 },
     ],
     timeSpent: [
-      { category: "work", timeSpent: 150 },
-      { category: "home", timeSpent: 100 },
+      { project: "work", timeSpent: 150 },
+      { project: "home", timeSpent: 100 },
     ],
     productivity: days([0, 2, 0, 1, 1, 3, 0, 2, 1, 4]),
-    categoryVolume: [
-      { category: "life-admin", pending: 2, overdue: 3, completed: 0, total: 5 },
-      { category: "work", pending: 4, overdue: 0, completed: 3, total: 7 },
+    projectVolume: [
+      { project: "life-admin", pending: 2, overdue: 3, completed: 0, total: 5 },
+      { project: "work", pending: 4, overdue: 0, completed: 3, total: 7 },
     ],
     ...overrides,
   };
@@ -50,7 +50,7 @@ describe("StatsOverview", () => {
   it("shows zeros for a user with no tasks yet", async () => {
     mock.onGet("/stats/dashboard").reply(
       200,
-      stats({ backlogHealth: [], timeSpent: [], productivity: days([0, 0, 0]), categoryVolume: [] }),
+      stats({ backlogHealth: [], timeSpent: [], productivity: days([0, 0, 0]), projectVolume: [] }),
     );
     renderWithProviders(<StatsOverview />);
 

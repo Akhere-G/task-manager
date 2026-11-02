@@ -24,6 +24,8 @@ class Task(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(Text)
+    # Legacy: projects replaced categories. The column stays so the projects
+    # migration can be rolled back; nothing reads or writes it.
     category: Mapped[str] = mapped_column(
         String(50), server_default="General", nullable=True
     )
@@ -47,6 +49,9 @@ class Task(Base):
     repeat_timezone: Mapped[str | None] = mapped_column(String(64))
     series_id: Mapped[int | None]
     reminded_for_start_at: Mapped[datetime | None] = mapped_column(DateTime)
+    project_id: Mapped[int | None] = mapped_column(
+        ForeignKey("projects.id", ondelete="SET NULL")
+    )
     is_deleted: Mapped[bool] = mapped_column(default=False, server_default="0")
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
@@ -55,6 +60,7 @@ class Task(Base):
         Index("idx_tasks_search", "title", "description", mysql_prefix="FULLTEXT"),
         Index("idx_tasks_user_end_at", "user_id", "end_at"),
         Index("idx_tasks_user_completed", "user_id", "is_completed", "completed_at"),
+        Index("idx_tasks_user_project", "user_id", "project_id"),
         Index("idx_tasks_user_deleted", "user_id", "is_deleted", "deleted_at"),
         CheckConstraint("priority BETWEEN 1 AND 4", name="ck_tasks_priority"),
     )

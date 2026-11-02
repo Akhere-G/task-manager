@@ -9,6 +9,7 @@ from app.database import db
 from app.exceptions import InvalidTaskTimes, TaskConflict, TaskNotFound
 from app.models import Task
 from app.schemas.task_schema import TaskSchema
+from app.services.project_service import ensure_projects_belong_to
 from app.services.task_query import TaskQuery
 from app.utils.dates import get_zone, parse_iso, utc_now
 from app.utils.recurrence import (
@@ -146,6 +147,7 @@ def _purge_expired_trash(user_id: int) -> None:
 
 
 def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
+    ensure_projects_belong_to(user_id, (item.get("project_id") for item in items))
     _purge_expired_trash(user_id)
     tasks = [Task(**item, user_id=user_id) for item in items]
     for task in tasks:
@@ -198,6 +200,7 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task = get_task(user_id, task_id, lock=True)
     before = snapshot(task)
 
+    ensure_projects_belong_to(user_id, [data.get("project_id")])
     _check_times(task, data)
     _check_not_already_completed(task, data)
 

@@ -21,7 +21,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     id: 1,
     title: "Write report",
     description: null,
-    category: "work",
+    projectId: null,
     priority: 4,
     isCompleted: false,
     startAt: "2026-03-02T09:00:00Z",

@@ -38,7 +38,6 @@ def test_decompose_rejects_oversized_or_invalid_input(
         {"title": ""},
         {"title": "x" * 256},
         {"title": "Plan", "description": "x" * 2001},
-        {"title": "Plan", "category": "not-a-category"},
     ):
         assert session.post("/api/ai/decompose", json=body).status_code == 400
     fake_ai[1].assert_not_called()
@@ -50,9 +49,7 @@ def test_valid_requests_reach_the_provider(session: FlaskClient) -> None:
         == 200
     )
     assert (
-        session.post(
-            "/api/ai/decompose", json={"title": "Plan trip", "category": "social"}
-        ).status_code
+        session.post("/api/ai/decompose", json={"title": "Plan trip"}).status_code
         == 200
     )
 
