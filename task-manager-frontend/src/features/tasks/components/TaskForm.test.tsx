@@ -4,10 +4,19 @@ import { AxiosError, type AxiosResponse } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeTask, renderWithProviders } from "../../../test/render";
 import TaskForm from "./TaskForm";
+import { mockApi } from "../../../test/api";
+
+const mock = mockApi();
+const projects = [
+  { id: 1, name: "Work", colour: "#6366f1", parentId: null, position: 0 },
+  { id: 2, name: "Reports", colour: "#0ea5e9", parentId: 1, position: 0 },
+  { id: 3, name: "Home", colour: "#8b5cf6", parentId: null, position: 1 },
+];
 
 const submit = vi.fn();
 
 beforeEach(() => {
+  mock.onGet("/projects").reply(200, { projects });
   submit.mockReset().mockResolvedValue(undefined);
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -21,7 +30,7 @@ function badRequest(status: number, data: unknown) {
 
 async function fillValidTask() {
   await userEvent.type(screen.getByLabelText("Title"), "Write report");
-  await userEvent.selectOptions(screen.getByLabelText("Category"), "work");
+  await userEvent.selectOptions(await screen.findByLabelText("Project"), "1");
   fireEvent.change(screen.getByLabelText("Start At"), { target: { value: "2026-03-02T09:00" } });
   fireEvent.change(screen.getByLabelText("End At"), { target: { value: "2026-03-02T10:00" } });
 }
@@ -39,7 +48,7 @@ describe("TaskForm", () => {
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
     expect(submit.mock.calls[0][0]).toMatchObject({
       title: "Write report",
-      category: "work",
+      projectId: 1,
       description: "Quarterly numbers",
       startAt: "2026-03-02T09:00",
       endAt: "2026-03-02T10:00",
@@ -167,14 +176,15 @@ describe("TaskForm", () => {
     expect(screen.queryByText("Title is mandatory.")).not.toBeInTheDocument();
   });
 
-  it("pre-fills an existing task for editing", () => {
-    const task = makeTask({ title: "Existing", description: "Notes", category: "home" });
+  it("pre-fills an existing task for editing", async () => {
+    const task = makeTask({ title: "Existing", description: "Notes", projectId: 3 });
     renderWithProviders(
       <TaskForm submitAction={submit} initialData={task} confirmButtonText="Save" />,
     );
 
     expect(screen.getByLabelText("Title")).toHaveValue("Existing");
-    expect(screen.getByLabelText("Category")).toHaveValue("home");
+    await screen.findByRole("option", { name: "Home" });
+    expect(screen.getByLabelText("Project")).toHaveValue("3");
     expect(screen.getByLabelText("Description")).toHaveValue("Notes");
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
@@ -197,5 +207,21 @@ describe("TaskForm", () => {
 
     expect(await screen.findByText("Title is mandatory.")).toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("lists sub-projects indented and sends no project for the Inbox", async () => {
+    renderWithProviders(<TaskForm submitAction={submit} />);
+    await screen.findByRole("option", { name: /Reports/ });
+    const names = screen
+      .getAllByRole("option")
+      .map((option) => option.textContent?.replace(/\u00a0/g, "_"));
+    expect(names).toEqual(expect.arrayContaining(["Inbox", "Work", "__Reports", "Home"]));
+
+    await fillValidTask();
+    await userEvent.selectOptions(screen.getByLabelText("Project"), "");
+    await userEvent.click(addButton());
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0][0].projectId).toBeNull();
   });
 });

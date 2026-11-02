@@ -7,6 +7,9 @@ import useCreateAllTasks from "../hooks/useCreateAllTasks";
 import { trackEvent } from "../../../services/analytics";
 import { parseRepeatDays, parseRepeatInterval } from "../recurrence";
 import { parsePriority } from "../utils";
+import useProjects from "../../projects/hooks/useProjects";
+import { resolveProjectIds } from "../../projects/importProjects";
+import { useQueryClient } from "@tanstack/react-query";
 
 function getDescription(task: Record<string, string>) {
   const rawDescription = task.Description || task.description;
@@ -18,6 +21,8 @@ export default function BulkAddForm() {
 
   const { mutateAsync: createAllTasks } = useCreateAllTasks();
   const navigate = useNavigate();
+  const { data: projects = [] } = useProjects();
+  const queryClient = useQueryClient();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -26,7 +31,7 @@ export default function BulkAddForm() {
   const downloadTemplate = (withIsCompleted: boolean = false) => {
     const headers = [
       "Title",
-      "Category",
+      "Project",
       "Description",
       "Start At",
       "End At",
@@ -39,7 +44,7 @@ export default function BulkAddForm() {
     const sampleData = [
       [
         "Go gym",
-        "health",
+        "Health",
         "Leg day",
         "2026-04-01 18:00",
         "2026-04-01 20:00",
@@ -51,7 +56,7 @@ export default function BulkAddForm() {
       ],
       [
         "Prepare Report",
-        "work",
+        "Work / Reports",
         "Weekly sync prep",
         "2026-03-02 10:00",
         "2026-03-02 14:00",
@@ -105,9 +110,13 @@ export default function BulkAddForm() {
         const newTasks = rawTasks
           .map((task) => ({
             title: (task.Title || task.title || "").trim(),
-            category: (task.Category || task.category || "general")
-              .trim()
-              .toLowerCase(),
+            projectName: (
+              task.Project ||
+              task.project ||
+              task.Category ||
+              task.category ||
+              ""
+            ).trim(),
             priority: parsePriority(task.Priority || task.priority),
             description: getDescription(task),
             startAt:
@@ -220,7 +229,17 @@ export default function BulkAddForm() {
         }
 
         try {
-          await createAllTasks(newTasks);
+          const projectIds = await resolveProjectIds(
+            newTasks.map((task) => task.projectName),
+            projects,
+          );
+          await queryClient.invalidateQueries({ queryKey: ["projects"] });
+          await createAllTasks(
+            newTasks.map(({ projectName, ...task }) => ({
+              ...task,
+              projectId: projectIds.get(projectName) ?? null,
+            })),
+          );
           trackEvent("tasks_imported_csv", { row_count: newTasks.length });
           trackEvent("task_created", { source: "csv", count: newTasks.length });
           navigate(-1);

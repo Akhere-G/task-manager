@@ -19,6 +19,7 @@ from app.routes.ai_routes import ai_bp
 from app.routes.auth_routes import auth_bp
 from app.routes.mail_routes import mail_bp
 from app.routes.notifications import notification_bp
+from app.routes.project_routes import project_bp
 from app.routes.stats_routes import stats_bp
 from app.routes.task_routes import task_bp
 
@@ -109,6 +110,7 @@ def create_app() -> Flask:
         app.register_blueprint(ai_bp)
         app.register_blueprint(mail_bp)
         app.register_blueprint(notification_bp)
+        app.register_blueprint(project_bp)
 
         @app.route("/health")
         @limiter.exempt

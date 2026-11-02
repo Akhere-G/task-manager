@@ -14,17 +14,18 @@ import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { statusColors } from "../constants";
 import useGetStats from "../hooks/useGetStats";
-import { categoryColours } from "../../tasks/constants";
+import useProjectColours from "../../projects/hooks/useProjectColours";
 import ChartToolTip from "./ChartToolTip";
-import type { CategoryVolumeData } from "../api";
+import type { ProjectVolumeData } from "../api";
 
-export default function CategoryVolumeChart() {
+export default function StatusByProjectChart() {
+  const colourFor = useProjectColours();
   const breakpoint = useBreakpoint();
   const {
-    data: categoryVolume,
+    data: projectVolume,
     isLoading,
     isError,
-  } = useGetStats<CategoryVolumeData[]>((data) => data.categoryVolume);
+  } = useGetStats<ProjectVolumeData[]>((data) => data.projectVolume);
 
   const [activeSeries, setActiveSeries] = useState<Record<string, boolean>>({
     completed: true,
@@ -41,13 +42,13 @@ export default function CategoryVolumeChart() {
   };
 
   const getDynamicMax = () => {
-    if (!categoryVolume) return 0;
+    if (!projectVolume) return 0;
     const maxValue = Math.max(
-      ...categoryVolume.map((category) => {
-        const completed = activeSeries.completed ? category.completed : 0;
-        const overdue = activeSeries.overdue ? category.overdue : 0;
-        const pending = activeSeries.pending ? category.pending : 0;
-        const total = activeSeries.total ? category.total : 0;
+      ...projectVolume.map((volume) => {
+        const completed = activeSeries.completed ? volume.completed : 0;
+        const overdue = activeSeries.overdue ? volume.overdue : 0;
+        const pending = activeSeries.pending ? volume.pending : 0;
+        const total = activeSeries.total ? volume.total : 0;
         return Math.max(completed, overdue, pending, total);
       }),
     );
@@ -65,14 +66,14 @@ export default function CategoryVolumeChart() {
       </div>
     );
   if (isError) return <ErrorState error="Could not load data" />;
-  if (!categoryVolume || categoryVolume.length === 0) {
+  if (!projectVolume || projectVolume.length === 0) {
     return <EmptyState searchMessage="No tasks found." />;
   }
 
   return (
     <ResponsiveContainer className="pb-2" width="100%" height="100%">
       <RadarChart
-        data={categoryVolume}
+        data={projectVolume}
         margin={{ top: -20, right: 0, left: 0, bottom: -10 }}
       >
         <PolarGrid stroke="var(--color-surface-muted)" />
@@ -83,7 +84,7 @@ export default function CategoryVolumeChart() {
           allowDataOverflow
         />
         <PolarAngleAxis
-          dataKey="category"
+          dataKey="project"
           tick={{ fill: "var(--color-text-main)", fontSize: isMobile ? 9 : 12 }}
           tickFormatter={(value) => {
             const formatted = value.replaceAll("-", " ");
@@ -140,7 +141,7 @@ export default function CategoryVolumeChart() {
                 <ChartToolTip
                   title={{
                     name: label.charAt(0).toUpperCase() + label.slice(1),
-                    fill: categoryColours[label || ""],
+                    fill: colourFor(String(label)),
                   }}
                   series={payload
                     .filter((entry) => activeSeries[entry.name.toLowerCase()])

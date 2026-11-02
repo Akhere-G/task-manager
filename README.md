@@ -16,7 +16,7 @@ A high-performance task engine designed to turn raw productivity data into actio
 * **Pomodoro Timer:** Boost focus using timed work intervals. When a session finishes you can mark the task complete straight away.
 * **Performance Summary:** Monitor progress with a year-long activity map, tracking your overall 'Backlog Health' and daily productivity metrics.
 * **Planning & Deadlines:** Visualise the week ahead to review upcoming deadlines. Dedicated charts highlight how close your due dates are and flag overdue items.
-* **Workload Insights:** Understand exactly where your time goes with detailed breakdowns of time spent on different categories (e.g., work, health, or hobbies) over a rolling seven-day window.
+* **Workload Insights:** Understand exactly where your time goes with detailed breakdowns of time spent on different projects (e.g., work, health, or hobbies) over a rolling seven-day window.
 
 ---
 
@@ -45,7 +45,7 @@ The user interface operates as a highly responsive, single-page application (SPA
 
 ### AI features and data
 
-The Daily Brief, AI quick-add and task breakdown send task titles, descriptions and categories to the configured AI providers (Google Gemini, with Groq as a fallback). Nothing is sent unless you use those features.
+The Daily Brief, AI quick-add and task breakdown send task titles, descriptions and project names to the configured AI providers (Google Gemini, with Groq as a fallback). Nothing is sent unless you use those features.
 
 ### Product Analytics (PostHog)
 

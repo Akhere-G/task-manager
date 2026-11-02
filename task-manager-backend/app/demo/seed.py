@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
 from werkzeug.security import generate_password_hash
 
 from app.constants import DEFAULT_PRIORITY
@@ -21,6 +22,7 @@ from app.models import (
     Notification,
     NotificationSubscription,
     PasswordReset,
+    Project,
     RefreshToken,
     Task,
     User,
@@ -36,6 +38,7 @@ CLEARED_MODELS = (
     DailyBrief,
     PasswordReset,
     Task,
+    Project,
 )
 
 
@@ -133,7 +136,7 @@ def build_history(
 
 def build_series(
     fixture: dict[str, Any], now: datetime
-) -> Iterator[tuple[Task, list[Task]]]:
+) -> Iterator[tuple[Task, list[Task], str]]:
     tz_name = fixture["timezone"]
     tz = ZoneInfo(tz_name)
     rng = random.Random(fixture["seed"])
@@ -144,7 +147,7 @@ def build_series(
 
         start = resolve_time(item["start"], now, tz)
         length = timedelta(minutes=item["mins"])
-        common = {k: item.get(k) for k in ("title", "description", "category")}
+        common = {k: item.get(k) for k in ("title", "description")}
         common["priority"] = item.get("priority", DEFAULT_PRIORITY)
         history = (
             build_history(item, start, length, common, now, tz, rng)
@@ -165,7 +168,23 @@ def build_series(
             is_completed=bool(done),
             **repeat_columns(item.get("repeat"), start, tz_name, now),
         )
-        yield task, history
+        yield task, history, item["category"]
+
+
+def create_projects(
+    session: Session, user_id: int, categories: set[str]
+) -> dict[str, int]:
+    projects = {}
+    for position, category in enumerate(sorted(categories)):
+        project = Project(
+            user_id=user_id,
+            name=category.replace("-", " ").capitalize(),
+            position=position,
+        )
+        session.add(project)
+        session.flush()
+        projects[category] = project.id
+    return projects
 
 
 def reset_demo_account(now: datetime | None = None) -> int:
@@ -202,14 +221,18 @@ def reset_demo_account(now: datetime | None = None) -> int:
             )
         )
 
+        projects = create_projects(session, user.id, {item[2] for item in series})
+
         count = 0
-        for task, history in series:
+        for task, history, category in series:
             task.user_id = user.id
+            task.project_id = projects[category]
             session.add(task)
             session.flush()
             task.series_id = task.id
             for past in history:
                 past.user_id, past.series_id = user.id, task.id
+                past.project_id = projects[category]
             session.add_all(history)
             count += 1 + len(history)
 

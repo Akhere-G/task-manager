@@ -85,6 +85,8 @@ routes or services.
 | clauses         | A list of SQLAlchemy `where` conditions.                                      |
 | trash           | Soft-deleted tasks (`is_deleted`), kept for `TRASH_RETENTION_DAYS`.          |
 | restore         | Taking a task out of the trash.                                               |
+| project         | A user-made folder for tasks (`projects`), nestable to `MAX_PROJECT_DEPTH`.   |
+| inbox           | Tasks with no `project_id`.                                                   |
 | purge           | Hard-deleting a user's trash older than the retention when they create a task. |
 
 ## Commands

@@ -8,7 +8,7 @@ from flask import Flask
 
 import app.run_reminders as run_reminders
 from app.database import db
-from app.models import Notification, NotificationSubscription, Task
+from app.models import Notification, NotificationSubscription, Project, Task
 from app.utils.dates import utc_now
 
 
@@ -36,7 +36,6 @@ def add_task(app: Flask) -> Callable[..., int]:
             task = Task(
                 user_id=user_id,
                 title="Standup",
-                category="work",
                 start_at=start,
                 end_at=start + timedelta(hours=1),
                 **fields,
@@ -131,4 +130,23 @@ def test_message_has_no_none_when_task_has_no_description(
     run_reminders.check_task_reminders()
 
     with app.app_context():
-        assert db.session.query(Notification).one().message == "work"
+        assert db.session.query(Notification).one().message == "Inbox"
+
+
+def test_message_names_the_tasks_project(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+    push: mock.MagicMock,
+) -> None:
+    with app.app_context():
+        project = Project(user_id=user_with_subscription, name="Work")
+        db.session.add(project)
+        db.session.commit()
+        project_id = project.id
+    add_task(user_with_subscription, description="Weekly sync", project_id=project_id)
+
+    run_reminders.check_task_reminders()
+
+    with app.app_context():
+        assert db.session.query(Notification).one().message == "Work -- Weekly sync"

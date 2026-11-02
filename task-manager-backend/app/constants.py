@@ -1,16 +1,7 @@
-CATEGORIES = (
-    "work",
-    "home",
-    "chores",
-    "life-admin",
-    "health",
-    "self-care",
-    "social",
-    "hobbies",
-    "learning",
-    "finance",
-    "general",
-)
+MAX_PROJECT_DEPTH = 3
+MAX_PROJECT_NAME_LENGTH = 100
+DEFAULT_PROJECT_COLOUR = "#64748b"
+INBOX_NAME = "Inbox"
 
 PRIORITIES = (1, 2, 3, 4)
 DEFAULT_PRIORITY = 4

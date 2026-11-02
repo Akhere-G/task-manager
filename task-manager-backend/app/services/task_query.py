@@ -4,7 +4,7 @@ from datetime import datetime
 
 @dataclass(frozen=True)
 class TaskQuery:
-    category: str | None = None
+    project: int | None = None
     priority: tuple[int, ...] | None = None
     search: str | None = None
     duration: str | None = None

@@ -5,7 +5,7 @@ export interface ProductivityData {
   tasks: number;
 }
 export interface TimeSpentData {
-  category: string;
+  project: string;
   timeSpent: number;
 }
 
@@ -14,8 +14,8 @@ export interface BacklogHealthData {
   count: number;
 }
 
-export interface CategoryVolumeData {
-  category: string;
+export interface ProjectVolumeData {
+  project: string;
   completed: number;
   overdue: number;
   pending: number;
@@ -28,7 +28,7 @@ export interface OverdueDistributionData {
 }
 
 export interface DeadlineProximityData {
-  category: string;
+  project: string;
   score: number;
 }
 
@@ -45,7 +45,7 @@ export interface Turnaround {
 export interface EstimationAccuracy {
   id: number;
   title: string;
-  category: string;
+  project: string;
   estimatedAt: number;
   completedAt: number;
   varianceMinutes: number;
@@ -58,24 +58,14 @@ export interface WeekOverviewData {
 
 export interface DistributionTrendData {
   date: string;
-  chores: number;
-  finance: number;
-  general: number;
-  health: number;
-  hobbies: number;
-  home: number;
-  learning: number;
-  "life-adim": number;
-  "self-care": number;
-  social: number;
-  work: number;
+  counts: { project: string; count: number }[];
 }
 
 export interface StatsResult {
   productivity: ProductivityData[];
   timeSpent: TimeSpentData[];
   backlogHealth: BacklogHealthData[];
-  categoryVolume: CategoryVolumeData[];
+  projectVolume: ProjectVolumeData[];
   overdueDistribution: OverdueDistributionData[];
   deadlineProximity: DeadlineProximityData[];
   hourlyProductivity: HourlyProductivityData[];

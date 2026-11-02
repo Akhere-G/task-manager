@@ -4,7 +4,6 @@ from typing import Any
 from marshmallow import fields, pre_load, validate
 
 from app.constants import (
-    CATEGORIES,
     DEFAULT_PRIORITY,
     MAX_DECOMPOSE_DESCRIPTION_LENGTH,
     MAX_DECOMPOSE_TITLE_LENGTH,
@@ -53,15 +52,8 @@ class DecomposeRequestSchema(CamelSchema):
             error=f"Description must be {MAX_DECOMPOSE_DESCRIPTION_LENGTH} characters or fewer.",
         ),
     )
-    category = fields.String(
-        allow_none=True, validate=validate.OneOf(CATEGORIES, error="Invalid category.")
-    )
     start_at = fields.String(allow_none=True)
     end_at = fields.String(allow_none=True)
-
-    @pre_load
-    def blank_category(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
-        return {**data, "category": None} if data.get("category") == "" else data
 
 
 def _end_of_today() -> str:
@@ -106,7 +98,7 @@ class AiTaskSchema(CamelSchema):
 
     title = fields.String(required=True)
     description = fields.String(allow_none=True)
-    category = fields.String()
+    project = fields.String(allow_none=True)
     priority = fields.Raw()
     start_at = fields.String(load_default=_end_of_today)
     end_at = fields.String(load_default=_end_of_today)
@@ -121,10 +113,10 @@ class AiTaskSchema(CamelSchema):
         if not isinstance(data, dict):
             return data
         repaired = {**data, **_clean_recurrence(data)}
-        if repaired.get("category") not in CATEGORIES:
-            repaired["category"] = "general"
         if repaired.get("priority") not in PRIORITIES:
             repaired["priority"] = DEFAULT_PRIORITY
+        if not isinstance(repaired.get("project"), str):
+            repaired.pop("project", None)
         for key in ("startAt", "endAt"):
             if not repaired.get(key):
                 repaired.pop(key, None)

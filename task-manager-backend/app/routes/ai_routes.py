@@ -31,7 +31,7 @@ def get_daily_brief_route() -> ResponseReturnValue:
 @limiter.limit(ai_daily_limit, key_func=user_key, scope="ai-daily")
 def parse_task_route() -> ResponseReturnValue:
     data = ParseTaskRequestSchema().load(get_json_body())
-    return jsonify(parse_task_with_ai(data["text"]))
+    return jsonify(parse_task_with_ai(get_jwt_identity(), data["text"]))
 
 
 @ai_bp.route("/api/ai/decompose", methods=["POST"])
@@ -44,7 +44,6 @@ def decompose_task_route() -> ResponseReturnValue:
     tasks = decompose_task(
         data["title"],
         data.get("description") or "",
-        data.get("category") or "",
         data.get("start_at") or "",
         data.get("end_at") or "",
     )

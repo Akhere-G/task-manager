@@ -4,7 +4,7 @@ import useGetStats from "../hooks/useGetStats";
 export default function StatsOverview() {
   const { data, isLoading, isError } = useGetStats();
 
-  const { categoryVolume, backlogHealth, timeSpent, productivity } = data ?? {};
+  const { projectVolume, backlogHealth, timeSpent, productivity } = data ?? {};
   const stats = {
     completionRate: "0",
     timeInvested: "0",
@@ -17,7 +17,7 @@ export default function StatsOverview() {
     !isLoading &&
     backlogHealth &&
     productivity &&
-    categoryVolume &&
+    projectVolume &&
     timeSpent
   ) {
     const completed =
@@ -41,11 +41,11 @@ export default function StatsOverview() {
     const totalTasks = last7Days.reduce((acc, cur) => acc + cur.tasks, 0);
     stats.clearingSpeed = (totalTasks / 7).toFixed(1);
 
-    if (categoryVolume.length > 0) {
-      const top = categoryVolume.reduce((acc, cur) =>
+    if (projectVolume.length > 0) {
+      const top = projectVolume.reduce((acc, cur) =>
         acc.pending + acc.overdue > cur.pending + cur.overdue ? acc : cur,
       );
-      stats.weeklyFocus = top.category.replace(/[_-]/g, " ");
+      stats.weeklyFocus = top.project.replace(/[_-]/g, " ");
       stats.weeklyFocus =
         stats.weeklyFocus[0].toUpperCase() + stats.weeklyFocus.slice(1);
     }

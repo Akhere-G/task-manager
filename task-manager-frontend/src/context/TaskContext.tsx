@@ -3,7 +3,7 @@ import type { Task } from "../features/tasks/types";
 
 export interface TaskFilters {
   search: string;
-  category: string;
+  project: string;
   duration: string;
   isCompleted: string;
   dueDate: string;

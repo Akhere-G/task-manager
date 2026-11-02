@@ -10,11 +10,12 @@ import {
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import useGetStats from "../hooks/useGetStats";
 import { capitalise } from "../../../utils/formators";
-import { categoryColours } from "../../tasks/constants";
+import useProjectColours from "../../projects/hooks/useProjectColours";
 import ChartToolTip from "./ChartToolTip";
 import type { DeadlineProximityData } from "../api";
 
 export default function DeadlineProximityChart() {
+  const colourFor = useProjectColours();
   const {
     data: deadlineProximity,
     isLoading,
@@ -71,7 +72,7 @@ export default function DeadlineProximityChart() {
         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
         <XAxis
           type="category"
-          dataKey="category"
+          dataKey="project"
           tick={{ fill: "var(--color-text-sub)" }}
         />
         <YAxis type="number" dataKey="score" />
@@ -86,7 +87,7 @@ export default function DeadlineProximityChart() {
                 <ChartToolTip
                   title={{
                     name: capitalise(String(label)).replace("-", " "),
-                    fill: categoryColours[label || ""],
+                    fill: colourFor(String(label)),
                   }}
                   series={[
                     {

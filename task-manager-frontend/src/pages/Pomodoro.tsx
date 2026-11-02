@@ -9,6 +9,7 @@ import { formatDateRange, formatDateRelative } from "../features/tasks/utils";
 import { describeRecurrence } from "../features/tasks/recurrence";
 import useSetIsCompleted from "../features/tasks/hooks/useSetIsCompleted";
 import { trackEvent } from "../services/analytics";
+import ProjectLabel from "../features/projects/ProjectLabel";
 
 const POMODORO_DURATION = 25 * 60;
 
@@ -52,7 +53,7 @@ export default function Pomodoro() {
   const {
     id,
     title,
-    category,
+    projectId,
     description,
     isCompleted,
     startAt,
@@ -63,9 +64,6 @@ export default function Pomodoro() {
 
   if (isCompleted) return null;
   const isOverdue = !isCompleted && new Date(endAt) < new Date();
-
-  const formatStr = (str: string) =>
-    (str[0].toUpperCase() + str.slice(1)).replace("-", " ");
 
   const endDate = new Date(endAt);
   const startDate = new Date(startAt);
@@ -106,7 +104,7 @@ export default function Pomodoro() {
           </header>
           <div className="px-4 pb-4">
             <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
-              {formatStr(category)}
+              <ProjectLabel projectId={projectId} />
             </span>
             <p>{description}</p>
           </div>

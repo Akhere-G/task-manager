@@ -67,7 +67,7 @@ export default function AboutPage() {
       icon: <BarChart3 className="text-brand" size={28} />,
       title: "Workload Insights",
       description:
-        "Understand where your time goes. See a breakdown of time spent on different categories, like work, health, or hobbies, over the last seven days.",
+        "Understand where your time goes. See a breakdown of time spent on different projects, like work, health, or hobbies, over the last seven days.",
     },
   ];
 

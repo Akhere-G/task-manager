@@ -1,11 +1,11 @@
 export { default as ProductivityChart } from "./ProductivityChart";
 export { default as TimeSpentChart } from "./TimeSpentChart";
 export { default as BacklogHealthChart } from "./BacklogHealthChart";
-export { default as CategoryVolumeChart } from "./CategoryVolumeChart";
+export { default as ProjectVolumeChart } from "./ProjectVolumeChart";
 export { default as ChartCard } from "./ChartCard";
 export { default as ActivityHeatMap } from "./ActivityHeatMap";
 export { default as StatsOverview } from "./StatsOverview";
-export { default as StatusByCategoryChart } from "./StatusByCategoryChart";
+export { default as StatusByProjectChart } from "./StatusByProjectChart";
 export { default as OverdueDistributionChart } from "./OverdueDistributionChart";
 export { default as DeadlineProximityChart } from "./DeadlineProximityChart.tsx";
 export { default as HourlyProductivityChart } from "./HourlyProductivityChart.tsx";
