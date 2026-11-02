@@ -1,5 +1,5 @@
 import React from "react";
-import { Moon, Palette, Database, FolderTree } from "lucide-react";
+import { Moon, Palette, Database, FolderTree, Tags } from "lucide-react";
 import { useTheme } from "../features/users/ThemeContext";
 import { taskService } from "../features/tasks/api";
 import type { Task } from "../features/tasks/types";
@@ -9,6 +9,7 @@ import { formatRepeatDays } from "../features/tasks/recurrence";
 import useProjects from "../features/projects/hooks/useProjects";
 import { projectPath } from "../features/projects/utils";
 import ProjectSettings from "../features/projects/ProjectSettings";
+import LabelSettings from "../features/labels/LabelSettings";
 
 const EXPORT_PAGE_SIZE = 200;
 
@@ -181,6 +182,9 @@ export default function SettingsPage() {
         title="Projects"
       >
         <ProjectSettings />
+      </SettingsCard>
+      <SettingsCard icon={<Tags className="text-brand" />} title="Labels">
+        <LabelSettings />
       </SettingsCard>
       <SettingsCard icon={<Database className="text-brand" />} title="Data">
         <div>

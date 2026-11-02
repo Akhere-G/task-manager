@@ -7,6 +7,7 @@ export interface Task {
   title: string;
   description: string | null;
   projectId: number | null;
+  labelIds: number[];
   priority: Priority;
   isCompleted: boolean;
   startAt: string;
@@ -30,5 +31,11 @@ export interface TrashedTask extends Task {
 
 export type CreateTaskInput = Omit<
   Task,
-  "id" | "createdAt" | "isCompleted" | "completedAt" | "isGhost" | "seriesId"
->;
+  | "id"
+  | "createdAt"
+  | "isCompleted"
+  | "completedAt"
+  | "isGhost"
+  | "seriesId"
+  | "labelIds"
+> & { labelIds?: number[] };

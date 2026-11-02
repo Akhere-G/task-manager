@@ -4,6 +4,7 @@ import type { Task } from "../features/tasks/types";
 export interface TaskFilters {
   search: string;
   project: string;
+  label: string;
   duration: string;
   isCompleted: string;
   dueDate: string;

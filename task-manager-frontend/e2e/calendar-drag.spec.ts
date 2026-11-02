@@ -18,7 +18,8 @@ async function dragToNextDay(page: Page, event: Locator) {
   const columns = page.locator(".rbc-time-content .rbc-day-slot");
   const firstColumn = await columns.nth(0).boundingBox();
   const secondColumn = await columns.nth(1).boundingBox();
-  if (!from || !firstColumn || !secondColumn) throw new Error("Calendar is not laid out");
+  if (!from || !firstColumn || !secondColumn)
+    throw new Error("Calendar is not laid out");
 
   const x = from.x + from.width / 2;
   const y = from.y + 8;
@@ -45,7 +46,9 @@ test("dragging a saved repeating task to the next day moves it without skipping 
   await dragToNextDay(page, standup);
 
   await expect
-    .poll(async () => (await signedIn.tasks()).map((t) => [t.startAt, t.repeatDays]))
+    .poll(async () =>
+      (await signedIn.tasks()).map((t) => [t.startAt, t.repeatDays]),
+    )
     .toEqual([["2026-03-10T09:00:00Z", [1]]]);
 });
 
@@ -61,9 +64,13 @@ test("dragging a ghost moves the whole series to the new weekday", async ({
   await dragToNextDay(page, standup);
 
   await expect
-    .poll(async () => (await signedIn.tasks()).map((t) => [t.startAt, t.repeatDays]))
+    .poll(async () =>
+      (await signedIn.tasks()).map((t) => [t.startAt, t.repeatDays]),
+    )
     .toEqual([["2026-03-10T09:00:00Z", [1]]]);
   await page.reload();
   await expect(standup).toHaveCount(1);
-  await expect(page.locator(".rbc-day-slot").nth(1).locator(".rbc-event")).toHaveCount(1);
+  await expect(
+    page.locator(".rbc-day-slot").nth(1).locator(".rbc-event"),
+  ).toHaveCount(1);
 });
