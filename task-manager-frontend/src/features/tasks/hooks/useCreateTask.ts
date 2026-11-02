@@ -9,8 +9,8 @@ export default function useCreateTask() {
     mutationFn: async (task: CreateTaskInput) => {
       const formattedData = {
         ...task,
-        startAt: toFormattedUTCDate(task.startAt),
-        endAt: toFormattedUTCDate(task.endAt),
+        startAt: task.startAt ? toFormattedUTCDate(task.startAt) : null,
+        endAt: task.endAt ? toFormattedUTCDate(task.endAt) : null,
       };
       await taskService.create(formattedData);
     },

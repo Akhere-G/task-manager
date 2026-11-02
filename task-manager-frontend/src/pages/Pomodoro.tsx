@@ -12,6 +12,7 @@ import { trackEvent } from "../services/analytics";
 import ProjectLabel from "../features/projects/ProjectLabel";
 
 const POMODORO_DURATION = 25 * 60;
+const DEFAULT_FOCUS_MINUTES = 25;
 
 export default function Pomodoro() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -63,11 +64,12 @@ export default function Pomodoro() {
   } = task;
 
   if (isCompleted) return null;
-  const isOverdue = !isCompleted && new Date(endAt) < new Date();
+  const isOverdue = !isCompleted && !!endAt && new Date(endAt) < new Date();
 
-  const endDate = new Date(endAt);
-  const startDate = new Date(startAt);
-  const duration = (endDate.getTime() - startDate.getTime()) / 60000;
+  const duration =
+    startAt && endAt
+      ? (new Date(endAt).getTime() - new Date(startAt).getTime()) / 60000
+      : DEFAULT_FOCUS_MINUTES;
 
   const dateStr = formatDateRange(startAt, endAt);
 

@@ -18,11 +18,19 @@ function renderPomodoro(taskId = "1") {
   );
 }
 
-const finishEarly = () => screen.getByRole("button", { name: "Finished early" });
+const finishEarly = () =>
+  screen.getByRole("button", { name: "Finished early" });
 
 describe("Pomodoro page", () => {
   it("shows the task and a full 25 minute timer", async () => {
-    mock.onGet("/tasks/1").reply(200, makeTask({ title: "Deep work", startAt: "2026-03-02T09:00:00Z", endAt: "2026-03-02T11:00:00Z" }));
+    mock.onGet("/tasks/1").reply(
+      200,
+      makeTask({
+        title: "Deep work",
+        startAt: "2026-03-02T09:00:00Z",
+        endAt: "2026-03-02T11:00:00Z",
+      }),
+    );
     renderPomodoro();
 
     expect(await screen.findByText("Deep work")).toBeInTheDocument();
@@ -34,19 +42,30 @@ describe("Pomodoro page", () => {
     mock.onGet("/tasks/1").reply(200, makeTask());
     renderPomodoro();
 
-    await userEvent.click(await screen.findByRole("button", { name: "Play Timer" }));
-    expect(screen.getByRole("button", { name: "Pause Timer" })).toBeInTheDocument();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Play Timer" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Pause Timer" }),
+    ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Pause Timer" }));
-    expect(screen.getByRole("button", { name: "Play Timer" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Play Timer" }),
+    ).toBeInTheDocument();
   });
 
   it("counts the timer down while it is playing", async () => {
     mock.onGet("/tasks/1").reply(200, makeTask());
     renderPomodoro();
-    await userEvent.click(await screen.findByRole("button", { name: "Play Timer" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Play Timer" }),
+    );
 
-    await waitFor(() => expect(screen.queryByText("25:00")).not.toBeInTheDocument(), { timeout: 4000 });
+    await waitFor(
+      () => expect(screen.queryByText("25:00")).not.toBeInTheDocument(),
+      { timeout: 4000 },
+    );
 
     expect(screen.getByText(/^24:5\d$/)).toBeInTheDocument();
   });
@@ -58,7 +77,9 @@ describe("Pomodoro page", () => {
     await screen.findByText("Deep work");
 
     await userEvent.click(finishEarly());
-    expect(await screen.findByText("Complete task: Deep work?")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Complete task: Deep work?"),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Progress: 1 \/ 3 sessions/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
@@ -75,38 +96,52 @@ describe("Pomodoro page", () => {
     await screen.findByText("Deep work");
 
     await userEvent.click(finishEarly());
-    await userEvent.click(await screen.findByRole("button", { name: "Cancel" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Cancel" }),
+    );
 
-    expect(screen.queryByText("Complete task: Deep work?")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Complete task: Deep work?"),
+    ).not.toBeInTheDocument();
     expect(mock.history.patch).toHaveLength(0);
     expect(screen.getByText("Deep work")).toBeInTheDocument();
   });
 
   it("completes the series task, not a copy, for a repeating task", async () => {
-    mock.onGet("/tasks/1").reply(200, makeTask({ isRepeating: true, repeatBy: "daily" }));
+    mock
+      .onGet("/tasks/1")
+      .reply(200, makeTask({ isRepeating: true, repeatBy: "daily" }));
     mock.onPatch("/tasks/1").reply(200, {});
     renderPomodoro();
     await screen.findByText("Write report");
 
     await userEvent.click(finishEarly());
-    await userEvent.click(await screen.findByRole("button", { name: "Confirm" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Confirm" }),
+    );
 
     await waitFor(() => expect(mock.history.patch).toHaveLength(1));
-    expect(JSON.parse(mock.history.patch[0].data).expectedStartAt).toBe("2026-03-02 09:00:00");
+    expect(JSON.parse(mock.history.patch[0].data).expectedStartAt).toBe(
+      "2026-03-02 09:00:00",
+    );
   });
 
   it("says so when the task does not exist", async () => {
     mock.onGet("/tasks/99").reply(404, { error: "No task with that id" });
     renderPomodoro("99");
 
-    expect(await screen.findByText("This task doesn't exist")).toBeInTheDocument();
+    expect(
+      await screen.findByText("This task doesn't exist"),
+    ).toBeInTheDocument();
   });
 
   it("reports a load failure that is not a missing task", async () => {
     mock.onGet("/tasks/1").reply(500);
     renderPomodoro();
 
-    expect(await screen.findByText("Could not load details")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Could not load details"),
+    ).toBeInTheDocument();
   });
 
   it("goes back at once if the task is already completed", async () => {

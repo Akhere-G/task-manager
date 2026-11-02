@@ -14,8 +14,8 @@ export default function useCreateAllTasks() {
       const formattedTasks = tasks.map((task) => ({
         ...task,
 
-        startAt: toFormattedUTCDate(task.startAt),
-        endAt: toFormattedUTCDate(task.endAt),
+        startAt: task.startAt ? toFormattedUTCDate(task.startAt) : null,
+        endAt: task.endAt ? toFormattedUTCDate(task.endAt) : null,
         completedAt: task.completedAt
           ? toFormattedUTCDate(task.completedAt)
           : null,

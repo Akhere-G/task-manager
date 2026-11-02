@@ -48,6 +48,41 @@ async function fillValidTask() {
 const addButton = () => screen.getByRole("button", { name: "Add Task" });
 
 describe("TaskForm", () => {
+  it("sends no dates when the task has none", async () => {
+    renderWithProviders(<TaskForm submitAction={submit} />);
+
+    await userEvent.type(screen.getByLabelText("Title"), "Call the dentist");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Has a date" }));
+    expect(screen.queryByLabelText("Start At")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "Repeating?" }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(addButton());
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0][0]).toMatchObject({
+      title: "Call the dentist",
+      startAt: null,
+      endAt: null,
+      isRepeating: false,
+    });
+  });
+
+  it("opens an undated task without date fields", async () => {
+    renderWithProviders(
+      <TaskForm
+        submitAction={submit}
+        confirmButtonText="Save"
+        initialData={makeTask({ startAt: null, endAt: null })}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("checkbox", { name: "Has a date" }),
+    ).not.toBeChecked();
+    expect(screen.queryByLabelText("Start At")).not.toBeInTheDocument();
+  });
+
   it("submits the chosen labels", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
 
@@ -162,7 +197,7 @@ describe("TaskForm", () => {
     await fillValidTask();
     expect(screen.queryByLabelText("Repeat By")).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("checkbox"));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Repeating?" }));
     await userEvent.selectOptions(screen.getByLabelText("Repeat By"), "weekly");
     fireEvent.change(screen.getByLabelText("Repeat Until"), {
       target: { value: "2026-06-01" },
@@ -181,10 +216,10 @@ describe("TaskForm", () => {
   it("drops the repeat settings again when repeating is switched off", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
     await fillValidTask();
-    await userEvent.click(screen.getByRole("checkbox"));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Repeating?" }));
     await userEvent.selectOptions(screen.getByLabelText("Repeat By"), "daily");
 
-    await userEvent.click(screen.getByRole("checkbox"));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Repeating?" }));
     await userEvent.click(addButton());
 
     await waitFor(() => expect(submit).toHaveBeenCalled());

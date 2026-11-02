@@ -26,11 +26,9 @@ describe("LabelSettings", () => {
 
   it("shows the server's message when the name is taken", async () => {
     mock.onGet("/labels").reply(200, { labels: [urgent] });
-    mock
-      .onPost("/labels")
-      .reply(409, {
-        errors: { name: "You already have a label with that name." },
-      });
+    mock.onPost("/labels").reply(409, {
+      errors: { name: "You already have a label with that name." },
+    });
     renderWithProviders(<LabelSettings />);
     await screen.findByRole("button", { name: "Edit urgent" });
 

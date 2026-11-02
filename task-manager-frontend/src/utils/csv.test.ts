@@ -23,6 +23,11 @@ describe("csvCell", () => {
 
 describe("toCsv", () => {
   it("joins rows and quotes only where needed", () => {
-    expect(toCsv([["a", "b,c"], ["=x", 1]])).toBe('a,"b,c"\n\'=x,1');
+    expect(
+      toCsv([
+        ["a", "b,c"],
+        ["=x", 1],
+      ]),
+    ).toBe('a,"b,c"\n\'=x,1');
   });
 });

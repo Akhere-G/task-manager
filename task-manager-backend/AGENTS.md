@@ -88,6 +88,7 @@ routes or services.
 | project         | A user-made folder for tasks (`projects`), nestable to `MAX_PROJECT_DEPTH`.   |
 | label           | A user-made tag (`labels`); a task has up to `MAX_LABELS_PER_TASK`.           |
 | inbox           | Tasks with no `project_id`.                                                   |
+| undated task    | A task with no `start_at` and `end_at`; never repeating.                      |
 | purge           | Hard-deleting a user's trash older than the retention when they create a task. |
 
 ## Commands

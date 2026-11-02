@@ -23,10 +23,17 @@ vi.mock("./pages/Home", async () => {
   };
 });
 
-const user = { id: 1, firstName: "Test", lastName: "User", email: "user@example.com", isDemo: false };
+const user = {
+  id: 1,
+  firstName: "Test",
+  lastName: "User",
+  email: "user@example.com",
+  isDemo: false,
+};
 
 const TASKS = /^\/tasks(\?.*)?$/;
-const taskRequests = () => mock.history.get.filter((r) => r.url?.startsWith("/tasks"));
+const taskRequests = () =>
+  mock.history.get.filter((r) => r.url?.startsWith("/tasks"));
 
 const mock = mockApi();
 
@@ -46,7 +53,9 @@ beforeAll(async () => {
 }, 120_000);
 
 beforeEach(() => {
-  mock.onGet(TASKS).reply(200, { tasks: [], totalTasks: 0, totalPages: 1, currentPage: 1 });
+  mock
+    .onGet(TASKS)
+    .reply(200, { tasks: [], totalTasks: 0, totalPages: 1, currentPage: 1 });
   mock.onGet("/ai/daily-brief").reply(200, { brief: "" });
   mock.onGet("/stats/dashboard").reply(200, {});
 });
@@ -68,7 +77,9 @@ describe("route protection", () => {
 
       renderApp(path);
 
-      expect(await screen.findByRole("heading", { name: "Login" })).toBeInTheDocument();
+      expect(
+        await screen.findByRole("heading", { name: "Login" }),
+      ).toBeInTheDocument();
       expect(taskRequests()).toHaveLength(0);
     },
   );
@@ -78,8 +89,12 @@ describe("route protection", () => {
 
     renderApp("/login");
 
-    expect(await screen.findByRole("heading", { name: "Your tasks" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Login" })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Your tasks" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Login" }),
+    ).not.toBeInTheDocument();
   });
 
   it("lets anyone read the public pages", async () => {
@@ -87,8 +102,12 @@ describe("route protection", () => {
 
     renderApp("/about");
 
-    expect(await screen.findByRole("heading", { level: 1, name: /Visualise Your/ })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Login" })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: /Visualise Your/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Login" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows a not-found page for unknown routes", async () => {
@@ -114,18 +133,24 @@ describe("signing in", () => {
     renderApp("/login");
     await submitLogin("user@example.com", "Sturdy-pass9");
 
-    expect(await screen.findByRole("heading", { name: "Your tasks" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Your tasks" }),
+    ).toBeInTheDocument();
     await waitFor(() => expect(taskRequests().length).toBeGreaterThan(0));
     expect(JSON.parse(mock.history.post[0].data)).toEqual({
       email: "user@example.com",
       password: "Sturdy-pass9",
     });
-    expect(screen.queryByRole("heading", { name: "Login" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Login" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the server's message for wrong credentials and stays on the page", async () => {
     mock.onGet("/auth/me").reply(401);
-    mock.onPost("/auth/login").reply(400, { errors: { general: "Invalid credentials." } });
+    mock
+      .onPost("/auth/login")
+      .reply(400, { errors: { general: "Invalid credentials." } });
 
     renderApp("/login");
     await submitLogin("user@example.com", "wrong-pass1");
@@ -141,7 +166,9 @@ describe("signing in", () => {
     renderApp("/login");
     await submitLogin("user@example.com", "Sturdy-pass9");
 
-    expect(await screen.findByText("Sorry... Something went wrong.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Sorry... Something went wrong."),
+    ).toBeInTheDocument();
   });
 });
 
@@ -153,6 +180,8 @@ describe("a session that expires while using the app", () => {
 
     renderApp("/");
 
-    expect(await screen.findByRole("heading", { name: "Login" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Login" }),
+    ).toBeInTheDocument();
   });
 });
