@@ -7,7 +7,10 @@ import { mockApi } from "../../../test/api";
 const mock = mockApi();
 
 const days = (counts: number[]) =>
-  counts.map((tasks, i) => ({ date: `2026-03-${String(i + 1).padStart(2, "0")}`, tasks }));
+  counts.map((tasks, i) => ({
+    date: `2026-03-${String(i + 1).padStart(2, "0")}`,
+    tasks,
+  }));
 
 function stats(overrides = {}) {
   return {
@@ -30,7 +33,9 @@ function stats(overrides = {}) {
 }
 
 function card(title: string) {
-  return within(screen.getByRole("heading", { name: title }).parentElement as HTMLElement);
+  return within(
+    screen.getByRole("heading", { name: title }).parentElement as HTMLElement,
+  );
 }
 
 describe("StatsOverview", () => {
@@ -50,7 +55,12 @@ describe("StatsOverview", () => {
   it("shows zeros for a user with no tasks yet", async () => {
     mock.onGet("/stats/dashboard").reply(
       200,
-      stats({ backlogHealth: [], timeSpent: [], productivity: days([0, 0, 0]), projectVolume: [] }),
+      stats({
+        backlogHealth: [],
+        timeSpent: [],
+        productivity: days([0, 0, 0]),
+        projectVolume: [],
+      }),
     );
     renderWithProviders(<StatsOverview />);
 
@@ -62,7 +72,9 @@ describe("StatsOverview", () => {
   });
 
   it("ends the streak at the first quiet day", async () => {
-    mock.onGet("/stats/dashboard").reply(200, stats({ productivity: days([5, 5, 0, 1, 1]) }));
+    mock
+      .onGet("/stats/dashboard")
+      .reply(200, stats({ productivity: days([5, 5, 0, 1, 1]) }));
     renderWithProviders(<StatsOverview />);
 
     await screen.findByText("38");

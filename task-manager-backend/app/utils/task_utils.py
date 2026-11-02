@@ -10,6 +10,7 @@ from sqlalchemy import (
     func,
     insert,
     literal,
+    literal_column,
     or_,
     select,
     text,
@@ -114,9 +115,7 @@ def _date_range_clause(
 
 
 def _duration_clause(duration: str | None) -> Clause | None:
-    minutes = func.timestampdiff(
-        func.literal_column("MINUTE"), Task.start_at, Task.end_at
-    )
+    minutes = func.timestampdiff(literal_column("MINUTE"), Task.start_at, Task.end_at)
     if duration == "short_tasks":
         return minutes <= SHORT_TASK_MINUTES
     if duration == "long_tasks":
@@ -140,6 +139,8 @@ def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
         clauses.append(
             Task.project_id.in_(_project_and_descendants(user_id, query.project))
         )
+    if query.view == "inbox":
+        clauses.append(Task.project_id.is_(None))
     if query.label:
         labelled = select(TaskLabel.task_id).where(TaskLabel.label_id.in_(query.label))
         clauses.append(Task.id.in_(labelled))

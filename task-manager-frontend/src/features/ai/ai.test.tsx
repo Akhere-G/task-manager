@@ -22,7 +22,9 @@ describe("natural-language quick add", () => {
 
   async function ask(text: string) {
     await userEvent.type(screen.getByRole("textbox"), text);
-    await userEvent.click(screen.getByRole("button", { name: "Generate new task with AI" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Generate new task with AI" }),
+    );
   }
 
   it("sends the text and hands the parsed task to the form", async () => {
@@ -33,15 +35,23 @@ describe("natural-language quick add", () => {
     await ask("Dentist at 3pm");
 
     await waitFor(() => expect(onParsed).toHaveBeenCalledTimes(1));
-    expect(JSON.parse(mock.history.post[0].data)).toEqual({ text: "Dentist at 3pm" });
-    expect(onParsed.mock.calls[0][0]).toMatchObject({ title: "Dentist", projectId: 4, repeatUntil: null });
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({
+      text: "Dentist at 3pm",
+    });
+    expect(onParsed.mock.calls[0][0]).toMatchObject({
+      title: "Dentist",
+      projectId: 4,
+      repeatUntil: null,
+    });
     expect(screen.getByRole("textbox")).toHaveValue("");
   });
 
   it("cannot be submitted while empty", () => {
     renderWithProviders(<AiAddTaskForm onParsed={vi.fn()} />);
 
-    expect(screen.getByRole("button", { name: "Generate new task with AI" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Generate new task with AI" }),
+    ).toBeDisabled();
   });
 
   it.each([
@@ -56,7 +66,9 @@ describe("natural-language quick add", () => {
     await ask("Dentist at 3pm");
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Generate new task with AI" })).toBeEnabled(),
+      expect(
+        screen.getByRole("button", { name: "Generate new task with AI" }),
+      ).toBeEnabled(),
     );
     expect(onParsed).not.toHaveBeenCalled();
     expect(screen.getByRole("textbox")).toHaveValue("Dentist at 3pm");
@@ -65,10 +77,14 @@ describe("natural-language quick add", () => {
 
 describe("daily brief", () => {
   it("renders the generated brief as formatted text", async () => {
-    mock.onGet("/ai/daily-brief").reply(200, { brief: "## Today\n\nStart with **the report**." });
+    mock
+      .onGet("/ai/daily-brief")
+      .reply(200, { brief: "## Today\n\nStart with **the report**." });
     renderWithProviders(<DailyBrief />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Open daily brief" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Open daily brief" }),
+    );
 
     expect(screen.getByRole("heading", { name: "Today" })).toBeInTheDocument();
     expect(screen.getByText("the report").tagName).toBe("STRONG");
@@ -76,7 +92,9 @@ describe("daily brief", () => {
   });
 
   it("does not render raw HTML from the model", async () => {
-    mock.onGet("/ai/daily-brief").reply(200, { brief: "Hello <img src=x onerror=alert(1)> there" });
+    mock
+      .onGet("/ai/daily-brief")
+      .reply(200, { brief: "Hello <img src=x onerror=alert(1)> there" });
     const { container } = renderWithProviders(<DailyBrief />);
 
     await screen.findByRole("button", { name: "Open daily brief" });
@@ -85,11 +103,19 @@ describe("daily brief", () => {
   });
 
   it("reloads on request", async () => {
-    mock.onGet("/ai/daily-brief").replyOnce(200, { brief: "First" }).onGet("/ai/daily-brief").reply(200, { brief: "Second" });
+    mock
+      .onGet("/ai/daily-brief")
+      .replyOnce(200, { brief: "First" })
+      .onGet("/ai/daily-brief")
+      .reply(200, { brief: "Second" });
     renderWithProviders(<DailyBrief />);
-    await userEvent.click(await screen.findByRole("button", { name: "Open daily brief" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Open daily brief" }),
+    );
 
-    await userEvent.click(screen.getByRole("button", { name: "Reload daily brief" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reload daily brief" }),
+    );
 
     expect(await screen.findByText("Second")).toBeInTheDocument();
   });
@@ -98,7 +124,9 @@ describe("daily brief", () => {
     mock.onGet("/ai/daily-brief").reply(500);
     renderWithProviders(<DailyBrief />);
 
-    expect(await screen.findByText("Error loading brief...")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Error loading brief..."),
+    ).toBeInTheDocument();
   });
 
   it("renders nothing when the brief is empty", async () => {
@@ -107,7 +135,9 @@ describe("daily brief", () => {
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Open daily brief" })).not.toBeInTheDocument(),
+      expect(
+        screen.queryByRole("button", { name: "Open daily brief" }),
+      ).not.toBeInTheDocument(),
     );
   });
 });

@@ -125,14 +125,14 @@ export default function BulkAddForm() {
               task["start at"] ||
               task.startAt ||
               task.start_at ||
-              "",
+              null,
             endAt:
               task["End At"] ||
               task["End at"] ||
               task["end at"] ||
               task.endAt ||
               task.end_at ||
-              "",
+              null,
             isCompleted: [
               task["Is Completed"],
               task["Is completed"],

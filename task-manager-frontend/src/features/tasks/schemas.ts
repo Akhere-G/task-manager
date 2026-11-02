@@ -10,11 +10,17 @@ const REPEAT_FREQUENCIES = Object.keys(REPEAT_LIMITS);
 
 const isDate = (value: string) => !isNaN(Date.parse(value));
 
+const hasValue = (value: string | null | undefined) =>
+  value !== null && value !== undefined && value.trim() !== "";
+
 const dateField = (label: string) =>
   z
-    .string({ error: `${label} is mandatory.` })
-    .min(1, `${label} is mandatory.`)
-    .refine(isDate, `Invalid date format for ${label}.`);
+    .string()
+    .nullish()
+    .refine(
+      (v) => !hasValue(v) || isDate(v as string),
+      `Invalid date format for ${label}.`,
+    );
 
 const isValidTimeZone = (timeZone: string) => {
   try {
@@ -78,10 +84,18 @@ export const taskSchema = z
     const issue = (path: string, message: string) =>
       ctx.addIssue({ code: "custom", path: [path], message });
 
-    if (isDate(data.startAt ?? "") && isDate(data.endAt ?? "")) {
-      if (Date.parse(data.endAt) <= Date.parse(data.startAt)) {
+    const { startAt, endAt } = data;
+    const hasStart = hasValue(startAt);
+    const hasEnd = hasValue(endAt);
+    if (hasStart && !hasEnd) issue("endAt", "End At is mandatory.");
+    if (hasEnd && !hasStart) issue("startAt", "Start At is mandatory.");
+    if (startAt && endAt && isDate(startAt) && isDate(endAt)) {
+      if (Date.parse(endAt) <= Date.parse(startAt)) {
         issue("endAt", "End At must be after start at.");
       }
+    }
+    if ((data.isRepeating || data.repeatBy) && !hasStart && !hasEnd) {
+      issue("startAt", "Repeating tasks need a start and an end time.");
     }
 
     if (data.isRepeating && !data.repeatBy) {

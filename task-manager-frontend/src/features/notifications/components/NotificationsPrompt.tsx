@@ -56,7 +56,9 @@ export default function NotificationsPrompt() {
         <button
           className="btn-secondary"
           onClick={() => {
-            trackEvent("notifications_prompt_responded", { result: "dismissed" });
+            trackEvent("notifications_prompt_responded", {
+              result: "dismissed",
+            });
             setShowPrompt(false);
           }}
         >

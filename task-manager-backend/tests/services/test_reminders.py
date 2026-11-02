@@ -150,3 +150,16 @@ def test_message_names_the_tasks_project(
 
     with app.app_context():
         assert db.session.query(Notification).one().message == "Work -- Weekly sync"
+
+
+def test_undated_tasks_are_not_reminded(
+    app: Flask, user_with_subscription: int, push: mock.MagicMock
+) -> None:
+    with app.app_context():
+        db.session.add(Task(user_id=user_with_subscription, title="Someday"))
+        db.session.commit()
+
+    run_reminders.check_task_reminders()
+
+    assert push.call_count == 0
+    assert notification_count(app) == 0

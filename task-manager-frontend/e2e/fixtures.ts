@@ -11,8 +11,8 @@ export interface TaskInput {
   title: string;
   projectId?: number | null;
   priority?: number;
-  startAt: string;
-  endAt: string;
+  startAt?: string;
+  endAt?: string;
   repeatBy?: string;
   repeatUntil?: string;
 }
@@ -24,7 +24,7 @@ export interface StoredTask {
   projectId: number | null;
   isCompleted: boolean;
   isRepeating: boolean;
-  startAt: string;
+  startAt: string | null;
   repeatDays: (number | string)[] | null;
 }
 

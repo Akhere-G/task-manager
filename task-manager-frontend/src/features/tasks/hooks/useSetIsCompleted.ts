@@ -14,7 +14,7 @@ export default function useSetIsCompleted() {
     const completedAt = isCompleted ? new Date().toUTCString() : null;
     const expectedStartAt =
       isCompleted && task?.isRepeating && !task.isGhost
-        ? task.startAt
+        ? (task.startAt ?? undefined)
         : undefined;
 
     try {
@@ -23,7 +23,9 @@ export default function useSetIsCompleted() {
         newTaskData: { isCompleted, completedAt, expectedStartAt },
       });
 
-      const wasOverdue = task ? new Date(task.endAt) < new Date() : undefined;
+      const wasOverdue = task?.endAt
+        ? new Date(task.endAt) < new Date()
+        : undefined;
       trackEvent("task_status_changed", {
         from_status: isCompleted
           ? wasOverdue === undefined

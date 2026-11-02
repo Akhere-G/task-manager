@@ -20,7 +20,13 @@ export const formatDate = (dateStr?: string) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export const formatDateRange = (startAt: string, endAt: string) => {
+export const NO_DATE_LABEL = "No date";
+
+export const formatDateRange = (
+  startAt: string | null,
+  endAt: string | null,
+) => {
+  if (!startAt || !endAt) return NO_DATE_LABEL;
   const startDate = parseISO(startAt);
   const endDate = parseISO(endAt);
   const now = new Date();
@@ -175,20 +181,25 @@ export function mapTasksToCalendarEvents(
   isMobile: boolean,
   view: View,
 ) {
+  const dated = tasks.flatMap((task) =>
+    task.startAt && task.endAt
+      ? [{ task, startAt: task.startAt, endAt: task.endAt }]
+      : [],
+  );
   if (!isMobile || view !== Views.MONTH) {
-    return tasks.map((task) => ({
+    return dated.map(({ task, startAt, endAt }) => ({
       id: task.id,
       title: task.title || "(No Title)",
-      start: parseISO(task.startAt),
-      end: parseISO(task.endAt),
+      start: parseISO(startAt),
+      end: parseISO(endAt),
       allDay: false,
       resource: task,
     }));
   }
 
   const uniqueDayLookup: Record<string, number> = {};
-  tasks.forEach((task) => {
-    const date = format(parseISO(task.startAt), "yyyy-MM-dd");
+  dated.forEach(({ startAt }) => {
+    const date = format(parseISO(startAt), "yyyy-MM-dd");
     uniqueDayLookup[date] = (uniqueDayLookup[date] || 0) + 1;
   });
 
