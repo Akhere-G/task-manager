@@ -100,3 +100,20 @@ def test_requests_without_login_are_rejected(client: FlaskClient) -> None:
     assert client.post("/api/tasks", json={}).status_code == 401
     assert client.post("/api/tasks/1/reschedule", json={}).status_code == 401
     assert client.get("/api/stats/dashboard").status_code == 401
+
+
+def test_user_cannot_see_or_restore_another_users_trash(
+    make_user: Callable[..., int],
+    login: Callable[..., FlaskClient],
+    task_payload: Callable[..., dict[str, Any]],
+) -> None:
+    make_user("a@example.com")
+    make_user("b@example.com")
+    a = login("a@example.com")
+    b = login("b@example.com")
+    task_id = create_task(a, task_payload())
+    a.delete(f"/api/tasks/{task_id}")
+
+    assert b.get("/api/tasks/trash").get_json()["tasks"] == []
+    assert b.post(f"/api/tasks/{task_id}/restore").status_code == 404
+    assert len(a.get("/api/tasks/trash").get_json()["tasks"]) == 1

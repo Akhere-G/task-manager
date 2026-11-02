@@ -18,6 +18,8 @@ DEFAULT_PRIORITY = 4
 REPEAT_FREQUENCIES = ("daily", "weekly", "monthly", "yearly")
 REPEAT_INTERVAL_LIMITS = {"daily": 365, "weekly": 52, "monthly": 24, "yearly": 10}
 
+TRASH_RETENTION_DAYS = 30
+
 MAX_PAGE_SIZE = 200
 MAX_TASKS_PER_REQUEST = 2000
 MAX_PROJECTION_DAYS = 400

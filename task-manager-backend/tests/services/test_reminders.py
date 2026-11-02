@@ -88,6 +88,20 @@ def test_completed_tasks_are_not_reminded(
     assert notification_count(app) == 0
 
 
+def test_deleted_tasks_are_not_reminded(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+    push: mock.MagicMock,
+) -> None:
+    add_task(user_with_subscription, is_deleted=True, deleted_at=utc_now())
+
+    run_reminders.check_task_reminders()
+
+    assert push.call_count == 0
+    assert notification_count(app) == 0
+
+
 def test_rescheduled_task_is_reminded_again(
     app: Flask,
     user_with_subscription: int,

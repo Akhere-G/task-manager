@@ -80,6 +80,14 @@ export const formatDateRelative = (date = "") => {
   return format(dateVal, "dd MMM yyyy");
 };
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+export const daysUntilPurge = (purgeAt: string, now = new Date()) =>
+  Math.max(
+    0,
+    Math.ceil((parseISO(purgeAt).getTime() - now.getTime()) / MS_PER_DAY),
+  );
+
 export const getCalendarTaskId = (task: Task): number =>
   task.isGhost ? task.seriesId : task.id;
 

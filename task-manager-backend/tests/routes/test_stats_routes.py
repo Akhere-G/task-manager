@@ -171,3 +171,24 @@ def test_dashboard_aggregates_in_the_database(
         session.get("/api/stats/dashboard")
 
     assert len(statements) <= 20
+
+
+def test_deleted_tasks_do_not_count_in_the_stats(
+    app: Flask, login: Callable[..., FlaskClient], add_tasks: Callable[..., None]
+) -> None:
+    from app.utils.dates import utc_now
+
+    now = utc_now().replace(microsecond=0)
+    add_tasks(
+        title="late",
+        category="work",
+        start_at=now - timedelta(days=6),
+        end_at=now - timedelta(days=5),
+        is_deleted=True,
+        deleted_at=now,
+    )
+
+    stats = dashboard(app, login)
+
+    assert stats["overdueDistribution"] == []
+    assert not any(v["overdue"] for v in stats["categoryVolume"])
