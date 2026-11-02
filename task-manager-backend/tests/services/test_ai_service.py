@@ -70,6 +70,19 @@ def test_parse_repairs_what_the_model_got_wrong() -> None:
     assert task["repeatDays"] == [0, 3] and task["repeatUntil"] is None
 
 
+@pytest.mark.parametrize(
+    "priority, expected", [(1, 1), (3, 3), (0, 4), ("p1", 4), (None, 4)]
+)
+def test_parse_keeps_a_valid_priority_and_defaults_the_rest(
+    priority: Any, expected: int
+) -> None:
+    model = {**GYM, "priority": priority}
+    with mock.patch.object(ai_service, "get_generated_text", return_value=reply(model)):
+        task = parse_task_with_ai("urgent gym session")
+
+    assert task["priority"] == expected
+
+
 def test_parse_clears_recurrence_when_the_frequency_is_unknown() -> None:
     model = {"title": "Once", "repeatBy": "fortnightly", "repeatDays": [1]}
     with mock.patch.object(ai_service, "get_generated_text", return_value=reply(model)):
@@ -90,6 +103,7 @@ def test_parse_falls_back_to_the_raw_text(bad_reply: str) -> None:
         task = parse_task_with_ai("Call the dentist")
 
     assert task["title"] == "Call the dentist" and task["category"] == "general"
+    assert task["priority"] == 4
 
 
 def test_parse_surfaces_provider_outage() -> None:

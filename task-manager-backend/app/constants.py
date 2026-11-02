@@ -12,6 +12,9 @@ CATEGORIES = (
     "general",
 )
 
+PRIORITIES = (1, 2, 3, 4)
+DEFAULT_PRIORITY = 4
+
 REPEAT_FREQUENCIES = ("daily", "weekly", "monthly", "yearly")
 REPEAT_INTERVAL_LIMITS = {"daily": 365, "weekly": 52, "monthly": 24, "yearly": 10}
 

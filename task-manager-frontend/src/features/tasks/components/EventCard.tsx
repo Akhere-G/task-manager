@@ -1,4 +1,6 @@
 import { Views, type Event, type View } from "react-big-calendar";
+import type { Task } from "../types";
+import PriorityFlag from "./PriorityFlag";
 
 interface EventCardProps {
   title: string;
@@ -22,5 +24,11 @@ export default function EventCard({
       </div>
     );
   }
-  return <div className="text-[0.7rem]">{title}</div>;
+  const task = event.resource as Task | undefined;
+  return (
+    <div className="flex items-center gap-1 text-[0.7rem]">
+      <PriorityFlag priority={task?.priority} size={10} />
+      <span className="truncate">{title}</span>
+    </div>
+  );
 }

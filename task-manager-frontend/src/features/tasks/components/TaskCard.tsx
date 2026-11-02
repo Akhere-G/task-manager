@@ -19,6 +19,7 @@ import { formatDateRange, formatDateRelative, playSound } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import useSkipTask from "../hooks/useSkipTask";
 import { describeRecurrence } from "../recurrence";
+import PriorityFlag from "./PriorityFlag";
 
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
@@ -56,6 +57,7 @@ function TaskCard({
     isGhost,
     title,
     category,
+    priority,
     description,
     isCompleted,
     startAt,
@@ -124,7 +126,8 @@ function TaskCard({
 
       <div className="p-3  grow space-y-2  flex flex-col">
         <div className="flex justify-between items-start">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
+          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-brand">
+            <PriorityFlag priority={priority} size={12} />
             {category?.replace("-", " ")}
           </span>
           {isOverdue && <AlertCircle className="mr-1.5 w-4 h-4 text-failure" />}

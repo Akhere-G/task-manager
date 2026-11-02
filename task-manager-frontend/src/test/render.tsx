@@ -22,6 +22,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     title: "Write report",
     description: null,
     category: "work",
+    priority: 4,
     isCompleted: false,
     startAt: "2026-03-02T09:00:00Z",
     endAt: "2026-03-02T10:00:00Z",
@@ -101,10 +102,15 @@ export function renderWithProviders(
 
 export function renderHookWithProviders<Result>(
   hook: () => Result,
-  { queryClient = makeQueryClient() }: { queryClient?: QueryClient } = {},
+  {
+    queryClient = makeQueryClient(),
+    route = "/",
+  }: { queryClient?: QueryClient; route?: string } = {},
 ) {
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <Providers queryClient={queryClient}>{children}</Providers>
+    <Providers queryClient={queryClient} route={route}>
+      {children}
+    </Providers>
   );
   return { queryClient, ...renderHook(hook, { wrapper }) };
 }

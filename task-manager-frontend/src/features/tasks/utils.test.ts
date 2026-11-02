@@ -6,6 +6,7 @@ import {
   formatDateRange,
   getCalendarTaskId,
   mapTasksToCalendarEvents,
+  parsePriority,
 } from "./utils";
 
 // Wednesday 11 March 2026, midday UTC (vitest.config.ts pins TZ to UTC).
@@ -85,5 +86,20 @@ describe("mapTasksToCalendarEvents", () => {
       ["2026-03-11", 2],
       ["2026-03-12", 1],
     ]);
+  });
+});
+
+describe("parsePriority", () => {
+  it.each([
+    ["1", 1],
+    ["P2", 2],
+    [" p3 ", 3],
+    ["4", 4],
+  ])("reads %j as P%i", (cell, expected) => {
+    expect(parsePriority(cell)).toBe(expected);
+  });
+
+  it.each(["", "0", "5", "high", "P12", undefined])("treats %j as P4", (cell) => {
+    expect(parsePriority(cell)).toBe(4);
   });
 });
