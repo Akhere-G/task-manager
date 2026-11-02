@@ -17,12 +17,16 @@ describe("priority flag", () => {
   it.each([1, 2, 3] as const)("marks a P%i task", (priority) => {
     renderCard(priority);
 
-    expect(screen.getByRole("img", { name: `Priority ${priority}` })).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: `Priority ${priority}` }),
+    ).toBeInTheDocument();
   });
 
   it("shows nothing for a P4 task", () => {
     renderCard(4);
 
-    expect(screen.queryByRole("img", { name: /Priority/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: /Priority/ }),
+    ).not.toBeInTheDocument();
   });
 });

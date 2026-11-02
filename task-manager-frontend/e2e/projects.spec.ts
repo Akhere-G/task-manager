@@ -21,7 +21,9 @@ test.describe("projects", () => {
     await page.getByLabel("Project name").fill("Reports");
     await page.getByLabel("Parent project").selectOption({ label: "Work" });
     await page.getByRole("button", { name: "Add project" }).click();
-    await expect(page.getByRole("button", { name: "Edit Reports" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Edit Reports" }),
+    ).toBeVisible();
 
     await signedIn.createTask({
       title: "Loose end",
@@ -35,7 +37,9 @@ test.describe("projects", () => {
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
     await expect(card(page, "Quarterly numbers")).toBeVisible();
-    await expect(card(page, "Quarterly numbers")).toContainText("Work / Reports");
+    await expect(card(page, "Quarterly numbers")).toContainText(
+      "Work / Reports",
+    );
     await expect(card(page, "Loose end")).toContainText("Inbox");
 
     const parentId = await signedIn.projectIdByName("Work");

@@ -13,10 +13,16 @@ const projects = [
   { id: 3, name: "Home", colour: "#8b5cf6", parentId: null, position: 1 },
 ];
 
+const labels = [
+  { id: 1, name: "urgent", colour: "#ef4444" },
+  { id: 2, name: "later", colour: "#22c55e" },
+];
+
 const submit = vi.fn();
 
 beforeEach(() => {
   mock.onGet("/projects").reply(200, { projects });
+  mock.onGet("/labels").reply(200, { labels });
   submit.mockReset().mockResolvedValue(undefined);
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -31,18 +37,51 @@ function badRequest(status: number, data: unknown) {
 async function fillValidTask() {
   await userEvent.type(screen.getByLabelText("Title"), "Write report");
   await userEvent.selectOptions(await screen.findByLabelText("Project"), "1");
-  fireEvent.change(screen.getByLabelText("Start At"), { target: { value: "2026-03-02T09:00" } });
-  fireEvent.change(screen.getByLabelText("End At"), { target: { value: "2026-03-02T10:00" } });
+  fireEvent.change(screen.getByLabelText("Start At"), {
+    target: { value: "2026-03-02T09:00" },
+  });
+  fireEvent.change(screen.getByLabelText("End At"), {
+    target: { value: "2026-03-02T10:00" },
+  });
 }
 
 const addButton = () => screen.getByRole("button", { name: "Add Task" });
 
 describe("TaskForm", () => {
+  it("submits the chosen labels", async () => {
+    renderWithProviders(<TaskForm submitAction={submit} />);
+
+    await fillValidTask();
+    await userEvent.click(await screen.findByRole("button", { name: "later" }));
+    await userEvent.click(screen.getByRole("button", { name: "urgent" }));
+    await userEvent.click(addButton());
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0][0].labelIds).toEqual([2, 1]);
+  });
+
+  it("starts with the labels of the task being edited", async () => {
+    renderWithProviders(
+      <TaskForm
+        submitAction={submit}
+        confirmButtonText="Save"
+        initialData={makeTask({ labelIds: [2] })}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "later" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("submits what the user entered", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
 
     await fillValidTask();
-    await userEvent.type(screen.getByLabelText("Description"), "Quarterly numbers");
+    await userEvent.type(
+      screen.getByLabelText("Description"),
+      "Quarterly numbers",
+    );
     await userEvent.click(addButton());
 
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
@@ -72,7 +111,12 @@ describe("TaskForm", () => {
   });
 
   it("starts from the task's own priority when editing", () => {
-    renderWithProviders(<TaskForm submitAction={submit} initialData={makeTask({ priority: 2 })} />);
+    renderWithProviders(
+      <TaskForm
+        submitAction={submit}
+        initialData={makeTask({ priority: 2 })}
+      />,
+    );
 
     expect(screen.getByLabelText("Priority")).toHaveValue("2");
   });
@@ -90,11 +134,15 @@ describe("TaskForm", () => {
   it("does not submit while a field is invalid", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
     await fillValidTask();
-    fireEvent.change(screen.getByLabelText("End At"), { target: { value: "2026-03-02T08:00" } });
+    fireEvent.change(screen.getByLabelText("End At"), {
+      target: { value: "2026-03-02T08:00" },
+    });
 
     await userEvent.click(addButton());
 
-    expect(await screen.findByText("End At must be after start at.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("End At must be after start at."),
+    ).toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
   });
 
@@ -102,7 +150,9 @@ describe("TaskForm", () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
     await fillValidTask();
 
-    fireEvent.change(screen.getByLabelText("Start At"), { target: { value: "2026-03-05T14:00" } });
+    fireEvent.change(screen.getByLabelText("Start At"), {
+      target: { value: "2026-03-05T14:00" },
+    });
 
     expect(screen.getByLabelText("End At")).toHaveValue("2026-03-05T15:00");
   });
@@ -114,7 +164,9 @@ describe("TaskForm", () => {
 
     await userEvent.click(screen.getByRole("checkbox"));
     await userEvent.selectOptions(screen.getByLabelText("Repeat By"), "weekly");
-    fireEvent.change(screen.getByLabelText("Repeat Until"), { target: { value: "2026-06-01" } });
+    fireEvent.change(screen.getByLabelText("Repeat Until"), {
+      target: { value: "2026-06-01" },
+    });
     await userEvent.click(addButton());
 
     await waitFor(() => expect(submit).toHaveBeenCalled());
@@ -136,11 +188,16 @@ describe("TaskForm", () => {
     await userEvent.click(addButton());
 
     await waitFor(() => expect(submit).toHaveBeenCalled());
-    expect(submit.mock.calls[0][0]).toMatchObject({ isRepeating: false, repeatBy: null });
+    expect(submit.mock.calls[0][0]).toMatchObject({
+      isRepeating: false,
+      repeatBy: null,
+    });
   });
 
   it("shows the field errors the server reports", async () => {
-    submit.mockRejectedValue(badRequest(400, { errors: { title: "Title is mandatory." } }));
+    submit.mockRejectedValue(
+      badRequest(400, { errors: { title: "Title is mandatory." } }),
+    );
     renderWithProviders(<TaskForm submitAction={submit} />);
     await fillValidTask();
 
@@ -150,7 +207,9 @@ describe("TaskForm", () => {
   });
 
   it("shows a general message for any other failure and lets the user retry", async () => {
-    submit.mockRejectedValueOnce(badRequest(500, {})).mockResolvedValueOnce(undefined);
+    submit
+      .mockRejectedValueOnce(badRequest(500, {}))
+      .mockResolvedValueOnce(undefined);
     renderWithProviders(<TaskForm submitAction={submit} />);
     await fillValidTask();
 
@@ -163,7 +222,9 @@ describe("TaskForm", () => {
 
   it("drops the server's earlier field errors when the next attempt fails differently", async () => {
     submit
-      .mockRejectedValueOnce(badRequest(400, { errors: { title: "Title is mandatory." } }))
+      .mockRejectedValueOnce(
+        badRequest(400, { errors: { title: "Title is mandatory." } }),
+      )
       .mockRejectedValueOnce(badRequest(500, {}));
     renderWithProviders(<TaskForm submitAction={submit} />);
     await fillValidTask();
@@ -177,9 +238,17 @@ describe("TaskForm", () => {
   });
 
   it("pre-fills an existing task for editing", async () => {
-    const task = makeTask({ title: "Existing", description: "Notes", projectId: 3 });
+    const task = makeTask({
+      title: "Existing",
+      description: "Notes",
+      projectId: 3,
+    });
     renderWithProviders(
-      <TaskForm submitAction={submit} initialData={task} confirmButtonText="Save" />,
+      <TaskForm
+        submitAction={submit}
+        initialData={task}
+        confirmButtonText="Save"
+      />,
     );
 
     expect(screen.getByLabelText("Title")).toHaveValue("Existing");
@@ -215,7 +284,9 @@ describe("TaskForm", () => {
     const names = screen
       .getAllByRole("option")
       .map((option) => option.textContent?.replace(/\u00a0/g, "_"));
-    expect(names).toEqual(expect.arrayContaining(["Inbox", "Work", "__Reports", "Home"]));
+    expect(names).toEqual(
+      expect.arrayContaining(["Inbox", "Work", "__Reports", "Home"]),
+    );
 
     await fillValidTask();
     await userEvent.selectOptions(screen.getByLabelText("Project"), "");

@@ -7,11 +7,7 @@ export default function useSetIsCompleted() {
   const { mutateAsync: updateTask } = useUpdateTask();
   const inFlight = useRef(new Set<number>());
 
-  async function setIsCompleted(
-    id: number,
-    isCompleted: boolean,
-    task?: Task,
-  ) {
+  async function setIsCompleted(id: number, isCompleted: boolean, task?: Task) {
     if (inFlight.current.has(id)) return;
     inFlight.current.add(id);
 

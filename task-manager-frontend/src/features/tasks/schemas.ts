@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Task } from "./types";
+import { MAX_LABELS_PER_TASK } from "../labels/types";
 import { REPEAT_LIMITS, isValidRepeatDay } from "./recurrence";
 import { toFieldErrors } from "../../utils/zodErrors";
 
@@ -44,6 +45,13 @@ export const taskSchema = z
       .number({ error: "Choose one of your projects." })
       .int("Choose one of your projects.")
       .nullish(),
+    labelIds: z
+      .array(z.number().int(), { error: "Choose your own labels." })
+      .max(
+        MAX_LABELS_PER_TASK,
+        `A task can have up to ${MAX_LABELS_PER_TASK} labels.`,
+      )
+      .optional(),
     repeatUntil: z
       .string()
       .nullish()

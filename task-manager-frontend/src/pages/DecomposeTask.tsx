@@ -44,6 +44,7 @@ export default function DecomposeTask() {
       });
       const formattedTasks: Task[] = tasks.map((task, id) => ({
         ...task,
+        labelIds: task.labelIds ?? [],
         id,
         isCompleted: false,
         createdAt: "",
@@ -92,6 +93,7 @@ export default function DecomposeTask() {
         {
           title: `Task #${prev.length + 1}`,
           projectId: parentTask.projectId,
+          labelIds: parentTask.labelIds,
           priority: parentTask.priority,
           description: "",
           startAt: parentTask.startAt,

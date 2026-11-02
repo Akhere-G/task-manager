@@ -62,7 +62,10 @@ export class Api {
     return (await response.json()).id;
   }
 
-  async createProject(name: string, parentId: number | null = null): Promise<number> {
+  async createProject(
+    name: string,
+    parentId: number | null = null,
+  ): Promise<number> {
     const response = await this.request.post(`${API}/projects`, {
       headers: this.headers,
       data: { name, parentId },
@@ -71,10 +74,25 @@ export class Api {
     return (await response.json()).id;
   }
 
-  async projectIdByName(name: string): Promise<number> {
-    const response = await this.request.get(`${API}/projects`, { headers: this.headers });
+  async labelIdByName(name: string): Promise<number> {
+    const response = await this.request.get(`${API}/labels`, {
+      headers: this.headers,
+    });
     expect(response.status()).toBe(200);
-    const projects: { id: number; name: string }[] = (await response.json()).projects;
+    const labels: { id: number; name: string }[] = (await response.json())
+      .labels;
+    const label = labels.find((l) => l.name === name);
+    expect(label, `label ${name}`).toBeDefined();
+    return label?.id ?? 0;
+  }
+
+  async projectIdByName(name: string): Promise<number> {
+    const response = await this.request.get(`${API}/projects`, {
+      headers: this.headers,
+    });
+    expect(response.status()).toBe(200);
+    const projects: { id: number; name: string }[] = (await response.json())
+      .projects;
     const project = projects.find((p) => p.name === name);
     expect(project, `project ${name}`).toBeDefined();
     return project?.id ?? 0;

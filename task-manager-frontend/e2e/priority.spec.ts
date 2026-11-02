@@ -27,13 +27,21 @@ test.describe("priority", () => {
 
     await expect(card(page, "Fix the outage")).toBeVisible();
     await expect
-      .poll(async () => (await signedIn.tasks()).map((t) => [t.title, t.priority]))
+      .poll(async () =>
+        (await signedIn.tasks()).map((t) => [t.title, t.priority]),
+      )
       .toContainEqual(["Fix the outage", 1]);
 
     await page.goto("/?sort_by=priority&order=asc");
 
-    await expect(page.getByRole("article").locator("h3").first()).toHaveText("Fix the outage");
-    await expect(card(page, "Fix the outage").getByRole("img", { name: "Priority 1" })).toBeVisible();
-    await expect(card(page, "Routine check-in").getByRole("img", { name: /Priority/ })).toHaveCount(0);
+    await expect(page.getByRole("article").locator("h3").first()).toHaveText(
+      "Fix the outage",
+    );
+    await expect(
+      card(page, "Fix the outage").getByRole("img", { name: "Priority 1" }),
+    ).toBeVisible();
+    await expect(
+      card(page, "Routine check-in").getByRole("img", { name: /Priority/ }),
+    ).toHaveCount(0);
   });
 });

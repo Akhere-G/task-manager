@@ -6,6 +6,7 @@ import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import { describeRecurrence } from "../recurrence";
 import PriorityFlag from "./PriorityFlag";
 import ProjectLabel from "../../projects/ProjectLabel";
+import LabelChips from "../../labels/LabelChips";
 
 interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
@@ -69,6 +70,7 @@ export function TaskCardSmall({
           <span className="text-[10px] font-bold uppercase tracking-widest text-accent text-nowrap">
             <ProjectLabel projectId={task.projectId} />
           </span>
+          <LabelChips labelIds={task.labelIds} />
         </span>
 
         <span

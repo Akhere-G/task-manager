@@ -22,6 +22,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     title: "Write report",
     description: null,
     projectId: null,
+    labelIds: [],
     priority: 4,
     isCompleted: false,
     startAt: "2026-03-02T09:00:00Z",
@@ -38,7 +39,11 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
 }
 
 /** A projected occurrence of series `seriesId` on `day` (YYYYMMDD), as the API sends it. */
-export function makeGhost(seriesId: number, day: string, overrides: Partial<Task> = {}): Task {
+export function makeGhost(
+  seriesId: number,
+  day: string,
+  overrides: Partial<Task> = {},
+): Task {
   return makeTask({
     id: `ghost_${seriesId}_${day}` as unknown as number,
     seriesId,
@@ -93,7 +98,12 @@ export function renderWithProviders(
   }: ProviderOptions & Omit<RenderOptions, "wrapper"> = {},
 ) {
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <Providers route={route} history={history} queryClient={queryClient} withAuth={withAuth}>
+    <Providers
+      route={route}
+      history={history}
+      queryClient={queryClient}
+      withAuth={withAuth}
+    >
       {children}
     </Providers>
   );

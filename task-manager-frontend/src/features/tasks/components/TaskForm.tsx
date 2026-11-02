@@ -14,6 +14,7 @@ import RecurrencePicker from "./RecurrencePicker";
 import { priorityOptions } from "../constants";
 import useProjects from "../../projects/hooks/useProjects";
 import { projectOptions } from "../../projects/utils";
+import LabelPicker from "../../labels/LabelPicker";
 import { REPEAT_LIMITS, defaultDays, getBrowserTimeZone } from "../recurrence";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
@@ -81,6 +82,7 @@ export default function TaskForm({
   const [formState, setFormState] = useState<CreateTaskInput>({
     title: "",
     projectId: null,
+    labelIds: [],
     priority: DEFAULT_PRIORITY,
     description: "",
     ...getDefaultTimes(),
@@ -95,6 +97,7 @@ export default function TaskForm({
   const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
     title: "",
     projectId: "",
+    labelIds: "",
     priority: "",
     description: "",
     startAt: "",
@@ -121,6 +124,7 @@ export default function TaskForm({
   const defaultErrorMessages = {
     title: "",
     projectId: "",
+    labelIds: "",
     priority: "",
     description: "",
     startAt: "",
@@ -354,6 +358,20 @@ export default function TaskForm({
         touched={touched.projectId}
         handleBlur={handleBlur}
       />
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-bold text-text-main">Labels</span>
+        <LabelPicker
+          value={formState.labelIds ?? []}
+          onChange={(labelIds) => {
+            const next = { ...formState, labelIds };
+            setFormState(next);
+            validateForm(next);
+          }}
+        />
+        {errorMessages.labelIds && (
+          <p className="text-sm text-failure">{errorMessages.labelIds}</p>
+        )}
+      </div>
       <FormInput
         label="Priority"
         name="priority"

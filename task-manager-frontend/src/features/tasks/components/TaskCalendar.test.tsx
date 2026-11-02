@@ -21,7 +21,9 @@ vi.mock("react-big-calendar/lib/addons/dragAndDrop", () => ({
         <ul>
           {events.map((event) => (
             <li key={event.id}>
-              <span data-testid={`start-${event.id}`}>{event.start.toISOString()}</span>
+              <span data-testid={`start-${event.id}`}>
+                {event.start.toISOString()}
+              </span>
               <button
                 onClick={() =>
                   onEventDrop({
@@ -55,8 +57,11 @@ function renderCalendar(tasks: Task[]) {
 }
 
 const moveADayLater = (id: number | string) =>
-  userEvent.click(screen.getByRole("button", { name: `Move ${id} a day later` }));
-const shownStart = (id: number | string) => screen.getByTestId(`start-${id}`).textContent;
+  userEvent.click(
+    screen.getByRole("button", { name: `Move ${id} a day later` }),
+  );
+const shownStart = (id: number | string) =>
+  screen.getByTestId(`start-${id}`).textContent;
 const sentBody = () => JSON.parse(mock.history.post[0].data);
 
 describe("rescheduling on the calendar", () => {
@@ -101,7 +106,9 @@ describe("rescheduling on the calendar", () => {
   });
 
   it("puts the event back when the move is rejected", async () => {
-    mock.onPost("/tasks/1/reschedule").reply(409, { error: "Already updated." });
+    mock
+      .onPost("/tasks/1/reschedule")
+      .reply(409, { error: "Already updated." });
     renderCalendar([makeTask({ id: 1 })]);
 
     await moveADayLater(1);

@@ -6,11 +6,7 @@ interface CalendarTaskList {
   tasks: Task[];
   currentDate: Date;
   setSelectedTask: (task: Task) => void;
-  setIsCompleted: (
-    taskId: number,
-    isComplete: boolean,
-    task?: Task,
-  ) => void;
+  setIsCompleted: (taskId: number, isComplete: boolean, task?: Task) => void;
   setDraggedEvent: (task: Task | null) => void;
 }
 
