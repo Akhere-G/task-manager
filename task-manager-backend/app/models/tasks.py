@@ -47,11 +47,14 @@ class Task(Base):
     repeat_timezone: Mapped[str | None] = mapped_column(String(64))
     series_id: Mapped[int | None]
     reminded_for_start_at: Mapped[datetime | None] = mapped_column(DateTime)
+    is_deleted: Mapped[bool] = mapped_column(default=False, server_default="0")
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
     __table_args__ = (
         Index("idx_tasks_search", "title", "description", mysql_prefix="FULLTEXT"),
         Index("idx_tasks_user_end_at", "user_id", "end_at"),
         Index("idx_tasks_user_completed", "user_id", "is_completed", "completed_at"),
+        Index("idx_tasks_user_deleted", "user_id", "is_deleted", "deleted_at"),
         CheckConstraint("priority BETWEEN 1 AND 4", name="ck_tasks_priority"),
     )

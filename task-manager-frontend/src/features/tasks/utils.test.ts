@@ -3,6 +3,7 @@ import { Views } from "react-big-calendar";
 import { makeTask } from "../../test/render";
 import {
   calculateDateRange,
+  daysUntilPurge,
   formatDateRange,
   getCalendarTaskId,
   mapTasksToCalendarEvents,
@@ -101,5 +102,17 @@ describe("parsePriority", () => {
 
   it.each(["", "0", "5", "high", "P12", undefined])("treats %j as P4", (cell) => {
     expect(parsePriority(cell)).toBe(4);
+  });
+});
+
+describe("daysUntilPurge", () => {
+  it.each([
+    ["2026-04-10T12:00:00Z", 30],
+    ["2026-03-12T12:00:00Z", 1],
+    ["2026-03-11T13:00:00Z", 1],
+    ["2026-03-11T12:00:00Z", 0],
+    ["2026-03-01T12:00:00Z", 0],
+  ])("counts %s as %i day(s) left", (purgeAt, expected) => {
+    expect(daysUntilPurge(purgeAt)).toBe(expected);
   });
 });
