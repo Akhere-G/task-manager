@@ -20,6 +20,7 @@ from app.constants import (
     PRIORITIES,
     REPEAT_FREQUENCIES,
     REPEAT_INTERVAL_LIMITS,
+    TASK_VIEWS,
     TRASH_RETENTION_DAYS,
 )
 from app.models import Task
@@ -88,12 +89,8 @@ class TaskSchema(CamelAutoSchema):
         strict=True,
         validate=validate.OneOf(PRIORITIES, error="Priority must be between 1 and 4."),
     )
-    start_at = UtcDateTime(
-        required=True, error_messages={"required": "Start time is required."}
-    )
-    end_at = UtcDateTime(
-        required=True, error_messages={"required": "End time is required."}
-    )
+    start_at = UtcDateTime(allow_none=True)
+    end_at = UtcDateTime(allow_none=True)
     created_at = UtcDateTime()
     is_completed = fields.Boolean(**STRICT_BOOL)  # type: ignore
     completed_at = UtcDateTime(allow_none=True)
@@ -218,6 +215,7 @@ class TaskListQuerySchema(Schema):
 
     project = fields.Integer(validate=validate.Range(min=1))
     label = fields.String()
+    view = fields.String(validate=validate.OneOf(TASK_VIEWS))
     priority = fields.String()
     search = fields.String(data_key="q")
     duration = fields.String()

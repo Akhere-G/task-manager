@@ -14,17 +14,15 @@ let tasksOnServer: Task[];
 
 beforeEach(() => {
   tasksOnServer = [];
-  mock
-    .onGet("/tasks")
-    .reply(() => [
-      200,
-      {
-        tasks: tasksOnServer,
-        totalTasks: tasksOnServer.length,
-        totalPages: 1,
-        currentPage: 1,
-      },
-    ]);
+  mock.onGet("/tasks").reply(() => [
+    200,
+    {
+      tasks: tasksOnServer,
+      totalTasks: tasksOnServer.length,
+      totalPages: 1,
+      currentPage: 1,
+    },
+  ]);
   mock.onGet("/stats/dashboard").reply(200, {});
 });
 

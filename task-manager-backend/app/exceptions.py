@@ -85,6 +85,16 @@ class InvalidTaskTimes(AppError):
     message = "End time must be after the start time."
 
 
+class IncompleteTaskDates(AppError):
+    field = "startAt"
+    message = "Give both a start and an end time, or neither."
+
+
+class UndatedRepeatingTask(AppError):
+    field = "repeatBy"
+    message = "Repeating tasks need a start and an end time."
+
+
 class EmailTaken(AppError):
     field = "general"
     message = "Could not register. Try again or try and sign in."

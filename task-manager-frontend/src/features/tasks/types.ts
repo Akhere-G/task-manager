@@ -10,8 +10,8 @@ export interface Task {
   labelIds: number[];
   priority: Priority;
   isCompleted: boolean;
-  startAt: string;
-  endAt: string;
+  startAt: string | null;
+  endAt: string | null;
   createdAt: string;
   completedAt: string | null;
   isRepeating?: boolean | null;

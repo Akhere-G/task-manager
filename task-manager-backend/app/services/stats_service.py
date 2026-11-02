@@ -67,7 +67,9 @@ def _upcoming_ghosts(user_id: int, now: datetime) -> list[Task]:
 def _productivity_trend(user_id: int, now: datetime) -> Stats:
     first_day = now.date() - timedelta(days=TREND_DAYS - 1)
     rows = _rows(
-        select(COMPLETED_DATE, func.count(), func.sum(DURATION_MINUTES))
+        select(
+            COMPLETED_DATE, func.count(), func.coalesce(func.sum(DURATION_MINUTES), 0)
+        )
         .where(
             live_tasks_of(user_id),
             Task.is_completed,
@@ -89,7 +91,7 @@ def _productivity_trend(user_id: int, now: datetime) -> Stats:
 
 def _time_spent(user_id: int, names: ProjectNames) -> Stats:
     rows = _rows(
-        select(Task.project_id, func.sum(DURATION_MINUTES))
+        select(Task.project_id, func.coalesce(func.sum(DURATION_MINUTES), 0))
         .where(live_tasks_of(user_id), Task.is_completed)
         .group_by(Task.project_id)
     )
@@ -131,6 +133,7 @@ def _estimation_accuracy(user_id: int, now: datetime, names: ProjectNames) -> St
         .where(
             live_tasks_of(user_id),
             Task.is_completed,
+            Task.end_at.is_not(None),
             Task.completed_at > now - timedelta(days=ACCURACY_DAYS),
         )
         .order_by(Task.completed_at)
@@ -280,7 +283,7 @@ def _week_overview(user_id: int, now: datetime, ghosts: list[Task]) -> Stats:
     week_start = start_of_day(now.date())
     week_end = week_start + timedelta(days=7)
     rows = _rows(
-        select(END_DATE, func.count(), func.sum(DURATION_SECONDS))
+        select(END_DATE, func.count(), func.coalesce(func.sum(DURATION_SECONDS), 0))
         .where(
             live_tasks_of(user_id),
             Task.is_completed.is_(False),

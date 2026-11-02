@@ -19,7 +19,8 @@ export function TaskCardSmall({
   setIsCompleted,
   ...task
 }: TaskCardSmallProps) {
-  const isOverdue = !task.isCompleted && new Date(task.endAt) < new Date();
+  const isOverdue =
+    !task.isCompleted && !!task.endAt && new Date(task.endAt) < new Date();
   return (
     <div
       key={task.id}

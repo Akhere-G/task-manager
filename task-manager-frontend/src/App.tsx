@@ -27,6 +27,7 @@ const Contact = lazy(() => import("./pages/Contact"));
 const AddTask = lazy(() => import("./pages/AddTask"));
 const About = lazy(() => import("./pages/About"));
 const Trash = lazy(() => import("./pages/Trash"));
+const Inbox = lazy(() => import("./pages/Inbox"));
 
 function App() {
   const { isAuthenticated, logout, user } = useAuthContext();
@@ -36,6 +37,7 @@ function App() {
   usePageViewTracking();
 
   const protectedRoutes = [
+    { title: "Inbox", path: "/inbox" },
     { title: "Tasks", path: "/" },
     { title: "Add Task", path: "/addtask" },
     {
@@ -137,6 +139,14 @@ function App() {
               element={
                 <ProtectedRoute redirect={!isAuthenticated}>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inbox"
+              element={
+                <ProtectedRoute redirect={!isAuthenticated}>
+                  <Inbox />
                 </ProtectedRoute>
               }
             />

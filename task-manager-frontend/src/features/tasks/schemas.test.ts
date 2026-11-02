@@ -26,6 +26,33 @@ describe("validateTask", () => {
     expect(errors.startAt).toBe("Start At is mandatory.");
   });
 
+  it("accepts a task with no dates", () => {
+    expect(validateTask({ ...valid, startAt: null, endAt: null })).toEqual({});
+    expect(validateTask({ ...valid, startAt: "", endAt: "" })).toEqual({});
+  });
+
+  it("wants both dates or neither", () => {
+    expect(validateTask({ ...valid, endAt: null }).endAt).toBe(
+      "End At is mandatory.",
+    );
+    expect(validateTask({ ...valid, startAt: null }).startAt).toBe(
+      "Start At is mandatory.",
+    );
+  });
+
+  it("does not let an undated task repeat", () => {
+    const errors = validateTask({
+      ...valid,
+      startAt: null,
+      endAt: null,
+      isRepeating: true,
+      repeatBy: "daily",
+    });
+    expect(errors.startAt).toBe(
+      "Repeating tasks need a start and an end time.",
+    );
+  });
+
   it("rejects long titles, a fractional project id and bad ordering", () => {
     expect(validateTask({ ...valid, title: "a".repeat(256) }).title).toBe(
       "Title must be under 255 characters.",

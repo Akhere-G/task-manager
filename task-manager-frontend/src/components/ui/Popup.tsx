@@ -9,11 +9,7 @@ interface PopupProps {
   actionText?: string;
   sleek?: boolean;
   actionButtonVariant?:
-    | "primary"
-    | "secondary"
-    | "warning"
-    | "success"
-    | "failure";
+    "primary" | "secondary" | "warning" | "success" | "failure";
 }
 
 export default function Popup({

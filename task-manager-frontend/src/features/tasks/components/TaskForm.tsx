@@ -21,6 +21,23 @@ type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
   general: string;
 };
 
+type FormState = Omit<CreateTaskInput, "startAt" | "endAt"> & {
+  startAt: string;
+  endAt: string;
+};
+
+function toInput(state: FormState, hasDate: boolean): CreateTaskInput {
+  if (hasDate) return state;
+  return {
+    ...state,
+    startAt: null,
+    endAt: null,
+    isRepeating: false,
+    repeatBy: null,
+    repeatUntil: null,
+  };
+}
+
 const getDefaultTimes = () => {
   const startDate = new Date();
   startDate.setHours(startDate.getHours() + 1);
@@ -79,7 +96,8 @@ export default function TaskForm({
   confirmButtonText = "Add Task",
   initialData,
 }: TaskFormProps) {
-  const [formState, setFormState] = useState<CreateTaskInput>({
+  const [hasDate, setHasDate] = useState(true);
+  const [formState, setFormState] = useState<FormState>({
     title: "",
     projectId: null,
     labelIds: [],
@@ -142,6 +160,7 @@ export default function TaskForm({
   const [isLoading, setIsloading] = useState(false);
 
   useEffect(() => {
+    if (initialData?.startAt === null) setHasDate(false);
     if (initialData)
       setFormState((prev) => {
         try {
@@ -180,12 +199,17 @@ export default function TaskForm({
       });
   }, [initialData]);
 
-  const validateForm = (data: CreateTaskInput) => {
+  const validateForm = (data: FormState, withDate = hasDate) => {
     setErrorMessages({
       ...defaultErrorMessages,
-      ...validateTask(data),
+      ...validateTask(toInput(data, withDate)),
     });
   };
+
+  function handleHasDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setHasDate(e.target.checked);
+    validateForm(formState, e.target.checked);
+  }
 
   function handleChange(
     e: React.ChangeEvent<
@@ -288,7 +312,10 @@ export default function TaskForm({
       repeatUntil: true,
     });
 
-    const errors = { ...defaultErrorMessages, ...validateTask(formState) };
+    const errors = {
+      ...defaultErrorMessages,
+      ...validateTask(toInput(formState, hasDate)),
+    };
     setErrorMessages(errors);
     const invalidFields = Object.entries(errors)
       .filter(([k, v]) => v !== "" && k !== "general")
@@ -302,7 +329,7 @@ export default function TaskForm({
       setIsloading(true);
 
       const formattedData = {
-        ...formState,
+        ...toInput(formState, hasDate),
         repeatUntil: formState.repeatUntil || null,
       };
 
@@ -391,6 +418,17 @@ export default function TaskForm({
         textarea
       />
       {!initialData?.isGhost && (
+        <label className="flex gap-2 items-baseline text-text-main">
+          <input
+            name="hasDate"
+            type="checkbox"
+            checked={hasDate}
+            onChange={handleHasDateChange}
+          />
+          Has a date
+        </label>
+      )}
+      {!initialData?.isGhost && hasDate && (
         <>
           <FormInput
             label="Start At"
@@ -414,16 +452,18 @@ export default function TaskForm({
           />
         </>
       )}
-      <div className="flex gap-2 items-baseline">
-        <input
-          name="isRepeating"
-          type="checkbox"
-          checked={formState.isRepeating || false}
-          onChange={handleCheck}
-        />
-        <p>Repeating?</p>
-      </div>
-      {Boolean(formState.isRepeating) && (
+      {hasDate && (
+        <label className="flex gap-2 items-baseline">
+          <input
+            name="isRepeating"
+            type="checkbox"
+            checked={formState.isRepeating || false}
+            onChange={handleCheck}
+          />
+          Repeating?
+        </label>
+      )}
+      {hasDate && Boolean(formState.isRepeating) && (
         <>
           <FormInput
             name="repeatBy"

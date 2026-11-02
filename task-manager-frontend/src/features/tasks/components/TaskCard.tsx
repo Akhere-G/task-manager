@@ -73,7 +73,7 @@ function TaskCard({
   const [showMore, setShowMore] = useState(false);
   const navigate = useNavigate();
 
-  const isOverdue = !isCompleted && new Date(endAt) < new Date();
+  const isOverdue = !isCompleted && !!endAt && new Date(endAt) < new Date();
 
   const desc = description || "";
   const maxDescriptionLength = 100;
