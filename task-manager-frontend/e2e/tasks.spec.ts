@@ -15,7 +15,6 @@ test.describe("task management", () => {
 
     await page.getByRole("button", { name: "Add new task" }).click();
     await page.getByLabel("Title").fill("Write quarterly report");
-    await page.getByLabel("Category").selectOption("work");
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
     await expect(card(page, "Write quarterly report")).toBeVisible();
@@ -68,7 +67,6 @@ test.describe("task management", () => {
     );
     await page.goto("/addtask");
     await page.getByLabel("Title").fill("Will not save");
-    await page.getByLabel("Category").selectOption("home");
 
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
@@ -81,13 +79,14 @@ test.describe("task management", () => {
     page,
     signedIn,
   }) => {
+    const healthId = await signedIn.createProject("Health");
     await page.goto("/addtask");
 
     await page.getByPlaceholder(/Fix the leaking tap/).fill("Dentist tomorrow at 3pm");
     await page.getByRole("button", { name: "Generate new task with AI" }).click();
 
     await expect(page.getByLabel("Title")).toHaveValue("Dentist appointment");
-    await expect(page.getByLabel("Category")).toHaveValue("health");
+    await expect(page.getByLabel("Project")).toHaveValue(String(healthId));
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
     await expect

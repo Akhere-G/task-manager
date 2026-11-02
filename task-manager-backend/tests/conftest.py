@@ -42,6 +42,7 @@ TEST_TYPE_BY_LAYER = {
     "utils": "unit",
     "schemas": "unit",
     "models": "integration",
+    "migrations": "integration",
     "services": "integration",
     "routes": "functional",
     "security": "security",

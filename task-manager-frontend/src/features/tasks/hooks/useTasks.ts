@@ -8,7 +8,7 @@ import { trackEvent } from "../../../services/analytics";
 
 export interface TaskFilters {
   search: string;
-  category: string;
+  project: string;
   priority: string;
   duration: string;
   isCompleted: string;
@@ -33,7 +33,7 @@ interface UseTasksProps {
 
 const getDefaultFilters = (): TaskFilters => ({
   search: "",
-  category: "",
+  project: "",
   priority: "",
   duration: "",
   isCompleted: "false",
@@ -45,7 +45,7 @@ const getDefaultFilters = (): TaskFilters => ({
 
 const apiParamMap: Record<string, string> = {
   search: "q",
-  category: "category",
+  project: "project",
   priority: "priority",
   duration: "duration",
   isCompleted: "is_completed",
@@ -90,7 +90,7 @@ export const useTasks = ({
 
   const filters = {
     search: searchInput,
-    category: searchParams.get("category") ?? defaultFilters.category,
+    project: searchParams.get("project") ?? defaultFilters.project,
     priority: searchParams.get("priority") ?? defaultFilters.priority,
     duration: searchParams.get("duration") ?? defaultFilters.duration,
     isCompleted: searchParams.get("is_completed") ?? defaultFilters.isCompleted,
@@ -212,7 +212,7 @@ export const useTasks = ({
 
   const isSearching =
     !!searchInput.trim() ||
-    !!filters.category ||
+    !!filters.project ||
     !!filters.priority ||
     !!filters.duration ||
     (filters.isCompleted !== "" && filters.isCompleted !== "false") ||

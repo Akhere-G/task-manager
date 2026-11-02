@@ -22,7 +22,6 @@ test.describe("priority", () => {
 
     await page.getByRole("button", { name: "Add new task" }).click();
     await page.getByLabel("Title").fill("Fix the outage");
-    await page.getByLabel("Category").selectOption("work");
     await page.getByLabel("Priority").selectOption("1");
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 

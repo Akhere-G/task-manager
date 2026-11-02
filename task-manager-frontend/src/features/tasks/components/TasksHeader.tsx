@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { FormInput } from "../../../components/ui";
 import {
-  categoryOptions,
   completedTasksOptions,
   dueDateOptions,
   isAscOptions,
@@ -10,10 +9,12 @@ import {
   taskDurationOptions,
 } from "../constants";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import useProjects from "../../projects/hooks/useProjects";
+import { projectOptions } from "../../projects/utils";
 
 interface TaskFilters {
   search: string;
-  category: string;
+  project: string;
   priority: string;
   duration: string;
   isCompleted: string;
@@ -39,6 +40,7 @@ export default function TasksHeader({
   showDueDateFilter = true,
 }: TasksHeaderProps) {
   const [openFilters, setOpenFilters] = useState(false);
+  const { data: projects = [] } = useProjects();
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -83,11 +85,11 @@ export default function TasksHeader({
             formClassNames={formClassNames}
           />
           <FormInput
-            name="category"
-            value={filters.category}
+            name="project"
+            value={filters.project}
             handleChange={handleChange}
-            label="Category"
-            options={categoryOptions}
+            label="Project"
+            options={[{ name: "All", value: "" }, ...projectOptions(projects)]}
             formClassNames={formClassNames}
           />
           <FormInput

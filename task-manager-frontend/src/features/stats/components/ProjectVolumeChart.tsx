@@ -1,22 +1,23 @@
 import { EmptyState, ErrorState, LoadingState } from "../../../components/ui";
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { categoryColours } from "../../tasks/constants";
+import useProjectColours from "../../projects/hooks/useProjectColours";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import useGetStats from "../hooks/useGetStats";
-import type { CategoryVolumeData } from "../api";
+import type { ProjectVolumeData } from "../api";
 
-export default function CategoryVolumeChart() {
+export default function ProjectVolumeChart() {
   const breakpoint = useBreakpoint();
+  const colourFor = useProjectColours();
 
   const {
-    data: categoryVolume,
+    data: projectVolume,
     isLoading,
     isError,
-  } = useGetStats<CategoryVolumeData[]>((data) => data.categoryVolume);
+  } = useGetStats<ProjectVolumeData[]>((data) => data.projectVolume);
 
-  const chartData = categoryVolume?.map((entry) => ({
+  const chartData = projectVolume?.map((entry) => ({
     ...entry,
-    fill: categoryColours[entry.category] || "#cbd5e1",
+    fill: colourFor(entry.project),
   }));
 
   const isMobile = breakpoint === "xs";
@@ -39,7 +40,7 @@ export default function CategoryVolumeChart() {
   }
 
   return (
-    categoryVolume && (
+    projectVolume && (
       <ResponsiveContainer>
         <PieChart
           margin={{ top: 0, right: 0, left: 0, bottom: isDesktop ? 50 : 0 }}
@@ -51,7 +52,7 @@ export default function CategoryVolumeChart() {
             innerRadius="60%"
             outerRadius="80%"
             dataKey="pending"
-            nameKey="category"
+            nameKey="project"
           />
           <Tooltip
             contentStyle={{

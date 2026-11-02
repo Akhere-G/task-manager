@@ -32,6 +32,31 @@ class TaskNotFound(NotFoundError):
         super().__init__(f"No task with the id {task_id} exists." if task_id else None)
 
 
+class ProjectNotFound(NotFoundError):
+    message = "No project with that id exists."
+
+
+class InvalidProject(AppError):
+    field = "projectId"
+    message = "Choose one of your own projects."
+
+
+class ProjectNameTaken(AppError):
+    status_code = 409
+    field = "name"
+    message = "You already have a project with that name here."
+
+
+class ProjectTooDeep(AppError):
+    field = "parentId"
+    message = "Projects can only be nested three levels deep."
+
+
+class ProjectCycle(AppError):
+    field = "parentId"
+    message = "A project cannot be moved inside itself."
+
+
 class TaskConflict(AppError):
     status_code = 409
     message = "This task was already updated."

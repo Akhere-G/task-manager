@@ -13,7 +13,7 @@ export default function useEditTask(props?: { onSuccess?: () => void }) {
       ...newTask,
       title: newTask.title.trim(),
       description: newTask.description?.trim() || null,
-      category: newTask.category,
+      projectId: newTask.projectId,
       startAt: newTask.startAt,
       endAt: newTask.endAt,
     };
@@ -25,7 +25,7 @@ export default function useEditTask(props?: { onSuccess?: () => void }) {
     try {
       await updateTask({ id: selectedTask.id, newTaskData: patchData });
       trackEvent("task_updated", {
-        category: newTask.category,
+        has_project: newTask.projectId !== null,
         is_repeating: Boolean(newTask.repeatBy),
         repeat_by: newTask.repeatBy ?? null,
         repeat_interval: newTask.repeatInterval ?? 1,

@@ -49,7 +49,7 @@ def count(model: type) -> int:
 def test_a_new_task_gets_the_database_defaults(user_id: int) -> None:
     task = add_task(user_id)
 
-    assert task.category == "General"
+    assert task.project_id is None
     assert task.priority == 4
     assert task.is_completed is False
     assert task.is_repeating is False

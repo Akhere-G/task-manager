@@ -12,7 +12,7 @@ describe("natural-language quick add", () => {
   const parsed = {
     title: "Dentist",
     description: null,
-    category: "health",
+    projectId: 4,
     startAt: "2026-03-02 15:00:00",
     endAt: "2026-03-02 16:00:00",
     isRepeating: false,
@@ -34,7 +34,7 @@ describe("natural-language quick add", () => {
 
     await waitFor(() => expect(onParsed).toHaveBeenCalledTimes(1));
     expect(JSON.parse(mock.history.post[0].data)).toEqual({ text: "Dentist at 3pm" });
-    expect(onParsed.mock.calls[0][0]).toMatchObject({ title: "Dentist", category: "health", repeatUntil: null });
+    expect(onParsed.mock.calls[0][0]).toMatchObject({ title: "Dentist", projectId: 4, repeatUntil: null });
     expect(screen.getByRole("textbox")).toHaveValue("");
   });
 

@@ -40,7 +40,7 @@ export default function useSetIsCompleted() {
       });
       if (isCompleted) {
         trackEvent("task_completed", {
-          category: task?.category,
+          has_project: task ? task.projectId !== null : undefined,
           is_repeating: task ? Boolean(task.repeatBy) : undefined,
           repeat_by: task?.repeatBy ?? null,
           was_overdue: wasOverdue,

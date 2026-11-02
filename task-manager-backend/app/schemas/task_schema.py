@@ -14,7 +14,6 @@ from marshmallow import (
 from marshmallow_sqlalchemy import auto_field
 
 from app.constants import (
-    CATEGORIES,
     MAX_PAGE_SIZE,
     MAX_PROJECTION_DAYS,
     PRIORITIES,
@@ -53,7 +52,7 @@ def _validate_zone(zone_name: str | None) -> None:
 class TaskSchema(CamelAutoSchema):
     class Meta(CamelAutoSchema.Meta):
         model = Task
-        exclude = ("reminded_for_start_at", "is_deleted", "deleted_at")
+        exclude = ("reminded_for_start_at", "is_deleted", "deleted_at", "category")
 
     id = fields.Raw(dump_only=True)
     user_id = auto_field(dump_only=True)
@@ -68,13 +67,7 @@ class TaskSchema(CamelAutoSchema):
         error_messages={"required": "Title is required."},
     )
     description = StrippedString(allow_none=True)
-    category = StrippedString(
-        required=True,
-        validate=validate.OneOf(
-            CATEGORIES, error="Invalid category. Must be one of: {choices}."
-        ),
-        error_messages={"required": "Category is required."},
-    )
+    project_id = fields.Integer(strict=True, allow_none=True)
     priority = fields.Integer(
         strict=True,
         validate=validate.OneOf(PRIORITIES, error="Priority must be between 1 and 4."),
@@ -175,6 +168,7 @@ class TaskSchema(CamelAutoSchema):
 class TaskUpdateSchema(TaskSchema):
     class Meta(TaskSchema.Meta):
         dump_only = ("created_at",)
+        include_fk = True
 
     expected_start_at = UtcDateTime(load_only=True)
     skip_occurrence = fields.Boolean(load_only=True)
@@ -206,7 +200,7 @@ class TaskListQuerySchema(Schema):
     class Meta:
         unknown = EXCLUDE
 
-    category = fields.String()
+    project = fields.Integer(validate=validate.Range(min=1))
     priority = fields.String()
     search = fields.String(data_key="q")
     duration = fields.String()
@@ -268,7 +262,7 @@ class TrashedTaskSchema(TaskSchema):
     purge_at = fields.Method("get_purge_at", dump_only=True)
 
     class Meta(TaskSchema.Meta):
-        exclude = ("reminded_for_start_at", "is_deleted")
+        exclude = ("reminded_for_start_at", "is_deleted", "category")
 
     def get_purge_at(self, task: Task) -> str | None:
         if task.deleted_at is None:

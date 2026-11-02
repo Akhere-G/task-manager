@@ -1,11 +1,14 @@
 import React from "react";
-import { Moon, Palette, Database } from "lucide-react";
+import { Moon, Palette, Database, FolderTree } from "lucide-react";
 import { useTheme } from "../features/users/ThemeContext";
 import { taskService } from "../features/tasks/api";
 import type { Task } from "../features/tasks/types";
 import { trackEvent } from "../services/analytics";
 import { toCsv } from "../utils/csv";
 import { formatRepeatDays } from "../features/tasks/recurrence";
+import useProjects from "../features/projects/hooks/useProjects";
+import { projectPath } from "../features/projects/utils";
+import ProjectSettings from "../features/projects/ProjectSettings";
 
 const EXPORT_PAGE_SIZE = 200;
 
@@ -13,11 +16,12 @@ export default function SettingsPage() {
   const { darkMode, theme, toggleDarkMode, setTheme, THEMES } = useTheme();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
+  const { data: projects = [] } = useProjects();
 
   const downloadTasks = (tasks: Task[]) => {
     const headers = [
       "Title",
-      "Category",
+      "Project",
       "Priority",
       "Description",
       "Start At",
@@ -45,7 +49,7 @@ export default function SettingsPage() {
     const taskData = tasks.map(
       ({
         title,
-        category,
+        projectId,
         priority,
         description,
         startAt,
@@ -60,7 +64,7 @@ export default function SettingsPage() {
         createdAt,
       }) => [
         title,
-        category,
+        projectPath(projects, projectId) ?? "",
         `P${priority ?? 4}`,
         description,
         startAt,
@@ -171,6 +175,12 @@ export default function SettingsPage() {
             />
           </button>
         </div>
+      </SettingsCard>
+      <SettingsCard
+        icon={<FolderTree className="text-brand" />}
+        title="Projects"
+      >
+        <ProjectSettings />
       </SettingsCard>
       <SettingsCard icon={<Database className="text-brand" />} title="Data">
         <div>

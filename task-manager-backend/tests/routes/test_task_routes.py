@@ -112,12 +112,12 @@ def test_bulk_validation_errors_are_listed_per_task(
 ) -> None:
     response = session.post(
         "/api/tasks/bulk",
-        json=[task_payload(), task_payload(category="nope", title="")],
+        json=[task_payload(), task_payload(projectId="nope", title="")],
     )
 
     assert response.status_code == 400
     errors = response.get_json()["errors"]
-    assert errors[0] == {} and set(errors[1]) == {"title", "category"}
+    assert errors[0] == {} and set(errors[1]) == {"title", "projectId"}
 
 
 def test_a_task_can_be_created_read_edited_and_deleted(
@@ -131,8 +131,8 @@ def test_a_task_can_be_created_read_edited_and_deleted(
 
     assert session.get(f"/api/tasks/{task['id']}").get_json() == task
 
-    edited = session.patch(f"/api/tasks/{task['id']}", json={"category": "home"})
-    assert edited.get_json()["category"] == "home"
+    edited = session.patch(f"/api/tasks/{task['id']}", json={"title": "Edited"})
+    assert edited.get_json()["title"] == "Edited"
 
     assert session.delete(f"/api/tasks/{task['id']}").status_code == 200
     assert session.get(f"/api/tasks/{task['id']}").status_code == 404

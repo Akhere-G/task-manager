@@ -5,9 +5,9 @@ from tests.schemas.helpers import load_errors
 
 
 def test_blank_filters_are_ignored_and_paging_defaults_to_page_one() -> None:
-    query = TaskListQuerySchema().load({"category": "", "q": "report"})
+    query = TaskListQuerySchema().load({"project": "", "q": "report"})
 
-    assert query.category is None
+    assert query.project is None
     assert query.search == "report"
     assert query.page == 1
 
@@ -55,3 +55,9 @@ def test_priorities_are_read_as_a_sorted_set() -> None:
 @pytest.mark.parametrize("priority", ["0", "5", "high", "1,", "1;2"])
 def test_bad_priorities_are_rejected(priority: str) -> None:
     assert "priority" in load_errors(TaskListQuerySchema(), {"priority": priority})
+
+
+def test_a_project_filter_is_a_positive_id() -> None:
+    assert TaskListQuerySchema().load({"project": "12"}).project == 12
+    assert "project" in load_errors(TaskListQuerySchema(), {"project": "0"})
+    assert "project" in load_errors(TaskListQuerySchema(), {"project": "work"})

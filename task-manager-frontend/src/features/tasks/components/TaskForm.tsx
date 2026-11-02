@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  categories,
   DEFAULT_PRIORITY,
   type CreateTaskInput,
   type Task,
@@ -13,6 +12,8 @@ import { addHours, addMilliseconds, format, isValid } from "date-fns";
 import { formatForInput } from "../../../utils/formators";
 import RecurrencePicker from "./RecurrencePicker";
 import { priorityOptions } from "../constants";
+import useProjects from "../../projects/hooks/useProjects";
+import { projectOptions } from "../../projects/utils";
 import { REPEAT_LIMITS, defaultDays, getBrowserTimeZone } from "../recurrence";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
@@ -59,6 +60,12 @@ function recurrenceFor(
   };
 }
 
+function parseFieldValue(name: string, value: string) {
+  if (name === "priority") return Number(value);
+  if (name === "projectId") return value === "" ? null : Number(value);
+  return value;
+}
+
 interface TaskFormProps {
   confirmButtonText?: string;
   submitAction: (task: CreateTaskInput) => Promise<void>;
@@ -73,7 +80,7 @@ export default function TaskForm({
 }: TaskFormProps) {
   const [formState, setFormState] = useState<CreateTaskInput>({
     title: "",
-    category: "",
+    projectId: null,
     priority: DEFAULT_PRIORITY,
     description: "",
     ...getDefaultTimes(),
@@ -87,7 +94,7 @@ export default function TaskForm({
 
   const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
     title: "",
-    category: "",
+    projectId: "",
     priority: "",
     description: "",
     startAt: "",
@@ -103,7 +110,7 @@ export default function TaskForm({
 
   const [touched, setTouched] = useState({
     title: false,
-    category: false,
+    projectId: false,
     description: false,
     startAt: false,
     endAt: false,
@@ -113,7 +120,7 @@ export default function TaskForm({
 
   const defaultErrorMessages = {
     title: "",
-    category: "",
+    projectId: "",
     priority: "",
     description: "",
     startAt: "",
@@ -184,7 +191,7 @@ export default function TaskForm({
     const { name, value } = e.target;
     const newFormState = {
       ...formState,
-      [name]: name === "priority" ? Number(value) : value,
+      [name]: parseFieldValue(name, value),
     };
     if (name === "repeatBy") {
       Object.assign(
@@ -269,7 +276,7 @@ export default function TaskForm({
     e.preventDefault();
     setTouched({
       title: true,
-      category: true,
+      projectId: true,
       description: true,
       startAt: true,
       endAt: true,
@@ -318,7 +325,8 @@ export default function TaskForm({
     }
   }
 
-  const options = [{ name: "None", value: "" }, ...categories];
+  const { data: projects = [] } = useProjects();
+  const options = [{ name: "Inbox", value: "" }, ...projectOptions(projects)];
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -337,13 +345,13 @@ export default function TaskForm({
         handleBlur={handleBlur}
       />
       <FormInput
-        label="Category"
-        name="category"
-        value={formState.category}
+        label="Project"
+        name="projectId"
+        value={formState.projectId === null ? "" : String(formState.projectId)}
         handleChange={handleChange}
-        errorMessage={errorMessages.category}
+        errorMessage={errorMessages.projectId}
         options={options}
-        touched={touched.category}
+        touched={touched.projectId}
         handleBlur={handleBlur}
       />
       <FormInput
