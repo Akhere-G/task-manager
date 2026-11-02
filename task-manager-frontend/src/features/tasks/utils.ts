@@ -11,7 +11,7 @@ import {
   parseISO,
 } from "date-fns";
 import type { CSSProperties } from "react";
-import type { Task } from "./types";
+import { DEFAULT_PRIORITY, type Priority, type Task } from "./types";
 import { calendarColoursDark, calendarColoursLight } from "./constants";
 import { Views, type Event, type View } from "react-big-calendar";
 
@@ -185,3 +185,9 @@ export const playSound = async (src: string) => {
   const sound = new Audio(src);
   await sound.play();
 };
+
+/** Reads "1"–"4" or "P1"–"P4" from an imported CSV cell; anything else is P4. */
+export function parsePriority(value: string | undefined): Priority {
+  const match = /^p?([1-4])$/i.exec((value ?? "").trim());
+  return match ? (Number(match[1]) as Priority) : DEFAULT_PRIORITY;
+}

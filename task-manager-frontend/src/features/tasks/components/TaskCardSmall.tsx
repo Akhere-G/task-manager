@@ -4,6 +4,7 @@ import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { formatDateRange, playSound } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import { describeRecurrence } from "../recurrence";
+import PriorityFlag from "./PriorityFlag";
 
 interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
@@ -59,7 +60,10 @@ export function TaskCardSmall({
                 <title>{describeRecurrence(task)}</title>
               </Repeat>
             )}
-            {task.title}
+            <span className="truncate">{task.title}</span>
+            <span className="ml-1">
+              <PriorityFlag priority={task.priority} size={10} />
+            </span>
           </span>
           <span className="text-[10px] font-bold uppercase tracking-widest text-accent text-nowrap">
             {task.category?.replace("-", " ")}

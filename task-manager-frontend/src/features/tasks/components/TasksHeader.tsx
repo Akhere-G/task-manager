@@ -5,6 +5,7 @@ import {
   completedTasksOptions,
   dueDateOptions,
   isAscOptions,
+  priorityFilterOptions,
   sortByOptions,
   taskDurationOptions,
 } from "../constants";
@@ -13,6 +14,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 interface TaskFilters {
   search: string;
   category: string;
+  priority: string;
   duration: string;
   isCompleted: string;
   dueDate: string;
@@ -86,6 +88,14 @@ export default function TasksHeader({
             handleChange={handleChange}
             label="Category"
             options={categoryOptions}
+            formClassNames={formClassNames}
+          />
+          <FormInput
+            name="priority"
+            value={filters.priority}
+            handleChange={handleChange}
+            label="Priority"
+            options={priorityFilterOptions}
             formClassNames={formClassNames}
           />
           <FormInput

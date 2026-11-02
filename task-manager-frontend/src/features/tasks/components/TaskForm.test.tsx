@@ -48,6 +48,26 @@ describe("TaskForm", () => {
     });
   });
 
+  it("submits P4 unless a priority is chosen, and the chosen one as a number", async () => {
+    renderWithProviders(<TaskForm submitAction={submit} />);
+    await fillValidTask();
+    await userEvent.click(addButton());
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0][0].priority).toBe(4);
+
+    await userEvent.selectOptions(screen.getByLabelText("Priority"), "1");
+    await userEvent.click(addButton());
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
+    expect(submit.mock.calls[1][0].priority).toBe(1);
+  });
+
+  it("starts from the task's own priority when editing", () => {
+    renderWithProviders(<TaskForm submitAction={submit} initialData={makeTask({ priority: 2 })} />);
+
+    expect(screen.getByLabelText("Priority")).toHaveValue("2");
+  });
+
   it("explains a missing title once the field has been left", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
 
