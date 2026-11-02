@@ -11,10 +11,12 @@ import {
 import { ChevronDown, ChevronUp } from "lucide-react";
 import useProjects from "../../projects/hooks/useProjects";
 import { projectOptions } from "../../projects/utils";
+import useLabels from "../../labels/hooks/useLabels";
 
 interface TaskFilters {
   search: string;
   project: string;
+  label: string;
   priority: string;
   duration: string;
   isCompleted: string;
@@ -41,6 +43,7 @@ export default function TasksHeader({
 }: TasksHeaderProps) {
   const [openFilters, setOpenFilters] = useState(false);
   const { data: projects = [] } = useProjects();
+  const { data: labels = [] } = useLabels();
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -90,6 +93,20 @@ export default function TasksHeader({
             handleChange={handleChange}
             label="Project"
             options={[{ name: "All", value: "" }, ...projectOptions(projects)]}
+            formClassNames={formClassNames}
+          />
+          <FormInput
+            name="label"
+            value={filters.label}
+            handleChange={handleChange}
+            label="Label"
+            options={[
+              { name: "All", value: "" },
+              ...labels.map((label) => ({
+                name: label.name,
+                value: String(label.id),
+              })),
+            ]}
             formClassNames={formClassNames}
           />
           <FormInput

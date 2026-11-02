@@ -13,7 +13,9 @@ test("working through a Pomodoro session completes the task and updates the stat
   await page.goto("/");
 
   await page.getByRole("button", { name: "Start task: Deep work" }).click();
-  await expect(page.getByRole("heading", { name: "Pomodoro Mode", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Pomodoro Mode", exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("25:00")).toBeVisible();
 
   await page.getByRole("button", { name: "Play Timer" }).click();
@@ -24,12 +26,16 @@ test("working through a Pomodoro session completes the task and updates the stat
   await expect(page.getByText("Complete task: Deep work?")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
-  await expect(page.getByRole("button", { name: "Add new task" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Add new task" }),
+  ).toBeVisible();
   await expect
     .poll(async () => (await signedIn.tasks()).map((t) => t.isCompleted))
     .toEqual([true]);
 
   await page.goto("/stats");
-  const completionRate = page.getByRole("heading", { name: "Completion Rate" }).locator("..");
+  const completionRate = page
+    .getByRole("heading", { name: "Completion Rate" })
+    .locator("..");
   await expect(completionRate).toContainText("100");
 });

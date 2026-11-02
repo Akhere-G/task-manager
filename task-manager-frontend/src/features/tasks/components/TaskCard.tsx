@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ProjectLabel from "../../projects/ProjectLabel";
+import LabelChips from "../../labels/LabelChips";
 import type { Task } from "../types";
 import {
   Trash2,
@@ -58,6 +59,7 @@ function TaskCard({
     isGhost,
     title,
     projectId,
+    labelIds,
     priority,
     description,
     isCompleted,
@@ -133,6 +135,7 @@ function TaskCard({
           </span>
           {isOverdue && <AlertCircle className="mr-1.5 w-4 h-4 text-failure" />}
         </div>
+        <LabelChips labelIds={labelIds} />
         <div className="flex flex-col">
           <p className="text-sm text-text-main leading-relaxed m-0 whitespace-pre-line wrap-break-word">
             {formattedDescription}

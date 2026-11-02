@@ -15,8 +15,14 @@ describe("describeRecurrence", () => {
     [{ repeatBy: "weekly", repeatDays: [0, 1, 2, 3, 4] }, "Every weekday"],
     [{ repeatBy: "weekly", repeatDays: [5, 6] }, "Every weekend"],
     [{ repeatBy: "weekly", repeatDays: [3, 0] }, "Every Mon and Thu"],
-    [{ repeatBy: "weekly", repeatInterval: 2, repeatDays: [0] }, "Mon every 2 weeks"],
-    [{ repeatBy: "monthly", repeatDays: [1, 15] }, "The 1st and 15th of every month"],
+    [
+      { repeatBy: "weekly", repeatInterval: 2, repeatDays: [0] },
+      "Mon every 2 weeks",
+    ],
+    [
+      { repeatBy: "monthly", repeatDays: [1, 15] },
+      "The 1st and 15th of every month",
+    ],
     [{ repeatBy: "yearly", repeatDays: ["12-25"] }, "25 Dec every year"],
     [{ repeatBy: "monthly" }, "Monthly"],
   ])("describes %o as %s", (recurrence, expected) => {

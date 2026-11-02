@@ -16,7 +16,9 @@ describe("filtering tasks by priority", () => {
   it("reads the priority filter from the page address", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    renderHookWithProviders(() => useTasks({ perPage: 10 }), { route: "/?priority=1,2" });
+    renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+      route: "/?priority=1,2",
+    });
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(lastRequestParams().get("priority")).toBe("1,2");

@@ -45,7 +45,12 @@ test("rejects a wrong password", async ({ page, api }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
-test("one user cannot open another user's task", async ({ browser, baseURL, signedIn, page }) => {
+test("one user cannot open another user's task", async ({
+  browser,
+  baseURL,
+  signedIn,
+  page,
+}) => {
   const taskId = await signedIn.createTask({
     title: "Private plan",
     startAt: "2026-03-11 09:00:00",
@@ -60,7 +65,9 @@ test("one user cannot open another user's task", async ({ browser, baseURL, sign
   await intruderPage.goto(`/pomodoro/${taskId}`);
 
   // A 404 is retried by TanStack Query's defaults before the page gives up, hence the wait.
-  await expect(intruderPage.getByText("This task doesn't exist")).toBeVisible({ timeout: 20_000 });
+  await expect(intruderPage.getByText("This task doesn't exist")).toBeVisible({
+    timeout: 20_000,
+  });
   await expect(intruderPage.getByText("Private plan")).toBeHidden();
   await intruder.close();
 });

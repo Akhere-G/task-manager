@@ -1,6 +1,7 @@
 export interface FormInputprops {
   label?: string;
   name: string;
+  id?: string;
   type?: string;
   value: string | number;
   handleChange: (
@@ -23,6 +24,7 @@ export interface FormInputprops {
 export default function FormInput({
   label,
   name,
+  id = name,
   type = "text",
   value,
   handleChange,
@@ -37,7 +39,7 @@ export default function FormInput({
     <div className={"group flex flex-col text-text-main " + formClassNames}>
       {label && (
         <label
-          htmlFor={name}
+          htmlFor={id}
           className="group-focus-within:text-accent text-sm font-bold text-text-main mb-2"
         >
           {label}
@@ -45,7 +47,7 @@ export default function FormInput({
       )}
       {!options && !textarea && (
         <input
-          id={name}
+          id={id}
           className="w-full p-3 rounded-xl border border-border-light focus:outline-none focus:border-brand bg-bg-secondary text-text-main transition-all placeholder:text-text-sub/50"
           name={name}
           type={type}
@@ -57,7 +59,7 @@ export default function FormInput({
       {options && !textarea && (
         <select
           className="w-full p-3 rounded-xl border border-border-light focus:outline-none focus:border-brand bg-bg-secondary text-text-main transition-all placeholder:text-text-sub/50"
-          id={name}
+          id={id}
           name={name}
           value={value}
           onChange={(e) => handleChange(e)}
@@ -73,7 +75,7 @@ export default function FormInput({
       {textarea && !options && (
         <textarea
           className="w-full p-3 rounded-xl border border-border-light focus:outline-none focus:border-brand bg-bg-secondary text-text-main transition-all resize-none"
-          id={name}
+          id={id}
           name={name}
           value={value}
           onChange={handleChange}

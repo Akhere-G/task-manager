@@ -6,6 +6,7 @@ from datetime import datetime
 class TaskQuery:
     project: int | None = None
     priority: tuple[int, ...] | None = None
+    label: tuple[int, ...] | None = None
     search: str | None = None
     duration: str | None = None
     is_completed: str | bool | None = None

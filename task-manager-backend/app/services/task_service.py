@@ -9,6 +9,11 @@ from app.database import db
 from app.exceptions import InvalidTaskTimes, TaskConflict, TaskNotFound
 from app.models import Task
 from app.schemas.task_schema import TaskSchema
+from app.services.label_service import (
+    attach_label_ids,
+    ensure_labels_belong_to,
+    set_task_labels,
+)
 from app.services.project_service import ensure_projects_belong_to
 from app.services.task_query import TaskQuery
 from app.utils.dates import get_zone, parse_iso, utc_now
@@ -29,7 +34,7 @@ from app.utils.task_utils import (
     with_repeating,
 )
 
-NON_COLUMN_FIELDS = {"expected_start_at", "skip_occurrence"}
+NON_COLUMN_FIELDS = {"expected_start_at", "skip_occurrence", "label_ids"}
 TRASH_RETENTION = timedelta(days=TRASH_RETENTION_DAYS)
 RECURRENCE_FIELDS = {
     "repeat_by",
@@ -95,6 +100,7 @@ def get_all_tasks(user_id: int, query: TaskQuery = TaskQuery()) -> dict[str, Any
         tasks = _project_repeating(user_id, query, tasks)
         total = len(tasks)
 
+    attach_label_ids(tasks)
     return {
         "tasks": tasks,
         "total_tasks": total,
@@ -108,6 +114,8 @@ def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
     task = db.session.scalar(stmt.with_for_update() if lock else stmt)
     if task is None:
         raise TaskNotFound(task_id)
+    if not lock:
+        attach_label_ids([task])
     return task
 
 
@@ -148,15 +156,20 @@ def _purge_expired_trash(user_id: int) -> None:
 
 def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
     ensure_projects_belong_to(user_id, (item.get("project_id") for item in items))
+    label_ids = [item.pop("label_ids", []) for item in items]
+    for ids in label_ids:
+        ensure_labels_belong_to(user_id, ids)
     _purge_expired_trash(user_id)
     tasks = [Task(**item, user_id=user_id) for item in items]
     for task in tasks:
         _apply_recurrence(task)
     db.session.add_all(tasks)
     db.session.flush()
-    for task in tasks:
+    for task, ids in zip(tasks, label_ids):
         task.series_id = task.id
+        set_task_labels([task.id], ids)
     db.session.commit()
+    attach_label_ids(tasks)
     return tasks
 
 
@@ -201,6 +214,9 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     before = snapshot(task)
 
     ensure_projects_belong_to(user_id, [data.get("project_id")])
+    if "label_ids" in data:
+        ensure_labels_belong_to(user_id, data["label_ids"])
+        set_task_labels([task.id], data["label_ids"])
     _check_times(task, data)
     _check_not_already_completed(task, data)
 
@@ -228,6 +244,7 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         db.session.flush()
 
     db.session.commit()
+    attach_label_ids([task])
     return task
 
 
@@ -260,6 +277,7 @@ def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         _apply_recurrence(task)
 
     db.session.commit()
+    attach_label_ids([task])
     return task
 
 
@@ -282,8 +300,10 @@ def get_trash(user_id: int, page: int, limit: int) -> dict[str, Any]:
         .limit(limit)
         .offset(limit * (page - 1))
     )
+    tasks = list(db.session.scalars(stmt))
+    attach_label_ids(tasks)
     return {
-        "tasks": list(db.session.scalars(stmt)),
+        "tasks": tasks,
         "total_tasks": total,
         "total_pages": (total + limit - 1) // limit,
         "current_page": page,
@@ -299,4 +319,5 @@ def restore_task(user_id: int, task_id: int) -> Task:
     task.is_deleted = False
     task.deleted_at = None
     db.session.commit()
+    attach_label_ids([task])
     return task

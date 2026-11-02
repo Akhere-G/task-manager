@@ -9,9 +9,14 @@ test.describe("task management", () => {
     await page.clock.setFixedTime(new Date("2026-03-11T12:00:00Z"));
   });
 
-  test("creates a task, completes it, and the server agrees", async ({ page, signedIn }) => {
+  test("creates a task, completes it, and the server agrees", async ({
+    page,
+    signedIn,
+  }) => {
     await page.goto("/");
-    await expect(page.getByText("No tasks found. Time to relax!")).toBeVisible();
+    await expect(
+      page.getByText("No tasks found. Time to relax!"),
+    ).toBeVisible();
 
     await page.getByRole("button", { name: "Add new task" }).click();
     await page.getByLabel("Title").fill("Write quarterly report");
@@ -24,7 +29,9 @@ test.describe("task management", () => {
 
     await expect(card(page, "Write quarterly report")).toBeHidden();
     await expect
-      .poll(async () => (await signedIn.tasks()).map((t) => [t.title, t.isCompleted]))
+      .poll(async () =>
+        (await signedIn.tasks()).map((t) => [t.title, t.isCompleted]),
+      )
       .toEqual([["Write quarterly report", true]]);
   });
 
@@ -41,15 +48,22 @@ test.describe("task management", () => {
     });
     await page.goto("/");
 
-    await card(page, "Water the plants").getByRole("button", { name: /Delete task/ }).click();
-    await page.getByRole("button", { name: "Delete Task", exact: true }).click();
+    await card(page, "Water the plants")
+      .getByRole("button", { name: /Delete task/ })
+      .click();
+    await page
+      .getByRole("button", { name: "Delete Task", exact: true })
+      .click();
 
     await expect(card(page, "Water the plants")).toBeHidden();
     await expect(card(page, "Keep me")).toBeVisible();
     expect((await signedIn.tasks()).map((t) => t.title)).toEqual(["Keep me"]);
   });
 
-  test("explains a missing title and creates nothing", async ({ page, signedIn }) => {
+  test("explains a missing title and creates nothing", async ({
+    page,
+    signedIn,
+  }) => {
     await page.goto("/addtask");
 
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
@@ -59,7 +73,10 @@ test.describe("task management", () => {
     expect(await signedIn.tasks()).toEqual([]);
   });
 
-  test("keeps the form and says so when the server fails", async ({ page, signedIn }) => {
+  test("keeps the form and says so when the server fails", async ({
+    page,
+    signedIn,
+  }) => {
     await page.route("**/api/tasks", (route) =>
       route.request().method() === "POST"
         ? route.fulfill({ status: 500, json: { error: "boom" } })
@@ -82,8 +99,12 @@ test.describe("task management", () => {
     const healthId = await signedIn.createProject("Health");
     await page.goto("/addtask");
 
-    await page.getByPlaceholder(/Fix the leaking tap/).fill("Dentist tomorrow at 3pm");
-    await page.getByRole("button", { name: "Generate new task with AI" }).click();
+    await page
+      .getByPlaceholder(/Fix the leaking tap/)
+      .fill("Dentist tomorrow at 3pm");
+    await page
+      .getByRole("button", { name: "Generate new task with AI" })
+      .click();
 
     await expect(page.getByLabel("Title")).toHaveValue("Dentist appointment");
     await expect(page.getByLabel("Project")).toHaveValue(String(healthId));

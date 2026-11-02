@@ -14,6 +14,7 @@ from marshmallow import (
 from marshmallow_sqlalchemy import auto_field
 
 from app.constants import (
+    MAX_LABELS_PER_TASK,
     MAX_PAGE_SIZE,
     MAX_PROJECTION_DAYS,
     PRIORITIES,
@@ -44,6 +45,13 @@ def _parse_priorities(value: str) -> tuple[int, ...] | None:
     return tuple(sorted({int(part) for part in parts}))
 
 
+def _parse_ids(value: str) -> tuple[int, ...] | None:
+    parts = [part.strip() for part in value.split(",")]
+    if not all(part.isdigit() and int(part) > 0 for part in parts):
+        return None
+    return tuple(sorted({int(part) for part in parts}))
+
+
 def _validate_zone(zone_name: str | None) -> None:
     if not is_valid_zone(zone_name):
         raise ValidationError("Repeat time zone is not a valid time zone.")
@@ -68,6 +76,14 @@ class TaskSchema(CamelAutoSchema):
     )
     description = StrippedString(allow_none=True)
     project_id = fields.Integer(strict=True, allow_none=True)
+    label_ids = fields.List(
+        fields.Integer(strict=True),
+        validate=validate.Length(
+            max=MAX_LABELS_PER_TASK,
+            error=f"A task can have at most {MAX_LABELS_PER_TASK} labels.",
+        ),
+        dump_default=list,
+    )
     priority = fields.Integer(
         strict=True,
         validate=validate.OneOf(PRIORITIES, error="Priority must be between 1 and 4."),
@@ -201,6 +217,7 @@ class TaskListQuerySchema(Schema):
         unknown = EXCLUDE
 
     project = fields.Integer(validate=validate.Range(min=1))
+    label = fields.String()
     priority = fields.String()
     search = fields.String(data_key="q")
     duration = fields.String()
@@ -243,6 +260,14 @@ class TaskListQuerySchema(Schema):
                 )
 
     @validates_schema
+    def validate_label(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if "label" in data and _parse_ids(data["label"]) is None:
+            raise ValidationError(
+                "label must be a comma-separated list of label ids.",
+                field_name="label",
+            )
+
+    @validates_schema
     def validate_priority(self, data: dict[str, Any], **kwargs: Any) -> None:
         if "priority" in data and _parse_priorities(data["priority"]) is None:
             raise ValidationError(
@@ -254,6 +279,8 @@ class TaskListQuerySchema(Schema):
     def to_query(self, data: dict[str, Any], **kwargs: Any) -> TaskQuery:
         if "priority" in data:
             data["priority"] = _parse_priorities(data["priority"])
+        if "label" in data:
+            data["label"] = _parse_ids(data["label"])
         return TaskQuery(**data)
 
 

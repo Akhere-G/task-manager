@@ -3,10 +3,20 @@ from collections.abc import Iterable, Iterator
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ColumnElement, TextClause, and_, func, or_, select, text
+from sqlalchemy import (
+    ColumnElement,
+    TextClause,
+    and_,
+    func,
+    insert,
+    literal,
+    or_,
+    select,
+    text,
+)
 
 from app.database import db
-from app.models import Project, Task
+from app.models import Project, Task, TaskLabel
 from app.utils.dates import (
     as_aware_utc,
     end_of_day,
@@ -130,6 +140,9 @@ def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
         clauses.append(
             Task.project_id.in_(_project_and_descendants(user_id, query.project))
         )
+    if query.label:
+        labelled = select(TaskLabel.task_id).where(TaskLabel.label_id.in_(query.label))
+        clauses.append(Task.id.in_(labelled))
     if query.priority:
         clauses.append(Task.priority.in_(query.priority))
 
@@ -245,21 +258,33 @@ def should_roll_series(task: Task, before: Task) -> bool:
     return end_of_day(task.repeat_until) >= next_task_start(task)
 
 
-def _save_completed_occurrence(before: Task) -> None:
-    db.session.add(
-        Task(
-            title=before.title,
-            description=before.description,
-            project_id=before.project_id,
-            priority=before.priority,
-            start_at=before.start_at,
-            end_at=before.end_at,
-            is_repeating=False,
-            user_id=before.user_id,
-            series_id=before.id,
-            is_completed=True,
-            completed_at=before.completed_at or utc_now(),
-            created_at=before.created_at,
+def _save_completed_occurrence(before: Task) -> Task:
+    occurrence = Task(
+        title=before.title,
+        description=before.description,
+        project_id=before.project_id,
+        priority=before.priority,
+        start_at=before.start_at,
+        end_at=before.end_at,
+        is_repeating=False,
+        user_id=before.user_id,
+        series_id=before.id,
+        is_completed=True,
+        completed_at=before.completed_at or utc_now(),
+        created_at=before.created_at,
+    )
+    db.session.add(occurrence)
+    return occurrence
+
+
+def _copy_labels(source_id: int, target: Task) -> None:
+    db.session.flush()
+    db.session.execute(
+        insert(TaskLabel).from_select(
+            ["task_id", "label_id"],
+            select(literal(target.id), TaskLabel.label_id).where(
+                TaskLabel.task_id == source_id
+            ),
         )
     )
 
@@ -275,5 +300,6 @@ def _move_to_next_occurrence(task: Task, before: Task) -> None:
 
 
 def roll_series(task: Task, before: Task) -> None:
-    _save_completed_occurrence(before)
+    occurrence = _save_completed_occurrence(before)
+    _copy_labels(before.id, occurrence)
     _move_to_next_occurrence(task, before)
