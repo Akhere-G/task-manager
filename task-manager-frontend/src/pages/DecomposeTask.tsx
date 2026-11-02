@@ -91,7 +91,7 @@ export default function DecomposeTask() {
         ...prev,
         {
           title: `Task #${prev.length + 1}`,
-          category: parentTask.category,
+          projectId: parentTask.projectId,
           priority: parentTask.priority,
           description: "",
           startAt: parentTask.startAt,

@@ -8,13 +8,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { categoryColours } from "../../tasks/constants";
+import useProjectColours from "../../projects/hooks/useProjectColours";
 import useGetStats from "../hooks/useGetStats";
 import { capitalise } from "../../../utils/formators";
 import ChartToolTip from "./ChartToolTip";
 import type { TimeSpentData } from "../api";
 
 export default function TimeSpentChart() {
+  const colourFor = useProjectColours();
   const {
     data: timeSpent,
     isLoading,
@@ -33,7 +34,7 @@ export default function TimeSpentChart() {
   const chartData = timeSpent?.map((data) => ({
     ...data,
     hours: Math.round(data.timeSpent / 60),
-    fill: categoryColours[data.category] || categoryColours["general"],
+    fill: colourFor(data.project),
   }));
 
   if (chartData && chartData.length === 0) {
@@ -54,7 +55,7 @@ export default function TimeSpentChart() {
             tick={{ fill: "var(--color-text-sub)", fontSize: "14px" }}
           />
           <YAxis
-            dataKey="category"
+            dataKey="project"
             type="category"
             width={100}
             tick={{ fill: "var(--color-text-main)", fontSize: "12px" }}

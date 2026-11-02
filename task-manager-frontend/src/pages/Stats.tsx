@@ -22,8 +22,8 @@ const ProductivityChart = lazy(
 const StatsOverview = lazy(
   () => import("../features/stats/components/StatsOverview"),
 );
-const StatusByCategoryChart = lazy(
-  () => import("../features/stats/components/StatusByCategoryChart"),
+const StatusByProjectChart = lazy(
+  () => import("../features/stats/components/StatusByProjectChart"),
 );
 const TimeSpentChart = lazy(
   () => import("../features/stats/components/TimeSpentChart"),
@@ -101,7 +101,7 @@ export default function Stats() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard
           title="Deadline Proximity"
-          subtitle="Average time until deadlines per category."
+          subtitle="Average time until deadlines per project."
           width="lg:col-span-7"
           height="h-96"
         >
@@ -124,17 +124,17 @@ export default function Stats() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard
-          title="Category Overview"
-          subtitle="Task status by category."
+          title="Project Overview"
+          subtitle="Task status by project."
           width="lg:col-span-5"
           height="h-90 md:h-125"
         >
-          <StatusByCategoryChart />
+          <StatusByProjectChart />
         </ChartCard>
 
         <ChartCard
           title="Time spent"
-          subtitle="Total time spent per category."
+          subtitle="Total time spent per project."
           width="lg:col-span-7"
           height="h-90 md:h-125"
         >
@@ -144,7 +144,7 @@ export default function Stats() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <ChartCard
           title="Weekly Flow"
-          subtitle="A breakdown of completed tasks by category over the last seven days."
+          subtitle="A breakdown of completed tasks by project over the last seven days."
           width="lg:col-span-12"
           height="h-96"
         >

@@ -15,30 +15,37 @@ import { formatDate } from "date-fns";
 import { LoadingState, ErrorState, EmptyState } from "../../../components/ui";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import useGetStats from "../hooks/useGetStats";
-import { categoryColours } from "../../tasks/constants";
-import { capitalise } from "../../../utils/formators";
+import useProjectColours from "../../projects/hooks/useProjectColours";
 import ChartToolTip from "./ChartToolTip";
 import type { DistributionTrendData } from "../api";
 
-const CATEGORIES = [
-  "work",
-  "home",
-  "chores",
-  "life-admin",
-  "health",
-  "self-care",
-  "social",
-  "hobbies",
-  "learning",
-  "finance",
-  "general",
-];
+interface Row {
+  date: string;
+  [seriesKey: string]: number | string;
+}
+
+/** Series keys are indexes because project names may contain dots or dashes. */
+function toRows(days: DistributionTrendData[]) {
+  const names = [
+    ...new Set(days.flatMap((day) => day.counts.map((c) => c.project))),
+  ];
+  const rows: Row[] = days.map((day) => {
+    const row: Row = { date: day.date };
+    names.forEach((name, index) => {
+      row[`s${index}`] =
+        day.counts.find((c) => c.project === name)?.count ?? 0;
+    });
+    return row;
+  });
+  return { names, rows };
+}
 
 export default function DistributionTrendChart() {
   const { data, isLoading, isError } = useGetStats<DistributionTrendData[]>(
     (stats) => stats.distributionTrend,
   );
 
+  const colourFor = useProjectColours();
   const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
   const breakpoint = useBreakpoint();
   const isMobile = ["xs", "sm"].includes(breakpoint);
@@ -53,10 +60,10 @@ export default function DistributionTrendChart() {
     );
   };
 
-  const hasNoData =
-    data?.every((d) =>
-      Object.values({ ...d, date: 0 }).every((v) => v === 0),
-    ) ?? false;
+  const { names, rows } = toRows(data ?? []);
+  const hasNoData = rows.every((row) =>
+    names.every((_, index) => row[`s${index}`] === 0),
+  );
 
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState error="Could not load data." />;
@@ -66,7 +73,7 @@ export default function DistributionTrendChart() {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart
-        data={data}
+        data={rows}
         margin={{
           top: 0,
           right: 5,
@@ -93,12 +100,13 @@ export default function DistributionTrendChart() {
             if (!payload?.[0]?.payload) return;
             const data = payload[0].payload;
 
-            const sortedItems = CATEGORIES.map((cat) => ({
-              title: capitalise(cat).replaceAll("-", " "),
-              name: cat,
-              value: data[cat] || 0,
-              colour: categoryColours[cat],
-            }))
+            const sortedItems = names
+              .map((name, index) => ({
+                title: name,
+                name: `s${index}`,
+                value: Number(data[`s${index}`]) || 0,
+                colour: colourFor(name),
+              }))
               .filter(
                 (item) =>
                   item.value > 0 && !hiddenCategories.includes(item.name),
@@ -109,7 +117,7 @@ export default function DistributionTrendChart() {
                 ? [{ name: "No tasks completed." }]
                 : sortedItems.map(({ title, value, colour }) => ({
                     name: title,
-                    value,
+                    value: String(value),
                     fill: colour,
                   }));
             return (
@@ -140,29 +148,26 @@ export default function DistributionTrendChart() {
           )}
         />
 
-        {CATEGORIES.map((cat) => (
-          <Area
-            key={cat}
-            type="monotone"
-            dataKey={cat}
-            name={cat
-              .replace("-", " ")
-              .replace(/\b\w/g, (l) => l.toUpperCase())}
-            stackId="1"
-            stroke={categoryColours[cat]}
-            fill={categoryColours[cat]}
-            isAnimationActive={true}
-            animationDuration={500}
-            data={data.map((item) => ({
-              ...item,
-              [cat]: hiddenCategories.includes(cat)
-                ? 0
-                : item[cat as keyof DistributionTrendData],
-            }))}
-            fillOpacity={hiddenCategories.includes(cat) ? 0 : 0.6}
-            strokeOpacity={hiddenCategories.includes(cat) ? 0 : 1}
-          />
-        ))}
+        {names.map((name, index) => {
+          const key = `s${index}`;
+          const hidden = hiddenCategories.includes(key);
+          return (
+            <Area
+              key={key}
+              type="monotone"
+              dataKey={key}
+              name={name}
+              stackId="1"
+              stroke={colourFor(name)}
+              fill={colourFor(name)}
+              isAnimationActive={true}
+              animationDuration={500}
+              data={rows.map((row) => ({ ...row, [key]: hidden ? 0 : row[key] }))}
+              fillOpacity={hidden ? 0 : 0.6}
+              strokeOpacity={hidden ? 0 : 1}
+            />
+          );
+        })}
       </AreaChart>
     </ResponsiveContainer>
   );

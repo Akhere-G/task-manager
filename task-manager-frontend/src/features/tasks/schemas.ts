@@ -1,11 +1,10 @@
 import { z } from "zod";
-import { categories, type Task } from "./types";
+import type { Task } from "./types";
 import { REPEAT_LIMITS, isValidRepeatDay } from "./recurrence";
 import { toFieldErrors } from "../../utils/zodErrors";
 
 export type TaskError = { [P in keyof Task]: string };
 
-const CATEGORY_KEYS = categories.map((c) => c.value);
 const REPEAT_FREQUENCIES = Object.keys(REPEAT_LIMITS);
 
 const isDate = (value: string) => !isNaN(Date.parse(value));
@@ -41,15 +40,10 @@ export const taskSchema = z
       .optional(),
     startAt: dateField("Start At"),
     endAt: dateField("End At"),
-    category: z
-      .string({ error: "Category is mandatory." })
-      .trim()
-      .min(1, "Category is mandatory.")
-      .max(50, "Category name is too long.")
-      .refine(
-        (cat) => CATEGORY_KEYS.includes(cat),
-        `Invalid category. Must be one of: ${CATEGORY_KEYS.join(", ")}.`,
-      ),
+    projectId: z
+      .number({ error: "Choose one of your projects." })
+      .int("Choose one of your projects.")
+      .nullish(),
     repeatUntil: z
       .string()
       .nullish()

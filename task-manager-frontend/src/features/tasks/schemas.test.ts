@@ -4,7 +4,7 @@ import { validateTask, validateTaskList } from "./schemas";
 const valid = {
   title: "Write report",
   description: "",
-  category: "work",
+  projectId: null,
   startAt: "2026-01-01T10:00",
   endAt: "2026-01-01T11:00",
   isRepeating: false,
@@ -21,18 +21,19 @@ describe("validateTask", () => {
   });
 
   it("reports required fields and keeps messages", () => {
-    const errors = validateTask({ ...valid, title: " ", category: "" });
+    const errors = validateTask({ ...valid, title: " ", startAt: "" });
     expect(errors.title).toBe("Title is mandatory.");
-    expect(errors.category).toBe("Category is mandatory.");
+    expect(errors.startAt).toBe("Start At is mandatory.");
   });
 
-  it("rejects long titles, unknown categories and bad ordering", () => {
+  it("rejects long titles, a fractional project id and bad ordering", () => {
     expect(validateTask({ ...valid, title: "a".repeat(256) }).title).toBe(
       "Title must be under 255 characters.",
     );
-    expect(validateTask({ ...valid, category: "nope" }).category).toMatch(
-      /^Invalid category/,
+    expect(validateTask({ ...valid, projectId: 1.5 }).projectId).toBe(
+      "Choose one of your projects.",
     );
+    expect(validateTask({ ...valid, projectId: 4 })).toEqual({});
     expect(validateTask({ ...valid, endAt: valid.startAt }).endAt).toBe(
       "End At must be after start at.",
     );

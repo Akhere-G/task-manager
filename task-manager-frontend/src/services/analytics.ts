@@ -31,6 +31,7 @@ export type AnalyticsEvent =
   | "task_status_changed"
   | "task_deleted"
   | "task_restored"
+  | "project_created"
   | "recurring_task_skipped"
   | "calendar_task_rescheduled"
   | "task_form_validation_failed"

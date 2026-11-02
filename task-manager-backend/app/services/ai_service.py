@@ -10,11 +10,12 @@ from groq import Groq
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from app.constants import CATEGORIES, DEFAULT_PRIORITY
+from app.constants import DEFAULT_PRIORITY, INBOX_NAME
 from app.database import db
 from app.exceptions import AIUnavailable
 from app.models import DailyBrief, Task
 from app.schemas.ai_schema import AiTaskSchema
+from app.services.project_service import project_paths
 from app.services.stats_service import get_brief_stats
 from app.services.task_query import TaskQuery
 from app.services.task_service import get_all_tasks
@@ -106,7 +107,9 @@ def _store_brief(user_id: int, day: date, text: str) -> str:
     return text
 
 
-def _brief_prompt(day: date, tasks: list[Task], stats: dict[str, Any]) -> str:
+def _brief_prompt(
+    day: date, tasks: list[Task], stats: dict[str, Any], paths: dict[int, str]
+) -> str:
     completed_this_week = sum(d["tasks"] for d in stats["productivity"][-7:])
     average = completed_this_week / 7
     minutes_today = sum(
@@ -115,11 +118,12 @@ def _brief_prompt(day: date, tasks: list[Task], stats: dict[str, Any]) -> str:
         if t.start_at and t.end_at
     )
     volume = "\n".join(
-        f"- {v['category']}: {v['pending']} pending, {v['overdue']} overdue"
-        for v in stats["categoryVolume"]
+        f"- {v['project']}: {v['pending']} pending, {v['overdue']} overdue"
+        for v in stats["projectVolume"]
     )
     schedule = "\n".join(
-        f"- {t.title} (P{t.priority}, {t.category}, {t.start_at} - {t.end_at})"
+        f"- {t.title} (P{t.priority}, {paths.get(t.project_id, INBOX_NAME)}, "
+        f"{t.start_at} - {t.end_at})"
         for t in tasks
     )
 
@@ -159,7 +163,9 @@ def generate_daily_brief(
                 project_repeating=True,
             ),
         )["tasks"]
-        prompt = _brief_prompt(day, todays_tasks, get_brief_stats(user_id))
+        prompt = _brief_prompt(
+            day, todays_tasks, get_brief_stats(user_id), project_paths(user_id)
+        )
         return _store_brief(user_id, day, get_generated_text(prompt)), False
     except (Exception, SQLAlchemyError) as err:
         db.session.rollback()
@@ -167,14 +173,20 @@ def generate_daily_brief(
         return FALLBACK_BRIEF, True
 
 
-def _parse_prompt(user_input: str, now: datetime) -> str:
+def _project_choices(paths: dict[int, str]) -> str:
+    if not paths:
+        return "null (the user has no projects)"
+    return "one of: " + "; ".join(sorted(paths.values())) + ", or null"
+
+
+def _parse_prompt(user_input: str, now: datetime, paths: dict[int, str]) -> str:
     return f"""
     Current Date and Time: {now.strftime("%Y-%m-%d %H:%M:%S")}
     Extract task details from: "{user_input}"
     Return ONLY a JSON object, with no other comments with these keys:
     - title: (string)
     - description: (string or null), put any extra information here
-    - category: (MUST be one of: {", ".join(CATEGORIES)})
+    - project: (string) {_project_choices(paths)}. Use null if none clearly fits.
     - priority: integer 1 (urgent) to 4 (none), default 4. "p1" to "p4" set it.
     - startAt: Datetime (MUST be present), use YYYY-MM-DD HH:MM. Should be set to any date time mention. If no time mentioned, use {now:%Y-%m-%d} 00:00.
     - endAt: Datetime use YYYY-MM-DD HH:MM (MUST be present). Should be after startAt but on the same day. If no time mentioned, if a duration was mentioned, add that to the start date and set this to that. Otherwise set to an hour after start at.
@@ -193,33 +205,52 @@ def _parse_prompt(user_input: str, now: datetime) -> str:
 def _decompose_prompt(
     title: str,
     description: str,
-    category: str,
     start_at: str | datetime,
     end_at: str | datetime,
 ) -> str:
     return f"""
     Decompose this task into 3-7 substasks that will help the user complete the task.
-    - {title} ({category}, {description}, {start_at} to {end_at})
+    - {title} ({description}, {start_at} to {end_at})
     Return only a json list of objects of this format
     - title: (string)
     - description: (string or null)
-    - category: (MUST be one of: {", ".join(CATEGORIES)})
     - startAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is {date.today():%Y-%m-%d}. If no time mentioned, default to end of day 00:00)
     - endAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, If no due date mentioned, default to end of day 23:59)
     """
 
 
-def parse_task_with_ai(user_input: str) -> dict[str, Any]:
+def _resolve_project_id(name: Any, paths: dict[int, str]) -> int | None:
+    if not isinstance(name, str) or not name.strip():
+        return None
+    wanted = name.strip().lower()
+    for project_id, path in paths.items():
+        if path.lower() == wanted:
+            return project_id
+    leaves = [
+        project_id
+        for project_id, path in paths.items()
+        if path.rsplit(" / ", 1)[-1].lower() == wanted
+    ]
+    return leaves[0] if len(leaves) == 1 else None
+
+
+def _with_project_id(task: dict[str, Any], paths: dict[int, str]) -> dict[str, Any]:
+    task["projectId"] = _resolve_project_id(task.pop("project", None), paths)
+    return task
+
+
+def parse_task_with_ai(user_id: int, user_input: str) -> dict[str, Any]:
     now = datetime.now(UTC)
-    reply = get_generated_text(_parse_prompt(user_input, now))
+    paths = project_paths(user_id)
+    reply = get_generated_text(_parse_prompt(user_input, now, paths))
     try:
         schema = AiTaskSchema()
-        return schema.dump(schema.load(_extract_json(reply)))
+        return _with_project_id(schema.dump(schema.load(_extract_json(reply))), paths)
     except (ValueError, ValidationError):
         return {
             "title": user_input[:50],
             "description": user_input,
-            "category": "general",
+            "projectId": None,
             "priority": DEFAULT_PRIORITY,
             "startAt": f"{now:%Y-%m-%d} 00:00",
             "endAt": f"{now:%Y-%m-%d} 23:59",
@@ -229,15 +260,17 @@ def parse_task_with_ai(user_input: str) -> dict[str, Any]:
 def decompose_task(
     title: str,
     description: str,
-    category: str,
     start_at: str | datetime,
     end_at: str | datetime,
 ) -> list[dict[str, Any]]:
     try:
         reply = get_generated_text(
-            _decompose_prompt(title, description, category, start_at, end_at)
+            _decompose_prompt(title, description, start_at, end_at)
         )
         schema = AiTaskSchema(many=True)
-        return schema.dump(schema.load(_extract_json(reply)))
+        tasks = schema.dump(schema.load(_extract_json(reply)))
     except (AIUnavailable, ValueError, ValidationError):
         return []
+    for task in tasks:
+        task.pop("project", None)
+    return tasks

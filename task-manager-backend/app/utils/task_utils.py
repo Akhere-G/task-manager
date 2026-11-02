@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ColumnElement, TextClause, and_, func, or_, select, text
 
 from app.database import db
-from app.models import Task
+from app.models import Project, Task
 from app.utils.dates import (
     as_aware_utc,
     end_of_day,
@@ -15,6 +15,7 @@ from app.utils.dates import (
     start_of_day,
     utc_now,
 )
+from app.utils.project_tree import descendant_ids
 from app.utils.recurrence import next_occurrence
 
 if TYPE_CHECKING:
@@ -31,7 +32,7 @@ MAX_GHOSTS = 5000
 GHOST_COPIED_FIELDS = (
     "title",
     "description",
-    "category",
+    "project_id",
     "priority",
     "is_completed",
     "created_at",
@@ -113,10 +114,22 @@ def _duration_clause(duration: str | None) -> Clause | None:
     return None
 
 
+def _project_and_descendants(user_id: int, project_id: int) -> set[int]:
+    rows = db.session.execute(
+        select(Project.id, Project.parent_id).where(Project.user_id == user_id)
+    )
+    parents = {child_id: parent_id for child_id, parent_id in rows}
+    if project_id not in parents:
+        return {project_id}
+    return descendant_ids(parents, project_id)
+
+
 def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
     clauses: list[Clause] = [live_tasks_of(user_id)]
-    if query.category and query.category != "all":
-        clauses.append(Task.category == query.category)
+    if query.project:
+        clauses.append(
+            Task.project_id.in_(_project_and_descendants(user_id, query.project))
+        )
     if query.priority:
         clauses.append(Task.priority.in_(query.priority))
 
@@ -237,7 +250,7 @@ def _save_completed_occurrence(before: Task) -> None:
         Task(
             title=before.title,
             description=before.description,
-            category=before.category,
+            project_id=before.project_id,
             priority=before.priority,
             start_at=before.start_at,
             end_at=before.end_at,

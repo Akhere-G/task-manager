@@ -10,7 +10,7 @@ export default function useDeleteTask() {
     mutationFn: (id: number) => taskService.delete(id),
     onSuccess: () => {
       trackEvent("task_deleted", {
-        category: selectedTask?.category,
+        has_project: selectedTask ? selectedTask.projectId !== null : undefined,
         is_repeating: selectedTask ? Boolean(selectedTask.repeatBy) : undefined,
       });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });

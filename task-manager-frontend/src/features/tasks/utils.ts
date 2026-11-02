@@ -12,7 +12,7 @@ import {
 } from "date-fns";
 import type { CSSProperties } from "react";
 import { DEFAULT_PRIORITY, type Priority, type Task } from "./types";
-import { calendarColoursDark, calendarColoursLight } from "./constants";
+import { DEFAULT_PROJECT_COLOUR, type Project } from "../projects/types";
 import { Views, type Event, type View } from "react-big-calendar";
 
 export const formatDate = (dateStr?: string) => {
@@ -140,19 +140,32 @@ export function getEventClassName(
   return `!border-none !shadow-sm !rounded-md !px-1 !py-1 !text-xs !font-bold transition-all ${statusClasses}`;
 }
 
+const DARK_MODE_FACTOR = 0.7;
+
+function darken(hex: string): string {
+  const channel = (start: number) =>
+    Math.round(parseInt(hex.slice(start, start + 2), 16) * DARK_MODE_FACTOR)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${channel(1)}${channel(3)}${channel(5)}`;
+}
+
 export function getEventStyle(
   event: Event,
   isMobile: boolean,
   view: View,
   darkMode: boolean,
+  projects: Project[] = [],
 ): CSSProperties {
   if (isMobile && view === Views.MONTH) return {};
 
   const task = event.resource as Task;
   if (task.isCompleted) return {};
 
-  const palette = darkMode ? calendarColoursDark : calendarColoursLight;
-  const backgroundColor = palette[task.category] ?? palette["general"];
+  const colour =
+    projects.find((p) => p.id === task.projectId)?.colour ??
+    DEFAULT_PROJECT_COLOUR;
+  const backgroundColor = darkMode ? darken(colour) : colour;
 
   return { backgroundColor, color: "#ffffff" };
 }

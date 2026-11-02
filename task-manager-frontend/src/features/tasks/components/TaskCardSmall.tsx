@@ -5,6 +5,7 @@ import { formatDateRange, playSound } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import { describeRecurrence } from "../recurrence";
 import PriorityFlag from "./PriorityFlag";
+import ProjectLabel from "../../projects/ProjectLabel";
 
 interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
@@ -66,7 +67,7 @@ export function TaskCardSmall({
             </span>
           </span>
           <span className="text-[10px] font-bold uppercase tracking-widest text-accent text-nowrap">
-            {task.category?.replace("-", " ")}
+            <ProjectLabel projectId={task.projectId} />
           </span>
         </span>
 

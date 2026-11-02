@@ -25,7 +25,7 @@ export default function AddTask() {
     await createTask(formattedTask);
     trackEvent("task_created", {
       source: aiSuggestion ? "ai" : "form",
-      category: newTask.category,
+      has_project: newTask.projectId !== null,
       is_repeating: Boolean(newTask.repeatBy),
       repeat_by: newTask.repeatBy ?? null,
       repeat_interval: newTask.repeatInterval ?? 1,

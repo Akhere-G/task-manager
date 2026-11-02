@@ -60,7 +60,7 @@ def _stub_reply(prompt: str) -> str:
         return json.dumps(
             {
                 "title": "Dentist appointment",
-                "category": "health",
+                "project": "Health",
                 "startAt": "2026-03-12 15:00",
                 "endAt": "2026-03-12 16:00",
             }
@@ -69,7 +69,6 @@ def _stub_reply(prompt: str) -> str:
         steps = [
             {
                 "title": f"Step {n}",
-                "category": "work",
                 "startAt": "2026-03-12 09:00:00",
                 "endAt": "2026-03-12 10:00:00",
             }
