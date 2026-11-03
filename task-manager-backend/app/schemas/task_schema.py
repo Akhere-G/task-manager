@@ -153,7 +153,9 @@ class TaskSchema(CamelAutoSchema):
     @pre_load
     def blank_to_none(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         return {
-            k: None if v == "" and k in BLANK_TO_NONE else v for k, v in data.items()
+            k: None if v == "" and k in BLANK_TO_NONE else v
+            for k, v in data.items()
+            if not (k == "createdAt" and v is None)
         }
 
     @validates_schema
