@@ -100,3 +100,11 @@ def test_bad_requests_are_rejected(session: FlaskClient, body: dict) -> None:
     task = add(session, **today_at(8))
 
     assert snooze(session, task, **body).status_code == 400
+
+
+def test_the_old_skip_flag_is_ignored(session: FlaskClient) -> None:
+    task = add(session, repeatBy="daily", **today_at(8))
+
+    patched = session.patch(f"/api/tasks/{task['id']}", json={"skipOccurrence": True})
+
+    assert patched.get_json()["startAt"] == task["startAt"]
