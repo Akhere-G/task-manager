@@ -22,21 +22,24 @@ test("a dragged card keeps its new place after a reload", async ({
     steps: 4,
   });
   await page.mouse.move(to.x + to.width / 2, to.y + 10, { steps: 12 });
-  const frames = await page.evaluateHandle(() => {
-    const seen: string[] = [];
+  // A string, because the e2e project has no DOM types.
+  await page.evaluate(`
+    window.__frames = [];
     const sample = () => {
-      const order = [...document.querySelectorAll("article h2, article h3")];
-      seen.push(order.map((heading) => heading.textContent).join(","));
+      const headings = document.querySelectorAll("article h3");
+      window.__frames.push([...headings].map((h) => h.textContent).join(","));
       requestAnimationFrame(sample);
     };
     sample();
-    return seen;
-  });
-  const released = await frames.evaluate((seen) => seen.length);
+  `);
+  const frameCount = () => page.evaluate<number>("window.__frames.length");
+  const released = await frameCount();
   await page.mouse.up();
   await page.waitForTimeout(300);
 
-  const afterDrop = (await frames.jsonValue()).slice(released + 1);
+  const afterDrop = (await page.evaluate<string[]>("window.__frames")).slice(
+    released + 1,
+  );
   expect(afterDrop.filter((order) => order !== afterDrop.at(-1))).toEqual([]);
   await expect(titles()).toHaveText(["Gamma", "Alpha", "Beta"]);
   await page.reload();
