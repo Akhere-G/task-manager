@@ -15,7 +15,7 @@ import {
 import LayoutToggle from "../features/tasks/components/LayoutToggle";
 import QuickCapture from "../features/tasks/components/QuickCapture";
 import TaskPopups from "../features/tasks/components/TaskPopups";
-import ViewNav from "../features/tasks/components/ViewNav";
+import TasksSidebar from "../features/tasks/components/TasksSidebar";
 import useTaskCounts from "../features/tasks/hooks/useTaskCounts";
 import { useTasks } from "../features/tasks/hooks/useTasks";
 import type { Task } from "../features/tasks/types";
@@ -108,9 +108,13 @@ export default function TasksPage() {
 
   return (
     <div className="flex flex-col gap-3 md:flex-row md:gap-6">
-      <aside className="md:w-48 md:shrink-0">
-        <ViewNav view={view} counts={counts} onSelect={selectView} />
-      </aside>
+      <TasksSidebar
+        view={view}
+        counts={counts}
+        project={filters.project}
+        onSelectView={selectView}
+        onSelectProject={(id) => updateFilters("project", id)}
+      />
 
       <section className="flex min-h-full min-w-0 grow flex-col gap-3">
         <TasksHeader

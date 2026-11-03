@@ -7,14 +7,11 @@ interface ViewNavProps {
 }
 
 const baseClass =
-  "flex shrink-0 items-center justify-between gap-3 rounded-full px-3 py-1.5 text-sm md:rounded-lg md:w-full";
+  "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-1.5 text-sm";
 
 export default function ViewNav({ view, counts, onSelect }: ViewNavProps) {
   return (
-    <nav
-      aria-label="Task views"
-      className="flex gap-2 overflow-x-auto px-3 md:flex-col md:gap-1 md:overflow-visible md:px-0"
-    >
+    <nav aria-label="Task views" className="flex flex-col gap-1">
       {TASK_VIEWS.map(({ value, label }) => {
         const count = value === "all" ? undefined : counts?.[value];
         const selected = value === view;
