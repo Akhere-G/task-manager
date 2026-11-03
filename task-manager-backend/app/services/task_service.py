@@ -21,6 +21,13 @@ from app.services.label_service import (
     set_task_labels,
 )
 from app.services.project_service import ensure_projects_belong_to
+from app.services.reminder_service import (
+    DEFAULT_REMINDER,
+    attach_reminders,
+    set_reminders,
+    sync_reminders,
+    wants_default_reminder,
+)
 from app.services.subtask_service import (
     attach_subtask_counts,
     attach_subtasks,
@@ -44,7 +51,7 @@ from app.utils.task_utils import (
     snapshot,
 )
 
-NON_COLUMN_FIELDS = {"expected_start_at", "label_ids"}
+NON_COLUMN_FIELDS = {"expected_start_at", "label_ids", "reminders"}
 TRASH_RETENTION = timedelta(days=TRASH_RETENTION_DAYS)
 RECURRENCE_FIELDS = {
     "repeat_by",
@@ -62,6 +69,7 @@ def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
         raise TaskNotFound(task_id)
     if not lock:
         attach_label_ids([task])
+        attach_reminders([task])
         attach_subtask_counts([task])
         attach_subtasks(task)
     return task
@@ -105,6 +113,7 @@ def _purge_expired_trash(user_id: int) -> None:
 def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
     ensure_projects_belong_to(user_id, (item.get("project_id") for item in items))
     label_ids = [item.pop("label_ids", []) for item in items]
+    reminders = [item.pop("reminders", None) for item in items]
     for ids in label_ids:
         ensure_labels_belong_to(user_id, ids)
     for item in items:
@@ -119,11 +128,15 @@ def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
         _apply_recurrence(task)
     db.session.add_all(tasks)
     db.session.flush()
-    for task, ids in zip(tasks, label_ids):
+    for task, ids, specs in zip(tasks, label_ids, reminders, strict=True):
         task.series_id = task.id
         set_task_labels([task.id], ids)
+        if specs is None and wants_default_reminder(task):
+            specs = [DEFAULT_REMINDER]
+        set_reminders(task, specs or [])
     db.session.commit()
     attach_label_ids(tasks)
+    attach_reminders(tasks)
     attach_subtask_counts(tasks)
     for task in tasks:
         task.subtasks = []  # type: ignore
@@ -190,6 +203,7 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         set_task_labels([task.id], data["label_ids"])
     _check_times(task, data)
     _check_not_already_completed(task, data)
+    new_reminders = data.get("reminders")
     if task.parent_id is not None:
         _check_subtask_fields(data)
 
@@ -204,6 +218,10 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         _apply_recurrence(task)
 
     db.session.flush()
+    if new_reminders is not None:
+        set_reminders(task, new_reminders)
+    else:
+        sync_reminders(task)
 
     if "project_id" in data and task.parent_id is None:
         move_subtasks_to_project(task)
@@ -218,6 +236,7 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
 
     db.session.commit()
     attach_label_ids([task])
+    attach_reminders([task])
     attach_subtask_counts([task])
     return task
 
@@ -250,8 +269,10 @@ def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         task.end_at = task.start_at + duration
         _apply_recurrence(task)
 
+    sync_reminders(task)
     db.session.commit()
     attach_label_ids([task])
+    attach_reminders([task])
     attach_subtask_counts([task])
     return task
 
@@ -300,4 +321,5 @@ def restore_task(user_id: int, task_id: int) -> Task:
     set_subtasks_deleted(task, False)
     db.session.commit()
     attach_label_ids([task])
+    attach_reminders([task])
     return task

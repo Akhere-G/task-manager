@@ -89,8 +89,11 @@ routes or services.
 | label           | A user-made tag (`labels`); a task has up to `MAX_LABELS_PER_TASK`.           |
 | inbox           | Tasks with no `project_id`.                                                   |
 | smart view      | A named filter (inbox, today, upcoming, overdue, week, month) resolved in the viewer's zone. |
-| window          | The `[start, end)` span of a ranged smart view, as naive UTC.                 || undated task    | A task with no `start_at` and `end_at`; never repeating.                      |
+| window          | The `[start, end)` span of a ranged smart view, as naive UTC.                 |
+| undated task    | A task with no `start_at` and `end_at`; never repeating.                      |
 | subtask         | A task with a `parent_id`; one level deep, never repeating, hidden from lists. |
+| snooze          | Moving a task to a later day, keeping its time of day and length.             |
+| reminder        | A `task_reminders` row; `fire_at` is when the runner pushes it (naive UTC).   |
 | purge           | Hard-deleting a user's trash older than the retention when they create a task. |
 
 ## Commands
