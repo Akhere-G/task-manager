@@ -63,3 +63,14 @@ export type CreateTaskInput = Omit<
   | "subtaskCompletedCount"
   | "subtasks"
 > & { labelIds?: number[] };
+
+export type SnoozePreset =
+  "tomorrow" | "weekend" | "next_week" | "date" | "next_occurrence";
+
+export interface SnoozeInput {
+  preset: SnoozePreset;
+  day?: string;
+  zoneName: string;
+  isGhost?: boolean;
+  previousStartAt?: string;
+}

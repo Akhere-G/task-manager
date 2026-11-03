@@ -39,13 +39,12 @@ from app.utils.recurrence import (
 )
 from app.utils.task_utils import (
     live_tasks_of,
-    next_task_start,
     roll_series,
     should_roll_series,
     snapshot,
 )
 
-NON_COLUMN_FIELDS = {"expected_start_at", "skip_occurrence", "label_ids"}
+NON_COLUMN_FIELDS = {"expected_start_at", "label_ids"}
 TRASH_RETENTION = timedelta(days=TRASH_RETENTION_DAYS)
 RECURRENCE_FIELDS = {
     "repeat_by",
@@ -181,12 +180,6 @@ def _sync_completion(task: Task, was_completed: bool) -> None:
         task.completed_at = None
 
 
-def _skip_occurrence(task: Task) -> None:
-    next_start = next_task_start(task)
-    task.end_at = next_start + (task.end_at - task.start_at)
-    task.start_at = next_start
-
-
 def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task = get_task(user_id, task_id, lock=True)
     before = snapshot(task)
@@ -210,13 +203,6 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     if RECURRENCE_FIELDS & data.keys() or not task.is_repeating:
         _apply_recurrence(task)
 
-    if (
-        data.get("skip_occurrence")
-        and task.is_repeating
-        and task.repeat_by
-        and not task.is_completed
-    ):
-        _skip_occurrence(task)
     db.session.flush()
 
     if "project_id" in data and task.parent_id is None:

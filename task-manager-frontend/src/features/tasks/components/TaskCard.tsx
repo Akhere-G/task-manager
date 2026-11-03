@@ -2,7 +2,7 @@ import { useState } from "react";
 import ProjectLabel from "../../projects/ProjectLabel";
 import LabelChips from "../../labels/LabelChips";
 import SubtaskCount from "./SubtaskCount";
-import type { Task } from "../types";
+import type { SnoozePreset, Task } from "../types";
 import {
   Trash2,
   CheckCircle,
@@ -14,13 +14,13 @@ import {
   Play,
   Sparkles,
   Repeat,
-  SkipForward,
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
 import { formatDateRange, formatDateRelative, playSound } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
-import useSkipTask from "../hooks/useSkipTask";
+import useSnoozeTask from "../hooks/useSnoozeTask";
+import SnoozeMenu from "./SnoozeMenu";
 import { describeRecurrence } from "../recurrence";
 import PriorityFlag from "./PriorityFlag";
 
@@ -35,8 +35,8 @@ interface TaskCardProps extends Task {
   showSetIsComplete?: boolean;
   showDecompose?: boolean;
   fullDescription?: boolean;
-  showSkip?: boolean;
-  skipTask: (task: Task) => void;
+  showSnooze?: boolean;
+  snoozeTask: (task: Task, preset: SnoozePreset, day?: string) => void;
 }
 
 function TaskCard({
@@ -50,8 +50,8 @@ function TaskCard({
   showSetIsComplete = true,
   showDecompose = true,
   fullDescription = false,
-  showSkip = true,
-  skipTask,
+  showSnooze = true,
+  snoozeTask,
   ...task
 }: TaskCardProps) {
   const {
@@ -67,7 +67,6 @@ function TaskCard({
     startAt,
     endAt,
     isRepeating,
-    repeatBy,
     repeatUntil,
   } = task;
   const repeatLabel = describeRecurrence(task);
@@ -240,18 +239,11 @@ function TaskCard({
               />
             </button>
           )}
-          {!isCompleted && repeatBy && showSkip && (
-            <button
-              onClick={() => skipTask(task)}
-              title="Skip task"
-              aria-label={`Skip task: ${title}`}
-              className="p-1.5 rounded-md hover:bg-slate-500/10 transition-colors group cursor-pointer"
-            >
-              <SkipForward
-                aria-hidden="true"
-                className="w-5 h-5 text-slate-500/70 group-hover:text-slate-500 group-hover:scale-110 transition-all"
-              />
-            </button>
+          {!isCompleted && showSnooze && (
+            <SnoozeMenu
+              task={task as Task}
+              onSnooze={(preset, day) => snoozeTask(task as Task, preset, day)}
+            />
           )}
         </div>
       </footer>
@@ -269,20 +261,20 @@ interface TaskCardConnectedProps extends Task {
   showPomodoro?: boolean;
   showSetIsComplete?: boolean;
   showDecompose?: boolean;
-  showSkip?: boolean;
+  showSnooze?: boolean;
   fullDescription?: boolean;
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps) {
   const { openPopup, closePopup } = useTaskContext();
   const setIsCompleted = useSetIsCompleted();
-  const skipTask = useSkipTask({ onSkip: closePopup });
+  const { mutate: snooze } = useSnoozeTask({ onSnooze: closePopup });
 
   return (
     <TaskCard
       setIsCompleted={setIsCompleted}
       onDelete={(task) => openPopup(task, PopupModes.Delete)}
       onEdit={(task) => openPopup(task, PopupModes.Edit)}
-      skipTask={skipTask}
+      snoozeTask={(task, preset, day) => snooze({ task, preset, day })}
       {...props}
     />
   );

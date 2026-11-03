@@ -164,42 +164,62 @@ describe("completing a task", () => {
   });
 });
 
-describe("skipping a recurring task", () => {
-  it("asks the server to move the task to its next occurrence", async () => {
-    mock.onPatch("/tasks/1").reply(200, {});
-    renderCard(makeTask({ isRepeating: true, repeatBy: "weekly" }));
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Skip task: Write report" }),
+describe("snoozing a task", () => {
+  const posts = () =>
+    mock.history.post.filter((r) => r.url?.includes("/snooze"));
+  const openMenu = () =>
+    userEvent.click(
+      screen.getByRole("button", { name: "Snooze task: Write report" }),
     );
 
-    await waitFor(() => expect(patches()).toHaveLength(1));
-    expect(JSON.parse(patches()[0].data)).toEqual({ skipOccurrence: true });
+  it("posts the chosen preset with the viewer's zone", async () => {
+    mock.onPost("/tasks/1/snooze").reply(200, {});
+    renderCard(makeTask());
+
+    await openMenu();
+    await userEvent.click(screen.getByRole("menuitem", { name: "Tomorrow" }));
+
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(JSON.parse(posts()[0].data)).toMatchObject({
+      preset: "tomorrow",
+      zoneName: expect.any(String),
+    });
     await waitFor(() => expect(gets("/tasks")).toBe(2));
   });
 
-  it("offers no skip button for a one-off task", () => {
-    renderCard(makeTask());
+  it("offers the next occurrence only for a repeating task", async () => {
+    const { unmount } = renderCard(makeTask());
+    await openMenu();
     expect(
-      screen.queryByRole("button", { name: /Skip task/ }),
+      screen.queryByRole("menuitem", { name: "Next occurrence" }),
     ).not.toBeInTheDocument();
+    unmount();
+
+    renderCard(makeTask({ isRepeating: true, repeatBy: "weekly" }));
+    await openMenu();
+    expect(
+      screen.getByRole("menuitem", { name: "Next occurrence" }),
+    ).toBeInTheDocument();
   });
 
-  // Known bug: skip uses the ghost's own id, which the API cannot find. Expect the
-  // series id ("/tasks/1") here once the skip is sent to the series.
-  it("sends a ghost card's skip to the ghost id", async () => {
-    mock.onPatch(/\/tasks\/.*/).reply(404, {});
+  it("snoozes a ghost card through its series", async () => {
+    mock.onPost("/tasks/1/snooze").reply(200, {});
     renderCard(makeGhost(1, "20260303"));
 
-    await userEvent.click(screen.getByRole("button", { name: /Skip task/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Snooze task/ }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Next week" }));
 
-    await waitFor(() => expect(patches()).toHaveLength(1));
-    expect(patches()[0].url).toBe("/tasks/ghost_1_20260303");
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(JSON.parse(posts()[0].data)).toMatchObject({
+      preset: "next_week",
+      isGhost: true,
+      previousStartAt: expect.any(String),
+    });
   });
 });
 
 describe("card actions", () => {
-  it("hides start and skip once a task is completed", () => {
+  it("hides start and snooze once a task is completed", () => {
     renderCard(
       makeTask({ isCompleted: true, isRepeating: true, repeatBy: "daily" }),
     );
@@ -211,7 +231,7 @@ describe("card actions", () => {
       screen.queryByRole("button", { name: /Start task/ }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Skip task/ }),
+      screen.queryByRole("button", { name: /Snooze task/ }),
     ).not.toBeInTheDocument();
   });
 
