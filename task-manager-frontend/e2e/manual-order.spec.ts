@@ -22,8 +22,22 @@ test("a dragged card keeps its new place after a reload", async ({
     steps: 4,
   });
   await page.mouse.move(to.x + to.width / 2, to.y + 10, { steps: 12 });
+  const frames = await page.evaluateHandle(() => {
+    const seen: string[] = [];
+    const sample = () => {
+      const order = [...document.querySelectorAll("article h2, article h3")];
+      seen.push(order.map((heading) => heading.textContent).join(","));
+      requestAnimationFrame(sample);
+    };
+    sample();
+    return seen;
+  });
+  const released = await frames.evaluate((seen) => seen.length);
   await page.mouse.up();
+  await page.waitForTimeout(300);
 
+  const afterDrop = (await frames.jsonValue()).slice(released + 1);
+  expect(afterDrop.filter((order) => order !== afterDrop.at(-1))).toEqual([]);
   await expect(titles()).toHaveText(["Gamma", "Alpha", "Beta"]);
   await page.reload();
   await expect(titles()).toHaveText(["Gamma", "Alpha", "Beta"]);
