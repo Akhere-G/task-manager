@@ -10,7 +10,7 @@ const WEEKLY_STANDUP = {
 };
 
 const weekOf = (day: string) =>
-  `/calendar?due_date=calendar_view&view=week&current_date=${day}T00:00:00.000Z`;
+  `/?layout=calendar&view=month&cal=week&current_date=${day}T00:00:00.000Z`;
 
 async function dragToNextDay(page: Page, event: Locator) {
   await event.scrollIntoViewIfNeeded();
