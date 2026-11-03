@@ -21,6 +21,10 @@ from app.services.label_service import (
     set_task_labels,
 )
 from app.services.project_service import ensure_projects_belong_to
+from app.services.subtask_service import (
+    attach_subtask_counts,
+    attach_subtasks,
+)
 from app.services.task_query import TaskQuery
 from app.utils.dates import get_zone, parse_iso, utc_now
 from app.utils.recurrence import (
@@ -107,6 +111,7 @@ def get_all_tasks(user_id: int, query: TaskQuery = TaskQuery()) -> dict[str, Any
         total = len(tasks)
 
     attach_label_ids(tasks)
+    attach_subtask_counts(tasks)
     return {
         "tasks": tasks,
         "total_tasks": total,
@@ -122,6 +127,8 @@ def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
         raise TaskNotFound(task_id)
     if not lock:
         attach_label_ids([task])
+        attach_subtask_counts([task])
+        attach_subtasks(task)
     return task
 
 
@@ -182,6 +189,9 @@ def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
         set_task_labels([task.id], ids)
     db.session.commit()
     attach_label_ids(tasks)
+    attach_subtask_counts(tasks)
+    for task in tasks:
+        task.subtasks = []  # type: ignore
     return tasks
 
 
@@ -271,6 +281,7 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
 
     db.session.commit()
     attach_label_ids([task])
+    attach_subtask_counts([task])
     return task
 
 
@@ -304,6 +315,7 @@ def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
 
     db.session.commit()
     attach_label_ids([task])
+    attach_subtask_counts([task])
     return task
 
 

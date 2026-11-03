@@ -3,6 +3,8 @@ from flask.typing import ResponseReturnValue
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.schemas.task_schema import (
+    SubtaskSchema,
+    SubtasksCreateSchema,
     TaskListQuerySchema,
     TaskPageSchema,
     TaskRescheduleSchema,
@@ -12,6 +14,7 @@ from app.schemas.task_schema import (
     TrashPageSchema,
     TrashQuerySchema,
 )
+from app.services.subtask_service import add_subtasks
 from app.services.task_service import (
     create_task,
     create_tasks,
@@ -86,6 +89,14 @@ def reschedule(task_id: int) -> ResponseReturnValue:
     return jsonify(
         TaskSchema().dump(reschedule_task(get_jwt_identity(), task_id, data))  # type: ignore
     )
+
+
+@task_bp.route("/api/tasks/<int:task_id>/subtasks", methods=["POST"])
+@jwt_required()
+def add_task_subtasks(task_id: int) -> ResponseReturnValue:
+    data = SubtasksCreateSchema().load(get_json_body())
+    subtasks = add_subtasks(get_jwt_identity(), task_id, data["subtasks"])
+    return jsonify({"subtasks": SubtaskSchema(many=True).dump(subtasks)}), 201
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["DELETE"])
