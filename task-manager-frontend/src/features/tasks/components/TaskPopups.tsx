@@ -1,11 +1,14 @@
-import { TaskCard } from ".";
+import TaskDetails from "./TaskDetails";
 import { Popup } from "../../../components/ui";
 import {
   PopupModes,
   useTaskContext,
   type PopupMode,
 } from "../../../context/TaskContext";
+import { useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import useDeleteTask from "../hooks/useDeleteTask";
+import useGetTask from "../hooks/useGetTask";
 import useEditTask from "../hooks/useEditTask";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import type { CreateTaskInput, Task } from "../types";
@@ -70,8 +73,8 @@ function TaskPopups({
     case PopupModes.View:
       return (
         <Popup title="" close={closePopup} showCloseButton={false} sleek>
-          <TaskCard
-            {...selectedTask}
+          <TaskDetails
+            task={selectedTask}
             onDelete={(task) => {
               openPopup(task, PopupModes.Delete);
             }}
@@ -88,9 +91,39 @@ function TaskPopups({
   }
 }
 
+function useOpenTaskFromUrl() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { popupMode, openPopup } = useTaskContext();
+  const taskId = Number(searchParams.get("task")) || 0;
+  const isClosed = popupMode === PopupModes.Closed;
+  const { data, isError } = useGetTask(taskId, taskId > 0 && isClosed);
+  // The URL clears a render after the popup closes; remembering the handled id
+  // stops that lag from reopening the task that was just closed.
+  const handledId = useRef(0);
+
+  useEffect(() => {
+    if (!taskId || !isClosed) handledId.current = taskId;
+  }, [taskId, isClosed]);
+
+  useEffect(() => {
+    if (data && isClosed && handledId.current !== data.id) {
+      handledId.current = data.id;
+      openPopup(data, PopupModes.View);
+    }
+  }, [data, isClosed, openPopup]);
+
+  useEffect(() => {
+    if (!isError) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("task");
+    setSearchParams(next, { replace: true });
+  }, [isError, searchParams, setSearchParams]);
+}
+
 export default function TaskPopupsConnected() {
   const { mutate: handleDelete } = useDeleteTask();
   const { popupMode, closePopup, selectedTask, openPopup } = useTaskContext();
+  useOpenTaskFromUrl();
   const handleEdit = useEditTask({ onSuccess: closePopup });
 
   const setIsCompleted = useSetIsCompleted();

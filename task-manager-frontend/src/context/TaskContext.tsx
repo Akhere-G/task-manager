@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import type { Task } from "../features/tasks/types";
 
 export interface TaskFilters {
@@ -37,14 +38,27 @@ export default function TaskContextProvider({
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [popupMode, setPopupMode] = useState<PopupMode>(PopupModes.Closed);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const setTaskParam = (taskId: number | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (taskId === null) next.delete("task");
+    else next.set("task", String(taskId));
+    setSearchParams(next, { replace: true });
+  };
+
   const openPopup = (task: Task, mode: PopupMode) => {
     setSelectedTask(task);
     setPopupMode(mode);
+    if (mode === PopupModes.View) {
+      setTaskParam(task.isGhost ? task.seriesId : task.id);
+    }
   };
 
   const closePopup = () => {
     setPopupMode(PopupModes.Closed);
     setSelectedTask(null);
+    setTaskParam(null);
   };
 
   const value = {
