@@ -52,4 +52,45 @@ describe("DecomposeTask", () => {
     });
     expect(await screen.findByTestId("where")).toHaveTextContent("/?task=1");
   });
+
+  it("tells the breakdown which subtasks already exist", async () => {
+    const existing = {
+      id: 9,
+      parentId: 1,
+      position: 0,
+      title: "Pack",
+      description: null,
+      priority: 4 as const,
+      isCompleted: false,
+      completedAt: null,
+    };
+    mock
+      .onGet("tasks/1")
+      .reply(
+        200,
+        makeTask({ id: 1, title: "Plan trip", subtasks: [existing] }),
+      );
+    mock.onGet("/projects").reply(200, { projects: [] });
+    mock.onGet("/labels").reply(200, { labels: [] });
+    mock
+      .onPost("ai/decompose")
+      .reply(200, { tasks: [{ title: "Book flights" }] });
+    renderWithProviders(
+      <Routes>
+        <Route path="/breakdown/:taskId" element={<DecomposeTask />} />
+      </Routes>,
+      { route: "/breakdown/1" },
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Break down tasks into subtasks",
+      }),
+    );
+
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+    expect(JSON.parse(mock.history.post[0].data).existingSubtasks).toEqual([
+      "Pack",
+    ]);
+  });
 });

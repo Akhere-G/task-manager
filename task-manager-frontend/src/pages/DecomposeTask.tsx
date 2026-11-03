@@ -68,7 +68,10 @@ export default function DecomposeTask() {
     setIsDecomposing(true);
     trackEvent("ai_task_breakdown_requested");
     try {
-      const { tasks } = await aiService.decomposeTask(parentTask);
+      const { tasks } = await aiService.decomposeTask(
+        parentTask,
+        parentTask.subtasks?.map((subtask) => subtask.title),
+      );
       trackEvent("ai_task_breakdown_succeeded", {
         subtask_count: tasks.length,
       });
