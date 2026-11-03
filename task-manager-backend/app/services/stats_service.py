@@ -18,7 +18,7 @@ from app.database import db
 from app.models import Task
 from app.services.project_service import root_project_names
 from app.utils.dates import as_aware_utc, as_naive_utc, start_of_day, utc_now
-from app.utils.task_utils import live_tasks_of, with_repeating
+from app.utils.task_utils import top_level_tasks_of, with_repeating
 
 Stats = list[dict[str, Any]]
 ProjectNames = dict[int | None, str]
@@ -71,7 +71,7 @@ def _productivity_trend(user_id: int, now: datetime) -> Stats:
             COMPLETED_DATE, func.count(), func.coalesce(func.sum(DURATION_MINUTES), 0)
         )
         .where(
-            live_tasks_of(user_id),
+            top_level_tasks_of(user_id),
             Task.is_completed,
             Task.completed_at >= start_of_day(first_day),
         )
@@ -92,7 +92,7 @@ def _productivity_trend(user_id: int, now: datetime) -> Stats:
 def _time_spent(user_id: int, names: ProjectNames) -> Stats:
     rows = _rows(
         select(Task.project_id, func.coalesce(func.sum(DURATION_MINUTES), 0))
-        .where(live_tasks_of(user_id), Task.is_completed)
+        .where(top_level_tasks_of(user_id), Task.is_completed)
         .group_by(Task.project_id)
     )
     totals: Counter[str] = Counter()
@@ -106,7 +106,7 @@ def _hourly_productivity(user_id: int) -> Stats:
     hour = func.hour(Task.completed_at)
     rows = _rows(
         select(hour, func.count())
-        .where(live_tasks_of(user_id), Task.is_completed)
+        .where(top_level_tasks_of(user_id), Task.is_completed)
         .group_by(hour)
     )
     counts = dict(rows)
@@ -117,7 +117,7 @@ def _turnaround_time(user_id: int) -> Stats:
     days_taken = func.datediff(Task.completed_at, Task.created_at)
     rows = _rows(
         select(days_taken, func.count())
-        .where(live_tasks_of(user_id), Task.is_completed, days_taken >= 0)
+        .where(top_level_tasks_of(user_id), Task.is_completed, days_taken >= 0)
         .group_by(days_taken)
     )
     counts = dict(rows)
@@ -131,7 +131,7 @@ def _estimation_accuracy(user_id: int, now: datetime, names: ProjectNames) -> St
     rows = _rows(
         select(Task.id, Task.title, Task.project_id, Task.end_at, Task.completed_at)
         .where(
-            live_tasks_of(user_id),
+            top_level_tasks_of(user_id),
             Task.is_completed,
             Task.end_at.is_not(None),
             Task.completed_at > now - timedelta(days=ACCURACY_DAYS),
@@ -156,7 +156,7 @@ def _distribution_trend(user_id: int, now: datetime, names: ProjectNames) -> Sta
     rows = _rows(
         select(COMPLETED_DATE, Task.project_id, func.count())
         .where(
-            live_tasks_of(user_id),
+            top_level_tasks_of(user_id),
             Task.is_completed,
             Task.completed_at >= start_of_day(first_day),
         )
@@ -202,7 +202,7 @@ def _project_volume(
             _count_if(_is_overdue(now)),
             _count_if(_is_pending(now)),
         )
-        .where(live_tasks_of(user_id))
+        .where(top_level_tasks_of(user_id))
         .group_by(Task.project_id)
     )
     volume = defaultdict(lambda: {"completed": 0, "overdue": 0, "pending": 0})
@@ -239,7 +239,7 @@ def _overdue_distribution(user_id: int, now: datetime) -> Stats:
     )
     rows = _rows(
         select(bucket, func.count())
-        .where(live_tasks_of(user_id), _is_overdue(now))
+        .where(top_level_tasks_of(user_id), _is_overdue(now))
         .group_by(bucket)
     )
     counts = dict(rows)
@@ -257,7 +257,7 @@ def _deadline_proximity(
     rows = _rows(
         select(Task.project_id, func.sum(time_left), func.count())
         .where(
-            live_tasks_of(user_id),
+            top_level_tasks_of(user_id),
             Task.is_completed.is_(False),
             Task.end_at.is_not(None),
         )
@@ -289,7 +289,7 @@ def _week_overview(user_id: int, now: datetime, ghosts: list[Task]) -> Stats:
     rows = _rows(
         select(END_DATE, func.count(), func.coalesce(func.sum(DURATION_SECONDS), 0))
         .where(
-            live_tasks_of(user_id),
+            top_level_tasks_of(user_id),
             Task.is_completed.is_(False),
             Task.end_at >= week_start,
             Task.end_at < week_end,

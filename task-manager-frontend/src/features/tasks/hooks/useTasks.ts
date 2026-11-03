@@ -1,20 +1,27 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { calculateDateRange } from "../utils";
 import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { taskService } from "../api";
+import { getBrowserTimeZone } from "../recurrence";
+import { calendarRange } from "../utils";
+import {
+  DEFAULT_VIEW,
+  calendarZoomFor,
+  isRangedView,
+  isTaskView,
+  type TaskLayout,
+  type TaskView,
+} from "../views";
 import { trackEvent } from "../../../services/analytics";
 
 export interface TaskFilters {
   search: string;
   project: string;
-  view: string;
   label: string;
   priority: string;
   duration: string;
   isCompleted: string;
-  dueDate: string;
   sortBy: string;
   order: string;
   currentDate: string;
@@ -27,54 +34,53 @@ export interface PageDetails {
 }
 
 interface UseTasksProps {
-  perPage: number | null;
-  defaultFilters?: TaskFilters;
-  projectRepeating?: boolean;
+  perPage: number;
   enabled?: boolean;
 }
 
-export const getDefaultFilters = (): TaskFilters => ({
+const getDefaultFilters = (): TaskFilters => ({
   search: "",
   project: "",
-  view: "",
   label: "",
   priority: "",
   duration: "",
   isCompleted: "false",
-  dueDate: "",
   sortBy: "start_at",
   order: "asc",
   currentDate: new Date().toISOString(),
 });
 
-const apiParamMap: Record<string, string> = {
+const apiParamMap: Record<keyof TaskFilters, string> = {
   search: "q",
   project: "project",
-  view: "view",
   label: "label",
   priority: "priority",
   duration: "duration",
   isCompleted: "is_completed",
-  dueDate: "due_date",
   sortBy: "sort_by",
   order: "order",
   currentDate: "current_date",
 };
 
-export const useTasks = ({
-  perPage,
-  defaultFilters: providedDefaults,
-  projectRepeating = false,
-  enabled = true,
-}: UseTasksProps) => {
+/** URL params that describe where the user is, not what they filtered. */
+const LOCATION_PARAMS = ["view", "layout", "cal"];
+
+const readLayout = (value: string | null): TaskLayout =>
+  value === "calendar" ? "calendar" : "list";
+
+const readView = (value: string | null): TaskView =>
+  isTaskView(value) ? value : DEFAULT_VIEW;
+
+export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [initialDefaults] = useState(getDefaultFilters);
-  const defaultFilters = providedDefaults ?? initialDefaults;
+  const [defaults] = useState(getDefaultFilters);
 
   const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
   const deferredSearch = useDeferredValue(searchInput);
 
   const currentPage = Number(searchParams.get("page")) || 1;
+  const view = readView(searchParams.get("view"));
+  const layout = readLayout(searchParams.get("layout"));
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -94,36 +100,19 @@ export const useTasks = ({
     return () => clearTimeout(handler);
   }, [deferredSearch, searchParams, setSearchParams]);
 
-  const filters = {
+  const filters: TaskFilters = {
     search: searchInput,
-    project: searchParams.get("project") ?? defaultFilters.project,
-    // The URL's own `view` param is the calendar layout, so this one is page-owned.
-    view: defaultFilters.view,
-    label: searchParams.get("label") ?? defaultFilters.label,
-    priority: searchParams.get("priority") ?? defaultFilters.priority,
-    duration: searchParams.get("duration") ?? defaultFilters.duration,
-    isCompleted: searchParams.get("is_completed") ?? defaultFilters.isCompleted,
-    dueDate: searchParams.get("due_date") ?? defaultFilters.dueDate,
-    sortBy: searchParams.get("sort_by") ?? defaultFilters.sortBy,
-    order: searchParams.get("order") ?? defaultFilters.order,
-    currentDate:
-      searchParams.get("current_date") ??
-      defaultFilters.currentDate ??
-      new Date().toISOString(),
+    project: searchParams.get("project") ?? defaults.project,
+    label: searchParams.get("label") ?? defaults.label,
+    priority: searchParams.get("priority") ?? defaults.priority,
+    duration: searchParams.get("duration") ?? defaults.duration,
+    isCompleted: searchParams.get("is_completed") ?? defaults.isCompleted,
+    sortBy: searchParams.get("sort_by") ?? defaults.sortBy,
+    order: searchParams.get("order") ?? defaults.order,
+    currentDate: searchParams.get("current_date") ?? defaults.currentDate,
   };
 
-  function addDateParams(
-    searchParams: URLSearchParams,
-    value: string,
-    currentDate: string,
-  ) {
-    if (value) {
-      const { start, end } = calculateDateRange(value, currentDate);
-      searchParams.set("start_date", start.toISOString());
-      searchParams.set("end_date", end.toISOString());
-      if (value === "overdue") searchParams.set("is_completed", "false");
-    }
-  }
+  const isCalendar = layout === "calendar";
 
   const result = useQuery({
     queryKey: [
@@ -131,31 +120,35 @@ export const useTasks = ({
       {
         ...filters,
         search: deferredSearch,
+        view,
+        layout,
         page: currentPage,
-        currentDate: filters.currentDate,
         perPage,
       },
     ],
-    queryFn: async () => {
+    queryFn: () => {
       const params = new URLSearchParams();
-      params.set("project_repeating", String(projectRepeating));
+      const ranged = isRangedView(view);
 
-      Object.entries(filters).forEach(([key, value]) => {
-        const apiKey = apiParamMap[key];
-        if (apiKey && value) {
-          if (key === "search") {
-            params.set(apiKey, String(deferredSearch));
-          } else {
-            params.set(apiKey, String(value));
-          }
-        }
+      (Object.keys(filters) as (keyof TaskFilters)[]).forEach((key) => {
+        const value = key === "search" ? deferredSearch : filters[key];
+        if (value && key !== "currentDate") params.set(apiParamMap[key], value);
       });
 
-      addDateParams(params, filters.dueDate, filters.currentDate);
-
-      if (perPage) {
+      if (isCalendar) {
+        const { start, end } = calendarRange(filters.currentDate);
+        params.set("start_date", start.toISOString());
+        params.set("end_date", end.toISOString());
+        params.set("project_repeating", "true");
+        if (!ranged && view !== "all") params.set("view", view);
+      } else {
+        if (view !== "all") params.set("view", view);
+        params.set("project_repeating", String(ranged));
         params.set("page", String(currentPage));
         params.set("limit", String(perPage));
+      }
+      if (ranged || view === "overdue") {
+        params.set("zone", getBrowserTimeZone() ?? "UTC");
       }
 
       return taskService.getAll(params);
@@ -186,7 +179,7 @@ export const useTasks = ({
     if (name === "search") {
       setSearchInput(value);
     } else {
-      const apiKey = apiParamMap[name];
+      const apiKey = apiParamMap[name as keyof TaskFilters];
       if (apiKey && value) {
         next.set(apiKey, value);
       } else {
@@ -199,14 +192,10 @@ export const useTasks = ({
 
   const resetFilters = () => {
     setSearchInput("");
-
     const params = new URLSearchParams();
-
-    Object.entries(defaultFilters).forEach(([key, value]) => {
-      const apiKey = apiParamMap[key];
-      if (apiKey && value) {
-        params.set(apiKey, String(value));
-      }
+    LOCATION_PARAMS.forEach((key) => {
+      const value = searchParams.get(key);
+      if (value) params.set(key, value);
     });
     setSearchParams(params);
   };
@@ -214,6 +203,23 @@ export const useTasks = ({
   const setPage = (page: number) => {
     const next = new URLSearchParams(searchParams);
     next.set("page", String(page));
+    setSearchParams(next);
+  };
+
+  const selectView = (nextView: TaskView) => {
+    trackEvent("tasks_view_selected", { view: nextView });
+    const next = new URLSearchParams(searchParams);
+    next.set("view", nextView);
+    next.set("cal", calendarZoomFor(nextView));
+    next.delete("current_date");
+    next.set("page", "1");
+    setSearchParams(next);
+  };
+
+  const selectLayout = (nextLayout: TaskLayout) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("layout", nextLayout);
+    next.set("page", "1");
     setSearchParams(next);
   };
 
@@ -225,8 +231,7 @@ export const useTasks = ({
     !!filters.label ||
     !!filters.priority ||
     !!filters.duration ||
-    (filters.isCompleted !== "" && filters.isCompleted !== "false") ||
-    !!filters.dueDate;
+    (filters.isCompleted !== "" && filters.isCompleted !== "false");
 
   const totalPages = result.data?.totalPages || 0;
   const totalItems = result.data?.totalTasks || 0;
@@ -236,6 +241,10 @@ export const useTasks = ({
     resetFilters,
     pageDetails: { currentPage, totalPages, totalItems },
     filters,
+    view,
+    layout,
+    selectView,
+    selectLayout,
     setPage,
     updateFilters,
     isStale,

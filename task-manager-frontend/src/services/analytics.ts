@@ -38,6 +38,7 @@ export type AnalyticsEvent =
   | "task_form_validation_failed"
   | "tasks_filtered"
   | "tasks_searched"
+  | "tasks_view_selected"
   | "tasks_imported_csv"
   | "tasks_exported_csv"
   | "pomodoro_started"

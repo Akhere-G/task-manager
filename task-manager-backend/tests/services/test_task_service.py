@@ -12,8 +12,8 @@ from app.schemas.task_schema import (
     TaskRescheduleSchema,
     TaskUpdateSchema,
 )
+from app.services.task_listing import get_all_tasks
 from app.services.task_service import (
-    get_all_tasks,
     reschedule_task,
     update_task,
 )

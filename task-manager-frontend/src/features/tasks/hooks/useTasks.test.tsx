@@ -36,3 +36,57 @@ describe("filtering tasks by priority", () => {
     expect(result.current.isSearching).toBe(true);
   });
 });
+
+describe("smart views", () => {
+  it("asks the server for the view in the viewer's zone and projects repeats", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+
+    renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+      route: "/?view=upcoming",
+    });
+
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+    const params = lastRequestParams();
+    expect(params.get("view")).toBe("upcoming");
+    expect(params.get("zone")).toBeTruthy();
+    expect(params.get("project_repeating")).toBe("true");
+    expect(params.has("start_date")).toBe(false);
+  });
+
+  it("sends no view for all tasks", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+
+    renderHookWithProviders(() => useTasks({ perPage: 10 }));
+
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+    expect(lastRequestParams().has("view")).toBe(false);
+  });
+
+  it("refetches when another view is selected", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }));
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+
+    act(() => result.current.selectView("overdue"));
+
+    await waitFor(() =>
+      expect(lastRequestParams().get("view")).toBe("overdue"),
+    );
+    expect(result.current.view).toBe("overdue");
+  });
+
+  it("loads the visible range and no view in the calendar layout", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+
+    renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+      route: "/?layout=calendar&view=month",
+    });
+
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+    const params = lastRequestParams();
+    expect(params.has("start_date")).toBe(true);
+    expect(params.has("end_date")).toBe(true);
+    expect(params.has("view")).toBe(false);
+    expect(params.has("limit")).toBe(false);
+  });
+});
