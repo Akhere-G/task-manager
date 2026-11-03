@@ -13,8 +13,9 @@ export default function useMoveTask() {
 
   return useMutation({
     mutationFn: ({ id, move }: MoveRequest) => taskService.move(id, move),
-    onMutate: async ({ id, reordered }) => {
-      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+    // The cache must change in the same tick as the drop: awaiting first lets
+    // dnd-kit clear its transforms and render the old order for a frame.
+    onMutate: ({ id, reordered }) => {
       const before = queryClient.getQueriesData<GetTaskResult>({
         queryKey: ["tasks"],
       });
@@ -25,6 +26,7 @@ export default function useMoveTask() {
             ? { ...data, tasks: reordered }
             : data,
       );
+      queryClient.cancelQueries({ queryKey: ["tasks"] });
       return { before };
     },
     onError: (_error, _request, context) => {
