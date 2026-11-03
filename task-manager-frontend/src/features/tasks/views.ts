@@ -1,6 +1,7 @@
 import { Views, type View } from "react-big-calendar";
 
 export const TASK_VIEWS = [
+  { value: "all", label: "All tasks" },
   { value: "inbox", label: "Inbox" },
   { value: "today", label: "Today" },
   { value: "upcoming", label: "Upcoming" },
@@ -11,9 +12,10 @@ export const TASK_VIEWS = [
 
 export type TaskView = (typeof TASK_VIEWS)[number]["value"];
 export type TaskLayout = "list" | "calendar";
-export type TaskViewCounts = Record<TaskView, number>;
+export type CountedView = Exclude<TaskView, "all">;
+export type TaskViewCounts = Record<CountedView, number>;
 
-export const DEFAULT_VIEW: TaskView = "today";
+export const DEFAULT_VIEW: TaskView = "all";
 
 const VIEW_VALUES: readonly string[] = TASK_VIEWS.map((view) => view.value);
 
@@ -29,10 +31,13 @@ const CALENDAR_ZOOM: Partial<Record<TaskView, View>> = {
 export const calendarZoomFor = (view: TaskView): View =>
   CALENDAR_ZOOM[view] ?? Views.MONTH;
 
-/** Ranged views are resolved by the server, so the client sends no dates for them. */
+/** Ranged views are resolved by the server from the viewer's zone, so no dates are sent. */
 export const RANGED_VIEWS: readonly TaskView[] = [
   "today",
   "upcoming",
   "week",
   "month",
 ];
+
+export const isRangedView = (view: TaskView): boolean =>
+  RANGED_VIEWS.includes(view);

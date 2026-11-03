@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import {
   DemoBanner,
   ErrorBoundary,
@@ -19,15 +19,13 @@ const DecomposeTask = lazy(() => import("./pages/DecomposeTask"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Demo = lazy(() => import("./pages/Demo"));
-const CalendarView = lazy(() => import("./pages/CalendarView"));
 const Pomodoro = lazy(() => import("./pages/Pomodoro"));
 const Stats = lazy(() => import("./pages/Stats"));
-const Home = lazy(() => import("./pages/Home"));
+const TasksPage = lazy(() => import("./pages/TasksPage"));
 const Contact = lazy(() => import("./pages/Contact"));
 const AddTask = lazy(() => import("./pages/AddTask"));
 const About = lazy(() => import("./pages/About"));
 const Trash = lazy(() => import("./pages/Trash"));
-const Inbox = lazy(() => import("./pages/Inbox"));
 
 function App() {
   const { isAuthenticated, logout, user } = useAuthContext();
@@ -37,13 +35,8 @@ function App() {
   usePageViewTracking();
 
   const protectedRoutes = [
-    { title: "Inbox", path: "/inbox" },
     { title: "Tasks", path: "/" },
     { title: "Add Task", path: "/addtask" },
-    {
-      title: "Calendar",
-      path: "/calendar?due_date=calendar_view",
-    },
     { title: "Stats", path: "/stats" },
   ];
 
@@ -90,7 +83,7 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute redirect={!isAuthenticated}>
-                  <Home />
+                  <TasksPage />
                 </ProtectedRoute>
               }
             />
@@ -104,11 +97,7 @@ function App() {
             />
             <Route
               path="/calendar"
-              element={
-                <ProtectedRoute redirect={!isAuthenticated}>
-                  <CalendarView />
-                </ProtectedRoute>
-              }
+              element={<Navigate to="/?layout=calendar&view=month" replace />}
             />
             <Route
               path="/stats"
@@ -144,11 +133,7 @@ function App() {
             />
             <Route
               path="/inbox"
-              element={
-                <ProtectedRoute redirect={!isAuthenticated}>
-                  <Inbox />
-                </ProtectedRoute>
-              }
+              element={<Navigate to="/?view=inbox" replace />}
             />
             <Route
               path="/trash"

@@ -31,14 +31,6 @@ export const completedTasksOptions = [
   { name: "Pending", value: "false" },
 ];
 
-export const dueDateOptions = [
-  { name: "All", value: "" },
-  { name: "Today", value: "today" },
-  { name: "This Week", value: "this_week" },
-  { name: "This Month", value: "this_month" },
-  { name: "Overdue", value: "overdue" },
-];
-
 export const sortByOptions = [
   { name: "Start Date", value: "start_at" },
   { name: "Created At", value: "created_at" },
