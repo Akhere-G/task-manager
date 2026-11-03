@@ -37,6 +37,7 @@ export const sortByOptions = [
   { name: "Title", value: "title" },
   { name: "Duration", value: "duration" },
   { name: "Priority", value: "priority" },
+  { name: "Manual", value: "manual" },
 ];
 
 export const isAscOptions = [
