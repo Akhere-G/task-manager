@@ -33,7 +33,7 @@ export type AnalyticsEvent =
   | "task_restored"
   | "project_created"
   | "label_created"
-  | "recurring_task_skipped"
+  | "task_snoozed"
   | "calendar_task_rescheduled"
   | "task_form_validation_failed"
   | "tasks_filtered"
