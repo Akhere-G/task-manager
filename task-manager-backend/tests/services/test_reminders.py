@@ -8,7 +8,14 @@ from flask import Flask
 
 import app.run_reminders as run_reminders
 from app.database import db
-from app.models import Notification, NotificationSubscription, Project, Task
+from app.models import (
+    Notification,
+    NotificationSubscription,
+    Project,
+    Task,
+    TaskReminder,
+)
+from app.services.reminder_service import set_reminders, sync_reminders
 from app.utils.dates import utc_now
 
 
@@ -41,6 +48,8 @@ def add_task(app: Flask) -> Callable[..., int]:
                 **fields,
             )
             db.session.add(task)
+            db.session.flush()
+            set_reminders(task, [{"kind": "before", "minutes_before": 30}])
             db.session.commit()
             return task.id
 
@@ -113,6 +122,7 @@ def test_rescheduled_task_is_reminded_again(
     with app.app_context():
         task = db.session.get(Task, task_id)
         task.start_at = utc_now() + timedelta(minutes=20)
+        sync_reminders(task)
         db.session.commit()
     run_reminders.check_task_reminders()
 
@@ -163,3 +173,58 @@ def test_undated_tasks_are_not_reminded(
 
     assert push.call_count == 0
     assert notification_count(app) == 0
+
+
+def test_several_reminders_each_fire_once(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+    push: mock.MagicMock,
+) -> None:
+    task_id = add_task(user_with_subscription)
+    with app.app_context():
+        task = db.session.get(Task, task_id)
+        set_reminders(
+            task,
+            [
+                {"kind": "before", "minutes_before": 60},
+                {"kind": "before", "minutes_before": 15},
+            ],
+        )
+        db.session.commit()
+
+    run_reminders.check_task_reminders()
+    run_reminders.check_task_reminders()
+
+    assert push.call_count == 2
+
+
+def test_a_reminder_past_its_grace_window_is_dropped(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+    push: mock.MagicMock,
+) -> None:
+    add_task(user_with_subscription, start_at=utc_now() + timedelta(minutes=10))
+    with app.app_context():
+        reminder = db.session.query(TaskReminder).one()
+        reminder.fire_at = utc_now() - timedelta(hours=3)
+        db.session.commit()
+
+    run_reminders.check_task_reminders()
+
+    assert push.call_count == 0
+
+
+def test_subtasks_are_not_reminded(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+    push: mock.MagicMock,
+) -> None:
+    parent_id = add_task(user_with_subscription, start_at=utc_now() + timedelta(days=3))
+    add_task(user_with_subscription, parent_id=parent_id)
+
+    run_reminders.check_task_reminders()
+
+    assert push.call_count == 0

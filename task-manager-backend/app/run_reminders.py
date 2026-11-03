@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 from pywebpush import WebPushException, webpush
@@ -10,8 +10,15 @@ from sqlalchemy.orm import Session
 
 from app.constants import INBOX_NAME
 from app.database import SessionLocal
-from app.models import Notification, NotificationSubscription, Project, Task
+from app.models import (
+    Notification,
+    NotificationSubscription,
+    Project,
+    Task,
+    TaskReminder,
+)
 from app.utils.dates import utc_now
+from app.utils.reminders import reminder_title
 
 load_dotenv()
 
@@ -20,7 +27,7 @@ logger = logging.getLogger(__name__)
 VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
 VAPID_CLAIMS: dict[str, str | int] = {"sub": "mailto:101akhere5@gmail.com"}
 
-REMINDER_WINDOW = timedelta(minutes=30)
+REMINDER_GRACE = timedelta(hours=1)
 PUSH_TIMEOUT_SECONDS = 10
 
 
@@ -79,45 +86,55 @@ def send_push_to_user_subscription(
     return total_subscriptions
 
 
-def check_task_reminders() -> None:
-    session = SessionLocal()
-    try:
-        now = utc_now()
-
-        stmt = select(Task).where(
+def _due_reminders(session: Session, now: datetime) -> list[tuple[TaskReminder, Task]]:
+    stmt = (
+        select(TaskReminder, Task)
+        .join(Task, Task.id == TaskReminder.task_id)
+        .where(
             Task.is_completed.is_(False),
             Task.is_deleted.is_(False),
             Task.parent_id.is_(None),
             Task.start_at >= now,
-            Task.start_at <= now + REMINDER_WINDOW,
+            TaskReminder.fire_at <= now,
+            TaskReminder.fire_at > now - REMINDER_GRACE,
             or_(
-                Task.reminded_for_start_at.is_(None),
-                Task.reminded_for_start_at != Task.start_at,
+                TaskReminder.fired_for_start_at.is_(None),
+                TaskReminder.fired_for_start_at != Task.start_at,
             ),
         )
-        upcoming_tasks = session.execute(stmt).scalars().all()
+    )
+    return [(reminder, task) for reminder, task in session.execute(stmt)]
+
+
+def check_task_reminders() -> None:
+    session = SessionLocal()
+    try:
+        now = utc_now()
+        due = _due_reminders(session, now)
 
         total_notifications = 0
-        for task in upcoming_tasks:
+        for reminder, task in due:
             try:
-                minutes = int((task.start_at - now).total_seconds() // 60)
-                suffix = "" if minutes == 1 else "s"
                 total_notifications += send_push_to_user_subscription(
                     session=session,
                     user_id=task.user_id,
-                    title=f"{task.title} starting in {minutes} minute{suffix}!",
+                    title=reminder_title(
+                        task.title,
+                        reminder.kind,
+                        task.start_at,
+                        now,
+                        reminder.zone_name,
+                    ),
                     message=reminder_body(task, _project_name(session, task)),
                 )
-                task.reminded_for_start_at = task.start_at
+                reminder.fired_for_start_at = task.start_at
                 session.commit()
             except Exception:
                 session.rollback()
-                logger.exception("Could not send the reminder for task %s", task.id)
+                logger.exception("Could not send reminder %s", reminder.id)
 
         logger.info(
-            "%s upcoming task(s), %s push(es) sent",
-            len(upcoming_tasks),
-            total_notifications,
+            "%s due reminder(s), %s push(es) sent", len(due), total_notifications
         )
     finally:
         session.close()
