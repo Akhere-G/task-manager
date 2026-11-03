@@ -42,7 +42,7 @@ export default function Popup({
       >
         <section
           onClick={(e) => e.stopPropagation()}
-          className="w-10/11 md:max-w-2xl relative p-0 "
+          className="w-10/11 md:max-w-4xl relative p-0 "
         >
           <button
             className="text-xl position absolute -top-4 -right-4 btn-secondary rounded-full w-10 h-10 z-1 shadow-sm"
@@ -51,7 +51,7 @@ export default function Popup({
           >
             &times;
           </button>
-          <section className="bg-surface rounded-md">{children}</section>
+          <section>{children}</section>
         </section>
       </div>
     );
