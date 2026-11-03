@@ -256,7 +256,11 @@ def _deadline_proximity(
     time_left = func.timestampdiff(literal_column("SECOND"), now, Task.end_at)
     rows = _rows(
         select(Task.project_id, func.sum(time_left), func.count())
-        .where(top_level_tasks_of(user_id), Task.is_completed.is_(False))
+        .where(
+            top_level_tasks_of(user_id),
+            Task.is_completed.is_(False),
+            Task.end_at.is_not(None),
+        )
         .group_by(Task.project_id)
     )
     seconds_by_project: Counter[str] = Counter()
