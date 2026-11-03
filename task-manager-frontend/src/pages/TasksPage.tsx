@@ -28,6 +28,7 @@ interface TasksBodyProps {
   currentDate: string;
   setCurrentDate: (date: Date) => void;
   isInbox: boolean;
+  sortable: boolean;
 }
 
 function TasksBody({
@@ -36,6 +37,7 @@ function TasksBody({
   currentDate,
   setCurrentDate,
   isInbox,
+  sortable,
 }: TasksBodyProps) {
   if (isCalendar) {
     return (
@@ -57,7 +59,7 @@ function TasksBody({
       />
     );
   }
-  return <TaskList tasks={tasks} />;
+  return <TaskList tasks={tasks} sortable={sortable} />;
 }
 
 export default function TasksPage() {
@@ -93,6 +95,9 @@ export default function TasksPage() {
         updateFilters("currentDate", date.toISOString())
       }
       isInbox={view === "inbox" && !isSearching}
+      sortable={
+        !isCalendar && filters.sortBy === "manual" && filters.order === "asc"
+      }
     />
   );
   if (error) {
