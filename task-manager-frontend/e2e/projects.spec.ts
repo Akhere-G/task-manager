@@ -42,8 +42,8 @@ test.describe("projects", () => {
     );
     await expect(card(page, "Loose end")).toContainText("Inbox");
 
-    const parentId = await signedIn.projectIdByName("Work");
-    await page.goto(`/?project=${parentId}`);
+    await page.reload();
+    await page.getByRole("button", { name: "Work", exact: true }).click();
 
     await expect(card(page, "Quarterly numbers")).toBeVisible();
     await expect(card(page, "Loose end")).toBeHidden();
