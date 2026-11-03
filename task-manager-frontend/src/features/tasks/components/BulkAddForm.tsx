@@ -5,16 +5,12 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import useCreateAllTasks from "../hooks/useCreateAllTasks";
 import { trackEvent } from "../../../services/analytics";
-import { parseRepeatDays, parseRepeatInterval } from "../recurrence";
-import { parsePriority } from "../utils";
+import { parseTaskRows } from "../csvImport";
+import { downloadTemplate } from "../csvTemplates";
 import useProjects from "../../projects/hooks/useProjects";
 import { resolveProjectIds } from "../../projects/importProjects";
 import { useQueryClient } from "@tanstack/react-query";
 
-function getDescription(task: Record<string, string>) {
-  const rawDescription = task.Description || task.description;
-  return rawDescription ? rawDescription.trim() : null;
-}
 export default function BulkAddForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -28,69 +24,6 @@ export default function BulkAddForm() {
 
   const triggerUpload = () => fileInputRef.current?.click();
 
-  const downloadTemplate = (withIsCompleted: boolean = false) => {
-    const headers = [
-      "Title",
-      "Project",
-      "Description",
-      "Start At",
-      "End At",
-      "Repeat By",
-      "Repeat Until",
-      "Repeat Interval",
-      "Repeat Days",
-      "Repeat Time Zone",
-    ];
-    const sampleData = [
-      [
-        "Go gym",
-        "Health",
-        "Leg day",
-        "2026-04-01 18:00",
-        "2026-04-01 20:00",
-        "",
-        "",
-        "",
-        "",
-        "",
-      ],
-      [
-        "Prepare Report",
-        "Work / Reports",
-        "Weekly sync prep",
-        "2026-03-02 10:00",
-        "2026-03-02 14:00",
-        "weekly",
-        "2026-09-01",
-        "1",
-        "Mon;Wed;Fri",
-        "UTC",
-      ],
-    ];
-
-    if (withIsCompleted) {
-      headers.push("Is Completed", "Completed At");
-      sampleData[0].push("true", "2025-07-12 16:30:00");
-      sampleData[1].push("false", "");
-    }
-
-    const csvContent = [headers, ...sampleData]
-      .map((e) => e.join(","))
-      .join("\n");
-
-    const blob = new Blob(["\ufeff", csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "tasks_template.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   const handleChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -103,116 +36,7 @@ export default function BulkAddForm() {
       header: true,
       skipEmptyLines: true,
       complete: async (result) => {
-        const rawTasks = result.data as Record<string, string>[];
-
-        const trueValues = ["1", "true", "True", "TRUE", 1, true];
-
-        const newTasks = rawTasks
-          .map((task) => ({
-            title: (task.Title || task.title || "").trim(),
-            projectName: (
-              task.Project ||
-              task.project ||
-              task.Category ||
-              task.category ||
-              ""
-            ).trim(),
-            priority: parsePriority(task.Priority || task.priority),
-            description: getDescription(task),
-            startAt:
-              task["Start At"] ||
-              task["Start at"] ||
-              task["start at"] ||
-              task.startAt ||
-              task.start_at ||
-              null,
-            endAt:
-              task["End At"] ||
-              task["End at"] ||
-              task["end at"] ||
-              task.endAt ||
-              task.end_at ||
-              null,
-            isCompleted: [
-              task["Is Completed"],
-              task["Is completed"],
-              task["is completed"],
-              task.isCompleted,
-              task.is_completed,
-            ].some((t) => trueValues.includes(t)),
-            completedAt:
-              task["Completed At"] ||
-              task["Completed at"] ||
-              task["completed at"] ||
-              task.completedAt ||
-              task.completed_at ||
-              null,
-            repeatBy:
-              task["Repeat By"] ||
-              task["Repeat by"] ||
-              task["repeat by"] ||
-              task.repeatBy ||
-              task.repeat_by ||
-              null,
-            repeatUntil:
-              task["Repeat Until"] ||
-              task["Repeat until"] ||
-              task["repeat until"] ||
-              task.repeatUntil ||
-              task.repeat_until ||
-              null,
-            rawRepeatInterval:
-              task["Repeat Interval"] ||
-              task["Repeat interval"] ||
-              task["repeat interval"] ||
-              task.repeatInterval ||
-              task.repeat_interval ||
-              "",
-            rawRepeatDays:
-              task["Repeat Days"] ||
-              task["Repeat days"] ||
-              task["repeat days"] ||
-              task.repeatDays ||
-              task.repeat_days ||
-              "",
-            rawRepeatTimezone:
-              task["Repeat Time Zone"] ||
-              task["Repeat Timezone"] ||
-              task["Repeat time zone"] ||
-              task["repeat time zone"] ||
-              task.repeatTimezone ||
-              task.repeat_timezone ||
-              "",
-            createdAt:
-              task["Created At"] ||
-              task["Created at"] ||
-              task["created at"] ||
-              task.createdAt ||
-              task.created_at,
-          }))
-          .map(
-            ({
-              rawRepeatInterval,
-              rawRepeatDays,
-              rawRepeatTimezone,
-              ...task
-            }) => {
-              const repeatInterval = task.repeatBy
-                ? parseRepeatInterval(rawRepeatInterval)
-                : undefined;
-              const repeatDays = parseRepeatDays(task.repeatBy, rawRepeatDays);
-              const repeatTimezone = task.repeatBy
-                ? rawRepeatTimezone.trim()
-                : "";
-              return {
-                ...task,
-                isRepeating: !!task.repeatBy,
-                ...(repeatInterval !== undefined ? { repeatInterval } : {}),
-                ...(repeatDays ? { repeatDays } : {}),
-                ...(repeatTimezone ? { repeatTimezone } : {}),
-              };
-            },
-          );
+        const newTasks = parseTaskRows(result.data as Record<string, string>[]);
 
         const allErrors = validateTaskList(newTasks);
         const hasErrors = allErrors.some((err) => Object.keys(err).length > 0);
@@ -278,9 +102,9 @@ export default function BulkAddForm() {
           {isUploading ? "Uploading..." : "Upload CSV"}
         </button>
         <button
-          aria-label="Downlaod simple template"
+          aria-label="Download simple template"
           type="button"
-          onClick={() => downloadTemplate()}
+          onClick={() => downloadTemplate("simple")}
           className="text-sm cursor-pointer text-accent underline underline-offset-4 hover:text-accent/80"
         >
           Download Simple Template
@@ -291,7 +115,7 @@ export default function BulkAddForm() {
           <button
             aria-label="Download Advanced template"
             type="button"
-            onClick={() => downloadTemplate(true)}
+            onClick={() => downloadTemplate("advanced")}
             className="text-sm cursor-pointer text-accent underline underline-offset-4 hover:text-accent/80"
           >
             download Advanced Template
