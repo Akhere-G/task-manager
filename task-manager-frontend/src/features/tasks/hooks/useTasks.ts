@@ -210,6 +210,7 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     trackEvent("tasks_view_selected", { view: nextView });
     const next = new URLSearchParams(searchParams);
     next.set("view", nextView);
+    if (nextView === "inbox") next.delete("project");
     next.set("cal", calendarZoomFor(nextView));
     next.delete("current_date");
     next.set("page", "1");
