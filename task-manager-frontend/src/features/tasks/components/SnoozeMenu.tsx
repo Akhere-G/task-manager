@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AlarmClockPlus } from "lucide-react";
 import type { SnoozePreset, Task } from "../types";
 
@@ -19,6 +20,14 @@ const itemClass =
 export default function SnoozeMenu({ task, onSnooze }: SnoozeMenuProps) {
   const [open, setOpen] = useState(false);
   const [day, setDay] = useState("");
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const button = useRef<HTMLButtonElement>(null);
+
+  // Cards clip their overflow, so the menu is drawn on the page instead.
+  const toggle = () => {
+    setAnchor(button.current?.getBoundingClientRect() ?? null);
+    setOpen(!open);
+  };
 
   const choose = (preset: SnoozePreset, chosenDay?: string) => {
     setOpen(false);
@@ -28,53 +37,61 @@ export default function SnoozeMenu({ task, onSnooze }: SnoozeMenuProps) {
   return (
     <div className="relative">
       <button
+        ref={button}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Snooze task: ${task.title}`}
         title="Snooze task"
-        onClick={() => setOpen(!open)}
+        onClick={toggle}
         className="p-1.5 rounded-md hover:bg-slate-500/10 transition-colors cursor-pointer"
       >
         <AlarmClockPlus aria-hidden className="w-5 h-5 text-slate-500/70" />
       </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute bottom-full right-0 z-10 mb-1 flex w-52 flex-col gap-1 rounded-md border border-surface bg-surface p-2 shadow-lg"
-        >
-          {DAY_PRESETS.map(({ preset, label }) => (
-            <button
-              key={preset}
-              role="menuitem"
-              className={itemClass}
-              onClick={() => choose(preset)}
-            >
-              {label}
-            </button>
-          ))}
-          <label className="flex flex-col gap-1 px-3 text-sm">
-            Pick date
-            <input
-              type="date"
-              value={day}
-              onChange={(e) => {
-                setDay(e.target.value);
-                if (e.target.value) choose("date", e.target.value);
-              }}
-            />
-          </label>
-          {task.repeatBy && (
-            <button
-              role="menuitem"
-              className={itemClass}
-              onClick={() => choose("next_occurrence")}
-            >
-              Next occurrence
-            </button>
-          )}
-        </div>
-      )}
+      {open &&
+        anchor &&
+        createPortal(
+          <div
+            role="menu"
+            style={{
+              bottom: window.innerHeight - anchor.top + 4,
+              right: window.innerWidth - anchor.right,
+            }}
+            className="fixed z-50 flex w-52 flex-col gap-1 rounded-md border border-surface bg-surface p-2 shadow-lg"
+          >
+            {DAY_PRESETS.map(({ preset, label }) => (
+              <button
+                key={preset}
+                role="menuitem"
+                className={itemClass}
+                onClick={() => choose(preset)}
+              >
+                {label}
+              </button>
+            ))}
+            <label className="flex flex-col gap-1 px-3 text-sm">
+              Pick date
+              <input
+                type="date"
+                value={day}
+                onChange={(e) => {
+                  setDay(e.target.value);
+                  if (e.target.value) choose("date", e.target.value);
+                }}
+              />
+            </label>
+            {task.repeatBy && (
+              <button
+                role="menuitem"
+                className={itemClass}
+                onClick={() => choose("next_occurrence")}
+              >
+                Next occurrence
+              </button>
+            )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
