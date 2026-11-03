@@ -16,12 +16,23 @@ export interface Subtask {
 export type SubtaskInput = Pick<Subtask, "title"> &
   Partial<Pick<Subtask, "description" | "priority">>;
 
+export type ReminderKind = "before" | "clock";
+
+export interface Reminder {
+  kind: ReminderKind;
+  minutesBefore: number | null;
+  daysBefore: number | null;
+  timeOfDay: string | null;
+  zoneName: string | null;
+}
+
 export interface Task {
   id: number;
   title: string;
   description: string | null;
   projectId: number | null;
   labelIds: number[];
+  reminders: Reminder[];
   parentId: number | null;
   position: number;
   subtaskCount: number;
@@ -57,12 +68,13 @@ export type CreateTaskInput = Omit<
   | "isGhost"
   | "seriesId"
   | "labelIds"
+  | "reminders"
   | "parentId"
   | "position"
   | "subtaskCount"
   | "subtaskCompletedCount"
   | "subtasks"
-> & { labelIds?: number[] };
+> & { labelIds?: number[]; reminders?: Reminder[] };
 
 export type SnoozePreset =
   "tomorrow" | "weekend" | "next_week" | "date" | "next_occurrence";
