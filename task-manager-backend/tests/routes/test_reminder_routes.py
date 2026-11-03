@@ -103,3 +103,16 @@ def test_bad_reminders_are_rejected(session: FlaskClient, reminder: dict) -> Non
     )
 
     assert response.status_code == 400
+
+
+def test_a_task_can_be_saved_with_the_reminders_it_returned(
+    session: FlaskClient,
+) -> None:
+    task = add(session, **dates())
+
+    response = session.patch(
+        f"/api/tasks/{task['id']}", json={"reminders": task["reminders"]}
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["reminders"] == task["reminders"]
