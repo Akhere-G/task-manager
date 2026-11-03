@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Views } from "react-big-calendar";
 import { makeTask } from "../../test/render";
 import {
-  calculateDateRange,
+  calendarRange,
   daysUntilPurge,
   formatDateRange,
   getCalendarTaskId,
@@ -31,25 +31,12 @@ describe("getCalendarTaskId", () => {
   });
 });
 
-describe("calculateDateRange", () => {
-  it("this_week runs from the start of today through six more days", () => {
-    const { start, end } = calculateDateRange("this_week", "2026-03-11");
-
-    expect(start.toISOString()).toBe("2026-03-11T00:00:00.000Z");
-    expect(end.toISOString()).toBe("2026-03-17T23:59:59.999Z");
-  });
-
-  it("calendar_view pads the month so the edge weeks are filled", () => {
-    const { start, end } = calculateDateRange("calendar_view", "2026-03-20");
+describe("calendarRange", () => {
+  it("pads the month so the edge weeks are filled", () => {
+    const { start, end } = calendarRange("2026-03-20");
 
     expect(start.toISOString()).toBe("2026-02-23T00:00:00.000Z");
     expect(end.toISOString()).toBe("2026-04-06T23:59:59.999Z");
-  });
-
-  it("overdue ends where today starts", () => {
-    expect(calculateDateRange("overdue", "2026-03-11").end.toISOString()).toBe(
-      "2026-03-11T00:00:00.000Z",
-    );
   });
 });
 

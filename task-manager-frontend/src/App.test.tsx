@@ -10,13 +10,13 @@ vi.mock("./features/notifications/components/NotificationsPrompt", () => ({
   default: () => null,
 }));
 
-// The real Home page pulls in the calendar and charts, which makes these routing tests depend
+// The real tasks page pulls in the calendar and charts, which makes these routing tests depend
 // on machine speed. The stand-in still fetches tasks through the real service and auth client.
-vi.mock("./pages/Home", async () => {
+vi.mock("./pages/TasksPage", async () => {
   const { useQuery } = await import("@tanstack/react-query");
   const { taskService } = await import("./features/tasks/api");
   return {
-    default: function Home() {
+    default: function TasksPage() {
       useQuery({ queryKey: ["tasks"], queryFn: () => taskService.getAll() });
       return <h1>Your tasks</h1>;
     },
@@ -47,7 +47,7 @@ beforeAll(async () => {
     import("./pages/Pomodoro"),
     import("./pages/Settings"),
     import("./pages/Stats"),
-    import("./pages/CalendarView"),
+    import("./pages/TasksPage"),
     import("./pages/AddTask"),
   ]);
 }, 120_000);
@@ -70,7 +70,7 @@ function renderApp(path: string) {
 }
 
 describe("route protection", () => {
-  it.each(["/", "/calendar", "/stats", "/addtask", "/pomodoro/1", "/settings"])(
+  it.each(["/", "/stats", "/addtask", "/pomodoro/1", "/settings"])(
     "sends a signed-out visitor from %s to the login page",
     async (path) => {
       mock.onGet("/auth/me").reply(401);

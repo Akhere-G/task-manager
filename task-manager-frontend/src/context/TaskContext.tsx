@@ -8,7 +8,6 @@ export interface TaskFilters {
   label: string;
   duration: string;
   isCompleted: string;
-  dueDate: string;
   sortBy: string;
   order: string;
 }

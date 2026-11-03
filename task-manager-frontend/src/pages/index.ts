@@ -1,11 +1,8 @@
 export { default as About } from "./About";
 export { default as AddTask } from "./AddTask";
 export { default as Contact } from "./Contact";
-export { default as Home } from "./Home";
-export { default as Inbox } from "./Inbox";
 export { default as Stats } from "./Stats";
 export { default as Pomodoro } from "./Pomodoro";
-export { default as CalendarView } from "./CalendarView";
 export { default as Register } from "./Register";
 export { default as Login } from "./Login";
 export { default as DecomposeTask } from "./DecomposeTask";
@@ -13,3 +10,4 @@ export { default as Settings } from "./Settings";
 export { default as Trash } from "./Trash";
 export { default as RequestPasswordReset } from "./RequestPasswordReset";
 export { default as ResetPassword } from "./ResetPassword";
+export { default as TasksPage } from "./TasksPage";
