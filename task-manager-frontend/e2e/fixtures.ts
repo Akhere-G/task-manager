@@ -26,6 +26,7 @@ export interface StoredTask {
   isRepeating: boolean;
   startAt: string | null;
   repeatDays: (number | string)[] | null;
+  reminders: { kind: string }[];
 }
 
 /** Thin client for setting up and checking data through the real API. */
