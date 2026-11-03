@@ -26,6 +26,7 @@ from app.models import Task
 from app.services.task_query import TaskQuery
 from app.utils.dates import is_valid_zone, to_iso_z, utc_now
 from app.utils.recurrence import is_valid_month_day
+from app.utils.snooze import SNOOZE_PRESETS
 from app.utils.views import RANGED_VIEWS, TASK_VIEWS
 
 from .base import CamelAutoSchema, CamelSchema
@@ -230,7 +231,6 @@ class TaskUpdateSchema(TaskSchema):
         include_fk = True
 
     expected_start_at = UtcDateTime(load_only=True)
-    skip_occurrence = fields.Boolean(load_only=True)
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(partial=True, **kwargs)
@@ -252,6 +252,24 @@ class TaskRescheduleSchema(CamelSchema):
         if data["end_at"] <= data["start_at"]:
             raise ValidationError(
                 "End time must be after the start time.", field_name="end_at"
+            )
+
+
+class TaskSnoozeSchema(CamelSchema):
+    preset = fields.String(required=True, validate=validate.OneOf(SNOOZE_PRESETS))
+    day = fields.Date()
+    zone_name = fields.String(required=True, validate=_validate_query_zone)
+    is_ghost = fields.Boolean(load_default=False, **STRICT_BOOL)  # type: ignore
+    previous_start_at = UtcDateTime()
+
+    @validates_schema
+    def validate_targets(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if data["preset"] == "date" and "day" not in data:
+            raise ValidationError("Pick a day.", field_name="day")
+        if data["is_ghost"] and "previous_start_at" not in data:
+            raise ValidationError(
+                "A projected occurrence needs its start.",
+                field_name="previous_start_at",
             )
 
 

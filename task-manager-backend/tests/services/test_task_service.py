@@ -67,15 +67,6 @@ def test_turning_repetition_off_clears_the_recurrence(user_id: int) -> None:
     assert task.repeat_interval == 1
 
 
-def test_skipping_moves_to_the_next_occurrence(user_id: int) -> None:
-    task = add_task(user_id, repeatBy="weekly", repeatDays=[0, 3])
-
-    task = edit(user_id, task, skipOccurrence=True)
-
-    assert task.start_at == at("2026-03-05 09:00")
-    assert task.is_completed is False
-
-
 def test_completing_an_occurrence_keeps_its_priority_in_the_history(
     user_id: int,
 ) -> None:
