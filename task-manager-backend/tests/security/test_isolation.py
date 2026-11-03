@@ -163,3 +163,40 @@ def test_user_cannot_use_or_change_another_users_label(
     moved = b.patch(f"/api/tasks/{own}", json={"labelIds": [label_id]})
     assert moved.status_code == 400
     assert a.get("/api/labels").get_json()["labels"][0]["name"] == "Secret"
+
+
+def test_user_cannot_add_subtasks_to_another_users_task(
+    make_user: Callable[..., int],
+    login: Callable[..., FlaskClient],
+    task_payload: Callable[..., dict[str, Any]],
+) -> None:
+    make_user("a@example.com")
+    make_user("b@example.com")
+    a = login("a@example.com")
+    b = login("b@example.com")
+    task_id = create_task(a, task_payload())
+
+    response = b.post(
+        f"/api/tasks/{task_id}/subtasks", json={"subtasks": [{"title": "x"}]}
+    )
+
+    assert response.status_code == 404
+    assert a.get(f"/api/tasks/{task_id}").get_json()["subtasks"] == []
+
+
+def test_a_patch_cannot_reparent_a_task(
+    make_user: Callable[..., int],
+    login: Callable[..., FlaskClient],
+    task_payload: Callable[..., dict[str, Any]],
+) -> None:
+    make_user("a@example.com")
+    make_user("b@example.com")
+    a = login("a@example.com")
+    b = login("b@example.com")
+    foreign = create_task(a, task_payload())
+    own = create_task(b, task_payload())
+
+    b.patch(f"/api/tasks/{own}", json={"parentId": foreign})
+
+    assert a.get(f"/api/tasks/{foreign}").get_json()["subtasks"] == []
+    assert b.get(f"/api/tasks/{own}").get_json()["parentId"] is None
