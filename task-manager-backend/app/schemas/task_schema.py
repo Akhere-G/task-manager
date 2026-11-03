@@ -20,13 +20,13 @@ from app.constants import (
     PRIORITIES,
     REPEAT_FREQUENCIES,
     REPEAT_INTERVAL_LIMITS,
-    TASK_VIEWS,
     TRASH_RETENTION_DAYS,
 )
 from app.models import Task
 from app.services.task_query import TaskQuery
 from app.utils.dates import is_valid_zone, to_iso_z, utc_now
 from app.utils.recurrence import is_valid_month_day
+from app.utils.views import RANGED_VIEWS, TASK_VIEWS
 
 from .base import CamelAutoSchema, CamelSchema
 from .fields import IsoDateTime, StrippedString, UtcDateTime
@@ -51,6 +51,11 @@ def _parse_ids(value: str) -> tuple[int, ...] | None:
     if not all(part.isdigit() and int(part) > 0 for part in parts):
         return None
     return tuple(sorted({int(part) for part in parts}))
+
+
+def _validate_query_zone(zone_name: str) -> None:
+    if not is_valid_zone(zone_name):
+        raise ValidationError("zone is not a valid time zone.")
 
 
 def _validate_zone(zone_name: str | None) -> None:
@@ -248,6 +253,16 @@ class TaskRescheduleSchema(CamelSchema):
             )
 
 
+class TaskCountsQuerySchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    zone_name = fields.String(
+        data_key="zone",
+        validate=_validate_query_zone,
+    )
+
+
 class TaskListQuerySchema(Schema):
     class Meta:
         unknown = EXCLUDE
@@ -255,6 +270,7 @@ class TaskListQuerySchema(Schema):
     project = fields.Integer(validate=validate.Range(min=1))
     label = fields.String()
     view = fields.String(validate=validate.OneOf(TASK_VIEWS))
+    zone = fields.String(validate=_validate_query_zone)
     priority = fields.String()
     search = fields.String(data_key="q")
     duration = fields.String()
@@ -285,9 +301,11 @@ class TaskListQuerySchema(Schema):
             )
 
         if data["project_repeating"]:
+            if data.get("view") in RANGED_VIEWS and not start:
+                return
             if not start:
                 raise ValidationError(
-                    "project_repeating needs start_date and end_date.",
+                    "project_repeating needs a ranged view or start_date and end_date.",
                     field_name="project_repeating",
                 )
             if (end - start).days > MAX_PROJECTION_DAYS:
