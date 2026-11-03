@@ -13,7 +13,13 @@ from app.services.subtask_service import attach_subtask_counts
 from app.services.task_query import TaskQuery
 from app.utils.dates import as_naive_utc, parse_iso
 from app.utils.task_utils import build_task_clauses, top_level_tasks_of, with_repeating
-from app.utils.views import COUNTED_VIEWS, Window, view_clause, view_window
+from app.utils.views import (
+    COUNTED_VIEWS,
+    RANGED_VIEWS,
+    Window,
+    view_clause,
+    view_window,
+)
 
 
 def _sort_clauses(query: TaskQuery) -> list[UnaryExpression[Any]]:
@@ -119,9 +125,19 @@ def get_all_tasks(user_id: int, query: TaskQuery | None = None) -> dict[str, Any
     }
 
 
+def _count_ghosts_by_view(user_id: int, zone_name: str | None) -> dict[str, int]:
+    open_clauses = build_task_clauses(user_id, TaskQuery(is_completed="false"))
+    counts: dict[str, int] = {}
+    for view in RANGED_VIEWS:
+        window = view_window(view, zone_name)
+        counts[view] = len(with_repeating([], *window, user_id, open_clauses))  # type: ignore
+    return counts
+
+
 def count_open_tasks_by_view(
     user_id: int, zone_name: str | None = None
 ) -> dict[str, int]:
+    """Counts what each view lists, including projected repeating occurrences."""
     counts = [
         func.coalesce(func.sum(case((view_clause(view, zone_name), 1), else_=0)), 0)
         for view in COUNTED_VIEWS
@@ -129,4 +145,6 @@ def count_open_tasks_by_view(
     row = db.session.execute(
         select(*counts).where(top_level_tasks_of(user_id), Task.is_completed.is_(False))
     ).one()
-    return {view: int(count) for view, count in zip(COUNTED_VIEWS, row, strict=True)}
+    saved = {view: int(count) for view, count in zip(COUNTED_VIEWS, row, strict=True)}
+    ghosts = _count_ghosts_by_view(user_id, zone_name)
+    return {view: count + ghosts.get(view, 0) for view, count in saved.items()}

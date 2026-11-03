@@ -91,6 +91,21 @@ def test_counts_cover_each_smart_view(session: FlaskClient) -> None:
     assert counts["upcoming"] == 1
 
 
+def test_counts_match_the_listed_views_with_repeating_ghosts(
+    session: FlaskClient,
+) -> None:
+    add(session, "daily", repeatBy="daily", **at_day(0, hour=23))
+    add(session, "tomorrow", **at_day(1))
+
+    counts = session.get("/api/tasks/counts?zone=UTC").get_json()["counts"]
+
+    for view in ("today", "upcoming", "week", "month"):
+        listed = session.get(
+            f"/api/tasks?zone=UTC&view={view}&project_repeating=true"
+        ).get_json()["totalTasks"]
+        assert counts[view] == listed, view
+
+
 @pytest.mark.parametrize("query", ["view=someday", "zone=Mars/Base"])
 def test_unknown_views_and_zones_are_rejected(session: FlaskClient, query: str) -> None:
     assert session.get(f"/api/tasks?{query}").status_code == 400
