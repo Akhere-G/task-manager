@@ -7,6 +7,7 @@ import { describeRecurrence } from "../recurrence";
 import PriorityFlag from "./PriorityFlag";
 import ProjectLabel from "../../projects/ProjectLabel";
 import LabelChips from "../../labels/LabelChips";
+import SubtaskCount from "./SubtaskCount";
 
 interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
@@ -72,6 +73,10 @@ export function TaskCardSmall({
             <ProjectLabel projectId={task.projectId} />
           </span>
           <LabelChips labelIds={task.labelIds} />
+          <SubtaskCount
+            done={task.subtaskCompletedCount}
+            total={task.subtaskCount}
+          />
         </span>
 
         <span
