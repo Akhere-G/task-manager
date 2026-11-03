@@ -105,6 +105,11 @@ class UndatedRepeatingTask(AppError):
     message = "Repeating tasks need a start and an end time."
 
 
+class SnoozeNotRepeating(AppError):
+    field = "preset"
+    message = "Only an open repeating task can move to its next occurrence."
+
+
 class EmailTaken(AppError):
     field = "general"
     message = "Could not register. Try again or try and sign in."
