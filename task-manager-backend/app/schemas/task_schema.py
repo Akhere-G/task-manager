@@ -101,15 +101,19 @@ class SubtasksCreateSchema(CamelSchema):
 
 class ReminderSchema(CamelSchema):
     kind = fields.String(required=True, validate=validate.OneOf(REMINDER_KINDS))
-    minutes_before = fields.Integer(strict=True, validate=validate.Range(min=0))
-    days_before = fields.Integer(strict=True, validate=validate.Range(min=0))
-    time_of_day = fields.Time()
-    zone_name = fields.String(validate=_validate_query_zone)
+    minutes_before = fields.Integer(
+        strict=True, allow_none=True, validate=validate.Range(min=0)
+    )
+    days_before = fields.Integer(
+        strict=True, allow_none=True, validate=validate.Range(min=0)
+    )
+    time_of_day = fields.Time(allow_none=True)
+    zone_name = fields.String(allow_none=True, validate=_validate_query_zone)
 
     @validates_schema
     def validate_kind(self, data: dict[str, Any], **kwargs: Any) -> None:
         needed = "minutes_before" if data["kind"] == "before" else "time_of_day"
-        if needed not in data:
+        if data.get(needed) is None:
             raise ValidationError("This reminder is incomplete.", field_name=needed)
 
 
