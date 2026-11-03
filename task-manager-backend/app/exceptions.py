@@ -105,6 +105,11 @@ class UndatedRepeatingTask(AppError):
     message = "Repeating tasks need a start and an end time."
 
 
+class InvalidMove(AppError):
+    field = "afterId"
+    message = "Say which task to move after or before."
+
+
 class SnoozeNotRepeating(AppError):
     field = "preset"
     message = "Only an open repeating task can move to its next occurrence."

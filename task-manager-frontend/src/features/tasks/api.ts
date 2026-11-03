@@ -33,6 +33,11 @@ interface DeleteTaskResult {
   message: string;
 }
 
+export interface MoveInput {
+  afterId: number | null;
+  beforeId: number | null;
+}
+
 export const taskService = {
   getAll: async (params?: URLSearchParams): Promise<GetTaskResult> => {
     const url = "/tasks" + (params ? `?${params.toString()}` : "");
@@ -86,6 +91,10 @@ export const taskService = {
       `/tasks/${id}/reschedule`,
       rescheduleData,
     );
+    return response.data;
+  },
+  move: async (id: number, input: MoveInput): Promise<Task> => {
+    const response = await apiClient.post(`/tasks/${id}/move`, input);
     return response.data;
   },
   snooze: async (id: number, input: SnoozeInput): Promise<Task> => {

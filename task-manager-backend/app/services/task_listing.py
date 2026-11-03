@@ -24,6 +24,7 @@ def _sort_clauses(query: TaskQuery) -> list[UnaryExpression[Any]]:
         "start_at": Task.start_at,
         "duration": duration,
         "priority": Task.priority,
+        "manual": Task.sort_order,
     }
     column = columns.get(query.sort_by, Task.created_at)  # type: ignore
     direction = desc if query.order == "desc" else asc
@@ -32,6 +33,8 @@ def _sort_clauses(query: TaskQuery) -> list[UnaryExpression[Any]]:
         clauses.insert(0, column.is_(None))
     if query.sort_by == "priority":
         clauses.append(asc(Task.start_at))
+    if query.sort_by == "manual":
+        clauses.append(asc(Task.id))
     return clauses
 
 
