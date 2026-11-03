@@ -229,7 +229,6 @@ class TaskUpdateSchema(TaskSchema):
         include_fk = True
 
     expected_start_at = UtcDateTime(load_only=True)
-    skip_occurrence = fields.Boolean(load_only=True)
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(partial=True, **kwargs)
