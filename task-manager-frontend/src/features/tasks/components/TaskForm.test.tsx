@@ -95,6 +95,23 @@ describe("TaskForm", () => {
     expect(submit.mock.calls[0][0].labelIds).toEqual([2, 1]);
   });
 
+  it("submits the 30 minute reminder by default and any added ones", async () => {
+    renderWithProviders(<TaskForm submitAction={submit} />);
+
+    await fillValidTask();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "1 hour before" }),
+    );
+    await userEvent.click(addButton());
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(
+      submit.mock.calls[0][0].reminders.map(
+        (r: { minutesBefore: number }) => r.minutesBefore,
+      ),
+    ).toEqual([30, 60]);
+  });
+
   it("starts with the labels of the task being edited", async () => {
     renderWithProviders(
       <TaskForm

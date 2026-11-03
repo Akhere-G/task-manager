@@ -5,6 +5,7 @@ from app.database import db
 from app.exceptions import SnoozeNotRepeating
 from app.models import Task
 from app.services.label_service import attach_label_ids
+from app.services.reminder_service import attach_reminders, sync_reminders
 from app.services.subtask_service import attach_subtask_counts
 from app.services.task_service import get_task, reschedule_task
 from app.utils.snooze import snooze_today, snoozed_span, target_day
@@ -12,8 +13,10 @@ from app.utils.task_utils import next_task_start
 
 
 def _finish(task: Task) -> Task:
+    sync_reminders(task)
     db.session.commit()
     attach_label_ids([task])
+    attach_reminders([task])
     attach_subtask_counts([task])
     return task
 
