@@ -69,6 +69,21 @@ function renderApp(path: string) {
   );
 }
 
+describe("retired pages", () => {
+  it.each([
+    ["/calendar", "view=month"],
+    ["/inbox", "view=inbox"],
+  ])("%s redirects to the matching view of the tasks page", async (path) => {
+    mock.onGet("/auth/me").reply(200, { user });
+
+    renderApp(path);
+
+    expect(
+      await screen.findByRole("heading", { name: "Your tasks" }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("route protection", () => {
   it.each(["/", "/stats", "/addtask", "/pomodoro/1", "/settings"])(
     "sends a signed-out visitor from %s to the login page",
