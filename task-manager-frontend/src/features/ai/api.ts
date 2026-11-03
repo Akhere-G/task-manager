@@ -22,8 +22,12 @@ export const aiService = {
   },
   decomposeTask: async (
     task: CreateTaskInput,
+    existingSubtasks: string[] = [],
   ): Promise<DecomposeTaskResult> => {
-    const response = await apiClient.post("ai/decompose", task);
+    const response = await apiClient.post("ai/decompose", {
+      ...task,
+      existingSubtasks,
+    });
     return response.data;
   },
 };

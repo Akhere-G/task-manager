@@ -46,6 +46,7 @@ def decompose_task_route() -> ResponseReturnValue:
         data.get("description") or "",
         data.get("start_at") or "",
         data.get("end_at") or "",
+        data["existing_subtasks"],
     )
     if not tasks:
         raise AIUnavailable("Could not decompose the task.")
