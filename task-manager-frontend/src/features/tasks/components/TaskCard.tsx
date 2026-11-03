@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ProjectLabel from "../../projects/ProjectLabel";
 import LabelChips from "../../labels/LabelChips";
+import SubtaskCount from "./SubtaskCount";
 import type { Task } from "../types";
 import {
   Trash2,
@@ -136,6 +137,10 @@ function TaskCard({
           {isOverdue && <AlertCircle className="mr-1.5 w-4 h-4 text-failure" />}
         </div>
         <LabelChips labelIds={labelIds} />
+        <SubtaskCount
+          done={task.subtaskCompletedCount}
+          total={task.subtaskCount}
+        />
         <div className="flex flex-col">
           <p className="text-sm text-text-main leading-relaxed m-0 whitespace-pre-line wrap-break-word">
             {formattedDescription}

@@ -58,6 +58,40 @@ def _validate_zone(zone_name: str | None) -> None:
         raise ValidationError("Repeat time zone is not a valid time zone.")
 
 
+class SubtaskSchema(CamelSchema):
+    id = fields.Integer(dump_only=True)
+    parent_id = fields.Integer(dump_only=True)
+    position = fields.Integer(dump_only=True)
+    title = fields.String(dump_only=True)
+    description = fields.String(dump_only=True, allow_none=True)
+    priority = fields.Integer(dump_only=True)
+    is_completed = fields.Boolean(dump_only=True)
+    completed_at = UtcDateTime(dump_only=True)
+
+
+class SubtaskCreateSchema(CamelSchema):
+    title = StrippedString(
+        required=True,
+        validate=validate.Length(
+            min=1, max=255, error="Title must be 1 to 255 characters."
+        ),
+        error_messages={"required": "Title is required."},
+    )
+    description = StrippedString(allow_none=True)
+    priority = fields.Integer(
+        strict=True,
+        validate=validate.OneOf(PRIORITIES, error="Priority must be between 1 and 4."),
+    )
+
+
+class SubtasksCreateSchema(CamelSchema):
+    subtasks = fields.List(
+        fields.Nested(SubtaskCreateSchema),
+        required=True,
+        validate=validate.Length(min=1, error="Add at least one subtask."),
+    )
+
+
 class TaskSchema(CamelAutoSchema):
     class Meta(CamelAutoSchema.Meta):
         model = Task
@@ -66,6 +100,11 @@ class TaskSchema(CamelAutoSchema):
     id = fields.Raw(dump_only=True)
     user_id = auto_field(dump_only=True)
     series_id = auto_field(dump_only=True)
+    parent_id = fields.Integer(dump_only=True, allow_none=True)
+    position = fields.Integer(dump_only=True)
+    subtask_count = fields.Integer(dump_only=True, dump_default=0)
+    subtask_completed_count = fields.Integer(dump_only=True, dump_default=0)
+    subtasks = fields.Nested("SubtaskSchema", many=True, dump_only=True)
     is_ghost = fields.Boolean(dump_only=True, dump_default=False)
 
     title = StrippedString(

@@ -55,6 +55,10 @@ class Task(Base):
     )
     is_deleted: Mapped[bool] = mapped_column(default=False, server_default="0")
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime)
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tasks.id", ondelete="CASCADE")
+    )
+    position: Mapped[int] = mapped_column(default=0, server_default="0")
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
     __table_args__ = (
@@ -62,6 +66,7 @@ class Task(Base):
         Index("idx_tasks_user_end_at", "user_id", "end_at"),
         Index("idx_tasks_user_completed", "user_id", "is_completed", "completed_at"),
         Index("idx_tasks_user_project", "user_id", "project_id"),
+        Index("idx_tasks_parent", "parent_id", "position"),
         Index("idx_tasks_user_deleted", "user_id", "is_deleted", "deleted_at"),
         CheckConstraint("priority BETWEEN 1 AND 4", name="ck_tasks_priority"),
     )

@@ -5,19 +5,48 @@ import TaskCard from "../features/tasks/components/TaskCard";
 import type { CreateTaskInput, Task } from "../features/tasks/types";
 import useGetTask from "../features/tasks/hooks/useGetTask";
 import axios from "axios";
-import type { TaskError } from "../features/tasks/schemas";
 import { ErrorState, LoadingState, Popup } from "../components/ui";
 import { TaskForm } from "../features/tasks/components";
 import { PopupModes, useTaskContext } from "../context/TaskContext";
-import useCreateAllTasks from "../features/tasks/hooks/useCreateAllTasks";
+import useAddSubtasks from "../features/tasks/hooks/useAddSubtasks";
 import { aiService } from "../features/ai/api";
 import { getErrorType, trackEvent } from "../services/analytics";
+
+const toStagedTask = (task: CreateTaskInput, id: number): Task => ({
+  ...task,
+  labelIds: task.labelIds ?? [],
+  id,
+  parentId: null,
+  position: id,
+  subtaskCount: 0,
+  subtaskCompletedCount: 0,
+  isCompleted: false,
+  createdAt: "",
+  completedAt: null,
+  seriesId: id,
+  isGhost: false,
+});
+
+function subtaskErrorText(err: unknown) {
+  const errors = axios.isAxiosError(err)
+    ? err.response?.data?.errors?.subtasks
+    : null;
+  if (!errors || typeof errors !== "object") {
+    return "Could not save the subtasks.";
+  }
+  return Object.entries(errors as Record<string, Record<string, string[]>>)
+    .map(
+      ([index, fields]) =>
+        `Subtask ${Number(index) + 1}: ${Object.values(fields).flat().join(", ")}`,
+    )
+    .join("\n");
+}
 
 export default function DecomposeTask() {
   const [idCount, setIdCount] = useState(0);
   const { taskId } = useParams();
   const navigate = useNavigate();
-  const { mutateAsync: createAllTasks } = useCreateAllTasks();
+  const { mutateAsync: addSubtasks } = useAddSubtasks(Number(taskId));
 
   const {
     data: parentTask,
@@ -42,16 +71,7 @@ export default function DecomposeTask() {
       trackEvent("ai_task_breakdown_succeeded", {
         subtask_count: tasks.length,
       });
-      const formattedTasks: Task[] = tasks.map((task, id) => ({
-        ...task,
-        labelIds: task.labelIds ?? [],
-        id,
-        isCompleted: false,
-        createdAt: "",
-        completedAt: null,
-        seriesId: id,
-        isGhost: false,
-      }));
+      const formattedTasks = tasks.map(toStagedTask);
       setStagedTasks(formattedTasks);
       setIdCount(formattedTasks.length);
       setDecomposeErrors("");
@@ -90,22 +110,18 @@ export default function DecomposeTask() {
     if (parentTask)
       setStagedTasks((prev) => [
         ...prev,
-        {
-          title: `Task #${prev.length + 1}`,
-          projectId: parentTask.projectId,
-          labelIds: parentTask.labelIds,
-          priority: parentTask.priority,
-          description: "",
-          startAt: parentTask.startAt,
-          endAt: parentTask.endAt,
-          estimatedTime: 30,
-          id: idCount + 1,
-          createdAt: "",
-          isCompleted: false,
-          completedAt: null,
-          isGhost: false,
-          seriesId: idCount + 1,
-        },
+        toStagedTask(
+          {
+            title: `Task #${prev.length + 1}`,
+            projectId: parentTask.projectId,
+            labelIds: parentTask.labelIds,
+            priority: parentTask.priority,
+            description: "",
+            startAt: parentTask.startAt,
+            endAt: parentTask.endAt,
+          },
+          idCount + 1,
+        ),
       ]);
     setIdCount((prev) => prev + 1);
   };
@@ -116,7 +132,13 @@ export default function DecomposeTask() {
     if (stagedTasks.length === 0) return;
     setIsSubmitting(true);
     try {
-      await createAllTasks(stagedTasks);
+      await addSubtasks(
+        stagedTasks.map(({ title, description, priority }) => ({
+          title,
+          description,
+          priority,
+        })),
+      );
       trackEvent("ai_task_breakdown_applied", {
         subtask_count: stagedTasks.length,
       });
@@ -124,18 +146,10 @@ export default function DecomposeTask() {
         source: "breakdown",
         count: stagedTasks.length,
       });
-      navigate(-1);
+      navigate(`/?task=${parentTask?.id}`);
     } catch (err) {
-      console.error("Bulk creation failed", err);
-
-      if (axios.isAxiosError(err) && err.response?.data.errors) {
-        const allErrors = err.response?.data.errors as Partial<TaskError>[];
-        const taskErrorMessages = allErrors
-          .map((err, i) => `Task ${i + 1}: ${Object.values(err).join(", ")}`)
-          .filter((m) => !m.endsWith(": "))
-          .join("\n");
-        setBulkAddErrors(taskErrorMessages);
-      }
+      console.error("Subtask creation failed", err);
+      setBulkAddErrors(subtaskErrorText(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -350,7 +364,7 @@ function AddTaskFooter({
         Clear All
       </button>
       <button
-        aria-label="Save all tasks"
+        aria-label="Save all subtasks"
         onClick={handleConfirmAll}
         className={`btn-primary flex items-center gap-2 ${isDisabled ? "btn-primary-disabled" : ""}`}
         disabled={isDisabled}
@@ -360,7 +374,7 @@ function AddTaskFooter({
         ) : (
           <Plus size={18} />
         )}
-        Save {length} Tasks
+        Save {length} Subtasks
       </button>
     </footer>
   );
