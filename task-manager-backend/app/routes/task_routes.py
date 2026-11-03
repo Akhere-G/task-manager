@@ -9,12 +9,14 @@ from app.schemas.task_schema import (
     TaskListQuerySchema,
     TaskPageSchema,
     TaskRescheduleSchema,
+    TaskSnoozeSchema,
     TaskSchema,
     TaskUpdateSchema,
     TrashedTaskSchema,
     TrashPageSchema,
     TrashQuerySchema,
 )
+from app.services.snooze_service import snooze_task
 from app.services.subtask_service import add_subtasks
 from app.services.task_listing import count_open_tasks_by_view, get_all_tasks
 from app.services.task_service import (
@@ -96,6 +98,15 @@ def reschedule(task_id: int) -> ResponseReturnValue:
     data = TaskRescheduleSchema().load(get_json_body())
     return jsonify(
         TaskSchema().dump(reschedule_task(get_jwt_identity(), task_id, data))  # type: ignore
+    )
+
+
+@task_bp.route("/api/tasks/<int:task_id>/snooze", methods=["POST"])
+@jwt_required()
+def snooze(task_id: int) -> ResponseReturnValue:
+    data = TaskSnoozeSchema().load(get_json_body())
+    return jsonify(
+        TaskSchema().dump(snooze_task(get_jwt_identity(), task_id, data))  # type: ignore
     )
 
 

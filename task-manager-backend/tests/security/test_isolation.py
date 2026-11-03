@@ -35,6 +35,11 @@ def test_user_cannot_touch_another_users_task(
     )
     moved = b.post(f"/api/tasks/{task_id}/reschedule", json=reschedule)
     assert moved.status_code == 404
+    snoozed = b.post(
+        f"/api/tasks/{task_id}/snooze",
+        json={"preset": "tomorrow", "zoneName": "UTC"},
+    )
+    assert snoozed.status_code == 404
 
     own = a.get(f"/api/tasks/{task_id}")
     assert own.status_code == 200
