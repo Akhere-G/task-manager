@@ -8,15 +8,23 @@ A high-performance task engine designed to turn raw productivity data into actio
 
 ## Core Features
 
-* **Flexible Views:** Switch between a clean list and a full calendar. Use smart filters and sorting to see exactly what needs your attention right now.
-* **Seamless Habits:** Set tasks to repeat daily, weekly, or monthly. The system projects 'ghost tasks' into your future calendar so you can plan for upcoming commitments.
+* **Smart Views:** Inbox, Today, Upcoming, Overdue, This week and This month sit in a sidebar (a closable panel on mobile), each with a live count. Switch any view between a list and a calendar; everything, including search and sort, lives in the URL so views can be bookmarked.
+* **Projects & Labels:** Organise tasks into nested projects and tag them with labels. Pick a project, or "All", from the sidebar to filter the list.
+* **Inbox:** Capture a title-only task in one line, with no date or project, and triage it later.
+* **Priorities:** Mark tasks P1 to P4, then filter or sort by priority.
+* **Subtasks:** Break a task into a checklist with its own completion. The parent shows progress and completing it completes the open subtasks.
+* **Drag to Reorder:** Sort by "Manual" and drag cards into the order you want, with mouse, touch or keyboard. The order is saved.
+* **Seamless Habits:** Set tasks to repeat daily, weekly, monthly or yearly, with every-N intervals and chosen days. The system projects 'ghost tasks' into your future calendar so you can plan for upcoming commitments.
+* **Snooze:** Move a task to tomorrow, the weekend, next week or a date, keeping its time of day. Repeating tasks can skip to their next occurrence.
+* **Reminders:** Add several reminders per task: 30 minutes or 1 hour before, at the start of the day, or at a set time. Push notifications are sent by the reminder runner (see below).
+* **Trash:** Deleted tasks are kept for 30 days and can be restored.
 * **Your Daily Brief (AI Coach):** Start your day with an AI coach that reviews pending and overdue tasks to suggest the best plan of action for a productive morning.
-* **Break It Down (AI Subtasks):** Avoid being overwhelmed by large projects. The built-in AI splits single large tasks into a clear, manageable checklist of smaller steps.
-* **Quick-Add Tools:** Add tasks instantly by typing naturally with our AI assistant, or upload a CSV file to migrate an entire project's worth of tasks in one go.
+* **Break It Down (AI Subtasks):** The built-in AI splits a large task into a clear checklist of smaller steps, saved as real subtasks.
+* **Quick-Add Tools:** Add tasks instantly by typing naturally with our AI assistant, or upload a CSV file to import many at once. Download a simple or advanced CSV template with examples of dated, dateless and repeating tasks. The time zone is taken from your browser, and you can export your tasks as CSV from Settings.
 * **Pomodoro Timer:** Boost focus using timed work intervals. When a session finishes you can mark the task complete straight away.
 * **Performance Summary:** Monitor progress with a year-long activity map, tracking your overall 'Backlog Health' and daily productivity metrics.
 * **Planning & Deadlines:** Visualise the week ahead to review upcoming deadlines. Dedicated charts highlight how close your due dates are and flag overdue items.
-* **Workload Insights:** Understand exactly where your time goes with detailed breakdowns of time spent on different projects (e.g., work, health, or hobbies) over a rolling seven-day window.
+* **Workload Insights:** See where your time goes with breakdowns of time spent per project over a rolling seven-day window.
 
 ---
 
@@ -42,6 +50,10 @@ The user interface operates as a highly responsive, single-page application (SPA
 * **Network Client:** Axios (Configured for credentials-backed API routing)
 * **State Management:** TanStack Query (Server-state caching and seamless optimistic updates)
 * **Data Visualisation:** Recharts (Dynamic rendering of workload insights and performance history)
+
+### Reminder runner
+
+Reminders are sent by `python -m app.run_reminders` (run from `task-manager-backend/`). It is not started by the web app, so schedule it (cron, Cloud Scheduler or similar) at least every 5 minutes; reminders more than an hour overdue are dropped.
 
 ### AI features and data
 
