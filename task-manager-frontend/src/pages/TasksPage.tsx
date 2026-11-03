@@ -128,18 +128,18 @@ export default function TasksPage() {
         <div className="mr-2 justify-self-end md:mr-0 md:col-start-2 md:row-start-1">
           <LayoutToggle layout={layout} onSelect={selectLayout} />
         </div>
-        <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-2">
+        <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-1 translate-y-12">
           {view === "inbox" && <QuickCapture />}
 
           {!isCalendar && hasTasks && (
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-4 ">
               <DailyBrief />
               <Pagination {...pageDetails} setPage={setPage} />
             </div>
           )}
 
           <section
-            className={`transition-opacity duration-150 ${isStale ? "opacity-75" : "opacity-100"}`}
+            className={`transition-opacity duration-150 -row-start-1 ${isStale ? "opacity-75" : "opacity-100"}`}
           >
             {content}
           </section>
