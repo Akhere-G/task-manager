@@ -49,7 +49,6 @@ class Task(Base):
     repeat_days: Mapped[list | None] = mapped_column(JSON)
     repeat_timezone: Mapped[str | None] = mapped_column(String(64))
     series_id: Mapped[int | None]
-    reminded_for_start_at: Mapped[datetime | None] = mapped_column(DateTime)
     project_id: Mapped[int | None] = mapped_column(
         ForeignKey("projects.id", ondelete="SET NULL")
     )
