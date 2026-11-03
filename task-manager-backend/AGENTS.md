@@ -88,7 +88,8 @@ routes or services.
 | project         | A user-made folder for tasks (`projects`), nestable to `MAX_PROJECT_DEPTH`.   |
 | label           | A user-made tag (`labels`); a task has up to `MAX_LABELS_PER_TASK`.           |
 | inbox           | Tasks with no `project_id`.                                                   |
-| undated task    | A task with no `start_at` and `end_at`; never repeating.                      |
+| smart view      | A named filter (inbox, today, upcoming, overdue, week, month) resolved in the viewer's zone. |
+| window          | The `[start, end)` span of a ranged smart view, as naive UTC.                 || undated task    | A task with no `start_at` and `end_at`; never repeating.                      |
 | subtask         | A task with a `parent_id`; one level deep, never repeating, hidden from lists. |
 | purge           | Hard-deleting a user's trash older than the retention when they create a task. |
 
