@@ -108,14 +108,6 @@ export default function TasksPage() {
 
   return (
     <div className="flex flex-col gap-3 md:flex-row md:gap-6">
-      <TasksSidebar
-        view={view}
-        counts={counts}
-        project={filters.project}
-        onSelectView={selectView}
-        onSelectProject={(id) => updateFilters("project", id)}
-      />
-
       <section className="flex min-h-full min-w-0 grow flex-col gap-3">
         <TasksHeader
           filters={filters}
@@ -124,7 +116,16 @@ export default function TasksPage() {
           updateFilters={updateFilters}
           sortable={!isCalendar}
         />
-        <LayoutToggle layout={layout} onSelect={selectLayout} />
+        <div className="flex justify-between mr-2">
+          <TasksSidebar
+            view={view}
+            counts={counts}
+            project={filters.project}
+            onSelectView={selectView}
+            onSelectProject={(id) => updateFilters("project", id)}
+          />
+          <LayoutToggle layout={layout} onSelect={selectLayout} />
+        </div>
         {view === "inbox" && <QuickCapture />}
 
         {!isCalendar && hasTasks && (
