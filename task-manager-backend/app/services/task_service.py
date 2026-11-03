@@ -315,7 +315,7 @@ def delete_task(user_id: int, task_id: int) -> None:
 
 
 def get_trash(user_id: int, page: int, limit: int) -> dict[str, Any]:
-    clauses = (Task.user_id == user_id, Task.is_deleted)
+    clauses = (Task.user_id == user_id, Task.is_deleted, Task.parent_id.is_(None))
     total = (
         db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
     )

@@ -87,6 +87,7 @@ def check_task_reminders() -> None:
         stmt = select(Task).where(
             Task.is_completed.is_(False),
             Task.is_deleted.is_(False),
+            Task.parent_id.is_(None),
             Task.start_at >= now,
             Task.start_at <= now + REMINDER_WINDOW,
             or_(
