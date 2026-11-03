@@ -8,8 +8,6 @@ import {
   taskDurationOptions,
 } from "../constants";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import useProjects from "../../projects/hooks/useProjects";
-import { projectOptions } from "../../projects/utils";
 import useLabels from "../../labels/hooks/useLabels";
 
 interface TaskFilters {
@@ -38,7 +36,6 @@ export default function TasksHeader({
   sortable = true,
 }: TasksHeaderProps) {
   const [openFilters, setOpenFilters] = useState(false);
-  const { data: projects = [] } = useProjects();
   const { data: labels = [] } = useLabels();
 
   const handleChange = (
@@ -81,14 +78,6 @@ export default function TasksHeader({
             value={filters.search}
             handleChange={handleChange}
             label="Search"
-            formClassNames={formClassNames}
-          />
-          <FormInput
-            name="project"
-            value={filters.project}
-            handleChange={handleChange}
-            label="Project"
-            options={[{ name: "All", value: "" }, ...projectOptions(projects)]}
             formClassNames={formClassNames}
           />
           <FormInput
