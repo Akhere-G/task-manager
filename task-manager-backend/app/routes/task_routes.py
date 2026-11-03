@@ -7,6 +7,7 @@ from app.schemas.task_schema import (
     SubtasksCreateSchema,
     TaskCountsQuerySchema,
     TaskListQuerySchema,
+    TaskMoveSchema,
     TaskPageSchema,
     TaskRescheduleSchema,
     TaskSchema,
@@ -16,6 +17,7 @@ from app.schemas.task_schema import (
     TrashPageSchema,
     TrashQuerySchema,
 )
+from app.services.order_service import move_task
 from app.services.snooze_service import snooze_task
 from app.services.subtask_service import add_subtasks
 from app.services.task_listing import count_open_tasks_by_view, get_all_tasks
@@ -99,6 +101,15 @@ def reschedule(task_id: int) -> ResponseReturnValue:
     return jsonify(
         TaskSchema().dump(reschedule_task(get_jwt_identity(), task_id, data))  # type: ignore
     )
+
+
+@task_bp.route("/api/tasks/<int:task_id>/move", methods=["POST"])
+@jwt_required()
+def move(task_id: int) -> ResponseReturnValue:
+    data = TaskMoveSchema().load(get_json_body())
+    user_id = get_jwt_identity()
+    move_task(user_id, task_id, data.get("after_id"), data.get("before_id"))
+    return jsonify(TaskSchema().dump(get_task(user_id, task_id)))  # type: ignore
 
 
 @task_bp.route("/api/tasks/<int:task_id>/snooze", methods=["POST"])

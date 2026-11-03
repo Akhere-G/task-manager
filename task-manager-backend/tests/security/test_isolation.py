@@ -40,6 +40,9 @@ def test_user_cannot_touch_another_users_task(
         json={"preset": "tomorrow", "zoneName": "UTC"},
     )
     assert snoozed.status_code == 404
+    other_id = create_task(b, {"title": "Mine"})
+    moved_beside = b.post(f"/api/tasks/{other_id}/move", json={"afterId": task_id})
+    assert moved_beside.status_code == 404
 
     own = a.get(f"/api/tasks/{task_id}")
     assert own.status_code == 200

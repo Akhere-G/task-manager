@@ -20,6 +20,7 @@ from app.services.label_service import (
     ensure_labels_belong_to,
     set_task_labels,
 )
+from app.services.order_service import top_positions
 from app.services.project_service import ensure_projects_belong_to
 from app.services.reminder_service import (
     DEFAULT_REMINDER,
@@ -123,7 +124,11 @@ def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
             item.get("is_repeating") or item.get("repeat_by"),
         )
     _purge_expired_trash(user_id)
-    tasks = [Task(**item, user_id=user_id) for item in items]
+    positions = top_positions(user_id, len(items))
+    tasks = [
+        Task(**item, user_id=user_id, sort_order=position)
+        for item, position in zip(items, positions, strict=True)
+    ]
     for task in tasks:
         _apply_recurrence(task)
     db.session.add_all(tasks)
