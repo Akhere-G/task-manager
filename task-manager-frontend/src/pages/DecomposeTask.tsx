@@ -364,7 +364,7 @@ function AddTaskFooter({
         Clear All
       </button>
       <button
-        aria-label="Save all tasks"
+        aria-label="Save all subtasks"
         onClick={handleConfirmAll}
         className={`btn-primary flex items-center gap-2 ${isDisabled ? "btn-primary-disabled" : ""}`}
         disabled={isDisabled}
@@ -374,7 +374,7 @@ function AddTaskFooter({
         ) : (
           <Plus size={18} />
         )}
-        Save {length} Tasks
+        Save {length} Subtasks
       </button>
     </footer>
   );
