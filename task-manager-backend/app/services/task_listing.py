@@ -8,6 +8,7 @@ from app.constants import MAX_TASKS_PER_REQUEST
 from app.database import db
 from app.models import Task
 from app.services.label_service import attach_label_ids
+from app.services.reminder_service import attach_reminders
 from app.services.subtask_service import attach_subtask_counts
 from app.services.task_query import TaskQuery
 from app.utils.dates import as_naive_utc, parse_iso
@@ -105,6 +106,7 @@ def get_all_tasks(user_id: int, query: TaskQuery | None = None) -> dict[str, Any
         tasks, total, limit = _select_page(user_id, query)
 
     attach_label_ids(tasks)
+    attach_reminders(tasks)
     attach_subtask_counts(tasks)
     return {
         "tasks": tasks,
