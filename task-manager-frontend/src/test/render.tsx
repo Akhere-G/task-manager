@@ -23,6 +23,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     description: null,
     projectId: null,
     labelIds: [],
+    reminders: [],
     parentId: null,
     position: 0,
     subtaskCount: 0,

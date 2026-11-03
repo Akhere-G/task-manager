@@ -58,6 +58,17 @@ export const taskSchema = z
         `A task can have up to ${MAX_LABELS_PER_TASK} labels.`,
       )
       .optional(),
+    reminders: z
+      .array(
+        z.object({
+          kind: z.enum(["before", "clock"]),
+          minutesBefore: z.number().int().min(0).nullish(),
+          daysBefore: z.number().int().min(0).nullish(),
+          timeOfDay: z.string().nullish(),
+          zoneName: z.string().nullish(),
+        }),
+      )
+      .optional(),
     repeatUntil: z
       .string()
       .nullish()
