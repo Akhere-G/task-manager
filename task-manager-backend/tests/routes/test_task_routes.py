@@ -107,6 +107,17 @@ def test_bulk_import_fixes_completion_and_repeat_flags(
     assert any(t["isRepeating"] for t in tasks)
 
 
+def test_bulk_create_treats_a_null_created_at_as_not_given(
+    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
+) -> None:
+    response = session.post(
+        "/api/tasks/bulk", json=[task_payload(createdAt=None, title="Step 1")]
+    )
+
+    assert response.status_code == 201
+    assert all_tasks(session)[0]["createdAt"] is not None
+
+
 def test_bulk_validation_errors_are_listed_per_task(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
