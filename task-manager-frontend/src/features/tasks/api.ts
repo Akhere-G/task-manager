@@ -2,6 +2,7 @@ import apiClient from "../../services/api";
 import type { TaskViewCounts } from "./views";
 import type {
   CreateTaskInput,
+  SnoozeInput,
   Subtask,
   SubtaskInput,
   Task,
@@ -85,6 +86,10 @@ export const taskService = {
       `/tasks/${id}/reschedule`,
       rescheduleData,
     );
+    return response.data;
+  },
+  snooze: async (id: number, input: SnoozeInput): Promise<Task> => {
+    const response = await apiClient.post(`/tasks/${id}/snooze`, input);
     return response.data;
   },
   delete: async (id: number): Promise<DeleteTaskResult> => {
