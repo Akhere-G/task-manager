@@ -30,6 +30,10 @@ interface TaskListProps {
 
 const itemClass =
   "transition-all duration-150 animate-in fade-in slide-in-from-bottom-2";
+// dnd-kit owns transform and transition here; CSS transitions or slide-in
+// animations on the same element make the dragged card trail the pointer.
+const sortableItemClass = "touch-manipulation";
+const draggingClass = "relative z-10 cursor-grabbing shadow-lg";
 
 function SortableItem({
   task,
@@ -38,14 +42,20 @@ function SortableItem({
   task: Task;
   children: React.ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: task.id, disabled: task.isGhost });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id, disabled: task.isGhost });
 
   return (
     <li
       ref={setNodeRef}
-      className={itemClass}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`${sortableItemClass} ${isDragging ? draggingClass : ""}`}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
       {...attributes}
       {...listeners}
       role="listitem"
