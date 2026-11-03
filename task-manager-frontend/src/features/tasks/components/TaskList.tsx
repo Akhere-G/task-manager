@@ -15,6 +15,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useState } from "react";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import useMoveTask from "../hooks/useMoveTask";
 import { reorder } from "../order";
@@ -32,6 +33,8 @@ const itemClass =
   "transition-all duration-150 animate-in fade-in slide-in-from-bottom-2";
 // dnd-kit owns transform and transition here; CSS transitions or slide-in
 // animations on the same element make the dragged card trail the pointer.
+// Cards are dropped where the pointer left them, so animating from the old
+// slot to the new one only makes the dropped card fly in from the side.
 const sortableItemClass = "touch-manipulation";
 const draggingClass = "relative z-10 cursor-grabbing shadow-lg";
 
@@ -49,7 +52,11 @@ function SortableItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id, disabled: task.isGhost });
+  } = useSortable({
+    id: task.id,
+    disabled: task.isGhost,
+    animateLayoutChanges: () => false,
+  });
 
   return (
     <li
@@ -65,7 +72,17 @@ function SortableItem({
   );
 }
 
-export default function TaskList({ tasks, sortable = false }: TaskListProps) {
+export default function TaskList({
+  tasks: loaded,
+  sortable = false,
+}: TaskListProps) {
+  // React Query tells its subscribers a task later than dnd-kit clears its
+  // offsets, which flashes the old order. Show the dropped order until the
+  // cache catches up; it is ignored as soon as `loaded` is a new list.
+  const [dropped, setDropped] = useState<{ from: Task[]; to: Task[] } | null>(
+    null,
+  );
+  const tasks = dropped?.from === loaded ? dropped.to : loaded;
   const breakpoint = useBreakpoint();
   const isMobile = ["xs", "sm"].includes(breakpoint);
   const { mutate: moveTask } = useMoveTask();
@@ -85,6 +102,7 @@ export default function TaskList({ tasks, sortable = false }: TaskListProps) {
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     const result = over && reorder(tasks, Number(active.id), Number(over.id));
     if (result) {
+      setDropped({ from: loaded, to: result.tasks });
       moveTask({
         id: Number(active.id),
         move: result.move,
