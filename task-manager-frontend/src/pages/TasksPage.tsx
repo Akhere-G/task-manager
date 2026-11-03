@@ -107,16 +107,16 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:gap-6">
-      <section className="flex min-h-full min-w-0 grow flex-col gap-3">
-        <TasksHeader
-          filters={filters}
-          resetFilters={resetFilters}
-          totalTasks={data?.totalTasks ?? 0}
-          updateFilters={updateFilters}
-          sortable={!isCalendar}
-        />
-        <div className="flex justify-between mr-2">
+    <section className="flex min-h-full min-w-0 flex-col gap-3">
+      <TasksHeader
+        filters={filters}
+        resetFilters={resetFilters}
+        totalTasks={data?.totalTasks ?? 0}
+        updateFilters={updateFilters}
+        sortable={!isCalendar}
+      />
+      <div className="grid grid-cols-[auto_1fr] items-start gap-3 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-x-6">
+        <div className="md:row-span-2">
           <TasksSidebar
             view={view}
             counts={counts}
@@ -124,42 +124,46 @@ export default function TasksPage() {
             onSelectView={selectView}
             onSelectProject={(id) => updateFilters("project", id)}
           />
+        </div>
+        <div className="mr-2 justify-self-end md:mr-0 md:col-start-2 md:row-start-1">
           <LayoutToggle layout={layout} onSelect={selectLayout} />
         </div>
-        {view === "inbox" && <QuickCapture />}
+        <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-2">
+          {view === "inbox" && <QuickCapture />}
 
-        {!isCalendar && hasTasks && (
-          <div className="flex flex-wrap justify-center gap-4">
-            <DailyBrief />
-            <Pagination {...pageDetails} setPage={setPage} />
-          </div>
-        )}
+          {!isCalendar && hasTasks && (
+            <div className="flex flex-wrap justify-center gap-4">
+              <DailyBrief />
+              <Pagination {...pageDetails} setPage={setPage} />
+            </div>
+          )}
 
-        <section
-          className={`transition-opacity duration-150 ${isStale ? "opacity-75" : "opacity-100"}`}
-        >
-          {content}
-        </section>
+          <section
+            className={`transition-opacity duration-150 ${isStale ? "opacity-75" : "opacity-100"}`}
+          >
+            {content}
+          </section>
 
-        {!isCalendar && hasTasks && (
-          <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate />
-        )}
+          {!isCalendar && hasTasks && (
+            <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate />
+          )}
 
-        <button
-          aria-label="Add new task"
-          className="z-1 fixed bottom-5 right-5 btn-primary rounded-full w-15 h-15 flex items-center justify-center shadow-xl"
-          onClick={() =>
-            navigate("/addtask", {
-              state: isCalendar
-                ? { currentDate: filters.currentDate }
-                : undefined,
-            })
-          }
-        >
-          <Plus size={40} />
-        </button>
-        <TaskPopups />
-      </section>
-    </div>
+          <button
+            aria-label="Add new task"
+            className="z-1 fixed bottom-5 right-5 btn-primary rounded-full w-15 h-15 flex items-center justify-center shadow-xl"
+            onClick={() =>
+              navigate("/addtask", {
+                state: isCalendar
+                  ? { currentDate: filters.currentDate }
+                  : undefined,
+              })
+            }
+          >
+            <Plus size={40} />
+          </button>
+          <TaskPopups />
+        </div>
+      </div>
+    </section>
   );
 }
