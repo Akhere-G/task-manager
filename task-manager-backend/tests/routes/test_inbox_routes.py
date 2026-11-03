@@ -168,6 +168,21 @@ def test_an_undated_task_can_be_completed_and_the_stats_still_load(
     assert session.get("/api/stats/dashboard").status_code == 200
 
 
+def test_an_open_undated_task_does_not_break_the_deadline_stats(
+    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
+) -> None:
+    project = session.post("/api/projects", json={"name": "Work"}).get_json()
+    add_undated(session, projectId=project["id"])
+    session.post("/api/tasks", json=task_payload(projectId=project["id"]))
+
+    response = session.get("/api/stats/dashboard")
+
+    assert response.status_code == 200
+    assert [row["project"] for row in response.get_json()["deadlineProximity"]] == [
+        "Work"
+    ]
+
+
 def test_the_duration_filter_leaves_out_undated_tasks(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
