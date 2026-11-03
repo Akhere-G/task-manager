@@ -28,6 +28,7 @@ from app.utils.dates import (
 )
 from app.utils.project_tree import descendant_ids
 from app.utils.recurrence import next_occurrence
+from app.utils.views import view_clause
 
 if TYPE_CHECKING:
     from app.services.task_query import TaskQuery
@@ -143,8 +144,6 @@ def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
         clauses.append(
             Task.project_id.in_(_project_and_descendants(user_id, query.project))
         )
-    if query.view == "inbox":
-        clauses.append(Task.project_id.is_(None))
     if query.label:
         labelled = select(TaskLabel.task_id).where(TaskLabel.label_id.in_(query.label))
         clauses.append(Task.id.in_(labelled))
@@ -156,6 +155,7 @@ def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
         _completion_clause(query.is_completed),
         _date_range_clause(query.start_date, query.end_date),
         _duration_clause(query.duration),
+        view_clause(query.view, query.zone),
     )
     for clause in optional_clauses:
         if clause is not None:

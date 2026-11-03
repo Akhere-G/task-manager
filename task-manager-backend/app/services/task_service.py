@@ -1,10 +1,9 @@
-from dataclasses import replace
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import UnaryExpression, asc, delete, desc, func, literal_column, select
+from sqlalchemy import delete, desc, func, select
 
-from app.constants import MAX_TASKS_PER_REQUEST, TRASH_RETENTION_DAYS
+from app.constants import TRASH_RETENTION_DAYS
 from app.database import db
 from app.exceptions import (
     IncompleteTaskDates,
@@ -30,8 +29,7 @@ from app.services.subtask_service import (
     reset_subtasks,
     set_subtasks_deleted,
 )
-from app.services.task_query import TaskQuery
-from app.utils.dates import get_zone, parse_iso, utc_now
+from app.utils.dates import get_zone, utc_now
 from app.utils.recurrence import (
     at_time_of,
     default_days,
@@ -40,13 +38,11 @@ from app.utils.recurrence import (
     snap_to_slot,
 )
 from app.utils.task_utils import (
-    build_task_clauses,
     live_tasks_of,
     next_task_start,
     roll_series,
     should_roll_series,
     snapshot,
-    with_repeating,
 )
 
 NON_COLUMN_FIELDS = {"expected_start_at", "skip_occurrence", "label_ids"}
@@ -58,71 +54,6 @@ RECURRENCE_FIELDS = {
     "repeat_timezone",
     "start_at",
 }
-
-
-def _sort_clauses(query: TaskQuery) -> list[UnaryExpression[Any]]:
-    duration = func.timestampdiff(literal_column("MINUTE"), Task.start_at, Task.end_at)
-    columns = {
-        "created_at": Task.created_at,
-        "title": Task.title,
-        "start_at": Task.start_at,
-        "duration": duration,
-        "priority": Task.priority,
-    }
-    column = columns.get(query.sort_by, Task.created_at)  # type: ignore
-    direction = desc if query.order == "desc" else asc
-    clauses = [direction(column)]
-    if query.sort_by in ("start_at", "duration"):
-        clauses.insert(0, column.is_(None))
-    if query.sort_by == "priority":
-        clauses.append(asc(Task.start_at))
-    return clauses
-
-
-def _page_size(query: TaskQuery, total: int) -> int:
-    return max(query.limit or min(total, MAX_TASKS_PER_REQUEST), 1)
-
-
-def _project_repeating(user_id: int, query: TaskQuery, tasks: list[Task]) -> list[Task]:
-    unranged = replace(query, start_date=None, end_date=None)
-    return with_repeating(
-        tasks,
-        parse_iso(query.start_date),
-        parse_iso(query.end_date),
-        user_id,
-        build_task_clauses(user_id, unranged),
-    )
-
-
-def get_all_tasks(user_id: int, query: TaskQuery = TaskQuery()) -> dict[str, Any]:
-    clauses = build_task_clauses(user_id, query)
-    total = (
-        db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
-    )
-    limit = _page_size(query, total)
-    page = max(query.page or 1, 1)
-
-    stmt = (
-        select(Task)
-        .where(*clauses)
-        .order_by(*_sort_clauses(query), Task.id)
-        .limit(limit)
-        .offset(limit * (page - 1))
-    )
-    tasks = list(db.session.scalars(stmt))
-
-    if query.project_repeating:
-        tasks = _project_repeating(user_id, query, tasks)
-        total = len(tasks)
-
-    attach_label_ids(tasks)
-    attach_subtask_counts(tasks)
-    return {
-        "tasks": tasks,
-        "total_tasks": total,
-        "total_pages": (total + limit - 1) // limit,
-        "current_page": page,
-    }
 
 
 def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
