@@ -75,6 +75,23 @@ describe("smart views", () => {
     expect(result.current.view).toBe("overdue");
   });
 
+  it("clears the project filter when the inbox is selected", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+    const { result } = renderHookWithProviders(
+      () => useTasks({ perPage: 10 }),
+      {
+        route: "/?project=4",
+      },
+    );
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+    expect(lastRequestParams().get("project")).toBe("4");
+
+    act(() => result.current.selectView("inbox"));
+
+    await waitFor(() => expect(lastRequestParams().get("view")).toBe("inbox"));
+    expect(lastRequestParams().has("project")).toBe(false);
+  });
+
   it("loads the visible range and no view in the calendar layout", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
