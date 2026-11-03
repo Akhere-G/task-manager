@@ -7,6 +7,7 @@ from app.constants import (
     DEFAULT_PRIORITY,
     MAX_DECOMPOSE_DESCRIPTION_LENGTH,
     MAX_DECOMPOSE_TITLE_LENGTH,
+    MAX_EXISTING_SUBTASKS,
     MAX_PARSE_TEXT_LENGTH,
     PRIORITIES,
     REPEAT_FREQUENCIES,
@@ -54,6 +55,11 @@ class DecomposeRequestSchema(CamelSchema):
     )
     start_at = fields.String(allow_none=True)
     end_at = fields.String(allow_none=True)
+    existing_subtasks = fields.List(
+        fields.String(validate=validate.Length(max=MAX_DECOMPOSE_TITLE_LENGTH)),
+        validate=validate.Length(max=MAX_EXISTING_SUBTASKS),
+        load_default=list,
+    )
 
 
 def _end_of_today() -> str:

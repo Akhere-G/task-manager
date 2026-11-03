@@ -207,10 +207,17 @@ def _decompose_prompt(
     description: str,
     start_at: str | datetime,
     end_at: str | datetime,
+    existing_subtasks: list[str],
 ) -> str:
+    existing = "\n".join(f"    - {subtask}" for subtask in existing_subtasks)
+    already_done = (
+        f"\n    It already has these subtasks, so do not repeat them:\n{existing}"
+        if existing
+        else ""
+    )
     return f"""
     Decompose this task into 3-7 substasks that will help the user complete the task.
-    - {title} ({description}, {start_at} to {end_at})
+    - {title} ({description}, {start_at} to {end_at}){already_done}
     Return only a json list of objects of this format
     - title: (string)
     - description: (string or null)
@@ -262,15 +269,19 @@ def decompose_task(
     description: str,
     start_at: str | datetime,
     end_at: str | datetime,
+    existing_subtasks: list[str] | None = None,
 ) -> list[dict[str, Any]]:
+    existing = existing_subtasks or []
     try:
         reply = get_generated_text(
-            _decompose_prompt(title, description, start_at, end_at)
+            _decompose_prompt(title, description, start_at, end_at, existing)
         )
         schema = AiTaskSchema(many=True)
         tasks = schema.dump(schema.load(_extract_json(reply)))
     except (AIUnavailable, ValueError, ValidationError):
         return []
-    for task in tasks:
+    known = {subtask.strip().lower() for subtask in existing}
+    new_tasks = [task for task in tasks if task["title"].strip().lower() not in known]
+    for task in new_tasks:
         task.pop("project", None)
-    return tasks
+    return new_tasks
