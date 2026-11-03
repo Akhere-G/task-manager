@@ -9,6 +9,7 @@ from app.database import db
 from app.exceptions import (
     IncompleteTaskDates,
     InvalidTaskTimes,
+    SubtaskCannotRepeat,
     TaskConflict,
     TaskNotFound,
     UndatedRepeatingTask,
@@ -24,6 +25,10 @@ from app.services.project_service import ensure_projects_belong_to
 from app.services.subtask_service import (
     attach_subtask_counts,
     attach_subtasks,
+    complete_open_subtasks,
+    move_subtasks_to_project,
+    reset_subtasks,
+    set_subtasks_deleted,
 )
 from app.services.task_query import TaskQuery
 from app.utils.dates import get_zone, parse_iso, utc_now
@@ -220,6 +225,12 @@ def _check_times(task: Task, data: dict[str, Any]) -> None:
     )
 
 
+def _check_subtask_fields(data: dict[str, Any]) -> None:
+    if data.get("is_repeating") or data.get("repeat_by"):
+        raise SubtaskCannotRepeat()
+    data.pop("project_id", None)
+
+
 def _check_not_already_completed(task: Task, data: dict[str, Any]) -> None:
     expected_start = data.get("expected_start_at")
     completing = data.get("is_completed") and not task.is_completed
@@ -255,6 +266,8 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         set_task_labels([task.id], data["label_ids"])
     _check_times(task, data)
     _check_not_already_completed(task, data)
+    if task.parent_id is not None:
+        _check_subtask_fields(data)
 
     for field, value in data.items():
         if field not in NON_COLUMN_FIELDS:
@@ -275,9 +288,16 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         _skip_occurrence(task)
     db.session.flush()
 
-    if should_roll_series(task, before):
+    if "project_id" in data and task.parent_id is None:
+        move_subtasks_to_project(task)
+
+    rolled = should_roll_series(task, before)
+    if rolled:
         roll_series(task, before)
+        reset_subtasks(task)
         db.session.flush()
+    elif task.is_completed and not before.is_completed:
+        complete_open_subtasks(task)
 
     db.session.commit()
     attach_label_ids([task])
@@ -321,8 +341,12 @@ def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
 
 def delete_task(user_id: int, task_id: int) -> None:
     task = get_task(user_id, task_id)
-    task.is_deleted = True
-    task.deleted_at = utc_now()
+    if task.parent_id is not None:
+        db.session.delete(task)
+    else:
+        task.is_deleted = True
+        task.deleted_at = utc_now()
+        set_subtasks_deleted(task, True)
     db.session.commit()
 
 
@@ -356,6 +380,7 @@ def restore_task(user_id: int, task_id: int) -> Task:
         raise TaskNotFound(task_id)
     task.is_deleted = False
     task.deleted_at = None
+    set_subtasks_deleted(task, False)
     db.session.commit()
     attach_label_ids([task])
     return task
