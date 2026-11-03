@@ -19,7 +19,9 @@ export default function useCreateAllTasks() {
         completedAt: task.completedAt
           ? toFormattedUTCDate(task.completedAt)
           : null,
-        createdAt: task.createdAt ? toFormattedUTCDate(task.createdAt) : null,
+        createdAt: task.createdAt
+          ? toFormattedUTCDate(task.createdAt)
+          : undefined,
       }));
       await taskService.createAll(formattedTasks);
     },
