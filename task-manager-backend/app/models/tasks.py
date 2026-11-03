@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     CheckConstraint,
     DateTime,
     Enum,
@@ -58,6 +59,7 @@ class Task(Base):
         ForeignKey("tasks.id", ondelete="CASCADE")
     )
     position: Mapped[int] = mapped_column(default=0, server_default="0")
+    sort_order: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
     __table_args__ = (
@@ -66,6 +68,7 @@ class Task(Base):
         Index("idx_tasks_user_completed", "user_id", "is_completed", "completed_at"),
         Index("idx_tasks_user_project", "user_id", "project_id"),
         Index("idx_tasks_parent", "parent_id", "position"),
+        Index("idx_tasks_user_order", "user_id", "sort_order"),
         Index("idx_tasks_user_deleted", "user_id", "is_deleted", "deleted_at"),
         CheckConstraint("priority BETWEEN 1 AND 4", name="ck_tasks_priority"),
     )

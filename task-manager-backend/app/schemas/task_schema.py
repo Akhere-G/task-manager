@@ -296,6 +296,11 @@ class TaskSnoozeSchema(CamelSchema):
             )
 
 
+class TaskMoveSchema(CamelSchema):
+    after_id = fields.Integer(strict=True, allow_none=True)
+    before_id = fields.Integer(strict=True, allow_none=True)
+
+
 class TaskCountsQuerySchema(Schema):
     class Meta:
         unknown = EXCLUDE
