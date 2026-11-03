@@ -15,6 +15,8 @@ import { priorityOptions } from "../constants";
 import useProjects from "../../projects/hooks/useProjects";
 import { projectOptions } from "../../projects/utils";
 import LabelPicker from "../../labels/LabelPicker";
+import ReminderPicker from "./ReminderPicker";
+import { beforeReminder } from "../reminders";
 import { REPEAT_LIMITS, defaultDays, getBrowserTimeZone } from "../recurrence";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
@@ -101,6 +103,7 @@ export default function TaskForm({
     title: "",
     projectId: null,
     labelIds: [],
+    reminders: [beforeReminder(30)],
     priority: DEFAULT_PRIORITY,
     description: "",
     ...getDefaultTimes(),
@@ -399,6 +402,16 @@ export default function TaskForm({
           <p className="text-sm text-failure">{errorMessages.labelIds}</p>
         )}
       </div>
+      {hasDate && (
+        <ReminderPicker
+          value={formState.reminders ?? []}
+          onChange={(reminders) => {
+            const next = { ...formState, reminders };
+            setFormState(next);
+            validateForm(next);
+          }}
+        />
+      )}
       <FormInput
         label="Priority"
         name="priority"
