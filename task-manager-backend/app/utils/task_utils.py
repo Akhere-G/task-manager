@@ -62,6 +62,10 @@ def live_tasks_of(user_id: int) -> ColumnElement[bool]:
     return and_(Task.user_id == user_id, Task.is_deleted.is_(False))
 
 
+def top_level_tasks_of(user_id: int) -> ColumnElement[bool]:
+    return and_(live_tasks_of(user_id), Task.parent_id.is_(None))
+
+
 def parse_search(search: str | None) -> tuple[str, str] | None:
     """Full-text search only indexes terms of FULLTEXT_MIN_TERM_LENGTH or more, so
     shorter terms fall back to LIKE."""
@@ -134,7 +138,7 @@ def _project_and_descendants(user_id: int, project_id: int) -> set[int]:
 
 
 def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
-    clauses: list[Clause] = [live_tasks_of(user_id)]
+    clauses: list[Clause] = [top_level_tasks_of(user_id)]
     if query.project:
         clauses.append(
             Task.project_id.in_(_project_and_descendants(user_id, query.project))
@@ -235,7 +239,7 @@ def with_repeating(
     view_end = as_aware_utc(view_end)
     repeating_tasks = db.session.scalars(
         select(Task).where(
-            live_tasks_of(user_id),
+            top_level_tasks_of(user_id),
             Task.is_repeating,
             or_(Task.repeat_until.is_(None), Task.repeat_until >= view_start),
             *clauses,
