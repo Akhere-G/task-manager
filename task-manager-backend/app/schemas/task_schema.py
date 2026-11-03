@@ -20,13 +20,13 @@ from app.constants import (
     PRIORITIES,
     REPEAT_FREQUENCIES,
     REPEAT_INTERVAL_LIMITS,
-    TASK_VIEWS,
     TRASH_RETENTION_DAYS,
 )
 from app.models import Task
 from app.services.task_query import TaskQuery
 from app.utils.dates import is_valid_zone, to_iso_z, utc_now
 from app.utils.recurrence import is_valid_month_day
+from app.utils.views import RANGED_VIEWS, TASK_VIEWS
 
 from .base import CamelAutoSchema, CamelSchema
 from .fields import IsoDateTime, StrippedString, UtcDateTime
@@ -53,9 +53,48 @@ def _parse_ids(value: str) -> tuple[int, ...] | None:
     return tuple(sorted({int(part) for part in parts}))
 
 
+def _validate_query_zone(zone_name: str) -> None:
+    if not is_valid_zone(zone_name):
+        raise ValidationError("zone is not a valid time zone.")
+
+
 def _validate_zone(zone_name: str | None) -> None:
     if not is_valid_zone(zone_name):
         raise ValidationError("Repeat time zone is not a valid time zone.")
+
+
+class SubtaskSchema(CamelSchema):
+    id = fields.Integer(dump_only=True)
+    parent_id = fields.Integer(dump_only=True)
+    position = fields.Integer(dump_only=True)
+    title = fields.String(dump_only=True)
+    description = fields.String(dump_only=True, allow_none=True)
+    priority = fields.Integer(dump_only=True)
+    is_completed = fields.Boolean(dump_only=True)
+    completed_at = UtcDateTime(dump_only=True)
+
+
+class SubtaskCreateSchema(CamelSchema):
+    title = StrippedString(
+        required=True,
+        validate=validate.Length(
+            min=1, max=255, error="Title must be 1 to 255 characters."
+        ),
+        error_messages={"required": "Title is required."},
+    )
+    description = StrippedString(allow_none=True)
+    priority = fields.Integer(
+        strict=True,
+        validate=validate.OneOf(PRIORITIES, error="Priority must be between 1 and 4."),
+    )
+
+
+class SubtasksCreateSchema(CamelSchema):
+    subtasks = fields.List(
+        fields.Nested(SubtaskCreateSchema),
+        required=True,
+        validate=validate.Length(min=1, error="Add at least one subtask."),
+    )
 
 
 class TaskSchema(CamelAutoSchema):
@@ -66,6 +105,11 @@ class TaskSchema(CamelAutoSchema):
     id = fields.Raw(dump_only=True)
     user_id = auto_field(dump_only=True)
     series_id = auto_field(dump_only=True)
+    parent_id = fields.Integer(dump_only=True, allow_none=True)
+    position = fields.Integer(dump_only=True)
+    subtask_count = fields.Integer(dump_only=True, dump_default=0)
+    subtask_completed_count = fields.Integer(dump_only=True, dump_default=0)
+    subtasks = fields.Nested("SubtaskSchema", many=True, dump_only=True)
     is_ghost = fields.Boolean(dump_only=True, dump_default=False)
 
     title = StrippedString(
@@ -211,6 +255,16 @@ class TaskRescheduleSchema(CamelSchema):
             )
 
 
+class TaskCountsQuerySchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    zone_name = fields.String(
+        data_key="zone",
+        validate=_validate_query_zone,
+    )
+
+
 class TaskListQuerySchema(Schema):
     class Meta:
         unknown = EXCLUDE
@@ -218,6 +272,7 @@ class TaskListQuerySchema(Schema):
     project = fields.Integer(validate=validate.Range(min=1))
     label = fields.String()
     view = fields.String(validate=validate.OneOf(TASK_VIEWS))
+    zone = fields.String(validate=_validate_query_zone)
     priority = fields.String()
     search = fields.String(data_key="q")
     duration = fields.String()
@@ -248,9 +303,11 @@ class TaskListQuerySchema(Schema):
             )
 
         if data["project_repeating"]:
+            if data.get("view") in RANGED_VIEWS and not start:
+                return
             if not start:
                 raise ValidationError(
-                    "project_repeating needs start_date and end_date.",
+                    "project_repeating needs a ranged view or start_date and end_date.",
                     field_name="project_repeating",
                 )
             if (end - start).days > MAX_PROJECTION_DAYS:

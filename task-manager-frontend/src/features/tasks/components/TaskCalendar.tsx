@@ -78,10 +78,10 @@ export default function TaskCalendar({
   const breakpoint = useBreakpoint();
   const isMobile = ["xs", "sm"].includes(breakpoint);
 
-  const view = (searchParams.get("view") as View) || Views.MONTH;
+  const view = (searchParams.get("cal") as View) || Views.MONTH;
   const setView = (view: View) => {
     const next = new URLSearchParams(searchParams);
-    next.set("view", view);
+    next.set("cal", view);
     setSearchParams(next);
   };
 
@@ -89,7 +89,7 @@ export default function TaskCalendar({
     const next = new URLSearchParams(searchParams);
     next.set("current_date", date.toISOString());
     next.set("page", "1");
-    if (!isMobile) next.set("view", Views.DAY);
+    if (!isMobile) next.set("cal", Views.DAY);
     setSearchParams(next);
   };
 

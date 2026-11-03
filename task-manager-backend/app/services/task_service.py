@@ -1,14 +1,14 @@
-from dataclasses import replace
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import UnaryExpression, asc, delete, desc, func, literal_column, select
+from sqlalchemy import delete, desc, func, select
 
-from app.constants import MAX_TASKS_PER_REQUEST, TRASH_RETENTION_DAYS
+from app.constants import TRASH_RETENTION_DAYS
 from app.database import db
 from app.exceptions import (
     IncompleteTaskDates,
     InvalidTaskTimes,
+    SubtaskCannotRepeat,
     TaskConflict,
     TaskNotFound,
     UndatedRepeatingTask,
@@ -21,8 +21,15 @@ from app.services.label_service import (
     set_task_labels,
 )
 from app.services.project_service import ensure_projects_belong_to
-from app.services.task_query import TaskQuery
-from app.utils.dates import get_zone, parse_iso, utc_now
+from app.services.subtask_service import (
+    attach_subtask_counts,
+    attach_subtasks,
+    complete_open_subtasks,
+    move_subtasks_to_project,
+    reset_subtasks,
+    set_subtasks_deleted,
+)
+from app.utils.dates import get_zone, utc_now
 from app.utils.recurrence import (
     at_time_of,
     default_days,
@@ -31,13 +38,11 @@ from app.utils.recurrence import (
     snap_to_slot,
 )
 from app.utils.task_utils import (
-    build_task_clauses,
     live_tasks_of,
     next_task_start,
     roll_series,
     should_roll_series,
     snapshot,
-    with_repeating,
 )
 
 NON_COLUMN_FIELDS = {"expected_start_at", "skip_occurrence", "label_ids"}
@@ -51,70 +56,6 @@ RECURRENCE_FIELDS = {
 }
 
 
-def _sort_clauses(query: TaskQuery) -> list[UnaryExpression[Any]]:
-    duration = func.timestampdiff(literal_column("MINUTE"), Task.start_at, Task.end_at)
-    columns = {
-        "created_at": Task.created_at,
-        "title": Task.title,
-        "start_at": Task.start_at,
-        "duration": duration,
-        "priority": Task.priority,
-    }
-    column = columns.get(query.sort_by, Task.created_at)  # type: ignore
-    direction = desc if query.order == "desc" else asc
-    clauses = [direction(column)]
-    if query.sort_by in ("start_at", "duration"):
-        clauses.insert(0, column.is_(None))
-    if query.sort_by == "priority":
-        clauses.append(asc(Task.start_at))
-    return clauses
-
-
-def _page_size(query: TaskQuery, total: int) -> int:
-    return max(query.limit or min(total, MAX_TASKS_PER_REQUEST), 1)
-
-
-def _project_repeating(user_id: int, query: TaskQuery, tasks: list[Task]) -> list[Task]:
-    unranged = replace(query, start_date=None, end_date=None)
-    return with_repeating(
-        tasks,
-        parse_iso(query.start_date),
-        parse_iso(query.end_date),
-        user_id,
-        build_task_clauses(user_id, unranged),
-    )
-
-
-def get_all_tasks(user_id: int, query: TaskQuery = TaskQuery()) -> dict[str, Any]:
-    clauses = build_task_clauses(user_id, query)
-    total = (
-        db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
-    )
-    limit = _page_size(query, total)
-    page = max(query.page or 1, 1)
-
-    stmt = (
-        select(Task)
-        .where(*clauses)
-        .order_by(*_sort_clauses(query), Task.id)
-        .limit(limit)
-        .offset(limit * (page - 1))
-    )
-    tasks = list(db.session.scalars(stmt))
-
-    if query.project_repeating:
-        tasks = _project_repeating(user_id, query, tasks)
-        total = len(tasks)
-
-    attach_label_ids(tasks)
-    return {
-        "tasks": tasks,
-        "total_tasks": total,
-        "total_pages": (total + limit - 1) // limit,
-        "current_page": page,
-    }
-
-
 def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
     stmt = select(Task).where(live_tasks_of(user_id), Task.id == task_id)
     task = db.session.scalar(stmt.with_for_update() if lock else stmt)
@@ -122,6 +63,8 @@ def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
         raise TaskNotFound(task_id)
     if not lock:
         attach_label_ids([task])
+        attach_subtask_counts([task])
+        attach_subtasks(task)
     return task
 
 
@@ -182,6 +125,9 @@ def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
         set_task_labels([task.id], ids)
     db.session.commit()
     attach_label_ids(tasks)
+    attach_subtask_counts(tasks)
+    for task in tasks:
+        task.subtasks = []  # type: ignore
     return tasks
 
 
@@ -208,6 +154,12 @@ def _check_times(task: Task, data: dict[str, Any]) -> None:
         data.get("end_at", task.end_at),
         data.get("is_repeating", task.is_repeating) or data.get("repeat_by"),
     )
+
+
+def _check_subtask_fields(data: dict[str, Any]) -> None:
+    if data.get("is_repeating") or data.get("repeat_by"):
+        raise SubtaskCannotRepeat()
+    data.pop("project_id", None)
 
 
 def _check_not_already_completed(task: Task, data: dict[str, Any]) -> None:
@@ -245,6 +197,8 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         set_task_labels([task.id], data["label_ids"])
     _check_times(task, data)
     _check_not_already_completed(task, data)
+    if task.parent_id is not None:
+        _check_subtask_fields(data)
 
     for field, value in data.items():
         if field not in NON_COLUMN_FIELDS:
@@ -265,12 +219,20 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         _skip_occurrence(task)
     db.session.flush()
 
-    if should_roll_series(task, before):
+    if "project_id" in data and task.parent_id is None:
+        move_subtasks_to_project(task)
+
+    rolled = should_roll_series(task, before)
+    if rolled:
         roll_series(task, before)
+        reset_subtasks(task)
         db.session.flush()
+    elif task.is_completed and not before.is_completed:
+        complete_open_subtasks(task)
 
     db.session.commit()
     attach_label_ids([task])
+    attach_subtask_counts([task])
     return task
 
 
@@ -304,18 +266,23 @@ def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
 
     db.session.commit()
     attach_label_ids([task])
+    attach_subtask_counts([task])
     return task
 
 
 def delete_task(user_id: int, task_id: int) -> None:
     task = get_task(user_id, task_id)
-    task.is_deleted = True
-    task.deleted_at = utc_now()
+    if task.parent_id is not None:
+        db.session.delete(task)
+    else:
+        task.is_deleted = True
+        task.deleted_at = utc_now()
+        set_subtasks_deleted(task, True)
     db.session.commit()
 
 
 def get_trash(user_id: int, page: int, limit: int) -> dict[str, Any]:
-    clauses = (Task.user_id == user_id, Task.is_deleted)
+    clauses = (Task.user_id == user_id, Task.is_deleted, Task.parent_id.is_(None))
     total = (
         db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
     )
@@ -344,6 +311,7 @@ def restore_task(user_id: int, task_id: int) -> Task:
         raise TaskNotFound(task_id)
     task.is_deleted = False
     task.deleted_at = None
+    set_subtasks_deleted(task, False)
     db.session.commit()
     attach_label_ids([task])
     return task

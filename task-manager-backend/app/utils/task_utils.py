@@ -28,6 +28,7 @@ from app.utils.dates import (
 )
 from app.utils.project_tree import descendant_ids
 from app.utils.recurrence import next_occurrence
+from app.utils.views import view_clause
 
 if TYPE_CHECKING:
     from app.services.task_query import TaskQuery
@@ -60,6 +61,10 @@ GHOST_COPIED_FIELDS = (
 
 def live_tasks_of(user_id: int) -> ColumnElement[bool]:
     return and_(Task.user_id == user_id, Task.is_deleted.is_(False))
+
+
+def top_level_tasks_of(user_id: int) -> ColumnElement[bool]:
+    return and_(live_tasks_of(user_id), Task.parent_id.is_(None))
 
 
 def parse_search(search: str | None) -> tuple[str, str] | None:
@@ -134,13 +139,11 @@ def _project_and_descendants(user_id: int, project_id: int) -> set[int]:
 
 
 def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
-    clauses: list[Clause] = [live_tasks_of(user_id)]
+    clauses: list[Clause] = [top_level_tasks_of(user_id)]
     if query.project:
         clauses.append(
             Task.project_id.in_(_project_and_descendants(user_id, query.project))
         )
-    if query.view == "inbox":
-        clauses.append(Task.project_id.is_(None))
     if query.label:
         labelled = select(TaskLabel.task_id).where(TaskLabel.label_id.in_(query.label))
         clauses.append(Task.id.in_(labelled))
@@ -152,6 +155,7 @@ def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
         _completion_clause(query.is_completed),
         _date_range_clause(query.start_date, query.end_date),
         _duration_clause(query.duration),
+        view_clause(query.view, query.zone),
     )
     for clause in optional_clauses:
         if clause is not None:
@@ -235,7 +239,7 @@ def with_repeating(
     view_end = as_aware_utc(view_end)
     repeating_tasks = db.session.scalars(
         select(Task).where(
-            live_tasks_of(user_id),
+            top_level_tasks_of(user_id),
             Task.is_repeating,
             or_(Task.repeat_until.is_(None), Task.repeat_until >= view_start),
             *clauses,

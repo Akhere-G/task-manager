@@ -1,5 +1,12 @@
 import apiClient from "../../services/api";
-import type { CreateTaskInput, Task, TrashedTask } from "./types";
+import type { TaskViewCounts } from "./views";
+import type {
+  CreateTaskInput,
+  Subtask,
+  SubtaskInput,
+  Task,
+  TrashedTask,
+} from "./types";
 
 export interface GetTaskResult {
   tasks: Task[];
@@ -31,6 +38,13 @@ export const taskService = {
     const response = await apiClient.get<GetTaskResult>(url);
     return response.data;
   },
+  getCounts: async (zone: string): Promise<TaskViewCounts> => {
+    const response = await apiClient.get<{ counts: TaskViewCounts }>(
+      "/tasks/counts",
+      { params: { zone } },
+    );
+    return response.data.counts;
+  },
   getById: async (id: number): Promise<Task> => {
     const response = await apiClient.get(`tasks/${id}`);
     return response.data;
@@ -38,6 +52,16 @@ export const taskService = {
   create: async (taskData: CreateTaskInput) => {
     const response = await apiClient.post("/tasks", taskData);
     return response.data;
+  },
+  addSubtasks: async (
+    parentId: number,
+    subtasks: SubtaskInput[],
+  ): Promise<Subtask[]> => {
+    const response = await apiClient.post<{ subtasks: Subtask[] }>(
+      `/tasks/${parentId}/subtasks`,
+      { subtasks },
+    );
+    return response.data.subtasks;
   },
   createAll: async (tasksData: CreateTaskInput[]) => {
     const response = await apiClient.post("/tasks/bulk", tasksData);

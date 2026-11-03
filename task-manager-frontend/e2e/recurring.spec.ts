@@ -17,7 +17,7 @@ test("a recurring task is projected onto the calendar without being saved", asyn
   });
   const events = page.locator(".rbc-event");
 
-  await page.goto("/calendar?due_date=calendar_view");
+  await page.goto("/?layout=calendar&view=month");
 
   // The stored task on the 9th plus an occurrence on each of the 10th to the 13th.
   await expect(events).toHaveCount(5);
@@ -39,7 +39,7 @@ test("completing a recurring task moves it on and never duplicates occurrences",
     repeatUntil: "2026-03-13",
   });
   const events = page.locator(".rbc-event");
-  await page.goto("/calendar?due_date=calendar_view");
+  await page.goto("/?layout=calendar&view=month");
   await expect(events).toHaveCount(5);
 
   await events.first().click();

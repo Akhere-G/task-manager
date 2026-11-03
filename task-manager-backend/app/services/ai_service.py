@@ -17,8 +17,8 @@ from app.models import DailyBrief, Task
 from app.schemas.ai_schema import AiTaskSchema
 from app.services.project_service import project_paths
 from app.services.stats_service import get_brief_stats
+from app.services.task_listing import get_all_tasks
 from app.services.task_query import TaskQuery
-from app.services.task_service import get_all_tasks
 from app.utils.dates import local_today
 
 logger = logging.getLogger(__name__)

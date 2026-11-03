@@ -6,8 +6,6 @@ import {
   endOfMonth,
   addDays,
   subDays,
-  startOfDay,
-  endOfDay,
   parseISO,
 } from "date-fns";
 import type { CSSProperties } from "react";
@@ -47,32 +45,13 @@ export const formatDateRange = (
   }
 };
 
-export const calculateDateRange = (type: string, currentDate: string) => {
-  const now = new Date();
-  const start = startOfDay(now);
-  const end = endOfDay(now);
-  const monthStart = startOfMonth(parseISO(currentDate));
-  const monthEnd = endOfMonth(parseISO(currentDate));
-  switch (type) {
-    case "today":
-      return { start, end };
-    case "this_week":
-      return {
-        start,
-        end: addDays(end, 6),
-      };
-    case "this_month":
-      return { start, end: addDays(end, 30) };
-    case "calendar_view":
-      return {
-        start: subDays(monthStart, 6),
-        end: addDays(monthEnd, 6),
-      };
-    case "overdue":
-      return { start: new Date(2000, 0, 1), end: start };
-    default:
-      return { start, end };
-  }
+/** The span the calendar loads: the month around a date plus a week's overlap each side. */
+export const calendarRange = (currentDate: string) => {
+  const date = parseISO(currentDate);
+  return {
+    start: subDays(startOfMonth(date), 6),
+    end: addDays(endOfMonth(date), 6),
+  };
 };
 
 export const formatDateRelative = (date = "") => {

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { FormInput } from "../../../components/ui";
 import {
   completedTasksOptions,
-  dueDateOptions,
   isAscOptions,
   priorityFilterOptions,
   sortByOptions,
@@ -20,7 +19,6 @@ interface TaskFilters {
   priority: string;
   duration: string;
   isCompleted: string;
-  dueDate: string;
   sortBy: string;
   order: string;
 }
@@ -30,7 +28,6 @@ interface TasksHeaderProps {
   resetFilters: () => void;
   totalTasks: number;
   sortable?: boolean;
-  showDueDateFilter?: boolean;
 }
 
 export default function TasksHeader({
@@ -39,7 +36,6 @@ export default function TasksHeader({
   resetFilters,
   totalTasks,
   sortable = true,
-  showDueDateFilter = true,
 }: TasksHeaderProps) {
   const [openFilters, setOpenFilters] = useState(false);
   const { data: projects = [] } = useProjects();
@@ -133,16 +129,6 @@ export default function TasksHeader({
             options={completedTasksOptions}
             formClassNames={formClassNames}
           />
-          {showDueDateFilter && (
-            <FormInput
-              name="dueDate"
-              value={filters.dueDate}
-              handleChange={handleChange}
-              label="Due Date"
-              options={dueDateOptions}
-              formClassNames={formClassNames}
-            />
-          )}
           {sortable && (
             <>
               <FormInput

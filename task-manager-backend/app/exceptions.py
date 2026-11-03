@@ -80,6 +80,16 @@ class TaskConflict(AppError):
         super().__init__(task=task)
 
 
+class SubtaskParentInvalid(AppError):
+    field = "parentId"
+    message = "Subtasks can only go under one of your own top-level tasks."
+
+
+class SubtaskCannotRepeat(AppError):
+    field = "repeatBy"
+    message = "Subtasks cannot repeat."
+
+
 class InvalidTaskTimes(AppError):
     field = "endAt"
     message = "End time must be after the start time."
