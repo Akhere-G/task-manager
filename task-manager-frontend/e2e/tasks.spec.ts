@@ -96,7 +96,7 @@ test.describe("task management", () => {
     page,
     signedIn,
   }) => {
-    const healthId = await signedIn.createProject("Health");
+    await signedIn.createProject("Health");
     await page.goto("/addtask");
 
     await page

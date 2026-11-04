@@ -121,7 +121,7 @@ def _resolve_names(
 ) -> None:
     """Swaps `project_name` / `label_names` for ids, creating what is missing."""
     project_name = data.pop("project_name", None)
-    if project_name is not None and with_project:
+    if project_name and with_project:
         data["project_id"] = resolve_project_path(user_id, project_name)
     label_names = data.pop("label_names", None)
     if label_names is not None:

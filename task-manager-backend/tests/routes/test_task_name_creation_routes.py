@@ -173,3 +173,20 @@ def test_one_user_cannot_reuse_anothers_projects_by_name(
 
     assert response.status_code == 201
     assert len(projects(session)) == 1
+
+
+def test_a_blank_project_name_does_not_override_the_project_id(
+    session: FlaskClient, task_payload: TaskPayload
+) -> None:
+    project = session.post("/api/projects", json={"name": "Work"}).get_json()
+
+    created = create(
+        session, task_payload, projectId=project["id"], projectName=""
+    ).get_json()
+    assert created["projectId"] == project["id"]
+
+    edited = session.patch(
+        f"/api/tasks/{created['id']}",
+        json={"projectId": project["id"], "projectName": ""},
+    )
+    assert edited.get_json()["projectId"] == project["id"]
