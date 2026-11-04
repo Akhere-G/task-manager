@@ -19,6 +19,7 @@ export interface FormInputprops {
   options?: { name: string; value: string }[];
   formClassNames?: string;
   textarea?: boolean;
+  optional?: boolean;
 }
 
 export default function FormInput({
@@ -34,16 +35,20 @@ export default function FormInput({
   options,
   formClassNames = "",
   textarea = false,
+  optional = false,
 }: FormInputprops) {
   return (
     <div className={"group flex flex-col text-text-main " + formClassNames}>
       {label && (
-        <label
-          htmlFor={id}
-          className="group-focus-within:text-accent text-sm font-bold text-text-main mb-2"
-        >
-          {label}
-        </label>
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <label
+            htmlFor={id}
+            className="group-focus-within:text-accent text-sm font-bold text-text-main"
+          >
+            {label}
+          </label>
+          {optional && <span className="text-xs text-text-sub">Optional</span>}
+        </div>
       )}
       {!options && !textarea && (
         <input
