@@ -2,21 +2,23 @@ import { useEffect, useState } from "react";
 import {
   DEFAULT_PRIORITY,
   type CreateTaskInput,
+  type Priority,
   type Task,
 } from "../../../features/tasks/types";
-import FormInput from "../../../components/ui/FormInput";
+import { Bell, CalendarDays, Repeat } from "lucide-react";
+import { FormInput, SettingsSection } from "../../../components/ui";
 import axios from "axios";
 import { validateTask } from "../schemas";
 import { trackEvent } from "../../../services/analytics";
 import { addHours, addMilliseconds, format, isValid } from "date-fns";
 import { formatForInput } from "../../../utils/formators";
-import RecurrencePicker from "./RecurrencePicker";
-import { priorityOptions } from "../constants";
-import useProjects from "../../projects/hooks/useProjects";
-import { projectOptions } from "../../projects/utils";
+import PriorityPicker from "./PriorityPicker";
+import ScheduleFields from "./ScheduleFields";
+import RepeatFields from "./RepeatFields";
+import ProjectCombobox from "../../projects/ProjectCombobox";
 import LabelPicker from "../../labels/LabelPicker";
 import ReminderPicker from "./ReminderPicker";
-import { beforeReminder } from "../reminders";
+import { beforeReminder, reminderLabel } from "../reminders";
 import { REPEAT_LIMITS, defaultDays, getBrowserTimeZone } from "../recurrence";
 
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
@@ -54,13 +56,7 @@ const getDefaultTimes = () => {
   return { startAt, endAt };
 };
 
-const repeatByOptions = [
-  { name: "None", value: "" },
-  { name: "Daily", value: "daily" },
-  { name: "Weekly", value: "weekly" },
-  { name: "Monthly", value: "monthly" },
-  { name: "Yearly", value: "yearly" },
-];
+const DEFAULT_REPEAT_BY = "weekly";
 
 function recurrenceFor(
   repeatBy: string | null | undefined,
@@ -82,7 +78,6 @@ function recurrenceFor(
 
 function parseFieldValue(name: string, value: string) {
   if (name === "priority") return Number(value);
-  if (name === "projectId") return value === "" ? null : Number(value);
   return value;
 }
 
@@ -99,6 +94,10 @@ export default function TaskForm({
   initialData,
 }: TaskFormProps) {
   const [hasDate, setHasDate] = useState(true);
+  // Stays open while the last reminder is removed so the picker doesn't vanish.
+  const [remindersOpen, setRemindersOpen] = useState(
+    initialData ? (initialData.reminders?.length ?? 0) > 0 : true,
+  );
   const [formState, setFormState] = useState<FormState>({
     title: "",
     projectId: null,
@@ -118,7 +117,9 @@ export default function TaskForm({
   const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
     title: "",
     projectId: "",
+    projectName: "",
     labelIds: "",
+    labelNames: "",
     priority: "",
     description: "",
     startAt: "",
@@ -145,7 +146,9 @@ export default function TaskForm({
   const defaultErrorMessages = {
     title: "",
     projectId: "",
+    projectName: "",
     labelIds: "",
+    labelNames: "",
     priority: "",
     description: "",
     startAt: "",
@@ -209,9 +212,15 @@ export default function TaskForm({
     });
   };
 
-  function handleHasDateChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setHasDate(e.target.checked);
-    validateForm(formState, e.target.checked);
+  function handleHasDateChange(checked: boolean) {
+    setHasDate(checked);
+    validateForm(formState, checked);
+  }
+
+  function updateFormState(changes: Partial<FormState>) {
+    const next = { ...formState, ...changes };
+    setFormState(next);
+    validateForm(next);
   }
 
   function handleChange(
@@ -234,30 +243,21 @@ export default function TaskForm({
     validateForm(newFormState);
   }
 
-  function handleRecurrenceChange(
-    changes: Pick<CreateTaskInput, "repeatInterval" | "repeatDays">,
-  ) {
-    const newFormState = { ...formState, ...changes };
-    setFormState(newFormState);
-    validateForm(newFormState);
-  }
-
-  function handleCheck({
-    target: { name, checked },
-  }: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
-    const newFormState = {
-      ...formState,
-      [name]: checked,
-      repeatBy: checked ? formState.repeatBy : null,
+  function handleRepeatingChange(checked: boolean) {
+    const repeatBy = checked ? formState.repeatBy || DEFAULT_REPEAT_BY : null;
+    updateFormState({
+      isRepeating: checked,
+      repeatBy,
       repeatUntil: checked ? formState.repeatUntil : null,
       ...(checked
         ? {
             repeatTimezone: formState.repeatTimezone ?? getBrowserTimeZone(),
+            ...(formState.repeatBy
+              ? {}
+              : recurrenceFor(repeatBy, formState.startAt, 1)),
           }
         : recurrenceFor(null, formState.startAt)),
-    };
-    setFormState(newFormState);
-    validateForm(newFormState);
+    });
   }
 
   function handleChangeStartAt(
@@ -359,8 +359,16 @@ export default function TaskForm({
     }
   }
 
-  const { data: projects = [] } = useProjects();
-  const options = [{ name: "Inbox", value: "" }, ...projectOptions(projects)];
+  const isSeriesOccurrence = Boolean(initialData?.isGhost);
+  const reminders = formState.reminders ?? [];
+  const remindersEnabled = remindersOpen || reminders.length > 0;
+
+  function handleRemindersToggle(enabled: boolean) {
+    setRemindersOpen(enabled);
+    updateFormState({
+      reminders: enabled && !reminders.length ? [beforeReminder(30)] : [],
+    });
+  }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -379,49 +387,8 @@ export default function TaskForm({
         handleBlur={handleBlur}
       />
       <FormInput
-        label="Project"
-        name="projectId"
-        value={formState.projectId === null ? "" : String(formState.projectId)}
-        handleChange={handleChange}
-        errorMessage={errorMessages.projectId}
-        options={options}
-        touched={touched.projectId}
-        handleBlur={handleBlur}
-      />
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-bold text-text-main">Labels</span>
-        <LabelPicker
-          value={formState.labelIds ?? []}
-          onChange={(labelIds) => {
-            const next = { ...formState, labelIds };
-            setFormState(next);
-            validateForm(next);
-          }}
-        />
-        {errorMessages.labelIds && (
-          <p className="text-sm text-failure">{errorMessages.labelIds}</p>
-        )}
-      </div>
-      {hasDate && (
-        <ReminderPicker
-          value={formState.reminders ?? []}
-          onChange={(reminders) => {
-            const next = { ...formState, reminders };
-            setFormState(next);
-            validateForm(next);
-          }}
-        />
-      )}
-      <FormInput
-        label="Priority"
-        name="priority"
-        value={String(formState.priority ?? DEFAULT_PRIORITY)}
-        handleChange={handleChange}
-        errorMessage={errorMessages.priority}
-        options={priorityOptions}
-      />
-      <FormInput
         label="Description"
+        optional
         name="description"
         value={formState.description ?? ""}
         handleChange={handleChange}
@@ -430,97 +397,113 @@ export default function TaskForm({
         handleBlur={handleBlur}
         textarea
       />
-      {!initialData?.isGhost && (
-        <label className="flex gap-2 items-baseline text-text-main">
-          <input
-            name="hasDate"
-            type="checkbox"
-            checked={hasDate}
-            onChange={handleHasDateChange}
+      <div className="grid gap-4 md:grid-cols-2">
+        <ProjectCombobox
+          projectId={formState.projectId}
+          onChange={({ projectId, projectName }) =>
+            updateFormState({ projectId, projectName })
+          }
+          error={errorMessages.projectId || errorMessages.projectName}
+        />
+        <PriorityPicker
+          value={formState.priority ?? DEFAULT_PRIORITY}
+          onChange={(priority) =>
+            updateFormState({ priority: priority as Priority })
+          }
+          error={errorMessages.priority}
+        />
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm font-bold text-text-main">Labels</span>
+          <span className="text-xs text-text-sub">Optional</span>
+        </div>
+        <LabelPicker
+          value={formState.labelIds ?? []}
+          onChange={(labelIds) => updateFormState({ labelIds })}
+          newNames={formState.labelNames ?? []}
+          onNewNamesChange={(labelNames) => updateFormState({ labelNames })}
+        />
+        {errorMessages.labelNames && (
+          <p className="text-sm text-failure">{errorMessages.labelNames}</p>
+        )}
+        {errorMessages.labelIds && (
+          <p className="text-sm text-failure">{errorMessages.labelIds}</p>
+        )}
+      </div>
+      {!isSeriesOccurrence && (
+        <SettingsSection
+          icon={CalendarDays}
+          title="Schedule"
+          description={
+            hasDate ? "When this task starts and ends" : "No dates set"
+          }
+          enabled={hasDate}
+          onEnabledChange={handleHasDateChange}
+          toggleLabel="Add dates"
+        >
+          <ScheduleFields
+            startAt={formState.startAt}
+            endAt={formState.endAt}
+            startError={errorMessages.startAt}
+            endError={errorMessages.endAt}
+            startTouched={touched.startAt}
+            endTouched={touched.endAt}
+            onStartChange={handleChangeStartAt}
+            onEndChange={handleChange}
+            onBlur={handleBlur}
           />
-          Has a date
-        </label>
-      )}
-      {!initialData?.isGhost && hasDate && (
-        <>
-          <FormInput
-            label="Start At"
-            name="startAt"
-            type="datetime-local"
-            value={formState.startAt}
-            handleChange={handleChangeStartAt}
-            errorMessage={errorMessages.startAt}
-            touched={touched.startAt}
-            handleBlur={handleBlur}
-          />
-          <FormInput
-            label="End At"
-            name="endAt"
-            type="datetime-local"
-            value={formState.endAt}
-            handleChange={handleChange}
-            errorMessage={errorMessages.endAt}
-            touched={touched.endAt}
-            handleBlur={handleBlur}
-          />
-        </>
+        </SettingsSection>
       )}
       {hasDate && (
-        <label className="flex gap-2 items-baseline">
-          <input
-            name="isRepeating"
-            type="checkbox"
-            checked={formState.isRepeating || false}
-            onChange={handleCheck}
+        <SettingsSection
+          icon={Bell}
+          title="Reminders"
+          description={
+            reminders.length
+              ? reminders.map(reminderLabel).join(", ")
+              : "No reminders"
+          }
+          enabled={remindersEnabled}
+          onEnabledChange={handleRemindersToggle}
+          toggleLabel="Add reminders"
+        >
+          <ReminderPicker
+            value={reminders}
+            onChange={(next) => updateFormState({ reminders: next })}
           />
-          Repeating?
-        </label>
+        </SettingsSection>
       )}
-      {hasDate && Boolean(formState.isRepeating) && (
-        <>
-          <FormInput
-            name="repeatBy"
-            label="Repeat By"
-            value={formState.repeatBy || ""}
-            handleChange={handleChange}
-            errorMessage={errorMessages.repeatBy}
-            touched={touched.repeatBy}
-            options={repeatByOptions}
+      {hasDate && (
+        <SettingsSection
+          icon={Repeat}
+          title="Repeat"
+          description={
+            formState.isRepeating
+              ? `Repeats ${formState.repeatBy ?? DEFAULT_REPEAT_BY}`
+              : "This task does not repeat"
+          }
+          enabled={Boolean(formState.isRepeating)}
+          onEnabledChange={handleRepeatingChange}
+          toggleLabel="Repeat task"
+        >
+          <RepeatFields
+            repeatBy={formState.repeatBy || DEFAULT_REPEAT_BY}
+            repeatUntil={formState.repeatUntil || ""}
+            interval={formState.repeatInterval ?? 1}
+            days={formState.repeatDays ?? null}
+            errors={errorMessages}
+            touched={touched}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onIntervalChange={(repeatInterval) =>
+              updateFormState({ repeatInterval })
+            }
+            onDaysChange={(repeatDays) => updateFormState({ repeatDays })}
           />
-          {formState.repeatBy && (
-            <RecurrencePicker
-              repeatBy={formState.repeatBy}
-              interval={formState.repeatInterval ?? 1}
-              days={formState.repeatDays ?? null}
-              intervalError={errorMessages.repeatInterval}
-              daysError={errorMessages.repeatDays}
-              onIntervalChange={(repeatInterval) =>
-                handleRecurrenceChange({
-                  repeatInterval,
-                  repeatDays: formState.repeatDays,
-                })
-              }
-              onDaysChange={(repeatDays) =>
-                handleRecurrenceChange({
-                  repeatInterval: formState.repeatInterval,
-                  repeatDays,
-                })
-              }
-            />
-          )}
-          <FormInput
-            name="repeatUntil"
-            label="Repeat Until"
-            value={formState.repeatUntil || ""}
-            handleChange={handleChange}
-            handleBlur={handleBlur}
-            errorMessage={errorMessages.repeatUntil}
-            touched={touched.repeatUntil}
-            type="date"
-          />
-        </>
+        </SettingsSection>
       )}
-      <footer className="flex gap-4 justify-end">
+      <footer className="flex justify-end gap-4 border-t border-border-light pt-4">
         {close && (
           <button
             aria-label="cancel"
