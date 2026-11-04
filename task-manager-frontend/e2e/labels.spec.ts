@@ -28,7 +28,10 @@ test.describe("labels", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Add new task" }).click();
     await page.getByLabel("Title").fill("Pay invoice");
-    await page.getByRole("button", { name: "urgent" }).click();
+    await page
+      .getByRole("group", { name: "Labels" })
+      .getByRole("button", { name: "urgent" })
+      .click();
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
     await expect(card(page, "Pay invoice")).toContainText("urgent");
