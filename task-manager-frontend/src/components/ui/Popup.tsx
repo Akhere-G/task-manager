@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface PopupProps {
   title: string;
@@ -34,11 +35,14 @@ export default function Popup({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [close]);
 
+  const render = (content: React.ReactNode) =>
+    createPortal(content, document.body);
+
   if (sleek) {
-    return (
+    return render(
       <div
         onClick={close}
-        className="fixed w-screen h-screen z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center"
+        className="fixed inset-0 z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center"
       >
         <section
           onClick={(e) => e.stopPropagation()}
@@ -53,13 +57,13 @@ export default function Popup({
           </button>
           <section>{children}</section>
         </section>
-      </div>
+      </div>,
     );
   }
-  return (
+  return render(
     <div
       onClick={close}
-      className="fixed w-screen h-screen z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center"
+      className="fixed inset-0 z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center"
     >
       <section
         onClick={(e) => e.stopPropagation()}
@@ -95,6 +99,6 @@ export default function Popup({
           )}
         </footer>
       </section>
-    </div>
+    </div>,
   );
 }
