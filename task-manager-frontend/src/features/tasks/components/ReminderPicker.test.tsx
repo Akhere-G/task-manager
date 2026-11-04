@@ -48,4 +48,16 @@ describe("ReminderPicker", () => {
       }),
     ]);
   });
+
+  it("does not add a clock reminder while the time is empty", async () => {
+    const onChange = vi.fn();
+    render(<ReminderPicker value={[]} onChange={onChange} />);
+
+    await userEvent.clear(screen.getByLabelText("At time"));
+    const add = screen.getByRole("button", { name: "Add reminder" });
+    await userEvent.click(add);
+
+    expect(add).toBeDisabled();
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
