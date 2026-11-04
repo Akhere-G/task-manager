@@ -4,3 +4,5 @@ export { default as FormInput } from "./FormInput";
 export { default as LoadingState } from "./LoadingState";
 export { default as Popup } from "./Popup";
 export { default as Pagination } from "./Pagination";
+export { default as SettingsSection } from "./SettingsSection";
+export { default as Toggle } from "./Toggle";

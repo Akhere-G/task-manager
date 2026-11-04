@@ -74,7 +74,14 @@ export type CreateTaskInput = Omit<
   | "subtaskCount"
   | "subtaskCompletedCount"
   | "subtasks"
-> & { labelIds?: number[]; reminders?: Reminder[] };
+> & {
+  labelIds?: number[];
+  /** Labels to find by name or create; added to `labelIds`. */
+  labelNames?: string[];
+  /** A project path ("Work / Website") to find or create; used instead of `projectId`. */
+  projectName?: string;
+  reminders?: Reminder[];
+};
 
 export type SnoozePreset =
   "tomorrow" | "weekend" | "next_week" | "date" | "next_occurrence";

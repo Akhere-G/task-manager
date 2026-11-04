@@ -34,9 +34,16 @@ function badRequest(status: number, data: unknown) {
   } as AxiosResponse);
 }
 
+const projectBox = () => screen.findByRole("combobox", { name: /Project/ });
+
+async function pickProject(name: string) {
+  await userEvent.click(await projectBox());
+  await userEvent.click(await screen.findByRole("option", { name }));
+}
+
 async function fillValidTask() {
   await userEvent.type(screen.getByLabelText("Title"), "Write report");
-  await userEvent.selectOptions(await screen.findByLabelText("Project"), "1");
+  await pickProject("Work");
   fireEvent.change(screen.getByLabelText("Start At"), {
     target: { value: "2026-03-02T09:00" },
   });
@@ -52,10 +59,10 @@ describe("TaskForm", () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
 
     await userEvent.type(screen.getByLabelText("Title"), "Call the dentist");
-    await userEvent.click(screen.getByRole("checkbox", { name: "Has a date" }));
+    await userEvent.click(screen.getByRole("switch", { name: "Add dates" }));
     expect(screen.queryByLabelText("Start At")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("checkbox", { name: "Repeating?" }),
+      screen.queryByRole("switch", { name: "Repeat task" }),
     ).not.toBeInTheDocument();
     await userEvent.click(addButton());
 
@@ -78,8 +85,8 @@ describe("TaskForm", () => {
     );
 
     expect(
-      await screen.findByRole("checkbox", { name: "Has a date" }),
-    ).not.toBeChecked();
+      await screen.findByRole("switch", { name: "Add dates" }),
+    ).toHaveAttribute("aria-checked", "false");
     expect(screen.queryByLabelText("Start At")).not.toBeInTheDocument();
   });
 
@@ -155,7 +162,9 @@ describe("TaskForm", () => {
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
     expect(submit.mock.calls[0][0].priority).toBe(4);
 
-    await userEvent.selectOptions(screen.getByLabelText("Priority"), "1");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Priority P1, Urgent" }),
+    );
     await userEvent.click(addButton());
 
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
@@ -170,7 +179,9 @@ describe("TaskForm", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Priority")).toHaveValue("2");
+    expect(
+      screen.getByRole("button", { name: "Priority P2, High" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("explains a missing title once the field has been left", async () => {
@@ -212,10 +223,10 @@ describe("TaskForm", () => {
   it("offers repeat options only for repeating tasks and sends them", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
     await fillValidTask();
-    expect(screen.queryByLabelText("Repeat By")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Frequency")).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("checkbox", { name: "Repeating?" }));
-    await userEvent.selectOptions(screen.getByLabelText("Repeat By"), "weekly");
+    await userEvent.click(screen.getByRole("switch", { name: "Repeat task" }));
+    await userEvent.selectOptions(screen.getByLabelText("Frequency"), "weekly");
     fireEvent.change(screen.getByLabelText("Repeat Until"), {
       target: { value: "2026-06-01" },
     });
@@ -233,10 +244,10 @@ describe("TaskForm", () => {
   it("drops the repeat settings again when repeating is switched off", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
     await fillValidTask();
-    await userEvent.click(screen.getByRole("checkbox", { name: "Repeating?" }));
-    await userEvent.selectOptions(screen.getByLabelText("Repeat By"), "daily");
+    await userEvent.click(screen.getByRole("switch", { name: "Repeat task" }));
+    await userEvent.selectOptions(screen.getByLabelText("Frequency"), "daily");
 
-    await userEvent.click(screen.getByRole("checkbox", { name: "Repeating?" }));
+    await userEvent.click(screen.getByRole("switch", { name: "Repeat task" }));
     await userEvent.click(addButton());
 
     await waitFor(() => expect(submit).toHaveBeenCalled());
@@ -304,8 +315,7 @@ describe("TaskForm", () => {
     );
 
     expect(screen.getByLabelText("Title")).toHaveValue("Existing");
-    await screen.findByRole("option", { name: "Home" });
-    expect(screen.getByLabelText("Project")).toHaveValue("3");
+    await waitFor(async () => expect(await projectBox()).toHaveValue("Home"));
     expect(screen.getByLabelText("Description")).toHaveValue("Notes");
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
@@ -330,21 +340,92 @@ describe("TaskForm", () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
-  it("lists sub-projects indented and sends no project for the Inbox", async () => {
+  it("lists sub-projects by their path and sends no project for the Inbox", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
-    await screen.findByRole("option", { name: /Reports/ });
-    const names = screen
-      .getAllByRole("option")
-      .map((option) => option.textContent?.replace(/\u00a0/g, "_"));
-    expect(names).toEqual(
-      expect.arrayContaining(["Inbox", "Work", "__Reports", "Home"]),
+    await userEvent.click(await projectBox());
+    const names = (await screen.findAllByRole("option")).map(
+      (option) => option.textContent,
     );
+    expect(names).toEqual(["Work", "Work / Reports", "Home"]);
 
     await fillValidTask();
-    await userEvent.selectOptions(screen.getByLabelText("Project"), "");
+    await userEvent.clear(await projectBox());
     await userEvent.click(addButton());
 
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
     expect(submit.mock.calls[0][0].projectId).toBeNull();
+    expect(submit.mock.calls[0][0].projectName).toBeFalsy();
+  });
+
+  it("sends a typed project that doesn't exist as a name to create", async () => {
+    renderWithProviders(<TaskForm submitAction={submit} />);
+    await fillValidTask();
+
+    await userEvent.clear(await projectBox());
+    await userEvent.type(await projectBox(), "Garden / Beds");
+    expect(
+      await screen.findByRole("option", { name: "Create “Garden / Beds”" }),
+    ).toBeInTheDocument();
+    await userEvent.click(addButton());
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0][0]).toMatchObject({
+      projectId: null,
+      projectName: "Garden / Beds",
+    });
+  });
+
+  it("treats a typed name that matches a project as that project", async () => {
+    renderWithProviders(<TaskForm submitAction={submit} />);
+    await fillValidTask();
+
+    await userEvent.clear(await projectBox());
+    await userEvent.type(await projectBox(), "work / reports");
+    await userEvent.click(addButton());
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0][0].projectId).toBe(2);
+    expect(submit.mock.calls[0][0].projectName).toBeFalsy();
+  });
+
+  it("sends typed labels to create and selects typed names that already exist", async () => {
+    renderWithProviders(<TaskForm submitAction={submit} />);
+    await fillValidTask();
+    await screen.findByRole("button", { name: "urgent" });
+
+    const input = screen.getByLabelText("New label");
+    await userEvent.type(input, "errand{Enter}");
+    await userEvent.type(input, "LATER{Enter}");
+    await userEvent.type(input, "Errand{Enter}");
+
+    expect(
+      screen.getByRole("button", { name: "Remove new label: errand" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "later" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(submit).not.toHaveBeenCalled();
+    await userEvent.click(addButton());
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0][0]).toMatchObject({
+      labelIds: [2],
+      labelNames: ["errand"],
+    });
+  });
+
+  it("lets a new label be removed again before saving", async () => {
+    renderWithProviders(<TaskForm submitAction={submit} />);
+    await fillValidTask();
+
+    await userEvent.type(screen.getByLabelText("New label"), "errand{Enter}");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove new label: errand" }),
+    );
+    await userEvent.click(addButton());
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0][0].labelNames).toEqual([]);
   });
 });

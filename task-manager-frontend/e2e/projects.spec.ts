@@ -33,7 +33,8 @@ test.describe("projects", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Add new task" }).click();
     await page.getByLabel("Title").fill("Quarterly numbers");
-    await page.getByLabel("Project").selectOption({ label: "  Reports" });
+    await page.getByRole("combobox", { name: "Project" }).click();
+    await page.getByRole("option", { name: "Work / Reports" }).click();
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
     await expect(card(page, "Quarterly numbers")).toBeVisible();

@@ -43,6 +43,7 @@ export default function ReminderPicker({
   };
 
   const addAtTime = () => {
+    if (!time) return;
     const reminder = clockReminder(time);
     if (!chosen.has(reminderKey(reminder))) onChange([...value, reminder]);
   };
@@ -86,8 +87,9 @@ export default function ReminderPicker({
         </label>
         <button
           type="button"
-          className="btn-secondary text-sm"
+          className="btn-secondary text-sm disabled:cursor-not-allowed disabled:opacity-50"
           onClick={addAtTime}
+          disabled={!time}
         >
           Add reminder
         </button>

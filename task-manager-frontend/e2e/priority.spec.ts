@@ -22,7 +22,7 @@ test.describe("priority", () => {
 
     await page.getByRole("button", { name: "Add new task" }).click();
     await page.getByLabel("Title").fill("Fix the outage");
-    await page.getByLabel("Priority").selectOption("1");
+    await page.getByRole("button", { name: "Priority P1, Urgent" }).click();
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
     await expect(card(page, "Fix the outage")).toBeVisible();

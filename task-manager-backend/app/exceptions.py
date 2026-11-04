@@ -61,6 +61,13 @@ class LabelNotFound(NotFoundError):
     message = "No label with that id exists."
 
 
+class TooManyLabels(AppError):
+    field = "labelNames"
+
+    def __init__(self, limit: int) -> None:
+        super().__init__(f"A task can have at most {limit} labels.")
+
+
 class InvalidLabel(AppError):
     field = "labelIds"
     message = "Choose your own labels."

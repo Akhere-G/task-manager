@@ -36,7 +36,7 @@ test.describe("inbox", () => {
     await card(page, "Call the dentist")
       .getByRole("button", { name: /Edit task/ })
       .click();
-    await page.getByRole("checkbox", { name: "Has a date" }).check();
+    await page.getByRole("switch", { name: "Add dates" }).click();
     await page.getByLabel("Start At").fill("2026-03-12T09:00");
     await page.getByLabel("End At").fill("2026-03-12T09:30");
     await page.getByRole("button", { name: "Edit Task", exact: true }).click();
