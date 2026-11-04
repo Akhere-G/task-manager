@@ -128,7 +128,7 @@ export default function TasksPage() {
         <div className="mr-2 justify-self-end md:mr-0 md:col-start-2 md:row-start-1">
           <LayoutToggle layout={layout} onSelect={selectLayout} />
         </div>
-        <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-1 translate-y-12">
+        <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-1 md:translate-y-8 md:pb-8">
           {view === "inbox" && <QuickCapture />}
 
           {!isCalendar && hasTasks && (
@@ -148,22 +148,23 @@ export default function TasksPage() {
             <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate />
           )}
 
-          <button
-            aria-label="Add new task"
-            className="z-1 fixed bottom-5 right-5 btn-primary rounded-full w-15 h-15 flex items-center justify-center shadow-xl"
-            onClick={() =>
-              navigate("/addtask", {
-                state: isCalendar
-                  ? { currentDate: filters.currentDate }
-                  : undefined,
-              })
-            }
-          >
-            <Plus size={40} />
-          </button>
           <TaskPopups />
         </div>
       </div>
+
+      <button
+        aria-label="Add new task"
+        className="z-1 fixed bottom-5 right-5 btn-primary rounded-full w-15 h-15 flex items-center justify-center shadow-xl"
+        onClick={() =>
+          navigate("/addtask", {
+            state: isCalendar
+              ? { currentDate: filters.currentDate }
+              : undefined,
+          })
+        }
+      >
+        <Plus size={40} />
+      </button>
     </section>
   );
 }
