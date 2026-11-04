@@ -107,7 +107,9 @@ test.describe("task management", () => {
       .click();
 
     await expect(page.getByLabel("Title")).toHaveValue("Dentist appointment");
-    await expect(page.getByLabel("Project")).toHaveValue(String(healthId));
+    await expect(page.getByRole("combobox", { name: "Project" })).toHaveValue(
+      "Health",
+    );
     await page.getByRole("button", { name: "Add Task", exact: true }).click();
 
     await expect
