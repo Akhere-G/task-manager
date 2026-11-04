@@ -55,6 +55,30 @@ def delete_label(user_id: int, label_id: int) -> None:
     db.session.commit()
 
 
+def resolve_label_names(user_id: int, names: Iterable[str]) -> list[int]:
+    """Returns the ids of the labels called `names`, creating missing ones with
+    the default colour. Matching ignores case. Does not commit."""
+    wanted: dict[str, str] = {}
+    for name in names:
+        wanted.setdefault(name.strip().lower(), name.strip())
+    if not wanted:
+        return []
+    existing = {
+        label.name.lower(): label
+        for label in db.session.scalars(
+            select(Label).where(
+                Label.user_id == user_id, func.lower(Label.name).in_(wanted)
+            )
+        )
+    }
+    for key, name in wanted.items():
+        if key not in existing:
+            existing[key] = Label(user_id=user_id, name=name)
+            db.session.add(existing[key])
+    db.session.flush()
+    return [existing[key].id for key in wanted]
+
+
 def ensure_labels_belong_to(user_id: int, label_ids: Iterable[int]) -> None:
     wanted = set(label_ids)
     if not wanted:
