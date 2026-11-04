@@ -14,10 +14,14 @@ from marshmallow import (
 from marshmallow_sqlalchemy import auto_field
 
 from app.constants import (
+    MAX_LABEL_NAME_LENGTH,
     MAX_LABELS_PER_TASK,
     MAX_PAGE_SIZE,
+    MAX_PROJECT_DEPTH,
+    MAX_PROJECT_NAME_LENGTH,
     MAX_PROJECTION_DAYS,
     PRIORITIES,
+    PROJECT_PATH_SEPARATOR,
     REPEAT_FREQUENCIES,
     REPEAT_INTERVAL_LIMITS,
     TRASH_RETENTION_DAYS,
@@ -33,6 +37,9 @@ from app.utils.views import RANGED_VIEWS, TASK_VIEWS
 from .base import CamelAutoSchema, CamelSchema
 from .fields import IsoDateTime, StrippedString, UtcDateTime
 
+MAX_PROJECT_PATH_LENGTH = MAX_PROJECT_DEPTH * (
+    MAX_PROJECT_NAME_LENGTH + len(PROJECT_PATH_SEPARATOR) + 2
+)
 BLANK_TO_NONE = ("description", "repeatBy", "repeatUntil", "repeatTimezone")
 STRICT_BOOL = {"truthy": {True}, "falsy": {False}}
 
@@ -149,6 +156,22 @@ class TaskSchema(CamelAutoSchema):
         ),
         dump_default=list,
     )
+    project_name = StrippedString(
+        load_only=True,
+        allow_none=True,
+        validate=validate.Length(max=MAX_PROJECT_PATH_LENGTH),
+    )
+    label_names = fields.List(
+        StrippedString(
+            validate=validate.Length(
+                min=1,
+                max=MAX_LABEL_NAME_LENGTH,
+                error=f"Label names must be 1 to {MAX_LABEL_NAME_LENGTH} characters.",
+            )
+        ),
+        load_only=True,
+        validate=validate.Length(max=MAX_LABELS_PER_TASK),
+    )
     reminders = fields.List(
         fields.Nested(ReminderSchema),
         dump_default=list,
@@ -181,6 +204,14 @@ class TaskSchema(CamelAutoSchema):
             for k, v in data.items()
             if not (k == "createdAt" and v is None)
         }
+
+    @validates_schema
+    def validate_project_choice(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if data.get("project_id") is not None and data.get("project_name"):
+            raise ValidationError(
+                "Send either a project id or a project name, not both.",
+                field_name="project_name",
+            )
 
     @validates_schema
     def validate_times(self, data: dict[str, Any], **kwargs: Any) -> None:

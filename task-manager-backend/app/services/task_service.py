@@ -3,7 +3,7 @@ from typing import Any
 
 from sqlalchemy import delete, desc, func, select
 
-from app.constants import TRASH_RETENTION_DAYS
+from app.constants import MAX_LABELS_PER_TASK, TRASH_RETENTION_DAYS
 from app.database import db
 from app.exceptions import (
     IncompleteTaskDates,
@@ -11,6 +11,7 @@ from app.exceptions import (
     SubtaskCannotRepeat,
     TaskConflict,
     TaskNotFound,
+    TooManyLabels,
     UndatedRepeatingTask,
 )
 from app.models import Task
@@ -18,10 +19,14 @@ from app.schemas.task_schema import TaskSchema
 from app.services.label_service import (
     attach_label_ids,
     ensure_labels_belong_to,
+    resolve_label_names,
     set_task_labels,
 )
 from app.services.order_service import top_positions
-from app.services.project_service import ensure_projects_belong_to
+from app.services.project_service import (
+    ensure_projects_belong_to,
+    resolve_project_path,
+)
 from app.services.reminder_service import (
     DEFAULT_REMINDER,
     attach_reminders,
@@ -111,7 +116,24 @@ def _purge_expired_trash(user_id: int) -> None:
     )
 
 
+def _resolve_names(
+    user_id: int, data: dict[str, Any], *, with_project: bool = True
+) -> None:
+    """Swaps `project_name` / `label_names` for ids, creating what is missing."""
+    project_name = data.pop("project_name", None)
+    if project_name is not None and with_project:
+        data["project_id"] = resolve_project_path(user_id, project_name)
+    label_names = data.pop("label_names", None)
+    if label_names is not None:
+        ids = {*data.get("label_ids", []), *resolve_label_names(user_id, label_names)}
+        if len(ids) > MAX_LABELS_PER_TASK:
+            raise TooManyLabels(MAX_LABELS_PER_TASK)
+        data["label_ids"] = sorted(ids)
+
+
 def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
+    for item in items:
+        _resolve_names(user_id, item)
     ensure_projects_belong_to(user_id, (item.get("project_id") for item in items))
     label_ids = [item.pop("label_ids", []) for item in items]
     reminders = [item.pop("reminders", None) for item in items]
@@ -202,6 +224,7 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task = get_task(user_id, task_id, lock=True)
     before = snapshot(task)
 
+    _resolve_names(user_id, data, with_project=task.parent_id is None)
     ensure_projects_belong_to(user_id, [data.get("project_id")])
     if "label_ids" in data:
         ensure_labels_belong_to(user_id, data["label_ids"])

@@ -3,7 +3,12 @@ from typing import Any
 
 from sqlalchemy import func, select, update
 
-from app.constants import INBOX_NAME, MAX_PROJECT_DEPTH
+from app.constants import (
+    INBOX_NAME,
+    MAX_PROJECT_DEPTH,
+    MAX_PROJECT_NAME_LENGTH,
+    PROJECT_PATH_SEPARATOR,
+)
 from app.database import db
 from app.exceptions import (
     InvalidProject,
@@ -156,3 +161,36 @@ def delete_project(user_id: int, project_id: int) -> None:
     )
     db.session.delete(project)
     db.session.commit()
+
+
+def resolve_project_path(user_id: int, path: str) -> int | None:
+    """Returns the id of the project at `path` ("Work / Website"), creating any
+    missing segments. Does not commit. A blank path means no project."""
+    if not path.strip():
+        return None
+    names = [part.strip() for part in path.split(PROJECT_PATH_SEPARATOR)]
+    if not all(names) or any(len(n) > MAX_PROJECT_NAME_LENGTH for n in names):
+        raise InvalidProject(
+            f"Each project name must be 1 to {MAX_PROJECT_NAME_LENGTH} characters.",
+            field="projectName",
+        )
+
+    parent_id: int | None = None
+    for depth, name in enumerate(names, start=1):
+        existing = db.session.scalar(
+            select(Project).where(
+                Project.user_id == user_id,
+                Project.parent_id.is_(None)
+                if parent_id is None
+                else Project.parent_id == parent_id,
+                func.lower(Project.name) == name.lower(),
+            )
+        )
+        if existing is None:
+            if depth > MAX_PROJECT_DEPTH:
+                raise ProjectTooDeep(field="projectName")
+            existing = Project(user_id=user_id, name=name, parent_id=parent_id)
+            db.session.add(existing)
+            db.session.flush()
+        parent_id = existing.id
+    return parent_id
