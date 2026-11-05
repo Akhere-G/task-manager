@@ -177,7 +177,7 @@ export default function TaskCalendar({
 
   return (
     <div className="space-y-6">
-      <div className="card px-0 md:px-2 h-112.5 md:h-225">
+      <div className="card px-0 md:px-2 h-112.5 md:h-175">
         <DnDCalendar
           localizer={localizer}
           events={events}

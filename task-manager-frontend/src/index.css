@@ -303,7 +303,7 @@
 }
 
 .rbc-time-slot {
-  @apply text-xs md:text-base flex justify-center min-h-12;
+  @apply text-xs md:text-base flex justify-center min-h-7;
 }
 
 .rbc-label {
