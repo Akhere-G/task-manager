@@ -116,7 +116,7 @@ export default function TasksPage() {
         sortable={!isCalendar}
       />
       <div className="grid grid-cols-[auto_1fr] items-start gap-3 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-x-6">
-        <div className="md:row-span-2">
+        <div className="md:row-span-2 md:self-baseline">
           <TasksSidebar
             view={view}
             counts={counts}
@@ -125,10 +125,10 @@ export default function TasksPage() {
             onSelectProject={(id) => updateFilters("project", id)}
           />
         </div>
-        <div className="mr-2 justify-self-end md:mr-0 md:col-start-2 md:row-start-1">
+        <div className="mr-2 justify-self-end md:mr-0 md:col-start-2 md:row-start-1 md:self-baseline">
           <LayoutToggle layout={layout} onSelect={selectLayout} />
         </div>
-        <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-1 md:translate-y-8 md:pb-8">
+        <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-1 md:translate-y-12 md:pb-12">
           {view === "inbox" && <QuickCapture />}
 
           {!isCalendar && hasTasks && (
