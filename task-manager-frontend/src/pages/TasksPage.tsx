@@ -8,6 +8,7 @@ import {
 } from "../components/ui";
 import { DailyBrief } from "../features/ai/components";
 import {
+  EisenhowerMatrix,
   TaskCalendar,
   TaskList,
   TasksHeader,
@@ -19,12 +20,13 @@ import TasksSidebar from "../features/tasks/components/TasksSidebar";
 import useTaskCounts from "../features/tasks/hooks/useTaskCounts";
 import { useTasks } from "../features/tasks/hooks/useTasks";
 import type { Task } from "../features/tasks/types";
+import type { TaskLayout } from "../features/tasks/views";
 
 const PER_PAGE = 10;
 
 interface TasksBodyProps {
   tasks: Task[];
-  isCalendar: boolean;
+  layout: TaskLayout;
   currentDate: string;
   setCurrentDate: (date: Date) => void;
   isInbox: boolean;
@@ -33,13 +35,13 @@ interface TasksBodyProps {
 
 function TasksBody({
   tasks,
-  isCalendar,
+  layout,
   currentDate,
   setCurrentDate,
   isInbox,
   sortable,
 }: TasksBodyProps) {
-  if (isCalendar) {
+  if (layout === "calendar") {
     return (
       <TaskCalendar
         tasks={tasks}
@@ -59,6 +61,7 @@ function TasksBody({
       />
     );
   }
+  if (layout === "matrix") return <EisenhowerMatrix tasks={tasks} />;
   return <TaskList tasks={tasks} sortable={sortable} />;
 }
 
@@ -85,18 +88,22 @@ export default function TasksPage() {
   const tasks = data?.tasks ?? [];
   const isCalendar = layout === "calendar";
   const hasTasks = tasks.length > 0;
+  const showsPagination =
+    layout === "list" || (layout === "matrix" && pageDetails.totalPages > 1);
 
   let content = (
     <TasksBody
       tasks={tasks}
-      isCalendar={isCalendar}
+      layout={layout}
       currentDate={filters.currentDate}
       setCurrentDate={(date) =>
         updateFilters("currentDate", date.toISOString())
       }
       isInbox={view === "inbox" && !isSearching}
       sortable={
-        !isCalendar && filters.sortBy === "manual" && filters.order === "asc"
+        layout === "list" &&
+        filters.sortBy === "manual" &&
+        filters.order === "asc"
       }
     />
   );
@@ -134,7 +141,9 @@ export default function TasksPage() {
           {!isCalendar && hasTasks && (
             <div className="flex flex-wrap justify-center gap-4 ">
               <DailyBrief />
-              <Pagination {...pageDetails} setPage={setPage} />
+              {showsPagination && (
+                <Pagination {...pageDetails} setPage={setPage} />
+              )}
             </div>
           )}
 
@@ -144,7 +153,7 @@ export default function TasksPage() {
             {content}
           </section>
 
-          {!isCalendar && hasTasks && (
+          {showsPagination && hasTasks && (
             <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate />
           )}
 

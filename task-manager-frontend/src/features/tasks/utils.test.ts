@@ -6,6 +6,7 @@ import {
   daysUntilPurge,
   formatDateRange,
   getCalendarTaskId,
+  groupByPriority,
   mapTasksToCalendarEvents,
   parsePriority,
 } from "./utils";
@@ -134,5 +135,20 @@ describe("daysUntilPurge", () => {
     ["2026-03-01T12:00:00Z", 0],
   ])("counts %s as %i day(s) left", (purgeAt, expected) => {
     expect(daysUntilPurge(purgeAt)).toBe(expected);
+  });
+});
+
+describe("groupByPriority", () => {
+  it("groups tasks by priority, keeping every priority present", () => {
+    const urgent = makeTask({ id: 1, priority: 1 });
+    const later = makeTask({ id: 2, priority: 4 });
+    const another = makeTask({ id: 3, priority: 4 });
+
+    expect(groupByPriority([urgent, later, another])).toEqual({
+      1: [urgent],
+      2: [],
+      3: [],
+      4: [later, another],
+    });
   });
 });

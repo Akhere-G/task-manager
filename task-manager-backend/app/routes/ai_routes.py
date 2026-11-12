@@ -9,6 +9,7 @@ from app.services.ai_service import (
     decompose_task,
     generate_daily_brief,
     parse_task_with_ai,
+    suggest_priorities,
 )
 from app.utils.http import get_json_body
 
@@ -52,3 +53,11 @@ def decompose_task_route() -> ResponseReturnValue:
         raise AIUnavailable("Could not decompose the task.")
 
     return jsonify({"tasks": tasks})
+
+
+@ai_bp.route("/api/ai/suggest-priorities", methods=["POST"])
+@jwt_required()
+@limiter.limit("10 per hour")
+@limiter.limit(ai_daily_limit, key_func=user_key, scope="ai-daily")
+def suggest_priorities_route() -> ResponseReturnValue:
+    return jsonify({"suggestions": suggest_priorities(get_jwt_identity())})

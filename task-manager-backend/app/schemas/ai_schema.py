@@ -9,6 +9,7 @@ from app.constants import (
     MAX_DECOMPOSE_TITLE_LENGTH,
     MAX_EXISTING_SUBTASKS,
     MAX_PARSE_TEXT_LENGTH,
+    MAX_PRIORITY_REASON_LENGTH,
     PRIORITIES,
     REPEAT_FREQUENCIES,
     REPEAT_INTERVAL_LIMITS,
@@ -127,3 +128,16 @@ class AiTaskSchema(CamelSchema):
             if not repaired.get(key):
                 repaired.pop(key, None)
         return repaired
+
+
+class PrioritySuggestionSchema(CamelSchema):
+    task_id = fields.Integer(required=True)
+    title = fields.String(dump_only=True)
+    current_priority = fields.Integer(dump_only=True)
+    suggested_priority = fields.Integer(
+        required=True, validate=validate.OneOf(PRIORITIES)
+    )
+    reason = fields.String(
+        load_default="",
+        validate=validate.Length(max=MAX_PRIORITY_REASON_LENGTH),
+    )

@@ -1,4 +1,4 @@
-import { CalendarDays, List } from "lucide-react";
+import { CalendarDays, LayoutGrid, List } from "lucide-react";
 import type { TaskLayout } from "../views";
 
 interface LayoutToggleProps {
@@ -9,6 +9,7 @@ interface LayoutToggleProps {
 const OPTIONS = [
   { value: "list", label: "List", Icon: List },
   { value: "calendar", label: "Calendar", Icon: CalendarDays },
+  { value: "matrix", label: "Matrix", Icon: LayoutGrid },
 ] as const;
 
 export default function LayoutToggle({ layout, onSelect }: LayoutToggleProps) {

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/render";
 import AiAddTaskForm from "./components/AiAddTaskForm";
 import DailyBrief from "./components/DailyBrief";
+import PrioritySuggestions from "./components/PrioritySuggestions";
 import { mockApi } from "../../test/api";
 
 const mock = mockApi();
@@ -139,5 +140,138 @@ describe("daily brief", () => {
         screen.queryByRole("button", { name: "Open daily brief" }),
       ).not.toBeInTheDocument(),
     );
+  });
+});
+
+describe("priority suggestions", () => {
+  const suggestion = {
+    taskId: 7,
+    title: "Pay rent",
+    currentPriority: 4,
+    suggestedPriority: 1,
+    reason: "Due tomorrow",
+  };
+
+  const requestSuggestions = () =>
+    userEvent.click(screen.getByRole("button", { name: "Suggest priorities" }));
+
+  it("lists the suggested changes with their reasons", async () => {
+    mock.onPost("/ai/suggest-priorities").reply(200, { suggestions: [suggestion] });
+    renderWithProviders(<PrioritySuggestions />);
+
+    await requestSuggestions();
+
+    expect(await screen.findByText("Pay rent")).toBeInTheDocument();
+    expect(screen.getByText(/P4 → P1\. Due tomorrow/)).toBeInTheDocument();
+  });
+
+  it("applies an accepted suggestion and removes it from the list", async () => {
+    mock.onPost("/ai/suggest-priorities").reply(200, { suggestions: [suggestion] });
+    mock.onPatch("/tasks/7").reply(200, {});
+    renderWithProviders(<PrioritySuggestions />);
+    await requestSuggestions();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Accept" }));
+
+    await waitFor(() =>
+      expect(screen.queryByText("Pay rent")).not.toBeInTheDocument(),
+    );
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ priority: 1 });
+  });
+
+  describe("selecting suggestions", () => {
+    const second = { ...suggestion, taskId: 8, title: "Book dentist" };
+
+    async function showTwoSuggestions() {
+      mock
+        .onPost("/ai/suggest-priorities")
+        .reply(200, { suggestions: [suggestion, second] });
+      mock.onPatch(/\/tasks\/\d+/).reply(200, {});
+      renderWithProviders(<PrioritySuggestions />);
+      await requestSuggestions();
+      await screen.findByText("Pay rent");
+    }
+
+    it("selects every suggestion by default", async () => {
+      await showTwoSuggestions();
+
+      expect(screen.getByRole("checkbox", { name: "Select Pay rent" })).toBeChecked();
+      expect(
+        screen.getByRole("checkbox", { name: "Select Book dentist" }),
+      ).toBeChecked();
+      expect(
+        screen.getByRole("button", { name: "Accept selected (2)" }),
+      ).toBeEnabled();
+    });
+
+    it("accepts only the selected suggestions", async () => {
+      await showTwoSuggestions();
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Book dentist" }));
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Accept selected (1)" }),
+      );
+
+      await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+      expect(mock.history.patch[0].url).toBe("/tasks/7");
+      expect(screen.getByText("Book dentist")).toBeInTheDocument();
+    });
+
+    it("can reselect a deselected suggestion", async () => {
+      await showTwoSuggestions();
+      const checkbox = screen.getByRole("checkbox", { name: "Select Pay rent" });
+
+      await userEvent.click(checkbox);
+      expect(checkbox).not.toBeChecked();
+      await userEvent.click(checkbox);
+
+      expect(checkbox).toBeChecked();
+    });
+
+    it("cannot accept selected when nothing is selected", async () => {
+      await showTwoSuggestions();
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Pay rent" }));
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Book dentist" }));
+
+      expect(
+        screen.getByRole("button", { name: "Accept selected (0)" }),
+      ).toBeDisabled();
+    });
+  });
+
+  it("dismisses a suggestion without changing the task", async () => {
+    mock.onPost("/ai/suggest-priorities").reply(200, { suggestions: [suggestion] });
+    renderWithProviders(<PrioritySuggestions />);
+    await requestSuggestions();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Dismiss" }));
+
+    expect(screen.queryByText("Pay rent")).not.toBeInTheDocument();
+    expect(mock.history.patch).toHaveLength(0);
+  });
+
+  it("says when nothing needs changing", async () => {
+    mock.onPost("/ai/suggest-priorities").reply(200, { suggestions: [] });
+    renderWithProviders(<PrioritySuggestions />);
+
+    await requestSuggestions();
+
+    expect(
+      await screen.findByText("No priority changes suggested."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an error and stays usable when the request fails", async () => {
+    mock.onPost("/ai/suggest-priorities").reply(502);
+    renderWithProviders(<PrioritySuggestions />);
+
+    await requestSuggestions();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not get suggestions",
+    );
+    expect(
+      screen.getByRole("button", { name: "Suggest priorities" }),
+    ).toBeEnabled();
   });
 });

@@ -51,7 +51,8 @@ export type AnalyticsEvent =
   | "ai_task_breakdown_succeeded"
   | "ai_task_breakdown_failed"
   | "ai_task_breakdown_applied"
-  | "ai_daily_brief_viewed";
+  | "ai_daily_brief_viewed"
+  | "ai_priorities_suggested";
 
 type AnalyticsValue = string | number | boolean | string[] | null | undefined;
 export type AnalyticsProps = Record<string, AnalyticsValue>;
