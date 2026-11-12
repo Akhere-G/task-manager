@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { Flag } from "lucide-react";
 import { useState } from "react";
 import { trackEvent } from "../../../services/analytics";
 import useUpdateTask from "../../tasks/hooks/useUpdateTask";
@@ -42,15 +42,27 @@ export default function PrioritySuggestions() {
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={requestSuggestions}
-        disabled={suggest.isPending}
-        className="btn-primary flex items-center gap-2 self-start"
-      >
-        <Sparkles size={16} aria-hidden />
-        {suggest.isPending ? "Thinking..." : "Suggest priorities"}
-      </button>
+      <div className="flex gap-4 flex-wrap">
+        <button
+          type="button"
+          onClick={requestSuggestions}
+          disabled={suggest.isPending}
+          className="btn-primary flex items-center gap-2 self-start"
+        >
+          <Flag size={16} aria-hidden />
+          {suggest.isPending ? "Thinking..." : "Suggest priorities"}
+        </button>
+        {pending && pending.length > 0 && (
+          <button
+            type="button"
+            className="btn-primary self-start"
+            disabled={selected.length === 0}
+            onClick={() => selected.forEach(accept)}
+          >
+            Accept selected ({selected.length})
+          </button>
+        )}
+      </div>
       {suggest.isError && (
         <p role="alert" className="text-failure">
           Could not get suggestions
@@ -59,16 +71,7 @@ export default function PrioritySuggestions() {
       {pending?.length === 0 && (
         <p className="text-text-sub">No priority changes suggested.</p>
       )}
-      {pending && pending.length > 0 && (
-        <button
-          type="button"
-          className="btn-primary self-start"
-          disabled={selected.length === 0}
-          onClick={() => selected.forEach(accept)}
-        >
-          Accept selected ({selected.length})
-        </button>
-      )}
+
       {pending?.map((suggestion) => (
         <div
           key={suggestion.taskId}
