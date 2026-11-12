@@ -24,7 +24,7 @@ test("on mobile the sidebar is a button above the tasks", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto("/");
   await page.getByText("Alpha").first().waitFor();
-  const button = page.getByRole("button", { name: "Views and projects" });
+  const button = page.getByRole("button", { name: "Views / projects" });
   await expect(
     page.getByRole("navigation", { name: "Task views" }),
   ).toBeHidden();

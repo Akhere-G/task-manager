@@ -17,7 +17,7 @@ export default function LayoutToggle({ layout, onSelect }: LayoutToggleProps) {
     <div
       role="group"
       aria-label="Layout"
-      className="flex flex-wrap gap-2 self-end"
+      className="flex shrink-1 flex-0 gap-2 self-end"
     >
       {OPTIONS.map(({ value, label, Icon }) => (
         <button
