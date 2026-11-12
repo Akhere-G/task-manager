@@ -132,7 +132,7 @@ export default function TasksPage() {
             onSelectProject={(id) => updateFilters("project", id)}
           />
         </div>
-        <div className="mr-2 justify-self-end md:mr-0 md:col-start-2 md:row-start-1 md:self-baseline">
+        <div className="mr-2 overflow-y-scroll max-w-[50vw] justify-self-end md:mr-0 md:col-start-2 md:row-start-1 md:self-baseline">
           <LayoutToggle layout={layout} onSelect={selectLayout} />
         </div>
         <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-1 md:translate-y-12 md:pb-12">

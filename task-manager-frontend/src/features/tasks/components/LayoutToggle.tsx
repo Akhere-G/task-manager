@@ -14,7 +14,11 @@ const OPTIONS = [
 
 export default function LayoutToggle({ layout, onSelect }: LayoutToggleProps) {
   return (
-    <div role="group" aria-label="Layout" className="flex gap-2 self-end">
+    <div
+      role="group"
+      aria-label="Layout"
+      className="flex shrink-1 flex-0 gap-2 self-end"
+    >
       {OPTIONS.map(({ value, label, Icon }) => (
         <button
           key={value}

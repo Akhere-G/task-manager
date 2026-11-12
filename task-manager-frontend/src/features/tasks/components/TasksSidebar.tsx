@@ -49,7 +49,7 @@ export default function TasksSidebar({
         className="mx-3 flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5 text-sm md:hidden"
       >
         <PanelLeft size={16} aria-hidden />
-        Views and projects
+        Views / projects
       </button>
 
       {open && (
@@ -61,7 +61,7 @@ export default function TasksSidebar({
       )}
       <div
         role={open ? "dialog" : undefined}
-        aria-label="Views and projects"
+        aria-label="Views / projects"
         className={`${
           open ? "flex" : "hidden"
         } fixed inset-y-0 left-0 z-40 w-72 flex-col gap-4 overflow-y-auto bg-canvas p-4 shadow-xl md:static md:z-auto md:flex md:w-auto md:bg-transparent md:p-0 md:shadow-none`}

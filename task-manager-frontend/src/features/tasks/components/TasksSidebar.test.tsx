@@ -53,10 +53,10 @@ describe("TasksSidebar", () => {
     const { onSelectView } = setup();
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Views and projects" }),
+      screen.getByRole("button", { name: "Views / projects" }),
     );
     expect(
-      screen.getByRole("dialog", { name: "Views and projects" }),
+      screen.getByRole("dialog", { name: "Views / projects" }),
     ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: /^Inbox/ }));
@@ -68,7 +68,7 @@ describe("TasksSidebar", () => {
   it("closes from the close button", async () => {
     setup();
     await userEvent.click(
-      screen.getByRole("button", { name: "Views and projects" }),
+      screen.getByRole("button", { name: "Views / projects" }),
     );
 
     await userEvent.click(
