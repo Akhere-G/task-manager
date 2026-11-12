@@ -179,6 +179,66 @@ describe("priority suggestions", () => {
     expect(JSON.parse(mock.history.patch[0].data)).toEqual({ priority: 1 });
   });
 
+  describe("selecting suggestions", () => {
+    const second = { ...suggestion, taskId: 8, title: "Book dentist" };
+
+    async function showTwoSuggestions() {
+      mock
+        .onPost("/ai/suggest-priorities")
+        .reply(200, { suggestions: [suggestion, second] });
+      mock.onPatch(/\/tasks\/\d+/).reply(200, {});
+      renderWithProviders(<PrioritySuggestions />);
+      await requestSuggestions();
+      await screen.findByText("Pay rent");
+    }
+
+    it("selects every suggestion by default", async () => {
+      await showTwoSuggestions();
+
+      expect(screen.getByRole("checkbox", { name: "Select Pay rent" })).toBeChecked();
+      expect(
+        screen.getByRole("checkbox", { name: "Select Book dentist" }),
+      ).toBeChecked();
+      expect(
+        screen.getByRole("button", { name: "Accept selected (2)" }),
+      ).toBeEnabled();
+    });
+
+    it("accepts only the selected suggestions", async () => {
+      await showTwoSuggestions();
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Book dentist" }));
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Accept selected (1)" }),
+      );
+
+      await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+      expect(mock.history.patch[0].url).toBe("/tasks/7");
+      expect(screen.getByText("Book dentist")).toBeInTheDocument();
+    });
+
+    it("can reselect a deselected suggestion", async () => {
+      await showTwoSuggestions();
+      const checkbox = screen.getByRole("checkbox", { name: "Select Pay rent" });
+
+      await userEvent.click(checkbox);
+      expect(checkbox).not.toBeChecked();
+      await userEvent.click(checkbox);
+
+      expect(checkbox).toBeChecked();
+    });
+
+    it("cannot accept selected when nothing is selected", async () => {
+      await showTwoSuggestions();
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Pay rent" }));
+      await userEvent.click(screen.getByRole("checkbox", { name: "Select Book dentist" }));
+
+      expect(
+        screen.getByRole("button", { name: "Accept selected (0)" }),
+      ).toBeDisabled();
+    });
+  });
+
   it("dismisses a suggestion without changing the task", async () => {
     mock.onPost("/ai/suggest-priorities").reply(200, { suggestions: [suggestion] });
     renderWithProviders(<PrioritySuggestions />);

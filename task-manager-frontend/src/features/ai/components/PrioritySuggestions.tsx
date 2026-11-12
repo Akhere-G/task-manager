@@ -9,9 +9,17 @@ export default function PrioritySuggestions() {
   const suggest = useSuggestPriorities();
   const { mutate: updateTask } = useUpdateTask();
   const [resolvedTaskIds, setResolvedTaskIds] = useState<number[]>([]);
+  const [deselectedTaskIds, setDeselectedTaskIds] = useState<number[]>([]);
 
   const resolve = (taskId: number) =>
     setResolvedTaskIds((ids) => [...ids, taskId]);
+
+  const toggleSelected = (taskId: number) =>
+    setDeselectedTaskIds((ids) =>
+      ids.includes(taskId)
+        ? ids.filter((id) => id !== taskId)
+        : [...ids, taskId],
+    );
 
   const accept = ({ taskId, suggestedPriority }: PrioritySuggestion) =>
     updateTask(
@@ -21,6 +29,7 @@ export default function PrioritySuggestions() {
 
   const requestSuggestions = () => {
     setResolvedTaskIds([]);
+    setDeselectedTaskIds([]);
     suggest.mutate();
     trackEvent("ai_priorities_suggested");
   };
@@ -28,6 +37,8 @@ export default function PrioritySuggestions() {
   const pending = suggest.data?.filter(
     ({ taskId }) => !resolvedTaskIds.includes(taskId),
   );
+  const selected =
+    pending?.filter(({ taskId }) => !deselectedTaskIds.includes(taskId)) ?? [];
 
   return (
     <div className="flex flex-col gap-2">
@@ -48,18 +59,39 @@ export default function PrioritySuggestions() {
       {pending?.length === 0 && (
         <p className="text-text-sub">No priority changes suggested.</p>
       )}
+      {pending && pending.length > 0 && (
+        <button
+          type="button"
+          className="btn-primary self-start"
+          disabled={selected.length === 0}
+          onClick={() => selected.forEach(accept)}
+        >
+          Accept selected ({selected.length})
+        </button>
+      )}
       {pending?.map((suggestion) => (
         <div
           key={suggestion.taskId}
           className="card flex flex-wrap items-center justify-between gap-2"
         >
-          <div>
-            <p className="font-semibold text-text-main">{suggestion.title}</p>
-            <p className="text-xs text-text-sub">
-              P{suggestion.currentPriority} → P{suggestion.suggestedPriority}.{" "}
-              {suggestion.reason}
-            </p>
-          </div>
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              className="mt-1"
+              aria-label={`Select ${suggestion.title}`}
+              checked={!deselectedTaskIds.includes(suggestion.taskId)}
+              onChange={() => toggleSelected(suggestion.taskId)}
+            />
+            <span>
+              <span className="block font-semibold text-text-main">
+                {suggestion.title}
+              </span>
+              <span className="block text-xs text-text-sub">
+                P{suggestion.currentPriority} → P{suggestion.suggestedPriority}.{" "}
+                {suggestion.reason}
+              </span>
+            </span>
+          </label>
           <div className="flex gap-2">
             <button
               type="button"
