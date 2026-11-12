@@ -50,13 +50,14 @@ def _ask_gemini(prompt: str) -> str | None:
 
 
 def _ask_groq(prompt: str) -> str | None:
-    completion = Groq(api_key=os.getenv("GROQ_API_KEY")).chat.completions.create(
+    completion = Groq(
+        api_key=os.getenv("GROQ_API_KEY"), timeout=30.0, max_retries=3
+    ).chat.completions.create(
         model=GROQ_MODEL,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
         ],
-        timeout=10.0,
     )
     return completion.choices[0].message.content
 
@@ -64,10 +65,12 @@ def _ask_groq(prompt: str) -> str | None:
 def get_generated_text(prompt: str) -> str:
     for name, ask in (("Gemini", _ask_gemini), ("Groq", _ask_groq)):
         try:
-            if text := ask(prompt):
+            text = ask(prompt)
+            if text:
                 return text
         except Exception as exc:
             logger.warning("%s request failed: %s", name, type(exc).__name__)
+
     raise AIUnavailable()
 
 
@@ -321,7 +324,12 @@ def _read_suggestions(reply: str) -> list[dict[str, Any]]:
 
 def suggest_priorities(user_id: int) -> list[dict[str, Any]]:
     tasks = get_all_tasks(
-        user_id, TaskQuery(is_completed=False, limit=MAX_TASKS_TO_PRIORITISE)
+        user_id,
+        TaskQuery(
+            is_completed=False,
+            sort_by="priority",
+            limit=MAX_TASKS_TO_PRIORITISE,
+        ),
     )["tasks"]
     if not tasks:
         return []
