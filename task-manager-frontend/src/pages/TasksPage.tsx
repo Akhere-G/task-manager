@@ -88,6 +88,8 @@ export default function TasksPage() {
   const tasks = data?.tasks ?? [];
   const isCalendar = layout === "calendar";
   const hasTasks = tasks.length > 0;
+  const showsPagination =
+    layout === "list" || (layout === "matrix" && pageDetails.totalPages > 1);
 
   let content = (
     <TasksBody
@@ -139,7 +141,9 @@ export default function TasksPage() {
           {!isCalendar && hasTasks && (
             <div className="flex flex-wrap justify-center gap-4 ">
               <DailyBrief />
-              <Pagination {...pageDetails} setPage={setPage} />
+              {showsPagination && (
+                <Pagination {...pageDetails} setPage={setPage} />
+              )}
             </div>
           )}
 
@@ -149,7 +153,7 @@ export default function TasksPage() {
             {content}
           </section>
 
-          {!isCalendar && hasTasks && (
+          {showsPagination && hasTasks && (
             <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate />
           )}
 
