@@ -1,5 +1,5 @@
 import apiClient from "../../services/api";
-import type { CreateTaskInput } from "../tasks/types";
+import type { CreateTaskInput, Priority } from "../tasks/types";
 
 export interface DailyBrief {
   brief: string;
@@ -7,6 +7,14 @@ export interface DailyBrief {
 
 export interface DecomposeTaskResult {
   tasks: CreateTaskInput[];
+}
+
+export interface PrioritySuggestion {
+  taskId: number;
+  title: string;
+  currentPriority: Priority;
+  suggestedPriority: Priority;
+  reason: string;
 }
 
 export const aiService = {
@@ -19,6 +27,10 @@ export const aiService = {
   parseTask: async (text: string): Promise<CreateTaskInput> => {
     const response = await apiClient.post("/ai/parse-task", { text });
     return response.data;
+  },
+  suggestPriorities: async (): Promise<PrioritySuggestion[]> => {
+    const response = await apiClient.post("/ai/suggest-priorities");
+    return response.data.suggestions;
   },
   decomposeTask: async (
     task: CreateTaskInput,
