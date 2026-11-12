@@ -9,7 +9,12 @@ from app.database import db
 from app.exceptions import AIUnavailable
 from app.models import Project
 from app.services import ai_service
-from app.services.ai_service import decompose_task, parse_task_with_ai
+from app.services.ai_service import (
+    decompose_task,
+    parse_task_with_ai,
+    suggest_priorities,
+)
+from tests.builders import add_task
 
 
 def reply(payload: Any, fenced: bool = False) -> str:
@@ -219,3 +224,81 @@ def test_parse_only_offers_the_models_the_users_own_projects(
 
     prompt = ask.call_args.args[0]
     assert "Health" in prompt and "Secret garden" not in prompt
+
+
+def suggest_with_reply(user_id: int, payload: Any) -> list[dict[str, Any]]:
+    with mock.patch.object(
+        ai_service, "get_generated_text", return_value=reply(payload)
+    ):
+        return suggest_priorities(user_id)
+
+
+def test_suggest_priorities_skips_the_provider_without_open_tasks(
+    user_id: int,
+) -> None:
+    with mock.patch.object(ai_service, "get_generated_text") as generate:
+        assert suggest_priorities(user_id) == []
+    generate.assert_not_called()
+
+
+def test_suggest_priorities_returns_changes_with_task_details(user_id: int) -> None:
+    task = add_task(user_id, title="Pay rent", priority=4)
+
+    suggestions = suggest_with_reply(
+        user_id, [{"taskId": task.id, "suggestedPriority": 1, "reason": "Due soon"}]
+    )
+
+    assert suggestions == [
+        {
+            "taskId": task.id,
+            "title": "Pay rent",
+            "currentPriority": 4,
+            "suggestedPriority": 1,
+            "reason": "Due soon",
+        }
+    ]
+
+
+def test_suggest_priorities_drops_unchanged_unknown_and_invalid_entries(
+    user_id: int,
+) -> None:
+    task = add_task(user_id, priority=2)
+
+    suggestions = suggest_with_reply(
+        user_id,
+        [
+            {"taskId": task.id, "suggestedPriority": 2},
+            {"taskId": task.id + 999, "suggestedPriority": 1},
+            {"taskId": task.id, "suggestedPriority": 9},
+            {"suggestedPriority": 1},
+            "nonsense",
+        ],
+    )
+
+    assert suggestions == []
+
+
+def test_suggest_priorities_ignores_other_users_tasks(
+    user_id: int, make_user: Callable[..., int]
+) -> None:
+    other_user_id = make_user(email="other@example.com")
+    add_task(other_user_id)
+    task = add_task(user_id, priority=4)
+
+    suggestions = suggest_with_reply(
+        other_user_id, [{"taskId": task.id, "suggestedPriority": 1}]
+    )
+
+    assert suggestions == []
+
+
+@pytest.mark.parametrize("bad_reply", ["not json", '{"taskId": 1}'])
+def test_suggest_priorities_reports_an_unreadable_reply(
+    bad_reply: str, user_id: int
+) -> None:
+    add_task(user_id)
+    with (
+        mock.patch.object(ai_service, "get_generated_text", return_value=bad_reply),
+        pytest.raises(AIUnavailable),
+    ):
+        suggest_priorities(user_id)

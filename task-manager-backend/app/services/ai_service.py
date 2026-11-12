@@ -10,11 +10,11 @@ from groq import Groq
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from app.constants import DEFAULT_PRIORITY, INBOX_NAME
+from app.constants import DEFAULT_PRIORITY, INBOX_NAME, MAX_TASKS_TO_PRIORITISE
 from app.database import db
 from app.exceptions import AIUnavailable
 from app.models import DailyBrief, Task
-from app.schemas.ai_schema import AiTaskSchema
+from app.schemas.ai_schema import AiTaskSchema, PrioritySuggestionSchema
 from app.services.project_service import project_paths
 from app.services.stats_service import get_brief_stats
 from app.services.task_listing import get_all_tasks
@@ -285,3 +285,57 @@ def decompose_task(
     for task in new_tasks:
         task.pop("project", None)
     return new_tasks
+
+
+def _priority_prompt(tasks: list[Task], paths: dict[int, str]) -> str:
+    listing = "\n".join(
+        f"- id {t.id}: {t.title} (P{t.priority}, "
+        f"{paths.get(t.project_id, INBOX_NAME)}, due {t.end_at or 'undated'})"
+        for t in tasks
+    )
+    return f"""
+    Priorities: 1 is urgent and important, 2 is important but not urgent,
+    3 is urgent but not important, 4 is neither.
+    Review these open tasks and suggest a priority only where the current one is wrong.
+    {listing}
+    Return only a json list of objects of this format
+    - taskId: (integer id from the list)
+    - suggestedPriority: (integer 1 to 4)
+    - reason: (string, one short sentence)
+    """
+
+
+def _read_suggestions(reply: str) -> list[dict[str, Any]]:
+    suggestions = _extract_json(reply)
+    if not isinstance(suggestions, list):
+        raise ValueError("Expected a list of suggestions")
+    schema = PrioritySuggestionSchema()
+    loaded = []
+    for suggestion in suggestions:
+        try:
+            loaded.append(schema.load(suggestion))
+        except ValidationError:
+            continue
+    return loaded
+
+
+def suggest_priorities(user_id: int) -> list[dict[str, Any]]:
+    tasks = get_all_tasks(
+        user_id, TaskQuery(is_completed=False, limit=MAX_TASKS_TO_PRIORITISE)
+    )["tasks"]
+    if not tasks:
+        return []
+    reply = get_generated_text(_priority_prompt(tasks, project_paths(user_id)))
+    try:
+        suggestions = _read_suggestions(reply)
+    except ValueError as err:
+        raise AIUnavailable("Could not read the priority suggestions.") from err
+    tasks_by_id = {task.id: task for task in tasks}
+    changes = []
+    for suggestion in suggestions:
+        task = tasks_by_id.get(suggestion["task_id"])
+        if task and task.priority != suggestion["suggested_priority"]:
+            changes.append(
+                {**suggestion, "title": task.title, "current_priority": task.priority}
+            )
+    return PrioritySuggestionSchema(many=True).dump(changes)
