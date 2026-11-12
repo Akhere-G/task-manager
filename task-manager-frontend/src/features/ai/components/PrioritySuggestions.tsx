@@ -41,13 +41,13 @@ export default function PrioritySuggestions() {
     pending?.filter(({ taskId }) => !deselectedTaskIds.includes(taskId)) ?? [];
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-4">
       <div className="flex gap-4 flex-wrap">
         <button
           type="button"
           onClick={requestSuggestions}
           disabled={suggest.isPending}
-          className="btn-primary flex items-center gap-2 self-start"
+          className="btn-primary flex items-center gap-2 self-start ml-4 md:ml-0"
         >
           <Flag size={16} aria-hidden />
           {suggest.isPending ? "Thinking..." : "Suggest priorities"}

@@ -26,9 +26,9 @@ export default function EisenhowerMatrix({ tasks }: EisenhowerMatrixProps) {
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4 max-w-mn">
       <PrioritySuggestions />
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         {matrixQuadrants.map((quadrant) => (
           <MatrixQuadrant
             key={quadrant.priority}
