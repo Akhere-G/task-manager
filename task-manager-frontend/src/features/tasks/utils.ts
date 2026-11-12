@@ -202,3 +202,9 @@ export function parsePriority(value: string | undefined): Priority {
   const match = /^p?([1-4])$/i.exec((value ?? "").trim());
   return match ? (Number(match[1]) as Priority) : DEFAULT_PRIORITY;
 }
+
+export const groupByPriority = (tasks: Task[]): Record<Priority, Task[]> => {
+  const groups: Record<Priority, Task[]> = { 1: [], 2: [], 3: [], 4: [] };
+  tasks.forEach((task) => groups[task.priority].push(task));
+  return groups;
+};

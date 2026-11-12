@@ -1,3 +1,5 @@
+import type { Priority } from "./types";
+
 export const priorityOptions = [
   { name: "P1 · Urgent", value: "1" },
   { name: "P2 · High", value: "2" },
@@ -18,6 +20,17 @@ export const priorityColours: Record<number, string> = {
   2: "text-orange-500",
   3: "text-blue-500",
 };
+
+export const matrixQuadrants: {
+  priority: Priority;
+  title: string;
+  description: string;
+}[] = [
+  { priority: 1, title: "Do first", description: "Urgent and important" },
+  { priority: 2, title: "Schedule", description: "Important, not urgent" },
+  { priority: 3, title: "Delegate", description: "Urgent, not important" },
+  { priority: 4, title: "Eliminate", description: "Neither urgent nor important" },
+];
 
 export const taskDurationOptions = [
   { name: "All", value: "" },
