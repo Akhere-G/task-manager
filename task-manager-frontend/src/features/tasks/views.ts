@@ -11,13 +11,17 @@ export const TASK_VIEWS = [
 ] as const;
 
 export type TaskView = (typeof TASK_VIEWS)[number]["value"];
-export type TaskLayout = "list" | "calendar";
+export const TASK_LAYOUTS = ["list", "calendar", "matrix"] as const;
+export type TaskLayout = (typeof TASK_LAYOUTS)[number];
 export type CountedView = Exclude<TaskView, "all">;
 export type TaskViewCounts = Record<CountedView, number>;
 
 export const DEFAULT_VIEW: TaskView = "all";
 
 const VIEW_VALUES: readonly string[] = TASK_VIEWS.map((view) => view.value);
+
+export const isTaskLayout = (value: string | null): value is TaskLayout =>
+  TASK_LAYOUTS.some((layout) => layout === value);
 
 export const isTaskView = (value: string | null): value is TaskView =>
   value !== null && VIEW_VALUES.includes(value);

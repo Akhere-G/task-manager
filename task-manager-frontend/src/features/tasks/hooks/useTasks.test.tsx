@@ -106,4 +106,29 @@ describe("smart views", () => {
     expect(params.has("view")).toBe(false);
     expect(params.has("limit")).toBe(false);
   });
+
+  it("loads one large page of tasks in the matrix layout", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+
+    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+      route: "/?layout=matrix",
+    });
+
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+    expect(result.current.layout).toBe("matrix");
+    expect(lastRequestParams().get("limit")).toBe("200");
+    expect(lastRequestParams().get("page")).toBe("1");
+  });
+
+  it("falls back to the list layout for an unknown layout", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+
+    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+      route: "/?layout=kanban",
+    });
+
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+    expect(result.current.layout).toBe("list");
+    expect(lastRequestParams().get("limit")).toBe("10");
+  });
 });

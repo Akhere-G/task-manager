@@ -9,6 +9,7 @@ import {
   DEFAULT_VIEW,
   calendarZoomFor,
   isRangedView,
+  isTaskLayout,
   isTaskView,
   type TaskLayout,
   type TaskView,
@@ -65,8 +66,10 @@ const apiParamMap: Record<keyof TaskFilters, string> = {
 /** URL params that describe where the user is, not what they filtered. */
 const LOCATION_PARAMS = ["view", "layout", "cal"];
 
+const MATRIX_PAGE_SIZE = 200;
+
 const readLayout = (value: string | null): TaskLayout =>
-  value === "calendar" ? "calendar" : "list";
+  isTaskLayout(value) ? value : "list";
 
 const readView = (value: string | null): TaskView =>
   isTaskView(value) ? value : DEFAULT_VIEW;
@@ -113,6 +116,7 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
   };
 
   const isCalendar = layout === "calendar";
+  const pageSize = layout === "matrix" ? MATRIX_PAGE_SIZE : perPage;
 
   const result = useQuery({
     queryKey: [
@@ -123,7 +127,7 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
         view,
         layout,
         page: currentPage,
-        perPage,
+        perPage: pageSize,
       },
     ],
     queryFn: () => {
@@ -145,7 +149,7 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
         if (view !== "all") params.set("view", view);
         params.set("project_repeating", String(ranged));
         params.set("page", String(currentPage));
-        params.set("limit", String(perPage));
+        params.set("limit", String(pageSize));
       }
       if (ranged || view === "overdue") {
         params.set("zone", getBrowserTimeZone() ?? "UTC");
