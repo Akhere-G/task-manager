@@ -8,7 +8,7 @@ A high-performance task engine designed to turn raw productivity data into actio
 
 ## Core Features
 
-* **Smart Views:** Inbox, Today, Upcoming, Overdue, This week and This month sit in a sidebar (a closable panel on mobile), each with a live count. Switch any view between a list and a calendar; everything, including search and sort, lives in the URL so views can be bookmarked.
+* **Smart Views:** Inbox, Today, Upcoming, Overdue, This week and This month sit in a sidebar (a closable panel on mobile), each with a live count. Switch any view between a list, a calendar and an Eisenhower matrix (priorities 1 to 4 as four quadrants; drag a task to another quadrant to change its priority); everything, including search and sort, lives in the URL so views can be bookmarked.
 * **Projects & Labels:** Organise tasks into nested projects and tag them with labels. Pick a project, or "All", from the sidebar to filter the list.
 * **Inbox:** Capture a title-only task in one line, with no date or project, and triage it later.
 * **Priorities:** Mark tasks P1 to P4, then filter or sort by priority.
@@ -18,6 +18,7 @@ A high-performance task engine designed to turn raw productivity data into actio
 * **Snooze:** Move a task to tomorrow, the weekend, next week or a date, keeping its time of day. Repeating tasks can skip to their next occurrence.
 * **Reminders:** Add several reminders per task: 30 minutes or 1 hour before, at the start of the day, or at a set time. Push notifications are sent by the reminder runner (see below).
 * **Trash:** Deleted tasks are kept for 30 days and can be restored.
+* **Priority Suggestions (AI):** From the matrix, ask the AI to review your open tasks and propose priority changes with a short reason each; accept or dismiss every one.
 * **Your Daily Brief (AI Coach):** Start your day with an AI coach that reviews pending and overdue tasks to suggest the best plan of action for a productive morning.
 * **Break It Down (AI Subtasks):** The built-in AI splits a large task into a clear checklist of smaller steps, saved as real subtasks.
 * **Quick-Add Tools:** Add tasks instantly by typing naturally with our AI assistant, or upload a CSV file to import many at once. Download a simple or advanced CSV template with examples of dated, dateless and repeating tasks. The time zone is taken from your browser, and you can export your tasks as CSV from Settings.
@@ -57,7 +58,7 @@ Reminders are sent by `python -m app.run_reminders` (run from `task-manager-back
 
 ### AI features and data
 
-The Daily Brief, AI quick-add and task breakdown send task titles, descriptions and project names to the configured AI providers (Google Gemini, with Groq as a fallback). Nothing is sent unless you use those features.
+The Daily Brief, AI quick-add, task breakdown and priority suggestions send task titles, descriptions and project names to the configured AI providers (Google Gemini, with Groq as a fallback). Nothing is sent unless you use those features.
 
 ### Product Analytics (PostHog)
 

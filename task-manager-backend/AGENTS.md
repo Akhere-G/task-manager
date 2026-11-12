@@ -94,6 +94,7 @@ routes or services.
 | subtask         | A task with a `parent_id`; one level deep, never repeating, hidden from lists. |
 | snooze          | Moving a task to a later day, keeping its time of day and length.             |
 | reminder        | A `task_reminders` row; `fire_at` is when the runner pushes it (naive UTC).   |
+| priority suggestion | An AI-proposed change of a task's `priority` (1 to 4), applied only when the user accepts it. |
 | purge           | Hard-deleting a user's trash older than the retention when they create a task. |
 
 ## Commands
