@@ -20,6 +20,7 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { ErrorState, LoadingState } from "../../../components/ui";
 import TaskCardSmallConnected from "../../tasks/components/TaskCardSmall";
 import type { Task } from "../../tasks/types";
@@ -194,9 +195,13 @@ export default function KanbanBoard({
           <AddColumnForm projectId={projectId} />
         </div>
       </SortableContext>
-      <DragOverlay>
-        {activeTask && <TaskCardSmallConnected {...activeTask} />}
-      </DragOverlay>
+      {/* A transformed ancestor would offset the overlay's fixed position. */}
+      {createPortal(
+        <DragOverlay>
+          {activeTask && <TaskCardSmallConnected {...activeTask} />}
+        </DragOverlay>,
+        document.body,
+      )}
       {deleting && (
         <DeleteColumnDialog
           column={deleting}
