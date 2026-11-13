@@ -26,3 +26,12 @@ MAX_PRIORITY_REASON_LENGTH = 200
 MAX_LABEL_NAME_LENGTH = 50
 MAX_LABELS_PER_TASK = 10
 DEFAULT_LABEL_COLOUR = "#64748b"
+
+MAX_COLUMN_NAME_LENGTH = 50
+MAX_COLUMN_STATUS_LENGTH = 50
+DEFAULT_COLUMN_COLOUR = "#64748b"
+DEFAULT_COLUMNS = (
+    ("To Do", "pending", "#64748b", "uncomplete"),
+    ("In Progress", "in_progress", "#3b82f6", "uncomplete"),
+    ("Done", "done", "#10b981", "complete"),
+)
