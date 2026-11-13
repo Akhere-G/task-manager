@@ -14,6 +14,7 @@ import { getErrorType, trackEvent } from "../services/analytics";
 
 const toStagedTask = (task: CreateTaskInput, id: number): Task => ({
   ...task,
+  columnId: task.columnId ?? null,
   labelIds: task.labelIds ?? [],
   reminders: task.reminders ?? [],
   id,

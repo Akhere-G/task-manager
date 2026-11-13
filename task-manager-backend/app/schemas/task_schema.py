@@ -148,6 +148,7 @@ class TaskSchema(CamelAutoSchema):
     )
     description = StrippedString(allow_none=True)
     project_id = fields.Integer(strict=True, allow_none=True)
+    column_id = fields.Integer(strict=True, allow_none=True)
     label_ids = fields.List(
         fields.Integer(strict=True),
         validate=validate.Length(

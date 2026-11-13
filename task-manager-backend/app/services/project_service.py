@@ -18,6 +18,7 @@ from app.exceptions import (
     ProjectTooDeep,
 )
 from app.models import Project
+from app.services.column_service import create_default_columns
 from app.utils.project_tree import (
     Parents,
     depth_of,
@@ -134,6 +135,8 @@ def create_project(user_id: int, data: dict[str, Any]) -> Project:
     _check_name_free(user_id, parent_id, data["name"])
     project = Project(**data, user_id=user_id)
     db.session.add(project)
+    db.session.flush()
+    create_default_columns(project.id)
     db.session.commit()
     return project
 
@@ -192,5 +195,6 @@ def resolve_project_path(user_id: int, path: str) -> int | None:
             existing = Project(user_id=user_id, name=name, parent_id=parent_id)
             db.session.add(existing)
             db.session.flush()
+            create_default_columns(existing.id)
         parent_id = existing.id
     return parent_id

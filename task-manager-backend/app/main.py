@@ -17,6 +17,7 @@ from app.extensions import limiter
 from app.headers import register_response_headers
 from app.routes.ai_routes import ai_bp
 from app.routes.auth_routes import auth_bp
+from app.routes.column_routes import column_bp
 from app.routes.label_routes import label_bp
 from app.routes.mail_routes import mail_bp
 from app.routes.notifications import notification_bp
@@ -112,6 +113,7 @@ def create_app() -> Flask:
         app.register_blueprint(mail_bp)
         app.register_blueprint(notification_bp)
         app.register_blueprint(project_bp)
+        app.register_blueprint(column_bp)
         app.register_blueprint(label_bp)
 
         @app.route("/health")

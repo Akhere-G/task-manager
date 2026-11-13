@@ -53,6 +53,9 @@ class Task(Base):
     project_id: Mapped[int | None] = mapped_column(
         ForeignKey("projects.id", ondelete="SET NULL")
     )
+    column_id: Mapped[int | None] = mapped_column(
+        ForeignKey("project_columns.id", ondelete="SET NULL")
+    )
     is_deleted: Mapped[bool] = mapped_column(default=False, server_default="0")
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime)
     parent_id: Mapped[int | None] = mapped_column(

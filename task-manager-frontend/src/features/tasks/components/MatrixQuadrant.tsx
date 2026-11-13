@@ -1,3 +1,4 @@
+import { CountChip } from "../../../components/ui";
 import type { Priority, Task } from "../types";
 import TaskCardSmall from "./TaskCardSmall";
 
@@ -27,7 +28,7 @@ export default function MatrixQuadrant({
     >
       <header>
         <h2 className="font-semibold text-text-main">
-          P{priority} · {title} ({tasks.length})
+          P{priority} · {title} <CountChip count={tasks.length} />
         </h2>
         <p className="text-xs text-text-sub">{description}</p>
       </header>

@@ -57,6 +57,21 @@ class ProjectCycle(AppError):
     message = "A project cannot be moved inside itself."
 
 
+class ColumnNotFound(NotFoundError):
+    message = "No column with that id exists."
+
+
+class InvalidColumn(AppError):
+    field = "columnId"
+    message = "Choose one of this project's columns."
+
+
+class ColumnNameTaken(AppError):
+    status_code = 409
+    field = "name"
+    message = "This project already has a column with that name."
+
+
 class LabelNotFound(NotFoundError):
     message = "No label with that id exists."
 

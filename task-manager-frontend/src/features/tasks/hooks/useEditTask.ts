@@ -19,7 +19,10 @@ export default function useEditTask(props?: { onSuccess?: () => void }) {
     };
 
     const patchData: Partial<Task> = Object.fromEntries(
-      Object.entries(rawData).filter(([, value]) => value !== ""),
+      // The form has no column field; the loaded one would clash with a project change.
+      Object.entries(rawData).filter(
+        ([key, value]) => value !== "" && key !== "columnId",
+      ),
     );
 
     try {

@@ -16,6 +16,7 @@ from app.exceptions import (
 )
 from app.models import Task
 from app.schemas.task_schema import TaskSchema
+from app.services.column_service import ensure_column_in_project
 from app.services.label_service import (
     attach_label_ids,
     ensure_labels_belong_to,
@@ -131,10 +132,24 @@ def _resolve_names(
         data["label_ids"] = sorted(ids)
 
 
+def _assign_columns(items: list[dict[str, Any]]) -> None:
+    for item in items:
+        ensure_column_in_project(item.get("column_id"), item.get("project_id"))
+
+
+def _resolve_column(task: Task, data: dict[str, Any]) -> None:
+    project_id = data.get("project_id", task.project_id)
+    if data.get("column_id") is not None:
+        ensure_column_in_project(data["column_id"], project_id)
+    elif "project_id" in data and data["project_id"] != task.project_id:
+        data["column_id"] = None
+
+
 def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:
     for item in items:
         _resolve_names(user_id, item)
     ensure_projects_belong_to(user_id, (item.get("project_id") for item in items))
+    _assign_columns(items)
     label_ids = [item.pop("label_ids", []) for item in items]
     reminders = [item.pop("reminders", None) for item in items]
     for ids in label_ids:
@@ -199,6 +214,7 @@ def _check_subtask_fields(data: dict[str, Any]) -> None:
     if data.get("is_repeating") or data.get("repeat_by"):
         raise SubtaskCannotRepeat()
     data.pop("project_id", None)
+    data.pop("column_id", None)
 
 
 def _check_not_already_completed(task: Task, data: dict[str, Any]) -> None:
@@ -234,6 +250,8 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     new_reminders = data.get("reminders")
     if task.parent_id is not None:
         _check_subtask_fields(data)
+    else:
+        _resolve_column(task, data)
 
     for field, value in data.items():
         if field not in NON_COLUMN_FIELDS:

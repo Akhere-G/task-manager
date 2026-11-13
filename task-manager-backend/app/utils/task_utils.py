@@ -268,6 +268,7 @@ def _save_completed_occurrence(before: Task) -> Task:
         title=before.title,
         description=before.description,
         project_id=before.project_id,
+        column_id=before.column_id,
         priority=before.priority,
         start_at=before.start_at,
         end_at=before.end_at,

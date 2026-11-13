@@ -52,6 +52,14 @@ def move_task(
     if after_id is None and before_id is None:
         raise InvalidMove()
     task = _lock_task(user_id, task_id)
+    place_task(user_id, task, after_id, before_id)
+    db.session.commit()
+
+
+def place_task(
+    user_id: int, task: Task, after_id: int | None, before_id: int | None
+) -> None:
+    """Sets the task's order between the two neighbours without committing."""
     position = position_between(
         _position_of(user_id, after_id), _position_of(user_id, before_id)
     )
@@ -62,4 +70,3 @@ def move_task(
             _position_of(user_id, after_id), _position_of(user_id, before_id)
         )
     task.sort_order = position  # type: ignore
-    db.session.commit()

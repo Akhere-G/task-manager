@@ -7,6 +7,7 @@ import {
   Pagination,
 } from "../components/ui";
 import { DailyBrief } from "../features/ai/components";
+import KanbanBoard from "../features/columns/components/KanbanBoard";
 import {
   EisenhowerMatrix,
   TaskCalendar,
@@ -29,6 +30,7 @@ interface TasksBodyProps {
   layout: TaskLayout;
   currentDate: string;
   setCurrentDate: (date: Date) => void;
+  projectId: number | null;
   isInbox: boolean;
   sortable: boolean;
 }
@@ -38,6 +40,7 @@ function TasksBody({
   layout,
   currentDate,
   setCurrentDate,
+  projectId,
   isInbox,
   sortable,
 }: TasksBodyProps) {
@@ -48,6 +51,13 @@ function TasksBody({
         currentDate={new Date(currentDate)}
         setCurrentDate={setCurrentDate}
       />
+    );
+  }
+  if (layout === "kanban") {
+    return projectId === null ? (
+      <EmptyState searchMessage="Select a project to see its board." />
+    ) : (
+      <KanbanBoard projectId={projectId} tasks={tasks} />
     );
   }
   if (tasks.length === 0) {
@@ -86,6 +96,7 @@ export default function TasksPage() {
   const navigate = useNavigate();
 
   const tasks = data?.tasks ?? [];
+  const projectId = filters.project ? Number(filters.project) : null;
   const isCalendar = layout === "calendar";
   const hasTasks = tasks.length > 0;
   const showsPagination =
@@ -99,6 +110,7 @@ export default function TasksPage() {
       setCurrentDate={(date) =>
         updateFilters("currentDate", date.toISOString())
       }
+      projectId={projectId}
       isInbox={view === "inbox" && !isSearching}
       sortable={
         layout === "list" &&
@@ -133,7 +145,11 @@ export default function TasksPage() {
           />
         </div>
         <div className="mr-2 overflow-y-scroll max-w-[50vw] justify-self-end md:mr-0 md:col-start-2 md:row-start-1 md:self-baseline">
-          <LayoutToggle layout={layout} onSelect={selectLayout} />
+          <LayoutToggle
+            layout={layout}
+            hasProject={projectId !== null}
+            onSelect={selectLayout}
+          />
         </div>
         <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-1 md:translate-y-12 md:pb-12">
           {view === "inbox" && <QuickCapture />}

@@ -1,18 +1,33 @@
-import { CalendarDays, LayoutGrid, List } from "lucide-react";
+import {
+  CalendarDays,
+  Columns3,
+  LayoutGrid,
+  List,
+  type LucideIcon,
+} from "lucide-react";
 import type { TaskLayout } from "../views";
 
 interface LayoutToggleProps {
   layout: TaskLayout;
+  /** The board shows one project, so it needs one selected. */
+  hasProject: boolean;
   onSelect: (layout: TaskLayout) => void;
 }
 
-const OPTIONS = [
-  { value: "list", label: "List", Icon: List },
-  { value: "calendar", label: "Calendar", Icon: CalendarDays },
-  { value: "matrix", label: "Matrix", Icon: LayoutGrid },
-] as const;
+export default function LayoutToggle({
+  layout,
+  hasProject,
+  onSelect,
+}: LayoutToggleProps) {
+  const OPTIONS: { value: TaskLayout; label: string; Icon: LucideIcon }[] = [
+    { value: "list", label: "List", Icon: List },
+    { value: "calendar", label: "Calendar", Icon: CalendarDays },
+    { value: "matrix", label: "Matrix", Icon: LayoutGrid },
+  ];
 
-export default function LayoutToggle({ layout, onSelect }: LayoutToggleProps) {
+  if (hasProject) {
+    OPTIONS.push({ value: "kanban", label: "Board", Icon: Columns3 });
+  }
   return (
     <div
       role="group"
