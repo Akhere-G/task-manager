@@ -31,6 +31,7 @@ export interface Task {
   title: string;
   description: string | null;
   projectId: number | null;
+  columnId: number | null;
   labelIds: number[];
   reminders: Reminder[];
   parentId: number | null;
@@ -67,6 +68,7 @@ export type CreateTaskInput = Omit<
   | "completedAt"
   | "isGhost"
   | "seriesId"
+  | "columnId"
   | "labelIds"
   | "reminders"
   | "parentId"
@@ -75,6 +77,8 @@ export type CreateTaskInput = Omit<
   | "subtaskCompletedCount"
   | "subtasks"
 > & {
+  /** Puts the task in this column of its project; defaults to the first. */
+  columnId?: number | null;
   labelIds?: number[];
   /** Labels to find by name or create; added to `labelIds`. */
   labelNames?: string[];

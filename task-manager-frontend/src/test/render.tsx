@@ -22,6 +22,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     title: "Write report",
     description: null,
     projectId: null,
+    columnId: null,
     labelIds: [],
     reminders: [],
     parentId: null,
