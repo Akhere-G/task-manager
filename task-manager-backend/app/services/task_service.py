@@ -16,7 +16,7 @@ from app.exceptions import (
 )
 from app.models import Task
 from app.schemas.task_schema import TaskSchema
-from app.services.column_service import ensure_column_in_project, first_column_id
+from app.services.column_service import ensure_column_in_project
 from app.services.label_service import (
     attach_label_ids,
     ensure_labels_belong_to,
@@ -134,10 +134,7 @@ def _resolve_names(
 
 def _assign_columns(items: list[dict[str, Any]]) -> None:
     for item in items:
-        if item.get("column_id") is None:
-            item["column_id"] = first_column_id(item.get("project_id"))
-        else:
-            ensure_column_in_project(item["column_id"], item.get("project_id"))
+        ensure_column_in_project(item.get("column_id"), item.get("project_id"))
 
 
 def _resolve_column(task: Task, data: dict[str, Any]) -> None:
@@ -145,7 +142,7 @@ def _resolve_column(task: Task, data: dict[str, Any]) -> None:
     if data.get("column_id") is not None:
         ensure_column_in_project(data["column_id"], project_id)
     elif "project_id" in data and data["project_id"] != task.project_id:
-        data["column_id"] = first_column_id(data["project_id"])
+        data["column_id"] = None
 
 
 def create_tasks(user_id: int, items: list[dict[str, Any]]) -> list[Task]:

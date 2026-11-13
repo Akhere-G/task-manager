@@ -8,7 +8,6 @@ from app.exceptions import (
     ColumnNameTaken,
     ColumnNotFound,
     InvalidColumn,
-    LastColumn,
     ProjectNotFound,
 )
 from app.models import OnDrop, Project, ProjectColumn, Task
@@ -48,12 +47,7 @@ def _columns_of(project_id: int) -> list[ProjectColumn]:
 
 def list_columns(user_id: int, project_id: int) -> list[ProjectColumn]:
     _ensure_project_belongs_to(user_id, project_id)
-    columns = _columns_of(project_id)
-    if not columns:
-        create_default_columns(project_id)
-        db.session.commit()
-        columns = _columns_of(project_id)
-    return columns
+    return _columns_of(project_id)
 
 
 def get_column(user_id: int, column_id: int) -> ProjectColumn:
@@ -65,17 +59,6 @@ def get_column(user_id: int, column_id: int) -> ProjectColumn:
     if column is None:
         raise ColumnNotFound()
     return column
-
-
-def first_column_id(project_id: int | None) -> int | None:
-    if project_id is None:
-        return None
-    return db.session.scalar(
-        select(ProjectColumn.id)
-        .where(ProjectColumn.project_id == project_id)
-        .order_by(ProjectColumn.position, ProjectColumn.id)
-        .limit(1)
-    )
 
 
 def ensure_column_in_project(column_id: int | None, project_id: int | None) -> None:
@@ -143,10 +126,8 @@ def reorder_columns(
     return [by_id[column_id] for column_id in column_ids]
 
 
-def delete_column(user_id: int, column_id: int, move_to_id: int) -> None:
+def delete_column(user_id: int, column_id: int, move_to_id: int | None) -> None:
     column = get_column(user_id, column_id)
-    if len(_columns_of(column.project_id)) == 1:
-        raise LastColumn()
     if move_to_id == column.id:
         raise InvalidColumn("Choose a different column for its tasks.")
     ensure_column_in_project(move_to_id, column.project_id)

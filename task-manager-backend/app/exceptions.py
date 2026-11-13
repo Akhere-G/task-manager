@@ -72,11 +72,6 @@ class ColumnNameTaken(AppError):
     message = "This project already has a column with that name."
 
 
-class LastColumn(AppError):
-    status_code = 409
-    message = "A project needs at least one column."
-
-
 class LabelNotFound(NotFoundError):
     message = "No label with that id exists."
 

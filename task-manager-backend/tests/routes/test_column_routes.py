@@ -93,11 +93,10 @@ def test_columns_are_reordered(session: FlaskClient) -> None:
     assert partial.status_code == 400
 
 
-def test_new_tasks_land_in_the_first_column(session: FlaskClient) -> None:
-    project_id = add_project(session)
-    task = add_task(session, project_id, "one")
+def test_new_tasks_start_unassigned(session: FlaskClient) -> None:
+    task = add_task(session, add_project(session), "one")
 
-    assert task["columnId"] == columns_of(session, project_id)[0]["id"]
+    assert task["columnId"] is None
     assert (
         session.post("/api/tasks", json={"title": "inbox"}).get_json()["columnId"]
         is None
@@ -185,21 +184,36 @@ def test_a_task_cannot_be_dropped_on_another_projects_column(
     assert drop(session, task["id"], other["id"]).status_code == 400
 
 
-def test_moving_a_task_to_another_project_uses_its_first_column(
+def test_moving_a_task_to_another_project_unassigns_it(
     session: FlaskClient,
 ) -> None:
-    task = add_task(session, add_project(session), "one")
+    project_id = add_project(session)
+    done = column_named(session, project_id, "Done")
+    task = add_task(session, project_id, "one", columnId=done["id"])
     other_id = add_project(session, "Other")
 
     moved = session.patch(f"/api/tasks/{task['id']}", json={"projectId": other_id})
 
-    assert moved.get_json()["columnId"] == columns_of(session, other_id)[0]["id"]
+    assert moved.get_json()["columnId"] is None
+
+
+def test_dropping_on_unassigned_clears_the_column(session: FlaskClient) -> None:
+    project_id = add_project(session)
+    done = column_named(session, project_id, "Done")
+    task = add_task(session, project_id, "one", columnId=done["id"])
+
+    response = session.post(
+        f"/api/tasks/{task['id']}/board-move", json={"columnId": None}
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["columnId"] is None
 
 
 def test_deleting_a_column_moves_its_tasks(session: FlaskClient) -> None:
     project_id = add_project(session)
-    task = add_task(session, project_id, "one")
     todo = column_named(session, project_id, "To Do")
+    task = add_task(session, project_id, "one", columnId=todo["id"])
     progress = column_named(session, project_id, "In Progress")
 
     deleted = session.delete(
@@ -214,7 +228,7 @@ def test_deleting_a_column_moves_its_tasks(session: FlaskClient) -> None:
     assert len(columns_of(session, project_id)) == 2
 
 
-def test_deleting_needs_a_target_and_never_the_last_column(
+def test_deleting_needs_a_target_but_not_a_real_column(
     session: FlaskClient,
 ) -> None:
     project_id = add_project(session)
@@ -225,10 +239,21 @@ def test_deleting_needs_a_target_and_never_the_last_column(
         session.delete(f"/api/columns/{ids[0]}", json={"moveToId": ids[0]}).status_code
         == 400
     )
-    for column_id in ids[:2]:
-        session.delete(f"/api/columns/{column_id}", json={"moveToId": ids[2]})
-    last = session.delete(f"/api/columns/{ids[2]}", json={"moveToId": ids[2]})
-    assert last.status_code == 409
+
+
+def test_deleting_can_send_tasks_to_unassigned_even_the_last_column(
+    session: FlaskClient,
+) -> None:
+    project_id = add_project(session)
+    ids = [c["id"] for c in columns_of(session, project_id)]
+    task = add_task(session, project_id, "one", columnId=ids[2])
+
+    for column_id in ids:
+        response = session.delete(f"/api/columns/{column_id}", json={"moveToId": None})
+        assert response.status_code == 200
+
+    assert columns_of(session, project_id) == []
+    assert session.get(f"/api/tasks/{task['id']}").get_json()["columnId"] is None
 
 
 def test_other_users_cannot_see_or_change_columns(

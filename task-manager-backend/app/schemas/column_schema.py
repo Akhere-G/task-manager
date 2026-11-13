@@ -53,11 +53,12 @@ class ColumnDeleteSchema(CamelSchema):
     move_to_id = fields.Integer(
         required=True,
         strict=True,
+        allow_none=True,
         error_messages={"required": "Choose a column for its tasks."},
     )
 
 
 class BoardMoveSchema(CamelSchema):
-    column_id = fields.Integer(required=True, strict=True)
+    column_id = fields.Integer(required=True, strict=True, allow_none=True)
     after_id = fields.Integer(strict=True, allow_none=True)
     before_id = fields.Integer(strict=True, allow_none=True)
