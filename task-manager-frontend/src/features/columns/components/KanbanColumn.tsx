@@ -1,14 +1,10 @@
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Settings } from "lucide-react";
 import { useState } from "react";
 import type { Task } from "../../tasks/types";
 import ColumnSettings from "./ColumnSettings";
-import KanbanCard, { taskDragId } from "./KanbanCard";
+import ColumnCards from "./ColumnCards";
 import QuickAddCard from "./QuickAddCard";
 import type { ProjectColumn } from "../types";
 
@@ -17,14 +13,12 @@ export const columnDragId = (id: number) => `column-${id}`;
 interface KanbanColumnProps {
   column: ProjectColumn;
   tasks: Task[];
-  canDelete: boolean;
   onDelete: () => void;
 }
 
 export default function KanbanColumn({
   column,
   tasks,
-  canDelete,
   onDelete,
 }: KanbanColumnProps) {
   const [showSettings, setShowSettings] = useState(false);
@@ -76,23 +70,8 @@ export default function KanbanColumn({
           <Settings size={16} aria-hidden />
         </button>
       </header>
-      {showSettings && (
-        <ColumnSettings
-          column={column}
-          canDelete={canDelete}
-          onDelete={onDelete}
-        />
-      )}
-      <SortableContext
-        items={tasks.map((task) => taskDragId(task.id))}
-        strategy={verticalListSortingStrategy}
-      >
-        <ul className="flex min-h-12 flex-col gap-2 overflow-y-auto">
-          {tasks.map((task) => (
-            <KanbanCard key={task.id} task={task} />
-          ))}
-        </ul>
-      </SortableContext>
+      {showSettings && <ColumnSettings column={column} onDelete={onDelete} />}
+      <ColumnCards tasks={tasks} />
       <QuickAddCard
         projectId={column.projectId}
         columnId={column.id}

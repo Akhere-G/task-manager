@@ -25,7 +25,7 @@ export function useUpdateColumn(projectId: number) {
 export function useDeleteColumn(projectId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, moveToId }: { id: number; moveToId: number }) =>
+    mutationFn: ({ id, moveToId }: { id: number; moveToId: number | null }) =>
       columnService.delete(id, moveToId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: columnsKey(projectId) });

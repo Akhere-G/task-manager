@@ -13,11 +13,13 @@ describe("LayoutToggle", () => {
     expect(onSelect).toHaveBeenCalledWith("kanban");
   });
 
-  it("disables the board without a project", () => {
+  it("hides the board without a project", () => {
     render(
       <LayoutToggle layout="list" hasProject={false} onSelect={vi.fn()} />,
     );
 
-    expect(screen.getByRole("button", { name: "Board" })).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "Board" }),
+    ).not.toBeInTheDocument();
   });
 });

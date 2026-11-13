@@ -40,6 +40,7 @@ const tasks = [
     isCompleted: true,
   }),
   makeTask({ id: 14, title: "Elsewhere", projectId: 8, columnId: null }),
+  makeTask({ id: 15, title: "Loose end", projectId: 7, columnId: null }),
 ];
 
 const board = () => {
@@ -61,6 +62,59 @@ describe("KanbanBoard", () => {
     ).toBeVisible();
     expect(within(await region("Done")).getByText("Ship")).toBeVisible();
     expect(screen.queryByText("Elsewhere")).not.toBeInTheDocument();
+  });
+
+  it("shows tasks with no column in Unassigned, the first column", async () => {
+    board();
+
+    const unassigned = await region("Unassigned");
+    expect(within(unassigned).getByText("Loose end")).toBeVisible();
+    const regions = screen.getAllByRole("region").map((r) => r.ariaLabel);
+    expect(regions[0]).toBe("Unassigned");
+  });
+
+  it("adds a task to Unassigned without a column", async () => {
+    mock.onPost("/tasks").reply(201, {});
+    board();
+
+    const unassigned = await region("Unassigned");
+    await userEvent.click(
+      within(unassigned).getByRole("button", { name: "Add task" }),
+    );
+    await userEvent.type(
+      within(unassigned).getByLabelText("New task in Unassigned"),
+      "Idea{Enter}",
+    );
+
+    await waitFor(() => expect(mock.history.post).toHaveLength(1));
+    expect(JSON.parse(mock.history.post[0].data)).toMatchObject({
+      title: "Idea",
+      columnId: null,
+    });
+  });
+
+  it("can send a deleted column's tasks to Unassigned", async () => {
+    mock.onDelete("/columns/1").reply(200, {});
+    board();
+
+    const todo = await region("To Do");
+    await userEvent.click(
+      within(todo).getByRole("button", { name: "Settings for To Do" }),
+    );
+    await userEvent.click(
+      within(todo).getByRole("button", { name: "Delete column" }),
+    );
+    await userEvent.selectOptions(
+      screen.getByLabelText("Move its tasks to"),
+      "",
+    );
+    const [, confirm] = screen.getAllByRole("button", {
+      name: "Delete column",
+    });
+    await userEvent.click(confirm);
+
+    await waitFor(() => expect(mock.history.delete).toHaveLength(1));
+    expect(JSON.parse(mock.history.delete[0].data)).toEqual({ moveToId: null });
   });
 
   it("changes what a column does on drop from its settings", async () => {

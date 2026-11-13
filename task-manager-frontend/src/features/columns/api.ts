@@ -41,7 +41,7 @@ export const columnService = {
     );
     return response.data.columns;
   },
-  delete: async (id: number, moveToId: number) => {
+  delete: async (id: number, moveToId: number | null) => {
     await apiClient.delete(`/columns/${id}`, { data: { moveToId } });
   },
   moveTask: async (

@@ -24,7 +24,7 @@ export type ColumnInput = Pick<ProjectColumn, "name"> &
   Partial<Pick<ProjectColumn, "status" | "colour" | "onDrop">>;
 
 export interface BoardMoveInput {
-  columnId: number;
+  columnId: number | null;
   afterId: number | null;
   beforeId: number | null;
 }

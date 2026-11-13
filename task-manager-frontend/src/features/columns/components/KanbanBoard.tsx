@@ -27,6 +27,8 @@ import {
   applyOnDrop,
   dropTask,
   groupByColumn,
+  type ColumnKey,
+  type DropTarget,
   type TasksByColumn,
 } from "../board";
 import { readDragRef } from "../dragRef";
@@ -35,6 +37,7 @@ import useColumns from "../hooks/useColumns";
 import useMoveTaskToColumn from "../hooks/useMoveTaskToColumn";
 import type { ProjectColumn } from "../types";
 import AddColumnForm from "./AddColumnForm";
+import UnassignedColumn from "./UnassignedColumn";
 import DeleteColumnDialog from "./DeleteColumnDialog";
 import KanbanColumn, { columnDragId } from "./KanbanColumn";
 
@@ -62,7 +65,7 @@ const collide: CollisionDetection = (args) => {
   const hits = pointerHits.length > 0 ? pointerHits : rectIntersection(args);
   const hit =
     hits.find((candidate) => typeOf(candidate.id) === "task") ??
-    hits.find((candidate) => typeOf(candidate.id) === "column");
+    hits.find((candidate) => typeOf(candidate.id) !== "task");
   return hit ? [hit] : [];
 };
 
@@ -109,21 +112,21 @@ export default function KanbanBoard({
     );
   };
 
-  const dropOnBoard = (
-    taskId: number,
-    overId: number,
-    overIsColumn: boolean,
-  ) => {
-    const result = dropTask(groups, taskId, overId, overIsColumn);
-    const column = columns.find((c) => c.id === result?.move.columnId);
-    if (!result || !column) return;
+  const dropOnBoard = (taskId: number, target: DropTarget) => {
+    const result = dropTask(groups, taskId, target);
+    if (!result) return;
+    const column =
+      columns.find((candidate) => candidate.id === result.move.columnId) ??
+      null;
+    if (result.move.columnId !== null && column === null) return;
 
+    const keys: ColumnKey[] = [null, ...columns.map((c) => c.id)];
     const next: TasksByColumn = new Map(
-      columns.map((c) => [
-        c.id,
-        (result.columns.get(c.id) ?? []).flatMap((task) => {
+      keys.map((key) => [
+        key,
+        (result.columns.get(key) ?? []).flatMap((task) => {
           if (task.id !== taskId) return [task];
-          const moved = applyOnDrop(task, column.id, column.onDrop);
+          const moved = applyOnDrop(task, column);
           return moved ? [moved] : [];
         }),
       ]),
@@ -132,7 +135,7 @@ export default function KanbanBoard({
     moveTask({
       id: taskId,
       move: result.move,
-      board: columns.flatMap((c) => next.get(c.id) ?? []),
+      board: keys.flatMap((key) => next.get(key) ?? []),
     });
   };
 
@@ -151,8 +154,12 @@ export default function KanbanBoard({
       );
       if (next.some((id, index) => id !== ids[index])) reorderColumns(next);
     } else if (from.type === "task") {
-      if (to.type === "task") dropOnBoard(from.taskId, to.taskId, false);
-      else dropOnBoard(from.taskId, to.columnId, true);
+      if (to.type === "task") {
+        dropOnBoard(from.taskId, { type: "task", taskId: to.taskId });
+      } else {
+        const columnId = to.type === "column" ? to.columnId : null;
+        dropOnBoard(from.taskId, { type: "column", columnId });
+      }
     }
   };
 
@@ -172,12 +179,15 @@ export default function KanbanBoard({
           aria-label="Kanban board"
           className="flex items-start gap-3 overflow-x-auto pb-4"
         >
+          <UnassignedColumn
+            projectId={projectId}
+            tasks={groups.get(null) ?? []}
+          />
           {columns.map((column) => (
             <KanbanColumn
               key={column.id}
               column={column}
               tasks={groups.get(column.id) ?? []}
-              canDelete={columns.length > 1}
               onDelete={() => setDeleting(column)}
             />
           ))}

@@ -14,11 +14,12 @@ export default function DeleteColumnDialog({
   otherColumns,
   close,
 }: DeleteColumnDialogProps) {
-  const [moveToId, setMoveToId] = useState(otherColumns[0]?.id);
+  const [moveToId, setMoveToId] = useState<number | null>(
+    otherColumns[0]?.id ?? null,
+  );
   const { mutate: deleteColumn } = useDeleteColumn(column.projectId);
 
   const confirm = () => {
-    if (moveToId === undefined) return;
     deleteColumn({ id: column.id, moveToId }, { onSuccess: close });
   };
 
@@ -32,10 +33,13 @@ export default function DeleteColumnDialog({
       <label className="flex flex-col gap-2 text-text-main">
         Move its tasks to
         <select
-          value={moveToId}
-          onChange={(event) => setMoveToId(Number(event.target.value))}
+          value={moveToId ?? ""}
+          onChange={(event) =>
+            setMoveToId(event.target.value ? Number(event.target.value) : null)
+          }
           className="rounded-lg border border-slate-300 bg-canvas px-2 py-1 dark:border-slate-700"
         >
+          <option value="">Unassigned</option>
           {otherColumns.map((other) => (
             <option key={other.id} value={other.id}>
               {other.name}

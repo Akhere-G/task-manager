@@ -1,4 +1,10 @@
-import { CalendarDays, Columns3, LayoutGrid, List } from "lucide-react";
+import {
+  CalendarDays,
+  Columns3,
+  LayoutGrid,
+  List,
+  type LucideIcon,
+} from "lucide-react";
 import type { TaskLayout } from "../views";
 
 interface LayoutToggleProps {
@@ -8,18 +14,20 @@ interface LayoutToggleProps {
   onSelect: (layout: TaskLayout) => void;
 }
 
-const OPTIONS = [
-  { value: "list", label: "List", Icon: List },
-  { value: "calendar", label: "Calendar", Icon: CalendarDays },
-  { value: "matrix", label: "Matrix", Icon: LayoutGrid },
-  { value: "kanban", label: "Board", Icon: Columns3 },
-] as const;
-
 export default function LayoutToggle({
   layout,
   hasProject,
   onSelect,
 }: LayoutToggleProps) {
+  const OPTIONS: { value: TaskLayout; label: string; Icon: LucideIcon }[] = [
+    { value: "list", label: "List", Icon: List },
+    { value: "calendar", label: "Calendar", Icon: CalendarDays },
+    { value: "matrix", label: "Matrix", Icon: LayoutGrid },
+  ];
+
+  if (hasProject) {
+    OPTIONS.push({ value: "kanban", label: "Board", Icon: Columns3 });
+  }
   return (
     <div
       role="group"
@@ -31,14 +39,8 @@ export default function LayoutToggle({
           key={value}
           type="button"
           aria-pressed={layout === value}
-          disabled={value === "kanban" && !hasProject}
-          title={
-            value === "kanban" && !hasProject
-              ? "Select a project to use its board"
-              : undefined
-          }
           onClick={() => onSelect(value)}
-          className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm disabled:opacity-50 ${layout === value ? "bg-brand text-white" : "bg-surface text-text-main hover:bg-brand/20"}`}
+          className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm ${layout === value ? "bg-brand text-white" : "bg-surface text-text-main hover:bg-brand/20"}`}
         >
           <Icon size={16} aria-hidden />
           {label}

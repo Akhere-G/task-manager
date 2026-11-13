@@ -5,7 +5,7 @@ import { DEFAULT_PRIORITY } from "../../tasks/types";
 
 interface QuickAddCardProps {
   projectId: number;
-  columnId: number;
+  columnId: number | null;
   columnName: string;
 }
 

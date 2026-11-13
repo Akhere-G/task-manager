@@ -11,7 +11,6 @@ import {
 interface ColumnSettingsProps {
   column: ProjectColumn;
   onDelete: () => void;
-  canDelete: boolean;
 }
 
 const fieldClass =
@@ -20,7 +19,6 @@ const fieldClass =
 export default function ColumnSettings({
   column,
   onDelete,
-  canDelete,
 }: ColumnSettingsProps) {
   const { mutate: updateColumn } = useUpdateColumn(column.projectId);
   const [name, setName] = useState(column.name);
@@ -90,9 +88,7 @@ export default function ColumnSettings({
       <button
         type="button"
         onClick={onDelete}
-        disabled={!canDelete}
-        title={canDelete ? undefined : "A project needs at least one column"}
-        className="flex items-center gap-1 self-start text-failure disabled:opacity-40"
+        className="flex items-center gap-1 self-start text-failure"
       >
         <Trash2 size={14} aria-hidden />
         Delete column
