@@ -66,7 +66,7 @@ const apiParamMap: Record<keyof TaskFilters, string> = {
 /** URL params that describe where the user is, not what they filtered. */
 const LOCATION_PARAMS = ["view", "layout", "cal"];
 
-const MATRIX_PAGE_SIZE = 200;
+const BOARD_PAGE_SIZE = 200;
 
 const readLayout = (value: string | null): TaskLayout =>
   isTaskLayout(value) ? value : "list";
@@ -103,7 +103,7 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     return () => clearTimeout(handler);
   }, [deferredSearch, searchParams, setSearchParams]);
 
-  const filters: TaskFilters = {
+  const searchFilters: TaskFilters = {
     search: searchInput,
     project: searchParams.get("project") ?? defaults.project,
     label: searchParams.get("label") ?? defaults.label,
@@ -115,8 +115,14 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     currentDate: searchParams.get("current_date") ?? defaults.currentDate,
   };
 
+  const isKanban = layout === "kanban";
+  // A board shows every task of its project, done or not, in manual order.
+  const filters: TaskFilters = isKanban
+    ? { ...searchFilters, isCompleted: "all", sortBy: "manual", order: "asc" }
+    : searchFilters;
+
   const isCalendar = layout === "calendar";
-  const pageSize = layout === "matrix" ? MATRIX_PAGE_SIZE : perPage;
+  const pageSize = layout === "matrix" || isKanban ? BOARD_PAGE_SIZE : perPage;
 
   const result = useQuery({
     queryKey: [

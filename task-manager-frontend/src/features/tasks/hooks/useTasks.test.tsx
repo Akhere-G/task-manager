@@ -124,11 +124,29 @@ describe("smart views", () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
     const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
-      route: "/?layout=kanban",
+      route: "/?layout=timeline",
     });
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(result.current.layout).toBe("list");
     expect(lastRequestParams().get("limit")).toBe("10");
+  });
+});
+
+describe("board layout", () => {
+  it("asks for every task of the project in manual order, done or not", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+
+    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+      route: "/?layout=kanban&project=7&is_completed=false",
+    });
+
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+    const params = lastRequestParams();
+    expect(result.current.layout).toBe("kanban");
+    expect(params.get("project")).toBe("7");
+    expect(params.get("is_completed")).toBe("all");
+    expect(params.get("sort_by")).toBe("manual");
+    expect(params.get("limit")).toBe("200");
   });
 });

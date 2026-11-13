@@ -11,7 +11,7 @@ export const TASK_VIEWS = [
 ] as const;
 
 export type TaskView = (typeof TASK_VIEWS)[number]["value"];
-export const TASK_LAYOUTS = ["list", "calendar", "matrix"] as const;
+export const TASK_LAYOUTS = ["list", "calendar", "matrix", "kanban"] as const;
 export type TaskLayout = (typeof TASK_LAYOUTS)[number];
 export type CountedView = Exclude<TaskView, "all">;
 export type TaskViewCounts = Record<CountedView, number>;
