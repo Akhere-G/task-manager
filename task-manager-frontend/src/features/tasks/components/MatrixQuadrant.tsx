@@ -21,13 +21,13 @@ export default function MatrixQuadrant({
   return (
     <section
       aria-label={title}
-      className="flex min-h-40 max-h-96 flex-col gap-2 rounded-xl bg-surface p-3"
+      className="flex min-h-40 max-h-96 flex-col gap-2 rounded-xl bg-surface p-3 max-w-screen"
       onDragOver={(event) => event.preventDefault()}
       onDrop={() => onDropTask(priority)}
     >
       <header>
         <h2 className="font-semibold text-text-main">
-          P{priority} · {title}
+          P{priority} · {title} ({tasks.length})
         </h2>
         <p className="text-xs text-text-sub">{description}</p>
       </header>
