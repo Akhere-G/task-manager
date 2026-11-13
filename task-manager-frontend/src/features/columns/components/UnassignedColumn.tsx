@@ -1,4 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
+import { CountChip } from "../../../components/ui";
 import type { Task } from "../../tasks/types";
 import ColumnCards from "./ColumnCards";
 import QuickAddCard from "./QuickAddCard";
@@ -31,7 +32,7 @@ export default function UnassignedColumn({
           className="h-3 w-3 shrink-0 rounded-full border border-slate-400"
         />
         <h2 className="flex-1 truncate font-semibold text-text-main">
-          Unassigned ({tasks.length})
+          Unassigned <CountChip count={tasks.length} />
         </h2>
       </header>
       <ColumnCards tasks={tasks} />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FormInput } from "../../../components/ui";
+import { CountChip, FormInput } from "../../../components/ui";
 import {
   completedTasksOptions,
   isAscOptions,
@@ -53,7 +53,7 @@ export default function TasksHeader({
       <div className="flex justify-between items-start gap-2">
         <header className="w-full max-w-52 flex flex-col">
           <h1 className="text-3xl font-bold text-text-main transition-colors">
-            Tasks ({totalTasks})
+            Tasks <CountChip count={totalTasks} />
           </h1>
           <p className="text-text-sub">Manage your daily goals.</p>
         </header>

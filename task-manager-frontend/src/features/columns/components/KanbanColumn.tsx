@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Settings } from "lucide-react";
 import { useState } from "react";
+import { CountChip } from "../../../components/ui";
 import type { Task } from "../../tasks/types";
 import ColumnSettings from "./ColumnSettings";
 import ColumnCards from "./ColumnCards";
@@ -58,7 +59,7 @@ export default function KanbanColumn({
           style={{ backgroundColor: column.colour }}
         />
         <h2 className="flex-1 truncate font-semibold text-text-main">
-          {column.name} ({tasks.length})
+          {column.name} <CountChip count={tasks.length} />
         </h2>
         <button
           type="button"
