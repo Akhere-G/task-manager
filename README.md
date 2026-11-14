@@ -9,6 +9,7 @@ A high-performance task engine designed to turn raw productivity data into actio
 ## Core Features
 
 * **Smart Views:** Inbox, Today, Upcoming, Overdue, This week and This month sit in a sidebar (a closable panel on mobile), each with a live count. Switch any view between a list, a calendar and an Eisenhower matrix (priorities 1 to 4 as four quadrants; drag a task to another quadrant to change its priority); everything, including search and sort, lives in the URL so views can be bookmarked.
+* **Kanban Board:** Pick a project and switch to Board to see its tasks as cards in columns. Every project starts with To Do, In Progress and Done; add, rename, recolour, reorder or delete your own. Each column decides what dropping a card does: do nothing, mark it complete, mark it incomplete, or move it to the trash. Tasks without a column sit in an Unassigned column, and each column shows a count chip.
 * **Projects & Labels:** Organise tasks into nested projects and tag them with labels. Pick a project, or "All", from the sidebar to filter the list.
 * **Inbox:** Capture a title-only task in one line, with no date or project, and triage it later.
 * **Priorities:** Mark tasks P1 to P4, then filter or sort by priority.
@@ -18,7 +19,7 @@ A high-performance task engine designed to turn raw productivity data into actio
 * **Snooze:** Move a task to tomorrow, the weekend, next week or a date, keeping its time of day. Repeating tasks can skip to their next occurrence.
 * **Reminders:** Add several reminders per task: 30 minutes or 1 hour before, at the start of the day, or at a set time. Push notifications are sent by the reminder runner (see below).
 * **Trash:** Deleted tasks are kept for 30 days and can be restored.
-* **Priority Suggestions (AI):** From the matrix, ask the AI to review your open tasks and propose priority changes with a short reason each; accept or dismiss every one.
+* **Priority Suggestions (AI):** From the matrix, ask the AI to review your open tasks and propose priority changes with a short reason each. Select the ones you want and accept them together, or dismiss the rest.
 * **Your Daily Brief (AI Coach):** Start your day with an AI coach that reviews pending and overdue tasks to suggest the best plan of action for a productive morning.
 * **Break It Down (AI Subtasks):** The built-in AI splits a large task into a clear checklist of smaller steps, saved as real subtasks.
 * **Quick-Add Tools:** Add tasks instantly by typing naturally with our AI assistant, or upload a CSV file to import many at once. Download a simple or advanced CSV template with examples of dated, dateless and repeating tasks. The time zone is taken from your browser, and you can export your tasks as CSV from Settings.

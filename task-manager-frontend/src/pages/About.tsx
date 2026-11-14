@@ -1,73 +1,99 @@
 import React from "react";
 import {
+  AlarmClock,
   BarChart3,
-  Timer,
+  Bell,
+  CalendarDays,
+  Columns3,
   Cpu,
-  Zap,
-  Split,
-  BrainCircuit,
-  LayoutList,
+  Download,
+  Folder,
+  Sparkles,
   RefreshCw,
-  Activity,
-  Clock,
+  Split,
+  Timer,
+  Upload,
+  Zap,
 } from "lucide-react";
 
 export default function AboutPage() {
   const FEATURES = [
     {
-      icon: <LayoutList className="text-brand" size={28} />,
-      title: "Flexible Views",
+      icon: <CalendarDays className="text-brand" size={28} />,
+      title: "Calendar View",
       description:
-        "Switch between a clean list and a full calendar. Use smart filters and sorting to see exactly what needs your attention right now.",
+        "See your week at a glance and drag tasks onto new days in seconds, so your schedule always matches your plans.",
+    },
+    {
+      icon: <Columns3 className="text-brand" size={28} />,
+      title: "Kanban Board",
+      description:
+        "Move work from idea to done on a visual board. Drag each task across columns and watch your projects move forward.",
+    },
+    {
+      icon: <Sparkles className="text-brand" size={28} />,
+      title: "Smart Prioritise",
+      description:
+        "Stop guessing what matters. Sort tasks into four priority quadrants with the Eisenhower Matrix, then let AI suggest changes with a clear reason for each.",
     },
     {
       icon: <RefreshCw className="text-brand" size={28} />,
       title: "Seamless Habits",
       description:
-        "Set tasks to repeat daily, weekly, or monthly. Our system projects 'ghost tasks' into your future calendar so you can plan for upcoming commitments.",
+        "Never lose track of recurring commitments. Set tasks to repeat and see what is coming up on your calendar, ready to plan around.",
     },
     {
-      icon: <BrainCircuit className="text-brand" size={28} />,
-      title: "Your Daily Brief",
+      icon: <Bell className="text-brand" size={28} />,
+      title: "Reminders",
       description:
-        "Start your day with an AI coach. It looks at your pending and overdue tasks to suggest the best plan of action for a productive morning.",
+        "Never miss a deadline. Get timely push notifications, from half an hour ahead or at a time you choose.",
+    },
+    {
+      icon: <Folder className="text-brand" size={28} />,
+      title: "Projects and Labels",
+      description:
+        "Keep work, home and everything in between in order. Group tasks into projects, tag them with labels and see only what you need.",
+    },
+    {
+      icon: <AlarmClock className="text-brand" size={28} />,
+      title: "Snooze",
+      description:
+        "Life gets busy. Push a task to tomorrow, the weekend or a date you choose, and keep its time of day.",
+    },
+    {
+      icon: (
+        <span className="flex gap-1">
+          <Upload className="text-brand" size={22} />
+          <Download className="text-brand" size={22} />
+        </span>
+      ),
+      title: "Import and Export",
+      description:
+        "Bring in tasks from a spreadsheet in one go, or export everything to CSV whenever you need a copy.",
     },
     {
       icon: <Split className="text-brand" size={28} />,
       title: "Break It Down",
       description:
-        "Don't let big projects overwhelm you. Our AI can take a single large task and split it into a clear, manageable checklist of smaller steps.",
+        "Big goals feel easier in small steps. Split a large task into a checklist by hand or with AI, then tick off progress as you go.",
     },
     {
       icon: <Zap className="text-brand" size={28} />,
-      title: "Quick-Add Tools",
+      title: "Quick Add",
       description:
-        "Add tasks instantly by typing naturally with our AI assistant, or upload a CSV file to move an entire project's worth of tasks in one go.",
+        "Capture an idea in seconds. Type it the way you think and the AI fills in the details, so nothing slips away.",
     },
-
     {
       icon: <Timer className="text-brand" size={28} />,
       title: "Pomodoro Timer",
       description:
-        "Boost your focus using timed work intervals. Every session you complete is automatically logged against your tasks for accurate time-tracking.",
-    },
-    {
-      icon: <Activity className="text-brand" size={28} />,
-      title: "Performance Summary",
-      description:
-        "See your progress with a year-long activity map. Monitor your 'Backlog Health' and daily productivity to stay on top of your work.",
-    },
-    {
-      icon: <Clock className="text-brand" size={28} />,
-      title: "Planning & Deadlines",
-      description:
-        "Look at the week ahead to see upcoming deadlines. Our charts show you exactly how close your due dates are and which tasks are overdue.",
+        "Get more done in less time. Work in focused sprints and mark a task complete the moment a session ends.",
     },
     {
       icon: <BarChart3 className="text-brand" size={28} />,
-      title: "Workload Insights",
+      title: "Stats and Planning",
       description:
-        "Understand where your time goes. See a breakdown of time spent on different projects, like work, health, or hobbies, over the last seven days.",
+        "The Stats page shows your progress over time, from your yearly activity to your backlog health and where your time goes. Use it to plan ahead with confidence.",
     },
   ];
 
@@ -78,14 +104,13 @@ export default function AboutPage() {
           Visualise Your <span className="text-brand">Workflow.</span>
         </h1>
         <p className="text-xl text-text-sub max-w-2xl mx-auto leading-relaxed">
-          A high-performance task engine designed to turn raw productivity data
-          into actionable insights. Track your progress, manage your energy, and
-          master your time.
+          Turn a busy to-do list into a clear plan. Know what matters most, see
+          what is coming, and get more done.
         </p>
       </section>
 
       <h2 className="text-3xl font-bold text-text-main mb-10 text-left border-b border-border-light pb-4 px-2 md:px-0">
-        Core Methodology
+        Everything You Need
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
         {FEATURES.map((feature) => (
@@ -104,21 +129,14 @@ export default function AboutPage() {
             <div className="flex items-center gap-2 mb-3">
               <Cpu className="text-brand" size={24} />
               <h2 className="text-2xl font-bold text-text-main">
-                The Architecture
+                Built to Be Fast and Reliable
               </h2>
             </div>
             <p className="text-text-sub leading-relaxed text-lg">
-              Our platform is built on a modern full-stack architecture designed
-              for high performance. We utilise a{" "}
-              <strong>Python, Flask and SQLAlchemy</strong> backend to handle
-              the heavy lifting, from <strong>database management</strong> to{" "}
-              <strong>AI-driven logic</strong>. On the frontend,{" "}
-              <strong>Axios</strong> manages efficient API communication, while{" "}
-              <strong>TanStack Query</strong> provides{" "}
-              <strong>seamless state management</strong> and{" "}
-              <strong>asynchronous data caching</strong>. Built with{" "}
-              <strong>TypeScript, React and Tailwind CSS</strong>, this setup
-              ensures a snappy, type-safe interface.
+              A Python and Flask backend keeps your data safe and powers the AI
+              features, while a React and TypeScript interface responds
+              instantly. Tailwind CSS and TanStack Query keep every screen
+              smooth and up to date.
             </p>
           </div>
 
@@ -156,10 +174,8 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="group p-8 bg-surface rounded-2xl shadow-sm hover:border-brand/40 hover:shadow-md transition-all duration-150">
-      <div className="mb-5 p-3 bg-brand/5 rounded-xl w-fit group-hover:bg-brand/10 transition-colors">
-        {icon}
-      </div>
+    <div className="p-8 bg-surface rounded-2xl shadow-sm">
+      <div className="mb-5 p-3 bg-brand/5 rounded-xl w-fit">{icon}</div>
       <h3 className="text-xl font-bold text-text-main mb-3">{title}</h3>
       <p className="text-text-sub leading-relaxed">{description}</p>
     </div>
