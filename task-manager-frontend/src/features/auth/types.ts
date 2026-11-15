@@ -1,4 +1,5 @@
 export type RegisterUserInput = {
+  acceptedTerms: boolean;
   firstName: string;
   lastName: string;
   email: string;

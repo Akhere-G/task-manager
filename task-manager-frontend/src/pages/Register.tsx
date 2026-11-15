@@ -13,6 +13,7 @@ type ErrorMesageType = { [P in keyof RegisterUserInput]: string } & {
 
 export default function Register() {
   const [formData, setFormData] = useState({
+    acceptedTerms: false,
     firstName: "",
     lastName: "",
     email: "",
@@ -20,6 +21,7 @@ export default function Register() {
     confirmPassword: "",
   });
   const [errorMessages, setErrorMessages] = useState({
+    acceptedTerms: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -28,6 +30,7 @@ export default function Register() {
     general: "",
   });
   const [touched, setTouched] = useState({
+    acceptedTerms: false,
     firstName: false,
     lastName: false,
     email: false,
@@ -63,6 +66,7 @@ export default function Register() {
   }
 
   const defaultErrorMessages = {
+    acceptedTerms: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -74,18 +78,16 @@ export default function Register() {
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setTouched({
+      acceptedTerms: true,
       firstName: true,
       lastName: true,
       email: true,
       password: true,
       confirmPassword: true,
     });
-    if (
-      Object.entries(errorMessages).some(
-        ([k, v]) => v !== "" && k !== "general",
-      )
-    )
-      return;
+    const validationErrors = validateRegister(formData);
+    setErrorMessages({ ...defaultErrorMessages, ...validationErrors });
+    if (Object.keys(validationErrors).length > 0) return;
 
     try {
       setIsloading(true);
@@ -173,14 +175,51 @@ export default function Register() {
             touched={touched.confirmPassword}
             handleBlur={handleBlur}
           />
+          <div>
+            <div className="flex items-start gap-3">
+              <input
+                id="acceptedTerms"
+                name="acceptedTerms"
+                type="checkbox"
+                checked={formData.acceptedTerms}
+                onChange={(event) => {
+                  const acceptedTerms = event.target.checked;
+                  const nextFormData = { ...formData, acceptedTerms };
+                  setFormData(nextFormData);
+                  validateForm(nextFormData);
+                  setTouched((current) => ({
+                    ...current,
+                    acceptedTerms: true,
+                  }));
+                }}
+                className="mt-1 h-4 w-4 accent-brand"
+              />
+              <label htmlFor="acceptedTerms" className="text-sm text-text-sub">
+                I agree to the{" "}
+                <Link className="text-link underline" to="/terms">
+                  Terms of Use
+                </Link>{" "}
+                and{" "}
+                <Link className="text-link underline" to="/privacy">
+                  Privacy Policy
+                </Link>
+                .
+              </label>
+            </div>
+            {touched.acceptedTerms && errorMessages.acceptedTerms && (
+              <p className="mt-2 text-failure bg-failure/10 p-1 pl-4 rounded-md border-l-failure border-l-4">
+                {errorMessages.acceptedTerms}
+              </p>
+            )}
+          </div>
           <button
             aria-label="Register"
             className={
-              isLoading
+              isLoading || !formData.acceptedTerms
                 ? "self-end btn-primary-disabled"
                 : "self-end btn-primary"
             }
-            disabled={isLoading}
+            disabled={isLoading || !formData.acceptedTerms}
           >
             Register
           </button>

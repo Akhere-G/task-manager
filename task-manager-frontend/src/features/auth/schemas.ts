@@ -23,6 +23,9 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
+    acceptedTerms: z.literal(true, {
+      error: "You must agree to the Terms of Use and Privacy Policy.",
+    }),
     firstName: nameField("First name"),
     lastName: nameField("Last name"),
     email: required("Email is required.")

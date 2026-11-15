@@ -31,6 +31,7 @@ def task_body(**overrides: Any) -> dict[str, Any]:
 
 def register_body(**overrides: Any) -> dict[str, Any]:
     return {
+        "acceptedTerms": True,
         "firstName": "New",
         "lastName": "Person",
         "email": "new@example.com",

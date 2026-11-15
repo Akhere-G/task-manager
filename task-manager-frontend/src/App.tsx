@@ -7,6 +7,7 @@ import {
   Header,
   ProtectedRoute,
 } from "./components/layout";
+import CookieConsentBanner from "./components/privacy/CookieConsentBanner";
 import { useAuthContext } from "./context/AuthContext";
 import { useTheme } from "./features/users/ThemeContext";
 import NotificationsPrompt from "./features/notifications/components/NotificationsPrompt";
@@ -26,6 +27,8 @@ const Contact = lazy(() => import("./pages/Contact"));
 const AddTask = lazy(() => import("./pages/AddTask"));
 const About = lazy(() => import("./pages/About"));
 const Trash = lazy(() => import("./pages/Trash"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 
 function App() {
   const { isAuthenticated, logout, user } = useAuthContext();
@@ -145,6 +148,8 @@ function App() {
             />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route
               path="/register"
               element={
@@ -194,6 +199,7 @@ function App() {
         </ErrorBoundary>
       </main>
       <Footer />
+      <CookieConsentBanner />
     </div>
   );
 }

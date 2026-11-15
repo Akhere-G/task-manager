@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthContext";
+import { useCookieConsent } from "../../context/CookieConsentContext";
 
 const Footer = () => {
   const { isAuthenticated } = useAuthContext();
+  const { openPreferences } = useCookieConsent();
   const year = new Date().getFullYear();
 
   return (
@@ -188,18 +190,25 @@ const Footer = () => {
           <div className="flex gap-6 text-xs text-text-sub">
             <Link
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              to="/about"
+              to="/privacy"
               className="hover:text-brand underline decoration-brand/30"
             >
               Privacy
             </Link>
             <Link
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              to="/about"
+              to="/terms"
               className="hover:text-brand underline decoration-brand/30"
             >
               Terms
             </Link>
+            <button
+              type="button"
+              onClick={openPreferences}
+              className="hover:text-brand underline decoration-brand/30 cursor-pointer"
+            >
+              Cookie settings
+            </button>
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               className="hover:text-brand font-bold transition-colors"

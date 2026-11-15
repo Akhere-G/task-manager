@@ -1,5 +1,6 @@
 import posthog from "posthog-js";
 import axios from "axios";
+import { getCookiePreferences } from "./cookiePreferences";
 
 export type AnalyticsEvent =
   | "view_page_home"
@@ -11,6 +12,8 @@ export type AnalyticsEvent =
   | "view_page_settings"
   | "view_page_about"
   | "view_page_contact"
+  | "view_page_privacy"
+  | "view_page_terms"
   | "view_page_register"
   | "view_page_login"
   | "view_page_demo"
@@ -64,21 +67,35 @@ let isEnabled = false;
 let identifiedId: string | null = null;
 let isDemo = false;
 let hasSession = false;
+let activeUserId: string | null = null;
+let analyticsCookiesAllowed = false;
+
+function identifyActiveUser() {
+  if (!isEnabled || !analyticsCookiesAllowed || isDemo || !activeUserId) return;
+  if (identifiedId === activeUserId) return;
+  if (identifiedId) {
+    posthog.reset();
+    posthog.opt_in_capturing({ captureEventName: false });
+  }
+  posthog.identify(activeUserId);
+  identifiedId = activeUserId;
+}
 
 export function initAnalytics() {
   if (!POSTHOG_KEY || isEnabled) return;
   try {
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
-      persistence: "memory",
+      cookieless_mode: "on_reject",
       autocapture: false,
       capture_pageview: false,
       capture_pageleave: false,
-      disable_session_recording: true,
+      disable_session_recording: false,
       person_profiles: "identified_only",
       respect_dnt: true,
     });
     isEnabled = true;
+    setAnalyticsCookieConsent(getCookiePreferences()?.analytics ?? false);
   } catch (err) {
     console.error("Analytics init failed", err);
   }
@@ -105,25 +122,37 @@ export function trackEvent(
 export function startAnalyticsSession(user: { id: string; isDemo?: boolean }) {
   hasSession = true;
   isDemo = Boolean(user.isDemo);
-  if (!isEnabled || isDemo) return;
+  activeUserId = String(user.id);
+  identifyActiveUser();
+}
+
+export function setAnalyticsCookieConsent(allowed: boolean) {
+  analyticsCookiesAllowed = allowed;
+  if (!isEnabled) return;
+
   try {
-    const id = String(user.id);
-    if (identifiedId === id) return;
-    if (identifiedId) posthog.reset();
-    posthog.identify(id);
-    identifiedId = id;
+    if (allowed) {
+      posthog.opt_in_capturing({ captureEventName: false });
+      identifyActiveUser();
+      return;
+    }
+
+    posthog.opt_out_capturing();
+    identifiedId = null;
   } catch (err) {
-    console.error("Analytics identify failed", err);
+    console.error("Analytics consent update failed", err);
   }
 }
 
 export function endAnalyticsSession() {
   hasSession = false;
   isDemo = false;
+  activeUserId = null;
   identifiedId = null;
   if (!isEnabled) return;
   try {
     posthog.reset();
+    setAnalyticsCookieConsent(analyticsCookiesAllowed);
   } catch (err) {
     console.error("Analytics reset failed", err);
   }

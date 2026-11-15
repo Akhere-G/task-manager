@@ -1,7 +1,7 @@
 import re
 from typing import Any
 
-from marshmallow import ValidationError, fields, validates_schema
+from marshmallow import ValidationError, fields, validate, validates_schema
 
 from app.utils.common_passwords import is_common_password
 
@@ -40,6 +40,12 @@ class LoginSchema(CamelSchema):
 
 
 class RegisterSchema(CamelSchema):
+    accepted_terms = fields.Boolean(
+        required=True,
+        validate=validate.Equal(
+            True, error="You must agree to the Terms of Use and Privacy Policy."
+        ),
+    )
     first_name = text("First name", 50)
     last_name = text("Last name", 50)
     email = email(100)

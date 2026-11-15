@@ -45,6 +45,7 @@ def test_register_returns_every_field_error_as_400(client: FlaskClient) -> None:
 
     assert response.status_code == 400
     assert set(response.get_json()["errors"]) == {
+        "acceptedTerms",
         "firstName",
         "lastName",
         "email",

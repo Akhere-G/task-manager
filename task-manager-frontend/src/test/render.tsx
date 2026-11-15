@@ -6,6 +6,7 @@ import AuthContextProvider from "../context/AuthContext";
 import TaskContextProvider from "../context/TaskContext";
 import { ThemeProvider } from "../features/users/ThemeContext";
 import type { Task } from "../features/tasks/types";
+import { CookieConsentProvider } from "../context/CookieConsentContext";
 
 export function makeQueryClient() {
   return new QueryClient({
@@ -77,9 +78,11 @@ export function Providers({
   withAuth = false,
 }: ProviderOptions & { children: ReactNode }) {
   const tasks = (
-    <TaskContextProvider>
-      <ThemeProvider>{children}</ThemeProvider>
-    </TaskContextProvider>
+    <CookieConsentProvider>
+      <TaskContextProvider>
+        <ThemeProvider>{children}</ThemeProvider>
+      </TaskContextProvider>
+    </CookieConsentProvider>
   );
   return (
     <QueryClientProvider client={queryClient}>

@@ -15,6 +15,7 @@ describe("auth schemas", () => {
 
   it("validates registration", () => {
     const base = {
+      acceptedTerms: true,
       firstName: "A",
       lastName: "B",
       email: "a@b.co",
@@ -31,6 +32,9 @@ describe("auth schemas", () => {
     expect(validateRegister({ ...base, email: "nope" }).email).toBe(
       "Invalid email address.",
     );
+    expect(validateRegister({ ...base, acceptedTerms: false })).toEqual({
+      acceptedTerms: "You must agree to the Terms of Use and Privacy Policy.",
+    });
   });
 
   it("validates password reset", () => {

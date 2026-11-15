@@ -1,5 +1,12 @@
 import React from "react";
-import { Moon, Palette, Database, FolderTree, Tags } from "lucide-react";
+import {
+  Moon,
+  Palette,
+  Database,
+  FolderTree,
+  Tags,
+  ShieldCheck,
+} from "lucide-react";
 import { useTheme } from "../features/users/ThemeContext";
 import { taskService } from "../features/tasks/api";
 import type { Task } from "../features/tasks/types";
@@ -10,6 +17,7 @@ import useProjects from "../features/projects/hooks/useProjects";
 import { projectPath } from "../features/projects/utils";
 import ProjectSettings from "../features/projects/ProjectSettings";
 import LabelSettings from "../features/labels/LabelSettings";
+import { useCookieConsent } from "../context/CookieConsentContext";
 
 const EXPORT_PAGE_SIZE = 200;
 
@@ -18,6 +26,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
   const { data: projects = [] } = useProjects();
+  const { openPreferences, preferences } = useCookieConsent();
 
   const downloadTasks = (tasks: Task[]) => {
     const headers = [
@@ -185,6 +194,26 @@ export default function SettingsPage() {
       </SettingsCard>
       <SettingsCard icon={<Tags className="text-brand" />} title="Labels">
         <LabelSettings />
+      </SettingsCard>
+      <SettingsCard
+        icon={<ShieldCheck className="text-brand" />}
+        title="Privacy"
+      >
+        <div className="flex gap-4 items-center justify-between">
+          <div>
+            <h4 className="font-medium text-text-main">Cookie preferences</h4>
+            <p className="text-sm text-text-sub">
+              Analytics cookies are currently {preferences.analytics ? "on" : "off"}.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={openPreferences}
+          >
+            Manage cookies
+          </button>
+        </div>
       </SettingsCard>
       <SettingsCard icon={<Database className="text-brand" />} title="Data">
         <div>

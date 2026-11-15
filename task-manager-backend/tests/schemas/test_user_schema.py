@@ -45,6 +45,11 @@ REGISTER = register_body()
             "Passwords do not match.",
         ),
         ({"confirmPassword": ""}, "confirmPassword", "Confirm password is required."),
+        (
+            {"acceptedTerms": False},
+            "acceptedTerms",
+            "You must agree to the Terms of Use and Privacy Policy.",
+        ),
     ],
 )
 def test_register_explains_each_rule(
@@ -55,6 +60,7 @@ def test_register_explains_each_rule(
 
 def test_register_reports_every_missing_field_at_once() -> None:
     assert set(load_errors(RegisterSchema(), {})) == {
+        "acceptedTerms",
         "firstName",
         "lastName",
         "email",

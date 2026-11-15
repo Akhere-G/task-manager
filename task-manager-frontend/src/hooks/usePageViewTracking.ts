@@ -23,6 +23,8 @@ const pageRoutes: { path: string; event: AnalyticsEvent; access: Access }[] = [
   { path: "/settings", event: "view_page_settings", access: "protected" },
   { path: "/about", event: "view_page_about", access: "public" },
   { path: "/contact", event: "view_page_contact", access: "public" },
+  { path: "/privacy", event: "view_page_privacy", access: "public" },
+  { path: "/terms", event: "view_page_terms", access: "public" },
   { path: "/register", event: "view_page_register", access: "guest" },
   { path: "/login", event: "view_page_login", access: "guest" },
   { path: "/demo", event: "view_page_demo", access: "guest" },

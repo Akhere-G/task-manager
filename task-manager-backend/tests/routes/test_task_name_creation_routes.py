@@ -160,6 +160,7 @@ def test_one_user_cannot_reuse_anothers_projects_by_name(
     other.post(
         "/api/auth/register",
         json={
+            "acceptedTerms": True,
             "firstName": "O",
             "lastName": "T",
             "email": "other@example.com",
