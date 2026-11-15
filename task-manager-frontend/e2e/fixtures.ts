@@ -48,6 +48,7 @@ export class Api {
         email,
         password: PASSWORD,
         confirmPassword: PASSWORD,
+        acceptedTerms: true,
       },
     });
     expect(response.status(), await response.text()).toBe(201);

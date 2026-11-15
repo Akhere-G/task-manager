@@ -16,6 +16,7 @@ test("registers, signs out, and signs back in", async ({ page }) => {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await page.getByLabel("Confirm Password").fill(PASSWORD);
+  await page.getByRole("checkbox", { name: /I agree to the/ }).check();
   await page.getByRole("button", { name: "Register" }).click();
 
   await expect(page.getByText("No tasks found. Time to relax!")).toBeVisible();
