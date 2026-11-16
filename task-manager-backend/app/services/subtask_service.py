@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from typing import Any
 
-from sqlalchemy import case, func, select, update
+from sqlalchemy import case, delete, func, select, update
 
 from app.database import db
 from app.exceptions import SubtaskParentInvalid, TaskNotFound
@@ -56,10 +56,9 @@ def _top_level_parent(user_id: int, parent_id: int) -> Task:
     return parent
 
 
-def add_subtasks(
-    user_id: int, parent_id: int, items: list[dict[str, Any]]
+def _insert_subtasks(
+    user_id: int, parent: Task, items: list[dict[str, Any]]
 ) -> list[Task]:
-    parent = _top_level_parent(user_id, parent_id)
     last_position = db.session.scalar(
         select(func.max(Task.position)).where(Task.parent_id == parent.id)
     )
@@ -78,6 +77,26 @@ def add_subtasks(
     db.session.flush()
     for subtask in subtasks:
         subtask.series_id = subtask.id
+    return subtasks
+
+
+def add_subtasks(
+    user_id: int, parent_id: int, items: list[dict[str, Any]]
+) -> list[Task]:
+    parent = _top_level_parent(user_id, parent_id)
+    subtasks = _insert_subtasks(user_id, parent, items)
+    db.session.commit()
+    return subtasks
+
+
+def replace_subtasks(
+    user_id: int, parent_id: int, items: list[dict[str, Any]]
+) -> list[Task]:
+    """Swaps every subtask for `items`; deleted outright so a later restore of
+    the parent cannot bring the replaced ones back."""
+    parent = _top_level_parent(user_id, parent_id)
+    db.session.execute(delete(Task).where(Task.parent_id == parent.id))
+    subtasks = _insert_subtasks(user_id, parent, items)
     db.session.commit()
     return subtasks
 
