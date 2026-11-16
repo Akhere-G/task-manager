@@ -107,6 +107,11 @@ class SubtaskParentInvalid(AppError):
     message = "Subtasks can only go under one of your own top-level tasks."
 
 
+class InvalidSubtaskOrder(AppError):
+    field = "ids"
+    message = "List every subtask of this task exactly once."
+
+
 class SubtaskCannotRepeat(AppError):
     field = "repeatBy"
     message = "Subtasks cannot repeat."
