@@ -35,6 +35,22 @@ class ParseTaskRequestSchema(CamelSchema):
     )
 
 
+class ExistingSubtaskSchema(CamelSchema):
+    title = fields.String(
+        required=True,
+        validate=validate.Length(
+            min=1,
+            max=MAX_DECOMPOSE_TITLE_LENGTH,
+            error=f"Title must be 1 to {MAX_DECOMPOSE_TITLE_LENGTH} characters.",
+        ),
+    )
+    description = fields.String(
+        allow_none=True,
+        load_default=None,
+        validate=validate.Length(max=MAX_DECOMPOSE_DESCRIPTION_LENGTH),
+    )
+
+
 class DecomposeRequestSchema(CamelSchema):
     title = fields.String(
         required=True,
@@ -57,7 +73,7 @@ class DecomposeRequestSchema(CamelSchema):
     start_at = fields.String(allow_none=True)
     end_at = fields.String(allow_none=True)
     existing_subtasks = fields.List(
-        fields.String(validate=validate.Length(max=MAX_DECOMPOSE_TITLE_LENGTH)),
+        fields.Nested(ExistingSubtaskSchema),
         validate=validate.Length(max=MAX_EXISTING_SUBTASKS),
         load_default=list,
     )

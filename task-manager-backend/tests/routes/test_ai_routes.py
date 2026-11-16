@@ -49,12 +49,25 @@ def test_decompose_rejects_oversized_or_invalid_input(
 def test_decompose_passes_existing_subtasks_to_the_service(
     session: FlaskClient, fake_ai: tuple[mock.MagicMock, mock.MagicMock]
 ) -> None:
-    body = {"title": "Plan trip", "existingSubtasks": ["Pack"]}
+    pack = {"title": "Pack", "description": "Light bag"}
+    body = {"title": "Plan trip", "existingSubtasks": [pack]}
     assert session.post("/api/ai/decompose", json=body).status_code == 200
-    assert fake_ai[1].call_args.args[-1] == ["Pack"]
+    assert fake_ai[1].call_args.args[-1] == [pack]
 
-    body["existingSubtasks"] = ["x"] * 51
-    assert session.post("/api/ai/decompose", json=body).status_code == 400
+
+def test_decompose_rejects_bad_existing_subtasks(
+    session: FlaskClient, fake_ai: tuple[mock.MagicMock, mock.MagicMock]
+) -> None:
+    for existing in (
+        [{"title": "x"}] * 51,
+        [{"title": "x" * 256}],
+        [{"title": "x", "description": "y" * 2001}],
+        [{"description": "no title"}],
+        ["Pack"],
+    ):
+        body = {"title": "Plan trip", "existingSubtasks": existing}
+        assert session.post("/api/ai/decompose", json=body).status_code == 400
+    fake_ai[1].assert_not_called()
 
 
 def test_valid_requests_reach_the_provider(session: FlaskClient) -> None:
