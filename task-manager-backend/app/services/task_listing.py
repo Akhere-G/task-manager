@@ -1,8 +1,8 @@
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import UnaryExpression, asc, case, desc, func, literal_column, select
+from sqlalchemy import UnaryExpression, asc, case, desc, func, select
 
 from app.constants import MAX_TASKS_PER_REQUEST
 from app.database import db
@@ -12,7 +12,12 @@ from app.services.reminder_service import attach_reminders
 from app.services.subtask_service import attach_subtask_counts
 from app.services.task_query import TaskQuery
 from app.utils.dates import as_naive_utc, parse_iso
-from app.utils.task_utils import build_task_clauses, top_level_tasks_of, with_repeating
+from app.utils.task_utils import (
+    DURATION_MINUTES,
+    build_task_clauses,
+    top_level_tasks_of,
+    with_repeating,
+)
 from app.utils.views import (
     COUNTED_VIEWS,
     RANGED_VIEWS,
@@ -22,13 +27,26 @@ from app.utils.views import (
 )
 
 
+@dataclass(frozen=True, slots=True)
+class _Page:
+    tasks: list[Task]
+    total: int
+    total_minutes: int
+    limit: int
+
+
+def _task_minutes(task: Task) -> int:
+    if task.start_at is None or task.end_at is None:
+        return 0
+    return int((task.end_at - task.start_at).total_seconds() // 60)
+
+
 def _sort_clauses(query: TaskQuery) -> list[UnaryExpression[Any]]:
-    duration = func.timestampdiff(literal_column("MINUTE"), Task.start_at, Task.end_at)
     columns = {
         "created_at": Task.created_at,
         "title": Task.title,
         "start_at": Task.start_at,
-        "duration": duration,
+        "duration": DURATION_MINUTES,
         "priority": Task.priority,
         "manual": Task.sort_order,
     }
@@ -84,11 +102,13 @@ def _select_all(user_id: int, query: TaskQuery) -> list[Task]:
     return list(db.session.scalars(stmt))
 
 
-def _select_page(user_id: int, query: TaskQuery) -> tuple[list[Task], int, int]:
+def _select_page(user_id: int, query: TaskQuery) -> _Page:
     clauses = build_task_clauses(user_id, query)
-    total = (
-        db.session.scalar(select(func.count()).select_from(Task).where(*clauses)) or 0
-    )
+    total, total_minutes = db.session.execute(
+        select(func.count(), func.coalesce(func.sum(DURATION_MINUTES), 0))
+        .select_from(Task)
+        .where(*clauses)
+    ).one()
     limit = _page_size(query, total)
     stmt = (
         select(Task)
@@ -97,30 +117,33 @@ def _select_page(user_id: int, query: TaskQuery) -> tuple[list[Task], int, int]:
         .limit(limit)
         .offset(limit * (max(query.page or 1, 1) - 1))
     )
-    return list(db.session.scalars(stmt)), total, limit
+    return _Page(list(db.session.scalars(stmt)), total, int(total_minutes), limit)
 
 
-def _slice_page(tasks: list[Task], query: TaskQuery) -> tuple[list[Task], int, int]:
+def _slice_page(tasks: list[Task], query: TaskQuery) -> _Page:
     limit = _page_size(query, len(tasks))
     offset = limit * (max(query.page or 1, 1) - 1)
-    return tasks[offset : offset + limit], len(tasks), limit
+    total_minutes = sum(_task_minutes(task) for task in tasks)
+    return _Page(tasks[offset : offset + limit], len(tasks), total_minutes, limit)
 
 
 def get_all_tasks(user_id: int, query: TaskQuery | None = None) -> dict[str, Any]:
     query = query or TaskQuery()
     if query.project_repeating:
         everything = _with_ghosts(user_id, query, _select_all(user_id, query))
-        tasks, total, limit = _slice_page(everything, query)
+        page = _slice_page(everything, query)
     else:
-        tasks, total, limit = _select_page(user_id, query)
+        page = _select_page(user_id, query)
+    tasks = page.tasks
 
     attach_label_ids(tasks)
     attach_reminders(tasks)
     attach_subtask_counts(tasks)
     return {
         "tasks": tasks,
-        "total_tasks": total,
-        "total_pages": (total + limit - 1) // limit,
+        "total_tasks": page.total,
+        "total_minutes": page.total_minutes,
+        "total_pages": (page.total + page.limit - 1) // page.limit,
         "current_page": max(query.page or 1, 1),
     }
 

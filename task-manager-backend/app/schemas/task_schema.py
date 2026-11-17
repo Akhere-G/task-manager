@@ -471,5 +471,6 @@ class TrashQuerySchema(Schema):
 class TaskPageSchema(CamelSchema):
     tasks = fields.Nested(TaskSchema, many=True)
     total_tasks = fields.Integer()
+    total_minutes = fields.Integer()
     total_pages = fields.Integer()
     current_page = fields.Integer()

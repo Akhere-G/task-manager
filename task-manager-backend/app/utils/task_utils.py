@@ -39,6 +39,9 @@ MAX_SEARCH_LENGTH = 100
 MAX_SEARCH_TERMS = 8
 FULLTEXT_MIN_TERM_LENGTH = 3
 SHORT_TASK_MINUTES = 30
+DURATION_MINUTES = func.timestampdiff(
+    literal_column("MINUTE"), Task.start_at, Task.end_at
+)
 MAX_GHOSTS = 5000
 
 GHOST_COPIED_FIELDS = (
@@ -120,11 +123,10 @@ def _date_range_clause(
 
 
 def _duration_clause(duration: str | None) -> Clause | None:
-    minutes = func.timestampdiff(literal_column("MINUTE"), Task.start_at, Task.end_at)
     if duration == "short_tasks":
-        return minutes <= SHORT_TASK_MINUTES
+        return DURATION_MINUTES <= SHORT_TASK_MINUTES
     if duration == "long_tasks":
-        return minutes > SHORT_TASK_MINUTES
+        return DURATION_MINUTES > SHORT_TASK_MINUTES
     return None
 
 
