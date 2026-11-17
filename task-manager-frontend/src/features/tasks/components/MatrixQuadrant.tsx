@@ -8,7 +8,7 @@ import { priorityBadgeSolidClasses, quadrantPanelClasses } from "../constants";
 import { useCategoryTasks } from "../hooks/useCategoryTasks";
 import type { TaskFilters } from "../taskParams";
 import type { Priority, Task } from "../types";
-import { isRangedView, type TaskView } from "../views";
+import type { TaskView } from "../views";
 import MatrixTaskRow from "./MatrixTaskRow";
 
 interface MatrixQuadrantProps {
@@ -49,7 +49,6 @@ export default function MatrixQuadrant({
     search,
     view,
     overrides: { priority: String(priority) },
-    includeProjections: isRangedView(view),
     enabled: allowsPriority(filters.priority, priority),
   });
 

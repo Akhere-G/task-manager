@@ -91,7 +91,6 @@ describe("useCategoryTasks", () => {
     const params = requestedParams(0);
     expect(params.get("project")).toBe("7");
     expect(params.get("column")).toBe("3");
-    expect(params.get("project_repeating")).toBe("false");
   });
 
   it("does not fetch while disabled", async () => {

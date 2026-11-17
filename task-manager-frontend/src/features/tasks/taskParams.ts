@@ -1,6 +1,6 @@
 import { getBrowserTimeZone } from "./recurrence";
 import { calendarRange } from "./utils";
-import { isRangedView, type TaskView } from "./views";
+import type { TaskView } from "./views";
 
 export interface TaskFilters {
   search: string;
@@ -35,19 +35,12 @@ const filterParams = (filters: TaskFilters, search: string) => {
   return params;
 };
 
-const addZone = (params: URLSearchParams, view: TaskView) => {
-  if (isRangedView(view) || view === "overdue") {
-    params.set("zone", getBrowserTimeZone() ?? "UTC");
-  }
-};
-
 interface ListParamsInput {
   filters: TaskFilters;
   search: string;
   view: TaskView;
   page: number;
   limit: number;
-  includeProjections: boolean;
 }
 
 export const buildListParams = ({
@@ -56,14 +49,11 @@ export const buildListParams = ({
   view,
   page,
   limit,
-  includeProjections,
 }: ListParamsInput) => {
   const params = filterParams(filters, search);
   if (view !== "all") params.set("view", view);
-  params.set("project_repeating", String(includeProjections));
   params.set("page", String(page));
   params.set("limit", String(limit));
-  addZone(params, view);
   return params;
 };
 
@@ -77,8 +67,7 @@ export const buildCalendarParams = (
   params.set("start_date", start.toISOString());
   params.set("end_date", end.toISOString());
   params.set("project_repeating", "true");
-  if (!isRangedView(view) && view !== "all") params.set("view", view);
-  addZone(params, view);
+  if (view !== "all") params.set("view", view);
   return params;
 };
 
@@ -90,29 +79,20 @@ export interface CategoryQuery {
   overrides?: Partial<TaskFilters>;
   /** Raw API params that define the category, such as one board column. */
   params?: Record<string, string>;
-  includeProjections?: boolean;
 }
 
 export const CATEGORY_PAGE_SIZE = 10;
 
-const PAGING_PARAMS = [
-  "page",
-  "limit",
-  "project_repeating",
-  "sort_by",
-  "order",
-];
+const PAGING_PARAMS = ["page", "limit", "sort_by", "order"];
 
 export const buildCategoryParams = (query: CategoryQuery, page: number) => {
-  const { filters, search, view, overrides, params, includeProjections } =
-    query;
+  const { filters, search, view, overrides, params } = query;
   const queryParams = buildListParams({
     filters: { ...filters, ...overrides },
     search,
     view,
     page,
     limit: CATEGORY_PAGE_SIZE,
-    includeProjections: includeProjections ?? false,
   });
   queryParams.set("zone", getBrowserTimeZone() ?? "UTC");
   for (const [name, value] of Object.entries(params ?? {})) {

@@ -27,17 +27,7 @@ export const useCategoryTasks = ({
   const categoryFilters = { ...filters, ...overrides };
 
   const result = useInfiniteQuery({
-    queryKey: [
-      "tasks",
-      "category",
-      {
-        categoryFilters,
-        search,
-        view,
-        params,
-        includeProjections: query.includeProjections ?? false,
-      },
-    ],
+    queryKey: ["tasks", "category", { categoryFilters, search, view, params }],
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
       taskService.getAll(buildCategoryParams(query, pageParam)),

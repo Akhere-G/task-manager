@@ -43,22 +43,7 @@ describe("filtering tasks by priority", () => {
   });
 });
 
-describe("smart views", () => {
-  it("asks the server for the view in the viewer's zone and projects repeats", async () => {
-    mock.onGet(/\/tasks/).reply(200, emptyPage);
-
-    renderHookWithProviders(() => useTasks(), {
-      route: "/?view=upcoming",
-    });
-
-    await waitFor(() => expect(mock.history.get).toHaveLength(1));
-    const params = lastRequestParams();
-    expect(params.get("view")).toBe("upcoming");
-    expect(params.get("zone")).toBeTruthy();
-    expect(params.get("project_repeating")).toBe("true");
-    expect(params.has("start_date")).toBe(false);
-  });
-
+describe("inbox and projects", () => {
   it("sends no view for all tasks", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
@@ -68,17 +53,16 @@ describe("smart views", () => {
     expect(lastRequestParams().has("view")).toBe(false);
   });
 
-  it("refetches when another view is selected", async () => {
+  it("falls back to all tasks for a view that no longer exists", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
-    const { result } = renderHookWithProviders(() => useTasks());
+
+    const { result } = renderHookWithProviders(() => useTasks(), {
+      route: "/?view=today",
+    });
+
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
-
-    act(() => result.current.selectView("overdue"));
-
-    await waitFor(() =>
-      expect(lastRequestParams().get("view")).toBe("overdue"),
-    );
-    expect(result.current.view).toBe("overdue");
+    expect(result.current.view).toBe("all");
+    expect(lastRequestParams().has("view")).toBe(false);
   });
 
   it("clears the project filter when the inbox is selected", async () => {
@@ -89,10 +73,36 @@ describe("smart views", () => {
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(lastRequestParams().get("project")).toBe("4");
 
-    act(() => result.current.selectView("inbox"));
+    act(() => result.current.selectInbox());
 
     await waitFor(() => expect(lastRequestParams().get("view")).toBe("inbox"));
     expect(lastRequestParams().has("project")).toBe(false);
+  });
+
+  it("leaves the inbox when a project is selected", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+    const { result } = renderHookWithProviders(() => useTasks(), {
+      route: "/?view=inbox",
+    });
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+
+    act(() => result.current.selectProject("7"));
+
+    await waitFor(() => expect(lastRequestParams().get("project")).toBe("7"));
+    expect(lastRequestParams().has("view")).toBe(false);
+    expect(result.current.view).toBe("all");
+  });
+
+  it("selecting all projects clears the project filter", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+    const { result } = renderHookWithProviders(() => useTasks(), {
+      route: "/?project=4",
+    });
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+
+    act(() => result.current.selectProject(""));
+
+    await waitFor(() => expect(lastRequestParams().has("project")).toBe(false));
   });
 
   it("loads the visible range and no view in the calendar layout", async () => {

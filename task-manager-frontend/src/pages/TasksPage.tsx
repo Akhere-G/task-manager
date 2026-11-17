@@ -9,7 +9,6 @@ import TasksBody from "../features/tasks/components/TasksBody";
 import QuickCapture from "../features/tasks/components/QuickCapture";
 import TaskPopups from "../features/tasks/components/TaskPopups";
 import TasksSidebar from "../features/tasks/components/TasksSidebar";
-import useTaskCounts from "../features/tasks/hooks/useTaskCounts";
 import { useTasks } from "../features/tasks/hooks/useTasks";
 import { SelectionProvider } from "../features/tasks/selection/SelectionProvider";
 
@@ -24,12 +23,12 @@ export default function TasksPage() {
     search,
     view,
     layout,
-    selectView,
+    selectInbox,
+    selectProject,
     selectLayout,
     resetFilters,
     updateFilters,
   } = useTasks();
-  const { data: counts } = useTaskCounts();
   const navigate = useNavigate();
 
   const tasks = data?.tasks ?? [];
@@ -74,10 +73,9 @@ export default function TasksPage() {
           <div className="md:row-span-2 md:self-baseline">
             <TasksSidebar
               view={view}
-              counts={counts}
               project={filters.project}
-              onSelectView={selectView}
-              onSelectProject={(id) => updateFilters("project", id)}
+              onSelectInbox={selectInbox}
+              onSelectProject={selectProject}
             />
           </div>
           <div className="mr-2 overflow-y-scroll max-w-[50vw] justify-self-end md:mr-0 md:col-start-2 md:row-start-1 md:self-baseline">

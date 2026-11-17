@@ -11,8 +11,6 @@ import {
 } from "../taskParams";
 import {
   DEFAULT_VIEW,
-  calendarZoomFor,
-  isRangedView,
   isTaskLayout,
   isTaskView,
   type TaskLayout,
@@ -126,7 +124,6 @@ export const useTasks = ({ enabled = true }: UseTasksProps = {}) => {
               view,
               page: 1,
               limit: TOTAL_ONLY_PAGE_SIZE,
-              includeProjections: isRangedView(view),
             }),
       ),
     placeholderData: keepPreviousData,
@@ -162,13 +159,24 @@ export const useTasks = ({ enabled = true }: UseTasksProps = {}) => {
     setSearchParams(params);
   };
 
-  const selectView = (nextView: TaskView) => {
-    trackEvent("tasks_view_selected", { view: nextView });
+  const selectInbox = () => {
+    trackEvent("tasks_view_selected", { view: "inbox" });
     const next = new URLSearchParams(searchParams);
-    next.set("view", nextView);
-    if (nextView === "inbox") next.delete("project");
-    next.set("cal", calendarZoomFor(nextView));
-    next.delete("current_date");
+    next.set("view", "inbox");
+    next.delete("project");
+    setSearchParams(next);
+  };
+
+  // Choosing a project, or all of them, leaves the inbox.
+  const selectProject = (projectId: string) => {
+    trackEvent("tasks_filtered", { filter: "project" });
+    const next = new URLSearchParams(searchParams);
+    next.delete("view");
+    if (projectId) {
+      next.set("project", projectId);
+    } else {
+      next.delete("project");
+    }
     setSearchParams(next);
   };
 
@@ -195,7 +203,8 @@ export const useTasks = ({ enabled = true }: UseTasksProps = {}) => {
     search: deferredSearch,
     view,
     layout,
-    selectView,
+    selectInbox,
+    selectProject,
     selectLayout,
     updateFilters,
     isStale,

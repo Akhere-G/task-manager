@@ -73,7 +73,6 @@ describe("readBoardGroups", () => {
             search: "",
             view: "all",
             params,
-            includeProjections: false,
           },
         ],
         data,

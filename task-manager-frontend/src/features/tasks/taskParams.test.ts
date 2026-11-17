@@ -56,13 +56,7 @@ describe("buildCategoryFilter", () => {
       project: "3",
       q: "report",
     });
-    for (const name of [
-      "page",
-      "limit",
-      "sort_by",
-      "order",
-      "project_repeating",
-    ]) {
+    for (const name of ["page", "limit", "sort_by", "order"]) {
       expect(filter).not.toHaveProperty(name);
     }
   });

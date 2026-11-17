@@ -1,5 +1,4 @@
 import apiClient from "../../services/api";
-import type { TaskViewCounts } from "./views";
 import type {
   CreateTaskInput,
   Priority,
@@ -67,13 +66,6 @@ export const taskService = {
     const url = "/tasks" + (params ? `?${params.toString()}` : "");
     const response = await apiClient.get<GetTaskResult>(url);
     return response.data;
-  },
-  getCounts: async (zone: string): Promise<TaskViewCounts> => {
-    const response = await apiClient.get<{ counts: TaskViewCounts }>(
-      "/tasks/counts",
-      { params: { zone } },
-    );
-    return response.data.counts;
   },
   getById: async (id: number): Promise<Task> => {
     const response = await apiClient.get(`tasks/${id}`);
