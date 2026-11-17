@@ -1,23 +1,26 @@
 import { useNavigate, useParams } from "react-router-dom";
 import useGetTask from "../features/tasks/hooks/useGetTask";
-import { EmptyState, ErrorState, LoadingState, Popup } from "../components/ui";
+import { EmptyState, ErrorState, LoadingState } from "../components/ui";
 import { isAxiosError } from "axios";
-import { Clock, Pause, Play, Repeat } from "lucide-react";
-import { useEffect, useState } from "react";
-import { CountdownCircleTimer } from "react-countdown-circle-timer";
-import { formatDateRange, formatDateRelative } from "../features/tasks/utils";
+import { Clock, Repeat } from "lucide-react";
+import { useEffect } from "react";
+import {
+  formatDateRange,
+  formatDateRelative,
+  taskMinutes,
+} from "../features/tasks/utils";
 import { describeRecurrence } from "../features/tasks/recurrence";
 import useSetIsCompleted from "../features/tasks/hooks/useSetIsCompleted";
-import { trackEvent } from "../services/analytics";
 import ProjectLabel from "../features/projects/ProjectLabel";
+import { PomodoroTimer } from "../features/pomodoro/components/PomodoroTimer";
+import { sessionCount } from "../features/pomodoro/plan";
+import { clearSession } from "../features/pomodoro/session";
+import { usePomodoroSettings } from "../features/pomodoro/usePomodoroSettings";
 
-const POMODORO_DURATION = 25 * 60;
 const DEFAULT_FOCUS_MINUTES = 25;
 
 export default function Pomodoro() {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [sessionsCompleted, setSessionsCompleted] = useState(0);
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const { settings, updateSettings } = usePomodoroSettings();
 
   const navigate = useNavigate();
 
@@ -37,13 +40,6 @@ export default function Pomodoro() {
   useEffect(() => {
     if (alreadyCompleted) navigate(-1);
   }, [alreadyCompleted, navigate]);
-
-  const toggleIsPlaying = () => {
-    if (!isPlaying) {
-      trackEvent("pomodoro_started", { sessions_completed: sessionsCompleted });
-    }
-    setIsPlaying((prev) => !prev);
-  };
 
   if (isLoading) return <LoadingState />;
   if (isError && status !== 404)
@@ -66,25 +62,15 @@ export default function Pomodoro() {
   if (isCompleted) return null;
   const isOverdue = !isCompleted && !!endAt && new Date(endAt) < new Date();
 
-  const duration =
-    startAt && endAt
-      ? (new Date(endAt).getTime() - new Date(startAt).getTime()) / 60000
-      : DEFAULT_FOCUS_MINUTES;
+  const duration = taskMinutes(task) || DEFAULT_FOCUS_MINUTES;
 
   const dateStr = formatDateRange(startAt, endAt);
 
-  const totalExpectedSessions = Math.ceil(duration / 25);
-
-  const handleSessionComplete = () => {
-    trackEvent("pomodoro_completed", {
-      sessions_completed: sessionsCompleted + 1,
-    });
-    setIsPlaying(false);
-    setSessionsCompleted((prev) => prev + 1);
-    setShowCompleteModal(true);
+  const completeTask = () => {
+    clearSession(id);
+    setIsCompleted(id, true, task);
+    navigate(-1);
   };
-
-  const TimerButton = isPlaying ? Pause : Play;
 
   return (
     <div className="flex flex-col gap-6">
@@ -134,89 +120,20 @@ export default function Pomodoro() {
         </div>
         <div className="card lg:flex-1/2 flex flex-col gap-4">
           <h2 className="text-2xl">Start Pomodoro Mode</h2>
-          <div className="flex items-center flex-col justify-center h-max">
-            <CountdownCircleTimer
-              key={sessionsCompleted}
-              duration={POMODORO_DURATION}
-              isPlaying={isPlaying}
-              colors={
-                ["var(--color-brand)", "var(--color-accent)"] as unknown as [
-                  `#${string}`,
-                  `#${string}`,
-                ]
-              }
-              onComplete={handleSessionComplete}
-              colorsTime={[0, 0]}
-            >
-              {({ remainingTime }) => {
-                const minutes = Math.floor(remainingTime / 60)
-                  .toString()
-                  .padStart(2, "0");
-                const seconds = (remainingTime % 60)
-                  .toString()
-                  .padStart(2, "0");
-
-                return (
-                  <div className="flex flex-col items-center pt-8 gap-4">
-                    <button
-                      className="p-1.5 group cursor-pointer"
-                      aria-label={isPlaying ? "Pause Timer" : "Play Timer"}
-                      onClick={toggleIsPlaying}
-                    >
-                      <TimerButton
-                        className="text-brand group-hover:brightness-150 transition-all"
-                        width={40}
-                        height={40}
-                        aria-hidden
-                      />
-                    </button>
-                    <p>
-                      {minutes}:{seconds}
-                    </p>
-                  </div>
-                );
-              }}
-            </CountdownCircleTimer>
-            <div className="flex gap-2 justify-center mt-4 flex-wrap">
-              {Array.from({ length: totalExpectedSessions }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-3 h-3 rounded-full ${i < sessionsCompleted ? "bg-brand" : "bg-slate-200 dark:bg-slate-700"}`}
-                />
-              ))}
-            </div>
-            <button
-              aria-label="Finished early"
-              onClick={handleSessionComplete}
-              className="btn-primary mt-4"
-            >
-              I&apos;ve finished early!
-            </button>
-          </div>
+          <PomodoroTimer
+            key={id}
+            taskId={id}
+            taskTitle={title}
+            settings={settings}
+            totalSessions={sessionCount(
+              taskMinutes(task),
+              settings.workMinutes,
+            )}
+            onSettingsChange={updateSettings}
+            onCompleteTask={completeTask}
+          />
         </div>
       </div>
-      {showCompleteModal && (
-        <Popup
-          close={() => setShowCompleteModal(false)}
-          title={`Complete task: ${title}?`}
-          handleConfirm={() => {
-            setIsCompleted(id, true, task);
-            navigate(-1);
-          }}
-          actionButtonVariant="primary"
-        >
-          <div className="flex flex-col gap-2">
-            <p>
-              Well done! You&apos;ve completed{" "}
-              <strong>session {sessionsCompleted}</strong>.
-            </p>
-            <p className="text-sm text-text-sub">
-              Progress: {sessionsCompleted} / {totalExpectedSessions} sessions
-            </p>
-            <p className="mt-4">Mark the entire task as complete now?</p>
-          </div>
-        </Popup>
-      )}
     </div>
   );
 }

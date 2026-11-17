@@ -23,7 +23,13 @@ test("working through a Pomodoro session completes the task and updates the stat
   await expect(page.getByRole("button", { name: "Pause Timer" })).toBeVisible();
   await page.getByRole("button", { name: "Pause Timer" }).click();
 
-  await page.getByRole("button", { name: "Finished early" }).click();
+  for (const session of [1, 2, 3]) {
+    await expect(page.getByText(`Session ${session} of 3`)).toBeVisible();
+    await page.getByRole("button", { name: "Finish early" }).click();
+    if (session < 3)
+      await page.getByRole("button", { name: "Skip rest" }).click();
+  }
+  await page.getByRole("button", { name: "Finish task" }).click();
   await expect(page.getByText("Complete task: Deep work?")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
