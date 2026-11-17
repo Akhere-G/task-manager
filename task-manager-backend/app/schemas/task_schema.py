@@ -30,6 +30,7 @@ from app.constants import (
 from app.models import Task
 from app.services.task_query import TaskQuery
 from app.utils.dates import is_valid_zone, to_iso_z, utc_now
+from app.utils.groups import TASK_GROUPS
 from app.utils.recurrence import is_valid_month_day
 from app.utils.reminders import REMINDER_KINDS
 from app.utils.snooze import SNOOZE_PRESETS
@@ -380,6 +381,7 @@ class TaskListQuerySchema(Schema):
     unassigned = fields.Boolean(load_default=False)
     label = fields.String()
     view = fields.String(validate=validate.OneOf(TASK_VIEWS))
+    group = fields.String(validate=validate.OneOf(TASK_GROUPS))
     zone = fields.String(validate=_validate_query_zone)
     priority = fields.String()
     search = fields.String(data_key="q")
@@ -422,6 +424,17 @@ class TaskListQuerySchema(Schema):
                 raise ValidationError(
                     f"Date range must be {MAX_PROJECTION_DAYS} days or fewer.",
                     field_name="project_repeating",
+                )
+
+    @validates_schema
+    def validate_group(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if "group" not in data:
+            return
+        for conflicting in ("view", "is_completed"):
+            if conflicting in data:
+                raise ValidationError(
+                    f"group and {conflicting} cannot be combined.",
+                    field_name="group",
                 )
 
     @validates_schema
