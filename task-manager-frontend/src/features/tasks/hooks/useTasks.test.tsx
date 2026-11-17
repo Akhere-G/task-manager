@@ -38,7 +38,7 @@ describe("filtering tasks by priority", () => {
 
     act(() => result.current.updateFilters("priority", "1"));
 
-    await waitFor(() => expect(lastRequestParams().get("priority")).toBe("200"));
+    await waitFor(() => expect(lastRequestParams().get("priority")).toBe("1"));
     expect(result.current.isSearching).toBe(true);
   });
 });
@@ -116,28 +116,22 @@ describe("smart views", () => {
   it("loads one large page of tasks in the matrix layout", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    const { result } = renderHookWithProviders(
-      () => useTasks({ perPage: 10 }),
-      {
-        route: "/?layout=matrix",
-      },
-    );
+    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+      route: "/?layout=matrix",
+    });
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(result.current.layout).toBe("matrix");
     expect(lastRequestParams().get("limit")).toBe("200");
-    expect(lastRequestParams().get("page")).toBe("200");
+    expect(lastRequestParams().get("page")).toBe("1");
   });
 
   it("falls back to the list layout for an unknown layout", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    const { result } = renderHookWithProviders(
-      () => useTasks({ perPage: 10 }),
-      {
-        route: "/?layout=timeline",
-      },
-    );
+    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+      route: "/?layout=timeline",
+    });
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(result.current.layout).toBe("list");
@@ -149,12 +143,9 @@ describe("board layout", () => {
   it("asks for every task of the project in manual order, done or not", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    const { result } = renderHookWithProviders(
-      () => useTasks({ perPage: 10 }),
-      {
-        route: "/?layout=kanban&project=7&is_completed=false",
-      },
-    );
+    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+      route: "/?layout=kanban&project=7&is_completed=false",
+    });
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     const params = lastRequestParams();

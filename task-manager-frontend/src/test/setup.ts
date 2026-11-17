@@ -65,3 +65,17 @@ window.scrollTo = vi.fn() as typeof window.scrollTo;
 // jsdom does not implement media playback; completing a task plays a sound.
 HTMLMediaElement.prototype.play = () => Promise.resolve();
 HTMLMediaElement.prototype.pause = () => {};
+
+class IntersectionObserverStub {
+  readonly root = null;
+  readonly rootMargin = "";
+  readonly thresholds = [];
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return [];
+  }
+}
+globalThis.IntersectionObserver ??=
+  IntersectionObserverStub as unknown as typeof IntersectionObserver;
