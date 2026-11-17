@@ -1,9 +1,24 @@
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
 import useAddSubtasks from "../hooks/useAddSubtasks";
-import useDeleteSubtask from "../hooks/useDeleteSubtask";
-import useUpdateTask from "../hooks/useUpdateTask";
+import useReorderSubtasks from "../hooks/useReorderSubtasks";
+import { reorder } from "../order";
 import type { Subtask } from "../types";
+import { SubtaskItem } from "./SubtaskItem";
 import SubtaskProgress from "./SubtaskProgress";
 
 interface SubtaskChecklistProps {
@@ -17,8 +32,16 @@ export default function SubtaskChecklist({
 }: SubtaskChecklistProps) {
   const [title, setTitle] = useState("");
   const { mutateAsync: addSubtasks, isPending } = useAddSubtasks(parentId);
-  const { mutate: updateTask } = useUpdateTask();
-  const { mutate: removeSubtask } = useDeleteSubtask();
+  const { mutate: reorderSubtasks } = useReorderSubtasks(parentId);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
   const done = subtasks.filter((subtask) => subtask.isCompleted).length;
 
   async function handleAdd(e: React.FormEvent) {
@@ -28,6 +51,12 @@ export default function SubtaskChecklist({
     await addSubtasks([{ title: trimmed }]);
     setTitle("");
   }
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    const result =
+      over && reorder(subtasks, Number(active.id), Number(over.id));
+    if (result) reorderSubtasks(result.items);
+  };
 
   return (
     <section aria-label="Subtasks" className="flex flex-col gap-3">
@@ -40,35 +69,22 @@ export default function SubtaskChecklist({
         )}
       </header>
       <SubtaskProgress done={done} total={subtasks.length} />
-      <ul className="flex flex-col gap-1">
-        {subtasks.map((subtask) => (
-          <li key={subtask.id} className="flex items-center gap-2">
-            <label className="flex items-center gap-2 grow text-text-main">
-              <input
-                type="checkbox"
-                checked={subtask.isCompleted}
-                onChange={(e) =>
-                  updateTask({
-                    id: subtask.id,
-                    newTaskData: { isCompleted: e.target.checked },
-                  })
-                }
-              />
-              <span className={subtask.isCompleted ? "line-through" : ""}>
-                {subtask.title}
-              </span>
-            </label>
-            <button
-              type="button"
-              aria-label={`Delete subtask ${subtask.title}`}
-              className="p-1 text-text-sub hover:text-failure cursor-pointer"
-              onClick={() => removeSubtask(subtask.id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </li>
-        ))}
-      </ul>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={subtasks.map((subtask) => subtask.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <ul className="flex flex-col gap-1">
+            {subtasks.map((subtask) => (
+              <SubtaskItem key={subtask.id} subtask={subtask} />
+            ))}
+          </ul>
+        </SortableContext>
+      </DndContext>
       <form onSubmit={handleAdd} className="flex gap-2">
         <input
           aria-label="New subtask"

@@ -12,13 +12,15 @@ export default function useReorderSubtasks(parentId: number) {
         parentId,
         reordered.map((subtask) => subtask.id),
       ),
-    onMutate: async (reordered) => {
-      await queryClient.cancelQueries({ queryKey });
+    // The cache must change in the same tick as the drop: awaiting first lets
+    // dnd-kit clear its transforms and render the old order for a frame.
+    onMutate: (reordered) => {
       const before = queryClient.getQueryData<Task>(queryKey);
       queryClient.setQueryData<Task>(
         queryKey,
         (task) => task && { ...task, subtasks: reordered },
       );
+      queryClient.cancelQueries({ queryKey });
       return { before };
     },
     onError: (_error, _reordered, context) => {
