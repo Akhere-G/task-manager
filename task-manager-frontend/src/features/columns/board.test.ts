@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { makeTask } from "../../test/render";
-import { applyOnDrop, dropTask, groupByColumn } from "./board";
+import type { Task } from "../tasks/types";
+import {
+  applyOnDrop,
+  dropTask,
+  type ColumnKey,
+  type TasksByColumn,
+} from "./board";
 import type { ProjectColumn } from "./types";
 
 const column = (id: number): ProjectColumn => ({
@@ -23,22 +29,16 @@ const tasks = [
 
 const ids = (list: { id: number }[] | undefined) => list?.map((t) => t.id);
 
-describe("groupByColumn", () => {
-  it("puts tasks with no column in Unassigned, which comes first", () => {
-    const groups = groupByColumn(tasks, columns);
-
-    expect([...groups.keys()]).toEqual([null, 10, 20]);
-    expect(ids(groups.get(null))).toEqual([4]);
-    expect(ids(groups.get(10))).toEqual([1, 2]);
-    expect(ids(groups.get(20))).toEqual([3]);
-  });
-
-  it("treats a column the board does not know as unassigned", () => {
-    const groups = groupByColumn([makeTask({ id: 9, columnId: 99 })], columns);
-
-    expect(ids(groups.get(null))).toEqual([9]);
-  });
-});
+const groupByColumn = (
+  boardTasks: Task[],
+  boardColumns: ProjectColumn[],
+): TasksByColumn =>
+  new Map<ColumnKey, Task[]>(
+    [null, ...boardColumns.map((c) => c.id)].map((key) => [
+      key,
+      boardTasks.filter((task) => task.columnId === key),
+    ]),
+  );
 
 describe("dropTask", () => {
   const groups = groupByColumn(tasks, columns);

@@ -2,27 +2,40 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Settings } from "lucide-react";
 import { useState } from "react";
-import { CountChip } from "../../../components/ui";
+
+import { useCategoryTasks } from "../../tasks/hooks/useCategoryTasks";
 import type { Task } from "../../tasks/types";
-import ColumnSettings from "./ColumnSettings";
+import { formatTaskTotals } from "../../tasks/utils";
+import { columnCategoryParams } from "../boardCache";
+import type { BoardQuery, ProjectColumn } from "../types";
 import ColumnCards from "./ColumnCards";
+import ColumnSettings from "./ColumnSettings";
 import QuickAddCard from "./QuickAddCard";
-import type { ProjectColumn } from "../types";
 
 export const columnDragId = (id: number) => `column-${id}`;
 
-interface KanbanColumnProps {
+interface KanbanColumnProps extends BoardQuery {
   column: ProjectColumn;
-  tasks: Task[];
+  /** The board as just dropped, shown until the server's answer is loaded. */
+  droppedTasks?: Task[];
   onDelete: () => void;
 }
 
 export default function KanbanColumn({
   column,
-  tasks,
+  filters,
+  search,
+  view,
+  droppedTasks,
   onDelete,
 }: KanbanColumnProps) {
   const [showSettings, setShowSettings] = useState(false);
+  const feed = useCategoryTasks({
+    filters,
+    search,
+    view,
+    params: columnCategoryParams(column.projectId, column.id),
+  });
   const {
     attributes,
     listeners,
@@ -40,10 +53,14 @@ export default function KanbanColumn({
     <section
       ref={setNodeRef}
       aria-label={column.name}
-      style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={`flex max-h-[75vh] w-72 shrink-0 flex-col gap-2 rounded-xl bg-surface p-3 ${isDragging ? "opacity-50" : ""}`}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        transition,
+        borderTopColor: column.colour,
+      }}
+      className={`flex max-h-[75vh] w-72 shrink-0 flex-col gap-2 rounded-xl border border-t-[3px] bg-surface-muted/50 pt-3 ${isDragging ? "opacity-50" : ""}`}
     >
-      <header className="flex items-center gap-2">
+      <header className="flex items-center gap-2 px-3">
         <button
           type="button"
           aria-label={`Drag column ${column.name}`}
@@ -55,12 +72,15 @@ export default function KanbanColumn({
         </button>
         <span
           aria-hidden
-          className="h-3 w-3 shrink-0 rounded-full"
+          className="h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: column.colour }}
         />
-        <h2 className="flex-1 truncate font-semibold text-text-main">
-          {column.name} <CountChip count={tasks.length} />
+        <h2 className="flex-1 truncate text-sm font-semibold text-text-main">
+          {column.name}
         </h2>
+        <span className="rounded-full border bg-surface px-2 py-0.5 text-[11px] font-medium text-text-sub">
+          {formatTaskTotals(feed.total, feed.totalMinutes)}
+        </span>
         <button
           type="button"
           aria-label={`Settings for ${column.name}`}
@@ -71,13 +91,19 @@ export default function KanbanColumn({
           <Settings size={16} aria-hidden />
         </button>
       </header>
-      {showSettings && <ColumnSettings column={column} onDelete={onDelete} />}
-      <ColumnCards tasks={tasks} />
-      <QuickAddCard
-        projectId={column.projectId}
-        columnId={column.id}
-        columnName={column.name}
-      />
+      {showSettings && (
+        <div className="px-3">
+          <ColumnSettings column={column} onDelete={onDelete} />
+        </div>
+      )}
+      <ColumnCards {...feed} tasks={droppedTasks ?? feed.tasks} />
+      <div className="px-2 pb-2">
+        <QuickAddCard
+          projectId={column.projectId}
+          columnId={column.id}
+          columnName={column.name}
+        />
+      </div>
     </section>
   );
 }

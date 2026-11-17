@@ -153,6 +153,6 @@ describe("board layout", () => {
     expect(params.get("project")).toBe("7");
     expect(params.get("is_completed")).toBe("all");
     expect(params.get("sort_by")).toBe("manual");
-    expect(params.get("limit")).toBe("200");
+    expect(params.get("limit")).toBe("1");
   });
 });

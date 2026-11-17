@@ -48,9 +48,9 @@ const getDefaultFilters = (): TaskFilters => ({
 /** URL params that describe where the user is, not what they filtered. */
 const LOCATION_PARAMS = ["view", "layout", "cal"];
 
-// Matrix quadrants load their own tasks, so this query only supplies the header total.
-const MATRIX_TOTAL_PAGE_SIZE = 1;
-const BOARD_PAGE_SIZE = 200;
+// Matrix quadrants and board columns load their own tasks, so this query only
+// supplies the header total.
+const BOARD_TOTAL_PAGE_SIZE = 1;
 
 const readLayout = (value: string | null): TaskLayout =>
   isTaskLayout(value) ? value : "list";
@@ -106,11 +106,8 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     : searchFilters;
 
   const isCalendar = layout === "calendar";
-  const pageSize = isKanban
-    ? BOARD_PAGE_SIZE
-    : layout === "matrix"
-      ? MATRIX_TOTAL_PAGE_SIZE
-      : perPage;
+  const pageSize =
+    layout === "matrix" || isKanban ? BOARD_TOTAL_PAGE_SIZE : perPage;
 
   const result = useQuery({
     queryKey: [

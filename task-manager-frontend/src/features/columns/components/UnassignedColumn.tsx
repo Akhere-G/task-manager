@@ -1,46 +1,65 @@
 import { useDroppable } from "@dnd-kit/core";
-import { CountChip } from "../../../components/ui";
+
+import { useCategoryTasks } from "../../tasks/hooks/useCategoryTasks";
 import type { Task } from "../../tasks/types";
+import { formatTaskTotals } from "../../tasks/utils";
+import { columnCategoryParams } from "../boardCache";
+import type { BoardQuery } from "../types";
 import ColumnCards from "./ColumnCards";
 import QuickAddCard from "./QuickAddCard";
 
 export const UNASSIGNED_DRAG_ID = "column-unassigned";
 
-interface UnassignedColumnProps {
+interface UnassignedColumnProps extends BoardQuery {
   projectId: number;
-  tasks: Task[];
+  /** The board as just dropped, shown until the server's answer is loaded. */
+  droppedTasks?: Task[];
 }
 
 export default function UnassignedColumn({
   projectId,
-  tasks,
+  filters,
+  search,
+  view,
+  droppedTasks,
 }: UnassignedColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: UNASSIGNED_DRAG_ID,
     data: { type: "unassigned" },
+  });
+  const feed = useCategoryTasks({
+    filters,
+    search,
+    view,
+    params: columnCategoryParams(projectId, null),
   });
 
   return (
     <section
       ref={setNodeRef}
       aria-label="Unassigned"
-      className={`flex max-h-[75vh] w-72 shrink-0 flex-col gap-2 rounded-xl bg-surface p-3 ${isOver ? "ring-2 ring-brand/40" : ""}`}
+      className={`flex max-h-[75vh] w-72 shrink-0 flex-col gap-2 rounded-xl border border-t-[3px] border-t-slate-400 bg-surface-muted/50 pt-3 ${isOver ? "ring-2 ring-brand/40" : ""}`}
     >
-      <header className="flex items-center gap-2">
+      <header className="flex items-center gap-2 px-3">
         <span
           aria-hidden
-          className="h-3 w-3 shrink-0 rounded-full border border-slate-400"
+          className="h-2.5 w-2.5 shrink-0 rounded-full border border-slate-400"
         />
-        <h2 className="flex-1 truncate font-semibold text-text-main">
-          Unassigned <CountChip count={tasks.length} />
+        <h2 className="flex-1 truncate text-sm font-semibold text-text-main">
+          Unassigned
         </h2>
+        <span className="rounded-full border bg-surface px-2 py-0.5 text-[11px] font-medium text-text-sub">
+          {formatTaskTotals(feed.total, feed.totalMinutes)}
+        </span>
       </header>
-      <ColumnCards tasks={tasks} />
-      <QuickAddCard
-        projectId={projectId}
-        columnId={null}
-        columnName="Unassigned"
-      />
+      <ColumnCards {...feed} tasks={droppedTasks ?? feed.tasks} />
+      <div className="px-2 pb-2">
+        <QuickAddCard
+          projectId={projectId}
+          columnId={null}
+          columnName="Unassigned"
+        />
+      </div>
     </section>
   );
 }

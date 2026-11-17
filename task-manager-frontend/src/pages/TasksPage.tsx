@@ -67,7 +67,12 @@ function TasksBody({
     return projectId === null ? (
       <EmptyState searchMessage="Select a project to see its board." />
     ) : (
-      <KanbanBoard projectId={projectId} tasks={tasks} />
+      <KanbanBoard
+        projectId={projectId}
+        filters={filters}
+        search={search}
+        view={view}
+      />
     );
   }
   if (layout === "matrix") {

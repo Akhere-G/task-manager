@@ -7,7 +7,7 @@ import { priorityBadgeSolidClasses, quadrantPanelClasses } from "../constants";
 import { useCategoryTasks } from "../hooks/useCategoryTasks";
 import type { TaskFilters } from "../taskParams";
 import type { Priority, Task } from "../types";
-import { formatMinutes } from "../utils";
+import { formatTaskTotals } from "../utils";
 import { isRangedView, type TaskView } from "../views";
 import MatrixTaskRow from "./MatrixTaskRow";
 
@@ -24,11 +24,6 @@ interface MatrixQuadrantProps {
 
 const allowsPriority = (filter: string, priority: Priority) =>
   filter === "" || filter.split(",").includes(String(priority));
-
-const countLabel = (total: number, totalMinutes: number) => {
-  const tasks = `${total} ${total === 1 ? "task" : "tasks"}`;
-  return totalMinutes > 0 ? `${tasks} · ${formatMinutes(totalMinutes)}` : tasks;
-};
 
 export default function MatrixQuadrant({
   priority,
@@ -81,7 +76,7 @@ export default function MatrixQuadrant({
         </h2>
         <div className="flex shrink-0 items-center gap-2">
           <span className="rounded-full border bg-surface px-2 py-0.5 text-[11px] font-medium text-text-sub">
-            {countLabel(total, totalMinutes)}
+            {formatTaskTotals(total, totalMinutes)}
           </span>
           <button
             type="button"

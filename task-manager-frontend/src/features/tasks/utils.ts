@@ -223,3 +223,8 @@ export const isTaskOverdue = (
   { isCompleted, endAt }: Pick<Task, "isCompleted" | "endAt">,
   now = new Date(),
 ) => !isCompleted && !!endAt && parseISO(endAt) < now;
+
+export const formatTaskTotals = (total: number, totalMinutes: number) => {
+  const tasks = `${total} ${total === 1 ? "task" : "tasks"}`;
+  return totalMinutes > 0 ? `${tasks} · ${formatMinutes(totalMinutes)}` : tasks;
+};

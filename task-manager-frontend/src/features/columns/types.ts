@@ -1,3 +1,6 @@
+import type { TaskFilters } from "../tasks/taskParams";
+import type { TaskView } from "../tasks/views";
+
 export const ON_DROP_OPTIONS = [
   { value: "nothing", label: "Do nothing" },
   { value: "complete", label: "Mark complete" },
@@ -30,3 +33,10 @@ export interface BoardMoveInput {
 }
 
 export const DEFAULT_COLUMN_COLOUR = "#64748b";
+
+/** What a board's columns share when they load their own tasks. */
+export interface BoardQuery {
+  filters: TaskFilters;
+  search: string;
+  view: TaskView;
+}
