@@ -1,13 +1,13 @@
-import { Loader2, Plus } from "lucide-react";
-import { useRef } from "react";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { InfiniteSentinel } from "../../../components/ui/InfiniteSentinel";
+import CategoryFooter from "../../../components/ui/CategoryFooter";
+import ScrollFeed from "../../../components/ui/ScrollFeed";
+import TotalsChip from "../../../components/ui/TotalsChip";
 import { priorityBadgeSolidClasses, quadrantPanelClasses } from "../constants";
 import { useCategoryTasks } from "../hooks/useCategoryTasks";
 import type { TaskFilters } from "../taskParams";
 import type { Priority, Task } from "../types";
-import { formatTaskTotals } from "../utils";
 import { isRangedView, type TaskView } from "../views";
 import MatrixTaskRow from "./MatrixTaskRow";
 
@@ -36,7 +36,6 @@ export default function MatrixQuadrant({
   onDropTask,
 }: MatrixQuadrantProps) {
   const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement>(null);
   const {
     tasks,
     total,
@@ -53,7 +52,6 @@ export default function MatrixQuadrant({
     includeProjections: isRangedView(view),
     enabled: allowsPriority(filters.priority, priority),
   });
-  const remaining = total - tasks.length;
 
   return (
     <section
@@ -75,9 +73,7 @@ export default function MatrixQuadrant({
           </span>
         </h2>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="rounded-full border bg-surface px-2 py-0.5 text-[11px] font-medium text-text-sub">
-            {formatTaskTotals(total, totalMinutes)}
-          </span>
+          <TotalsChip total={total} totalMinutes={totalMinutes} />
           <button
             type="button"
             aria-label={`Add a P${priority} task`}
@@ -90,9 +86,18 @@ export default function MatrixQuadrant({
         </div>
       </header>
 
-      <div
-        ref={scrollRef}
-        className="min-h-0 flex-1 overflow-y-auto bg-surface"
+      <ScrollFeed
+        isLoading={isLoading}
+        isEmpty={tasks.length === 0}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+        className="min-h-0 flex-1 bg-surface"
+        emptyMessage={
+          <p className="m-3 rounded-lg border border-dashed p-4 text-center text-xs text-text-sub">
+            Drop tasks here to assign P{priority} ({description})
+          </p>
+        }
       >
         {tasks.map((task) => (
           <MatrixTaskRow
@@ -101,35 +106,15 @@ export default function MatrixQuadrant({
             onDragTask={setDraggedTask}
           />
         ))}
-        {!isLoading && tasks.length === 0 && (
-          <p className="m-3 rounded-lg border border-dashed p-4 text-center text-xs text-text-sub">
-            Drop tasks here to assign P{priority} ({description})
-          </p>
-        )}
-        {isLoading && (
-          <p className="p-4 text-center text-xs text-text-sub">Loading…</p>
-        )}
-        <InfiniteSentinel
-          onVisible={fetchNextPage}
-          disabled={!hasNextPage || isFetchingNextPage}
-          scrollRef={scrollRef}
-        />
-        {isFetchingNextPage && (
-          <Loader2
-            aria-label="Loading more tasks"
-            className="mx-auto my-2 animate-spin text-text-sub"
-            size={16}
-          />
-        )}
-      </div>
+      </ScrollFeed>
 
       {tasks.length > 0 && (
-        <footer className="flex justify-between gap-2 rounded-b-xl border-t bg-surface px-3 py-1.5 text-[11px] text-text-sub">
-          <span>
-            Showing {tasks.length} of {total} tasks in {title}
-          </span>
-          {remaining > 0 && <span>Scroll for {remaining} more ↓</span>}
-        </footer>
+        <CategoryFooter
+          shown={tasks.length}
+          total={total}
+          label={`tasks in ${title}`}
+          className="rounded-b-xl border-t bg-surface px-3 py-1.5"
+        />
       )}
     </section>
   );

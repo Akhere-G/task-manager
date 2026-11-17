@@ -3,9 +3,9 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Settings } from "lucide-react";
 import { useState } from "react";
 
+import TotalsChip from "../../../components/ui/TotalsChip";
 import { useCategoryTasks } from "../../tasks/hooks/useCategoryTasks";
 import type { Task } from "../../tasks/types";
-import { formatTaskTotals } from "../../tasks/utils";
 import { columnCategoryParams } from "../boardCache";
 import type { BoardQuery, ProjectColumn } from "../types";
 import ColumnCards from "./ColumnCards";
@@ -78,9 +78,7 @@ export default function KanbanColumn({
         <h2 className="flex-1 truncate text-sm font-semibold text-text-main">
           {column.name}
         </h2>
-        <span className="rounded-full border bg-surface px-2 py-0.5 text-[11px] font-medium text-text-sub">
-          {formatTaskTotals(feed.total, feed.totalMinutes)}
-        </span>
+        <TotalsChip total={feed.total} totalMinutes={feed.totalMinutes} />
         <button
           type="button"
           aria-label={`Settings for ${column.name}`}

@@ -1,8 +1,8 @@
 import { useDroppable } from "@dnd-kit/core";
 
+import TotalsChip from "../../../components/ui/TotalsChip";
 import { useCategoryTasks } from "../../tasks/hooks/useCategoryTasks";
 import type { Task } from "../../tasks/types";
-import { formatTaskTotals } from "../../tasks/utils";
 import { columnCategoryParams } from "../boardCache";
 import type { BoardQuery } from "../types";
 import ColumnCards from "./ColumnCards";
@@ -48,9 +48,7 @@ export default function UnassignedColumn({
         <h2 className="flex-1 truncate text-sm font-semibold text-text-main">
           Unassigned
         </h2>
-        <span className="rounded-full border bg-surface px-2 py-0.5 text-[11px] font-medium text-text-sub">
-          {formatTaskTotals(feed.total, feed.totalMinutes)}
-        </span>
+        <TotalsChip total={feed.total} totalMinutes={feed.totalMinutes} />
       </header>
       <ColumnCards {...feed} tasks={droppedTasks ?? feed.tasks} />
       <div className="px-2 pb-2">

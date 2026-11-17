@@ -2,10 +2,9 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Loader2 } from "lucide-react";
-import { useRef } from "react";
 
-import { InfiniteSentinel } from "../../../components/ui/InfiniteSentinel";
+import CategoryFooter from "../../../components/ui/CategoryFooter";
+import ScrollFeed from "../../../components/ui/ScrollFeed";
 import type { Task } from "../../tasks/types";
 import KanbanCard, { taskDragId } from "./KanbanCard";
 
@@ -26,48 +25,32 @@ export default function ColumnCards({
   isFetchingNextPage,
   fetchNextPage,
 }: ColumnCardsProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const remaining = total - tasks.length;
-
   return (
     <SortableContext
       items={tasks.map((task) => taskDragId(task.id))}
       strategy={verticalListSortingStrategy}
     >
-      <div ref={scrollRef} className="min-h-12 flex-1 overflow-y-auto px-2">
+      <ScrollFeed
+        isLoading={isLoading}
+        isEmpty={tasks.length === 0}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+        className="min-h-12 flex-1 px-2"
+        emptyMessage={
+          <p className="rounded-lg border border-dashed p-3 text-center text-xs text-text-sub">
+            No tasks
+          </p>
+        }
+      >
         <ul className="flex flex-col gap-2">
           {tasks.map((task) => (
             <KanbanCard key={task.id} task={task} />
           ))}
         </ul>
-        {!isLoading && tasks.length === 0 && (
-          <p className="rounded-lg border border-dashed p-3 text-center text-xs text-text-sub">
-            No tasks
-          </p>
-        )}
-        {isLoading && (
-          <p className="p-3 text-center text-xs text-text-sub">Loading…</p>
-        )}
-        <InfiniteSentinel
-          onVisible={fetchNextPage}
-          disabled={!hasNextPage || isFetchingNextPage}
-          scrollRef={scrollRef}
-        />
-        {isFetchingNextPage && (
-          <Loader2
-            aria-label="Loading more tasks"
-            className="mx-auto my-2 animate-spin text-text-sub"
-            size={16}
-          />
-        )}
-      </div>
+      </ScrollFeed>
       {tasks.length > 0 && (
-        <p className="flex justify-between gap-2 px-3 text-[11px] text-text-sub">
-          <span>
-            Showing {tasks.length} of {total}
-          </span>
-          {remaining > 0 && <span>Scroll for {remaining} more ↓</span>}
-        </p>
+        <CategoryFooter shown={tasks.length} total={total} className="px-3" />
       )}
     </SortableContext>
   );
