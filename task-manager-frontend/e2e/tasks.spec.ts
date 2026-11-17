@@ -27,7 +27,12 @@ test.describe("task management", () => {
       .getByRole("button", { name: "Mark task as completed" })
       .click();
 
-    await expect(card(page, "Write quarterly report")).toBeHidden();
+    await expect(
+      page
+        .getByRole("region", { name: "Completed" })
+        .getByRole("article")
+        .filter({ hasText: "Write quarterly report" }),
+    ).toBeVisible();
     await expect
       .poll(async () =>
         (await signedIn.tasks()).map((t) => [t.title, t.isCompleted]),

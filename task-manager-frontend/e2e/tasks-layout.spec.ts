@@ -11,7 +11,7 @@ test("on desktop the tasks sit to the right of the sidebar", async ({
   await page.goto("/");
   await page.getByRole("article").first().waitFor();
   const sidebar = await page
-    .getByRole("navigation", { name: "Task views" })
+    .getByRole("navigation", { name: "Projects" })
     .boundingBox();
   const card = await page.getByRole("article").first().boundingBox();
   if (!sidebar || !card) throw new Error("Page is not laid out");
@@ -24,10 +24,8 @@ test("on mobile the sidebar is a button above the tasks", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto("/");
   await page.getByText("Alpha").first().waitFor();
-  const button = page.getByRole("button", { name: "Views / projects" });
-  await expect(
-    page.getByRole("navigation", { name: "Task views" }),
-  ).toBeHidden();
+  const button = page.getByRole("button", { name: "Projects", exact: true });
+  await expect(page.getByRole("navigation", { name: "Projects" })).toBeHidden();
   const box = await button.boundingBox();
   const card = await page.getByText("Alpha").first().boundingBox();
   if (!box || !card) throw new Error("Page is not laid out");
