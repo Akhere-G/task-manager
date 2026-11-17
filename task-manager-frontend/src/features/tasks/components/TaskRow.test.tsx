@@ -55,7 +55,7 @@ describe("TaskRow", () => {
       }),
     );
 
-    const titleLine = screen.getByRole("heading", { level: 3 });
+    const titleLine = screen.getByRole("heading", { level: 3 }).parentElement;
     const detailsLine = screen.getByText("1h 30m").parentElement;
     expect(titleLine).not.toContainElement(screen.getByText("1h 30m"));
     expect(detailsLine?.previousElementSibling).toBe(titleLine);

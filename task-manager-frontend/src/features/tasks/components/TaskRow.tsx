@@ -88,18 +88,20 @@ export function TaskRow({
         className={`mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md border-2 transition-colors ${isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h3
+        <div
           className={`flex min-w-0 items-center gap-2 text-sm font-medium ${isCompleted ? "line-through" : ""}`}
         >
           <PriorityBadge priority={task.priority} />
-          <button
-            type="button"
-            aria-label={`Open task: ${title}`}
-            onClick={() => onOpen(task)}
-            className="min-w-0 shrink cursor-pointer truncate text-left hover:underline"
-          >
-            {title}
-          </button>
+          <h3 className="min-w-0 shrink">
+            <button
+              type="button"
+              aria-label={`Open task: ${title}`}
+              onClick={() => onOpen(task)}
+              className="max-w-full cursor-pointer truncate text-left hover:underline"
+            >
+              {title}
+            </button>
+          </h3>
           {description && (
             <span className="hidden min-w-0 truncate text-xs font-normal text-text-sub md:inline">
               — {description}
@@ -109,7 +111,7 @@ export function TaskRow({
             done={task.subtaskCompletedCount}
             total={task.subtaskCount}
           />
-        </h3>
+        </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-sub">
           <ProjectLabel
             projectId={task.projectId}
