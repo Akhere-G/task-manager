@@ -170,7 +170,7 @@ def test_a_filter_is_capped_and_reports_what_it_matched(
         {"filter": {"project": 1}},
         {"filter": {"unassigned": False}},
         {"filter": {"group": "nonsense"}},
-        {"filter": {"group": "overdue", "view": "inbox"}},
+        {"filter": {"group": "overdue", "is_completed": "true"}},
     ],
 )
 def test_a_target_needs_ids_or_a_category_filter(

@@ -407,12 +407,10 @@ class TaskListQuerySchema(Schema):
     def validate_group(self, data: dict[str, Any], **kwargs: Any) -> None:
         if "group" not in data:
             return
-        for conflicting in ("view", "is_completed"):
-            if conflicting in data:
-                raise ValidationError(
-                    f"group and {conflicting} cannot be combined.",
-                    field_name="group",
-                )
+        if "is_completed" in data:
+            raise ValidationError(
+                "group and is_completed cannot be combined.", field_name="group"
+            )
 
     @validates_schema
     def validate_column(self, data: dict[str, Any], **kwargs: Any) -> None:

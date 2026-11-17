@@ -21,7 +21,6 @@ def test_blank_filters_are_ignored_and_paging_defaults_to_page_one() -> None:
         ({"start_date": "2026-03-02", "end_date": "2026-03-01"}, "end_date"),
         ({"project_repeating": "true"}, "project_repeating"),
         ({"group": "someday"}, "group"),
-        ({"group": "today", "view": "inbox"}, "group"),
         ({"group": "today", "is_completed": "true"}, "group"),
         (
             {
