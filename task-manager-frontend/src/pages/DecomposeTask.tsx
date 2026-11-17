@@ -2,13 +2,13 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Sparkles, Plus, Loader2, Move } from "lucide-react";
 import TaskCard from "../features/tasks/components/TaskCard";
-import type { CreateTaskInput, Task } from "../features/tasks/types";
+import type { CreateTaskInput, Subtask, Task } from "../features/tasks/types";
 import useGetTask from "../features/tasks/hooks/useGetTask";
 import axios from "axios";
 import { ErrorState, LoadingState, Popup } from "../components/ui";
 import { TaskForm } from "../features/tasks/components";
 import { PopupModes, useTaskContext } from "../context/TaskContext";
-import useAddSubtasks from "../features/tasks/hooks/useAddSubtasks";
+import useReplaceSubtasks from "../features/tasks/hooks/useReplaceSubtasks";
 import { aiService } from "../features/ai/api";
 import { getErrorType, trackEvent } from "../services/analytics";
 
@@ -29,6 +29,23 @@ const toStagedTask = (task: CreateTaskInput, id: number): Task => ({
   isGhost: false,
 });
 
+const stagedFromSubtask = (subtask: Subtask, parent: Task): Task =>
+  toStagedTask(
+    {
+      title: subtask.title,
+      description: subtask.description,
+      priority: subtask.priority,
+      projectId: parent.projectId,
+      labelIds: parent.labelIds,
+      startAt: parent.startAt,
+      endAt: parent.endAt,
+    },
+    subtask.id,
+  );
+
+const nextStagedId = (tasks: Task[]) =>
+  Math.max(0, ...tasks.map((task) => task.id)) + 1;
+
 function subtaskErrorText(err: unknown) {
   const errors = axios.isAxiosError(err)
     ? err.response?.data?.errors?.subtasks
@@ -45,18 +62,24 @@ function subtaskErrorText(err: unknown) {
 }
 
 export default function DecomposeTask() {
-  const [idCount, setIdCount] = useState(0);
   const { taskId } = useParams();
   const navigate = useNavigate();
-  const { mutateAsync: addSubtasks } = useAddSubtasks(Number(taskId));
+  const { mutateAsync: replaceSubtasks } = useReplaceSubtasks(Number(taskId));
 
   const {
     data: parentTask,
     isLoading: loadingParent,
+    isFetching: fetchingParent,
     isError: isGetParentError,
   } = useGetTask(Number(taskId));
 
-  const [stagedTasks, setStagedTasks] = useState<Task[]>([]);
+  const savedSteps = parentTask
+    ? (parentTask.subtasks ?? []).map((subtask) =>
+        stagedFromSubtask(subtask, parentTask),
+      )
+    : [];
+  const [editedSteps, setStagedTasks] = useState<Task[] | null>(null);
+  const stagedTasks = editedSteps ?? savedSteps;
   const [isDecomposing, setIsDecomposing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bulkAddErrors, setBulkAddErrors] = useState("");
@@ -71,7 +94,7 @@ export default function DecomposeTask() {
     try {
       const { tasks } = await aiService.decomposeTask(
         parentTask,
-        parentTask.subtasks?.map(({ title, description }) => ({
+        (parentTask.subtasks ?? []).map(({ title, description }) => ({
           title,
           description,
         })),
@@ -79,9 +102,7 @@ export default function DecomposeTask() {
       trackEvent("ai_task_breakdown_succeeded", {
         subtask_count: tasks.length,
       });
-      const formattedTasks = tasks.map(toStagedTask);
-      setStagedTasks(formattedTasks);
-      setIdCount(formattedTasks.length);
+      setStagedTasks(tasks.map((task, index) => toStagedTask(task, index + 1)));
       setDecomposeErrors("");
     } catch (err) {
       console.error("Failed to decompose task", err);
@@ -101,7 +122,7 @@ export default function DecomposeTask() {
   }
 
   const handleDeleteStaged = (id: number) => {
-    setStagedTasks((prev) => prev.filter((task) => task.id !== id));
+    setStagedTasks(stagedTasks.filter((task) => task.id !== id));
   };
 
   const handleEdit = async (updatedTask: CreateTaskInput) => {
@@ -115,23 +136,22 @@ export default function DecomposeTask() {
   };
 
   const handleAdd = () => {
-    if (parentTask)
-      setStagedTasks((prev) => [
-        ...prev,
-        toStagedTask(
-          {
-            title: `Task #${prev.length + 1}`,
-            projectId: parentTask.projectId,
-            labelIds: parentTask.labelIds,
-            priority: parentTask.priority,
-            description: "",
-            startAt: parentTask.startAt,
-            endAt: parentTask.endAt,
-          },
-          idCount + 1,
-        ),
-      ]);
-    setIdCount((prev) => prev + 1);
+    if (!parentTask) return;
+    setStagedTasks([
+      ...stagedTasks,
+      toStagedTask(
+        {
+          title: `Task #${stagedTasks.length + 1}`,
+          projectId: parentTask.projectId,
+          labelIds: parentTask.labelIds,
+          priority: parentTask.priority,
+          description: "",
+          startAt: parentTask.startAt,
+          endAt: parentTask.endAt,
+        },
+        nextStagedId(stagedTasks),
+      ),
+    ]);
   };
 
   const handleClear = () => setStagedTasks([]);
@@ -140,7 +160,7 @@ export default function DecomposeTask() {
     if (stagedTasks.length === 0) return;
     setIsSubmitting(true);
     try {
-      await addSubtasks(
+      await replaceSubtasks(
         stagedTasks.map(({ title, description, priority }) => ({
           title,
           description,
@@ -164,6 +184,7 @@ export default function DecomposeTask() {
   }
 
   const hasStaged = stagedTasks.length > 0;
+  const isBusy = isDecomposing || fetchingParent;
 
   if (loadingParent) return <LoadingState />;
 
@@ -219,7 +240,7 @@ export default function DecomposeTask() {
             <button
               aria-label="Break down tasks into subtasks"
               onClick={handleDecompose}
-              disabled={isDecomposing}
+              disabled={isBusy}
               className="btn-primary flex items-center gap-2"
             >
               {isDecomposing ? (
@@ -236,12 +257,13 @@ export default function DecomposeTask() {
         ) : (
           <div className="w-full flex justify-between items-center">
             <p className="text-text-sub italic text-sm">
-              AI suggests these {stagedTasks.length} steps:
+              {stagedTasks.length} steps. Saving replaces the existing subtasks.
             </p>
             <button
               aria-label="Regenerate sub tasks"
               onClick={handleDecompose}
-              className="text-brand text-sm font-semibold hover:underline flex items-center gap-1"
+              disabled={isBusy}
+              className="text-brand text-sm font-semibold hover:underline flex items-center gap-1 disabled:opacity-50 disabled:no-underline"
             >
               <Sparkles size={14} /> Regenerate
             </button>
