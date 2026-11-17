@@ -46,6 +46,21 @@ describe("TaskRow", () => {
     expect(screen.getByText("1h 30m")).toBeInTheDocument();
   });
 
+  it("puts the length and time on a second line under the title", () => {
+    renderRow(
+      makeTask({
+        title: "Plan trip",
+        startAt: "2026-03-02T09:00:00Z",
+        endAt: "2026-03-02T10:30:00Z",
+      }),
+    );
+
+    const titleLine = screen.getByRole("heading", { level: 3 });
+    const detailsLine = screen.getByText("1h 30m").parentElement;
+    expect(titleLine).not.toContainElement(screen.getByText("1h 30m"));
+    expect(detailsLine?.previousElementSibling).toBe(titleLine);
+  });
+
   it("describes a repeating task", () => {
     renderRow(
       makeTask({ isRepeating: true, repeatBy: "daily", repeatInterval: 5 }),

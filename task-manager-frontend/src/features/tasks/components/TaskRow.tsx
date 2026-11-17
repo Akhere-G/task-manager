@@ -1,5 +1,6 @@
 import {
   AlertCircle,
+  Clock,
   Pencil,
   Play,
   Repeat,
@@ -74,7 +75,7 @@ export function TaskRow({
 
   return (
     <article
-      className={`group relative flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded-md border-b border-surface-muted px-2 py-2.5 transition-colors hover:bg-surface-muted/60 focus-within:bg-surface-muted/60 ${isCompleted ? "opacity-60" : ""}`}
+      className={`group relative flex min-h-14 items-start gap-3 rounded-md border-b border-surface-muted px-2 py-2.5 transition-colors hover:bg-surface-muted/60 focus-within:bg-surface-muted/60 ${isCompleted ? "opacity-60" : ""}`}
     >
       <SelectBox task={task} />
       <button
@@ -84,36 +85,57 @@ export function TaskRow({
         aria-label={
           isCompleted ? "Mark task as pending" : "Mark task as completed"
         }
-        className={`h-5 w-5 shrink-0 cursor-pointer rounded-md border-2 transition-colors ${isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
+        className={`mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md border-2 transition-colors ${isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
       />
-      <PriorityBadge priority={task.priority} />
-      <h3
-        className={`flex min-w-0 flex-1 items-center gap-2 text-sm font-medium ${isCompleted ? "line-through" : ""}`}
-      >
-        <button
-          type="button"
-          aria-label={`Open task: ${title}`}
-          onClick={() => onOpen(task)}
-          className="shrink-0 cursor-pointer truncate text-left hover:underline"
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <h3
+          className={`flex min-w-0 items-center gap-2 text-sm font-medium ${isCompleted ? "line-through" : ""}`}
         >
-          {title}
-        </button>
-        {description && (
-          <span className="hidden min-w-0 truncate text-xs font-normal text-text-sub md:inline">
-            — {description}
-          </span>
-        )}
-        {recurrence && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] font-normal text-text-sub">
-            <Repeat aria-hidden size={11} />
-            {recurrence}
-          </span>
-        )}
-        <SubtaskCount
-          done={task.subtaskCompletedCount}
-          total={task.subtaskCount}
-        />
-      </h3>
+          <PriorityBadge priority={task.priority} />
+          <button
+            type="button"
+            aria-label={`Open task: ${title}`}
+            onClick={() => onOpen(task)}
+            className="min-w-0 shrink cursor-pointer truncate text-left hover:underline"
+          >
+            {title}
+          </button>
+          {description && (
+            <span className="hidden min-w-0 truncate text-xs font-normal text-text-sub md:inline">
+              — {description}
+            </span>
+          )}
+          <SubtaskCount
+            done={task.subtaskCompletedCount}
+            total={task.subtaskCount}
+          />
+        </h3>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-sub">
+          <ProjectLabel
+            projectId={task.projectId}
+            className="rounded-full border px-2 py-0.5 text-[11px] font-medium text-text-main"
+          />
+          <LabelChips labelIds={task.labelIds} />
+          {recurrence && (
+            <span className="inline-flex items-center gap-1">
+              <Repeat aria-hidden size={11} />
+              {recurrence}
+            </span>
+          )}
+          {minutes > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Clock aria-hidden size={11} />
+              {formatMinutes(minutes)}
+            </span>
+          )}
+          <time
+            className={`inline-flex items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 font-medium ${isOverdue ? "bg-failure/10 text-failure" : "text-text-main"}`}
+          >
+            {isOverdue && <AlertCircle aria-hidden size={12} />}
+            {formatDateRange(task.startAt, task.endAt)}
+          </time>
+        </div>
+      </div>
 
       <div className={actionsClass}>
         {!isCompleted && (
@@ -163,21 +185,6 @@ export function TaskRow({
         >
           <Trash2 aria-hidden size={16} />
         </button>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-3 text-xs text-text-sub">
-        <LabelChips labelIds={task.labelIds} />
-        <ProjectLabel
-          projectId={task.projectId}
-          className="rounded-full border px-2 py-0.5 text-[11px] font-medium text-text-main"
-        />
-        {minutes > 0 && <span>{formatMinutes(minutes)}</span>}
-        <time
-          className={`inline-flex items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 font-medium ${isOverdue ? "bg-failure/10 text-failure" : "text-text-main"}`}
-        >
-          {isOverdue && <AlertCircle aria-hidden size={12} />}
-          {formatDateRange(task.startAt, task.endAt)}
-        </time>
       </div>
     </article>
   );
