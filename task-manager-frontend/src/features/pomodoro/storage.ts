@@ -1,3 +1,6 @@
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
 export function readJson(key: string): unknown {
   try {
     const raw = localStorage.getItem(key);
