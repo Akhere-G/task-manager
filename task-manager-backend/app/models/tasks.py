@@ -72,6 +72,14 @@ class Task(Base):
         Index("idx_tasks_user_project", "user_id", "project_id"),
         Index("idx_tasks_parent", "parent_id", "position"),
         Index("idx_tasks_user_order", "user_id", "sort_order"),
+        Index(
+            "idx_tasks_user_column_order",
+            "user_id",
+            "project_id",
+            "column_id",
+            "sort_order",
+        ),
+        Index("idx_tasks_user_priority_order", "user_id", "priority", "sort_order"),
         Index("idx_tasks_user_deleted", "user_id", "is_deleted", "deleted_at"),
         CheckConstraint("priority BETWEEN 1 AND 4", name="ck_tasks_priority"),
     )
