@@ -7,6 +7,7 @@ import {
   apiParamMap,
   buildCalendarParams,
   buildListParams,
+  getDefaultFilters,
   type TaskFilters,
 } from "../taskParams";
 import {
@@ -23,18 +24,6 @@ export type { TaskFilters };
 interface UseTasksProps {
   enabled?: boolean;
 }
-
-const getDefaultFilters = (): TaskFilters => ({
-  search: "",
-  project: "",
-  label: "",
-  priority: "",
-  duration: "",
-  isCompleted: "false",
-  sortBy: "start_at",
-  order: "asc",
-  currentDate: new Date().toISOString(),
-});
 
 /** URL params that describe where the user is, not what they filtered. */
 const LOCATION_PARAMS = ["view", "layout", "cal"];

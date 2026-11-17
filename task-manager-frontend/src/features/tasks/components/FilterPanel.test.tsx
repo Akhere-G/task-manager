@@ -3,20 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { mockApi } from "../../../test/api";
 import { renderWithProviders } from "../../../test/render";
+import { getDefaultFilters } from "../taskParams";
 import FilterPanel from "./FilterPanel";
 
 mockApi();
-
-const filters = {
-  search: "",
-  project: "",
-  label: "",
-  priority: "",
-  duration: "",
-  isCompleted: "all",
-  sortBy: "start_at",
-  order: "asc",
-};
 
 function renderPanel(
   overrides: Partial<Parameters<typeof FilterPanel>[0]> = {},
@@ -24,9 +14,8 @@ function renderPanel(
   const updateFilters = vi.fn();
   renderWithProviders(
     <FilterPanel
-      filters={filters}
+      filters={getDefaultFilters()}
       updateFilters={updateFilters}
-      resetFilters={vi.fn()}
       sortable
       canFilterCompleted
       {...overrides}

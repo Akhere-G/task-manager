@@ -14,6 +14,18 @@ export interface TaskFilters {
   currentDate: string;
 }
 
+export const getDefaultFilters = (): TaskFilters => ({
+  search: "",
+  project: "",
+  label: "",
+  priority: "",
+  duration: "",
+  isCompleted: "false",
+  sortBy: "start_at",
+  order: "asc",
+  currentDate: new Date().toISOString(),
+});
+
 export const apiParamMap: Record<keyof TaskFilters, string> = {
   search: "q",
   project: "project",

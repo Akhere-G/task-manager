@@ -1,18 +1,8 @@
-import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { CountChip } from "../../../components/ui";
+import type { TaskFilters } from "../taskParams";
 import FilterPanel from "./FilterPanel";
-
-export interface TaskFilters {
-  search: string;
-  project: string;
-  label: string;
-  priority: string;
-  duration: string;
-  isCompleted: string;
-  sortBy: string;
-  order: string;
-}
+import FilterToolbar from "./FilterToolbar";
 
 interface TasksHeaderProps {
   filters: TaskFilters;
@@ -32,36 +22,29 @@ export default function TasksHeader({
   sortable = true,
   canFilterCompleted = true,
 }: TasksHeaderProps) {
-  const [openFilters, setOpenFilters] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="card flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <header className="flex flex-col">
-          <h1 className="text-3xl font-bold text-text-main transition-colors">
-            Tasks <CountChip count={totalTasks} />
-          </h1>
-          <p className="text-text-sub">Manage your daily goals.</p>
-        </header>
+      <header className="flex flex-wrap items-baseline gap-x-3">
+        <h1 className="text-3xl font-bold text-text-main transition-colors">
+          Tasks <CountChip count={totalTasks} />
+        </h1>
+        <p className="text-text-sub">Manage your daily goals.</p>
+      </header>
 
-        <button
-          type="button"
-          title="Show filters"
-          aria-label="Show filters"
-          aria-expanded={openFilters}
-          onClick={() => setOpenFilters(!openFilters)}
-          className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium ${openFilters ? "bg-brand text-white" : "bg-surface text-text-main hover:bg-brand/10"}`}
-        >
-          <SlidersHorizontal aria-hidden size={16} />
-          Filters
-        </button>
-      </div>
-
-      {openFilters && (
+      <FilterToolbar
+        filters={filters}
+        updateFilters={updateFilters}
+        resetFilters={resetFilters}
+        canFilterCompleted={canFilterCompleted}
+        isOpen={isOpen}
+        onToggle={() => setIsOpen(!isOpen)}
+      />
+      {isOpen && (
         <FilterPanel
           filters={filters}
           updateFilters={updateFilters}
-          resetFilters={resetFilters}
           sortable={sortable}
           canFilterCompleted={canFilterCompleted}
         />
