@@ -1,46 +1,59 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { taskService } from "../api";
+import { taskService, type BulkResult, type BulkTarget } from "../api";
 import { getBrowserTimeZone } from "../recurrence";
 import { useTaskSelection } from "../selection/useTaskSelection";
-import type { SnoozePreset } from "../types";
+import type { Priority, SnoozePreset } from "../types";
 
-export interface BulkSnoozeRequest {
-  ids: number[];
+interface SnoozeRequest {
+  target: BulkTarget;
   preset: SnoozePreset;
   day?: string;
 }
 
-export default function useBulkTaskActions() {
+interface PriorityRequest {
+  target: BulkTarget;
+  priority: Priority;
+}
+
+interface MoveRequest {
+  target: BulkTarget;
+  columnId: number | null;
+}
+
+function useBulkMutation<Request>(
+  run: (request: Request) => Promise<BulkResult>,
+) {
   const queryClient = useQueryClient();
   const { clear } = useTaskSelection();
 
-  const settings = {
+  return useMutation({
+    mutationFn: run,
     onSuccess: clear,
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ["tasks"] }),
         queryClient.invalidateQueries({ queryKey: ["stats"] }),
       ]),
-  };
+  });
+}
 
-  const complete = useMutation({
-    mutationFn: taskService.bulkComplete,
-    ...settings,
-  });
-  const remove = useMutation({
-    mutationFn: taskService.bulkDelete,
-    ...settings,
-  });
-  const snooze = useMutation({
-    mutationFn: ({ ids, preset, day }: BulkSnoozeRequest) =>
-      taskService.bulkSnooze(ids, {
-        preset,
-        day,
-        zoneName: getBrowserTimeZone() ?? "UTC",
-      }),
-    ...settings,
-  });
+export default function useBulkTaskActions() {
+  const complete = useBulkMutation(taskService.bulkComplete);
+  const remove = useBulkMutation(taskService.bulkDelete);
+  const snooze = useBulkMutation(({ target, preset, day }: SnoozeRequest) =>
+    taskService.bulkSnooze(target, {
+      preset,
+      day,
+      zoneName: getBrowserTimeZone() ?? "UTC",
+    }),
+  );
+  const setPriority = useBulkMutation(({ target, priority }: PriorityRequest) =>
+    taskService.bulkPriority(target, priority),
+  );
+  const move = useBulkMutation(({ target, columnId }: MoveRequest) =>
+    taskService.bulkMove(target, columnId),
+  );
 
-  return { complete, remove, snooze };
+  return { complete, remove, snooze, setPriority, move };
 }

@@ -1,21 +1,16 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { taskService } from "../api";
-import { buildListParams, type TaskFilters } from "../taskParams";
+import {
+  CATEGORY_PAGE_SIZE,
+  buildCategoryParams,
+  type CategoryQuery,
+} from "../taskParams";
 import type { Task } from "../types";
-import type { TaskView } from "../views";
 
-export const CATEGORY_PAGE_SIZE = 10;
+export { CATEGORY_PAGE_SIZE };
 
-interface UseCategoryTasksProps {
-  filters: TaskFilters;
-  search: string;
-  view: TaskView;
-  /** Filters that define the category, such as one priority. */
-  overrides?: Partial<TaskFilters>;
-  /** Raw API params that define the category, such as one board column. */
-  params?: Record<string, string>;
-  includeProjections?: boolean;
+interface UseCategoryTasksProps extends CategoryQuery {
   enabled?: boolean;
 }
 
@@ -24,35 +19,27 @@ const uniqueById = (tasks: Task[]) => [
 ];
 
 export const useCategoryTasks = ({
-  filters,
-  search,
-  view,
-  overrides = {},
-  params = {},
-  includeProjections = false,
   enabled = true,
+  ...query
 }: UseCategoryTasksProps) => {
+  const { filters, overrides = {}, search, view, params = {} } = query;
   const categoryFilters = { ...filters, ...overrides };
 
   const result = useInfiniteQuery({
     queryKey: [
       "tasks",
       "category",
-      { categoryFilters, search, view, params, includeProjections },
-    ],
-    initialPageParam: 1,
-    queryFn: ({ pageParam }) => {
-      const query = buildListParams({
-        filters: categoryFilters,
+      {
+        categoryFilters,
         search,
         view,
-        page: pageParam,
-        limit: CATEGORY_PAGE_SIZE,
-        includeProjections,
-      });
-      Object.entries(params).forEach(([name, value]) => query.set(name, value));
-      return taskService.getAll(query);
-    },
+        params,
+        includeProjections: query.includeProjections ?? false,
+      },
+    ],
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
+      taskService.getAll(buildCategoryParams(query, pageParam)),
     getNextPageParam: (lastPage) =>
       lastPage.currentPage < lastPage.totalPages
         ? lastPage.currentPage + 1

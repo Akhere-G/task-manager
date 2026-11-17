@@ -25,7 +25,7 @@ export function BulkActionBar() {
   }, [count, clear]);
 
   if (count === 0) return null;
-  const selectedIds = [...ids];
+  const target = { ids: [...ids] };
 
   return (
     <div
@@ -42,7 +42,7 @@ export function BulkActionBar() {
           <button
             type="button"
             disabled={isBusy}
-            onClick={() => remove.mutate(selectedIds)}
+            onClick={() => remove.mutate(target)}
             className={`${buttonClass} text-failure`}
           >
             Confirm delete
@@ -60,7 +60,7 @@ export function BulkActionBar() {
           <button
             type="button"
             disabled={isBusy}
-            onClick={() => complete.mutate(selectedIds)}
+            onClick={() => complete.mutate(target)}
             className={buttonClass}
           >
             <Check aria-hidden size={16} />
@@ -68,9 +68,7 @@ export function BulkActionBar() {
           </button>
           <SnoozeMenu
             label="Snooze selected tasks"
-            onSnooze={(preset, day) =>
-              snooze.mutate({ ids: selectedIds, preset, day })
-            }
+            onSnooze={(preset, day) => snooze.mutate({ target, preset, day })}
           />
           <button
             type="button"

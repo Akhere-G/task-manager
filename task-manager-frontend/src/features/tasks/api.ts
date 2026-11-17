@@ -2,6 +2,7 @@ import apiClient from "../../services/api";
 import type { TaskViewCounts } from "./views";
 import type {
   CreateTaskInput,
+  Priority,
   SnoozeInput,
   Subtask,
   SubtaskInput,
@@ -38,6 +39,28 @@ export interface MoveInput {
   afterId: number | null;
   beforeId: number | null;
 }
+
+/** Listed tasks, or every task in a category (the server resolves the filter). */
+export type BulkTarget = { ids: number[] } | { filter: Record<string, string> };
+
+export type BulkSnoozeInput = Omit<SnoozeInput, "isGhost" | "previousStartAt">;
+
+export interface BulkResult {
+  updated: number;
+  matched: number;
+}
+
+const postBulk = async (
+  action: string,
+  target: BulkTarget,
+  extra: object = {},
+): Promise<BulkResult> => {
+  const response = await apiClient.post<BulkResult>(`/tasks/bulk-${action}`, {
+    ...target,
+    ...extra,
+  });
+  return response.data;
+};
 
 export const taskService = {
   getAll: async (params?: URLSearchParams): Promise<GetTaskResult> => {
@@ -90,30 +113,14 @@ export const taskService = {
     );
     return response.data.subtasks;
   },
-  bulkComplete: async (ids: number[]): Promise<number> => {
-    const response = await apiClient.post<{ updated: number }>(
-      "/tasks/bulk-complete",
-      { ids },
-    );
-    return response.data.updated;
-  },
-  bulkDelete: async (ids: number[]): Promise<number> => {
-    const response = await apiClient.post<{ updated: number }>(
-      "/tasks/bulk-delete",
-      { ids },
-    );
-    return response.data.updated;
-  },
-  bulkSnooze: async (
-    ids: number[],
-    snooze: Omit<SnoozeInput, "isGhost" | "previousStartAt">,
-  ): Promise<number> => {
-    const response = await apiClient.post<{ updated: number }>(
-      "/tasks/bulk-snooze",
-      { ids, ...snooze },
-    );
-    return response.data.updated;
-  },
+  bulkComplete: (target: BulkTarget) => postBulk("complete", target),
+  bulkDelete: (target: BulkTarget) => postBulk("delete", target),
+  bulkSnooze: (target: BulkTarget, snooze: BulkSnoozeInput) =>
+    postBulk("snooze", target, snooze),
+  bulkPriority: (target: BulkTarget, priority: Priority) =>
+    postBulk("priority", target, { priority }),
+  bulkMove: (target: BulkTarget, columnId: number | null) =>
+    postBulk("move", target, { columnId }),
   createAll: async (tasksData: CreateTaskInput[]) => {
     const response = await apiClient.post("/tasks/bulk", tasksData);
     return response.data;
