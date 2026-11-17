@@ -19,7 +19,7 @@ function BriefModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Popup title="Daily Brief" close={onClose} showCloseButton={false} sleek>
-      <div className="card flex flex-col gap-4">
+      <div className="card flex flex-col gap-4 rounded-xl">
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-xl font-semibold text-accent">
             <Sparkles aria-hidden size={20} fill="currentColor" />

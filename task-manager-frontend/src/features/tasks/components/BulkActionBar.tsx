@@ -31,64 +31,69 @@ export function BulkActionBar() {
     <div
       role="toolbar"
       aria-label="Bulk task actions"
-      className="fixed bottom-5 left-1/2 z-20 flex -translate-x-1/2 flex-wrap items-center justify-center gap-1 rounded-xl border bg-surface px-3 py-2 shadow-xl"
+      className="fixed bottom-5 left-1/2 z-20 flex flex-col gap-2  -translate-x-1/2 card rounded-lg"
     >
-      <span className="px-2 text-sm font-semibold">{count} selected</span>
-      {confirmingDelete ? (
-        <>
-          <span className="text-sm">
-            Delete {count} {count === 1 ? "task" : "tasks"}?
-          </span>
-          <button
-            type="button"
-            disabled={isBusy}
-            onClick={() => remove.mutate(target)}
-            className={`${buttonClass} text-failure`}
-          >
-            Confirm delete
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirmingDelete(false)}
-            className={buttonClass}
-          >
-            Cancel
-          </button>
-        </>
-      ) : (
-        <>
-          <button
-            type="button"
-            disabled={isBusy}
-            onClick={() => complete.mutate(target)}
-            className={buttonClass}
-          >
-            <Check aria-hidden size={16} />
-            Complete
-          </button>
-          <SnoozeMenu
-            label="Snooze selected tasks"
-            onSnooze={(preset, day) => snooze.mutate({ target, preset, day })}
-          />
-          <button
-            type="button"
-            disabled={isBusy}
-            onClick={() => setConfirmingDelete(true)}
-            className={`${buttonClass} text-failure`}
-          >
-            <Trash2 aria-hidden size={16} />
-            Delete
-          </button>
-          <button
-            type="button"
-            aria-label="Clear selection"
-            onClick={clear}
-            className={buttonClass}
-          >
-            <X aria-hidden size={16} />
-          </button>
-        </>
-      )}
+      <div className="flex gap-2 items-center justify-between">
+        <span className="px-2 text-sm font-semibold">{count} selected</span>
+        <button
+          type="button"
+          aria-label="Clear selection"
+          onClick={clear}
+          className={buttonClass}
+        >
+          <X aria-hidden size={16} />
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-1 ">
+        {confirmingDelete ? (
+          <>
+            <span className="text-sm">
+              Delete {count} {count === 1 ? "task" : "tasks"}?
+            </span>
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => remove.mutate(target)}
+              className={`${buttonClass} text-failure`}
+            >
+              Confirm delete
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(false)}
+              className={buttonClass}
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => complete.mutate(target)}
+              className={buttonClass}
+            >
+              <Check aria-hidden size={16} />
+              Complete
+            </button>
+            <SnoozeMenu
+              label="Snooze selected tasks"
+              actionText="Snooze"
+              onSnooze={(preset, day) => snooze.mutate({ target, preset, day })}
+            />
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => setConfirmingDelete(true)}
+              className={`${buttonClass} text-failure`}
+            >
+              <Trash2 aria-hidden size={16} />
+              Delete
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

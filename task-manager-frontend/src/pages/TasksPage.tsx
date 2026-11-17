@@ -34,6 +34,7 @@ export default function TasksPage() {
   const tasks = data?.tasks ?? [];
   const projectId = filters.project ? Number(filters.project) : null;
   const isCalendar = layout === "calendar";
+  const isKanban = layout === "kanban";
   const hasTasks = tasks.length > 0;
 
   let content = (
@@ -66,8 +67,8 @@ export default function TasksPage() {
           resetFilters={resetFilters}
           totalTasks={data?.totalTasks ?? 0}
           updateFilters={updateFilters}
-          sortable={!isCalendar}
-          canFilterCompleted={layout !== "list"}
+          sortable={!isCalendar && !isKanban}
+          canFilterCompleted={!["list", "kanban"].includes(layout)}
         />
         <div className="grid grid-cols-[auto_1fr] items-start gap-3 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-x-6">
           <div className="md:row-span-2 md:self-baseline">
@@ -78,13 +79,13 @@ export default function TasksPage() {
               onSelectProject={selectProject}
             />
           </div>
-          <div className="mr-2 overflow-y-scroll max-w-[50vw] justify-self-end md:mr-0 md:col-start-2 md:row-start-1 md:self-baseline">
+          <div className="mr-2 overflow-y-scroll max-w-full justify-self-end md:mr-0 md:col-start-2 md:row-start-1 md:self-baseline">
             <LayoutToggle
               layout={layout}
               hasProject={projectId !== null}
               onSelect={selectLayout}
             >
-              {!isCalendar && hasTasks && <DailyBrief />}
+              <DailyBrief />
             </LayoutToggle>
           </div>
           <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-1 md:translate-y-12 md:pb-12">
