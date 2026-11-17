@@ -28,6 +28,20 @@ export const priorityBadgeClasses: Record<Priority, string> = {
   4: "bg-surface-muted text-text-sub",
 };
 
+export const priorityBadgeSolidClasses: Record<Priority, string> = {
+  1: "bg-red-500 text-white",
+  2: "bg-orange-500 text-white",
+  3: "bg-blue-600 text-white",
+  4: "bg-slate-500 text-white",
+};
+
+export const quadrantPanelClasses: Record<Priority, string> = {
+  1: "border-red-200 bg-red-50/40 dark:border-red-500/30 dark:bg-red-500/5",
+  2: "border-orange-200 bg-orange-50/40 dark:border-orange-500/30 dark:bg-orange-500/5",
+  3: "border-blue-200 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-500/5",
+  4: "border-slate-200 bg-surface dark:border-slate-700",
+};
+
 export const priorityRingClasses: Record<Priority, string> = {
   1: "border-red-500",
   2: "border-orange-500",

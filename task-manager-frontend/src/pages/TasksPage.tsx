@@ -21,14 +21,18 @@ import TaskPopups from "../features/tasks/components/TaskPopups";
 import TasksSidebar from "../features/tasks/components/TasksSidebar";
 import useTaskCounts from "../features/tasks/hooks/useTaskCounts";
 import { useTasks } from "../features/tasks/hooks/useTasks";
+import type { TaskFilters } from "../features/tasks/taskParams";
 import type { Task } from "../features/tasks/types";
-import type { TaskLayout } from "../features/tasks/views";
+import type { TaskLayout, TaskView } from "../features/tasks/views";
 
 const PER_PAGE = 10;
 
 interface TasksBodyProps {
   tasks: Task[];
   layout: TaskLayout;
+  filters: TaskFilters;
+  search: string;
+  view: TaskView;
   currentDate: string;
   setCurrentDate: (date: Date) => void;
   projectId: number | null;
@@ -40,6 +44,9 @@ interface TasksBodyProps {
 function TasksBody({
   tasks,
   layout,
+  filters,
+  search,
+  view,
   currentDate,
   setCurrentDate,
   projectId,
@@ -63,6 +70,9 @@ function TasksBody({
       <KanbanBoard projectId={projectId} tasks={tasks} />
     );
   }
+  if (layout === "matrix") {
+    return <EisenhowerMatrix filters={filters} search={search} view={view} />;
+  }
   if (tasks.length === 0) {
     return (
       <EmptyState
@@ -74,7 +84,6 @@ function TasksBody({
       />
     );
   }
-  if (layout === "matrix") return <EisenhowerMatrix tasks={tasks} />;
   return (
     <TaskList tasks={tasks} sortable={sortable} groupByDate={groupByDate} />
   );
@@ -90,6 +99,7 @@ export default function TasksPage() {
     isStale,
     isSearching,
     filters,
+    search,
     view,
     layout,
     selectView,
@@ -104,13 +114,15 @@ export default function TasksPage() {
   const projectId = filters.project ? Number(filters.project) : null;
   const isCalendar = layout === "calendar";
   const hasTasks = tasks.length > 0;
-  const showsPagination =
-    layout === "list" || (layout === "matrix" && pageDetails.totalPages > 1);
+  const showsPagination = layout === "list";
 
   let content = (
     <TasksBody
       tasks={tasks}
       layout={layout}
+      filters={filters}
+      search={search}
+      view={view}
       currentDate={filters.currentDate}
       setCurrentDate={(date) =>
         updateFilters("currentDate", date.toISOString())

@@ -113,7 +113,7 @@ describe("smart views", () => {
     expect(params.has("limit")).toBe(false);
   });
 
-  it("loads one large page of tasks in the matrix layout", async () => {
+  it("asks the matrix layout for one task, only to total it", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
     const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
@@ -122,7 +122,7 @@ describe("smart views", () => {
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(result.current.layout).toBe("matrix");
-    expect(lastRequestParams().get("limit")).toBe("200");
+    expect(lastRequestParams().get("limit")).toBe("1");
     expect(lastRequestParams().get("page")).toBe("1");
   });
 

@@ -63,6 +63,10 @@ export default function AddTask() {
     initialData.endAt = endAt.toISOString();
   }
 
+  if (state?.priority) {
+    initialData.priority = state.priority;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <section className="card flex flex-col gap-4">

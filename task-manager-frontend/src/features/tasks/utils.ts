@@ -204,12 +204,6 @@ export function parsePriority(value: string | undefined): Priority {
   return match ? (Number(match[1]) as Priority) : DEFAULT_PRIORITY;
 }
 
-export const groupByPriority = (tasks: Task[]): Record<Priority, Task[]> => {
-  const groups: Record<Priority, Task[]> = { 1: [], 2: [], 3: [], 4: [] };
-  tasks.forEach((task) => groups[task.priority].push(task));
-  return groups;
-};
-
 export const taskMinutes = ({
   startAt,
   endAt,

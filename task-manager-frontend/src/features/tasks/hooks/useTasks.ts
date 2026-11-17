@@ -48,6 +48,8 @@ const getDefaultFilters = (): TaskFilters => ({
 /** URL params that describe where the user is, not what they filtered. */
 const LOCATION_PARAMS = ["view", "layout", "cal"];
 
+// Matrix quadrants load their own tasks, so this query only supplies the header total.
+const MATRIX_TOTAL_PAGE_SIZE = 1;
 const BOARD_PAGE_SIZE = 200;
 
 const readLayout = (value: string | null): TaskLayout =>
@@ -104,8 +106,11 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     : searchFilters;
 
   const isCalendar = layout === "calendar";
-  const pageSize =
-    layout === "matrix" || isKanban ? BOARD_PAGE_SIZE : perPage;
+  const pageSize = isKanban
+    ? BOARD_PAGE_SIZE
+    : layout === "matrix"
+      ? MATRIX_TOTAL_PAGE_SIZE
+      : perPage;
 
   const result = useQuery({
     queryKey: [
@@ -221,6 +226,7 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     resetFilters,
     pageDetails: { currentPage, totalPages, totalItems },
     filters,
+    search: deferredSearch,
     view,
     layout,
     selectView,
