@@ -20,6 +20,7 @@ test.describe("trash", () => {
     });
     await page.goto("/");
 
+    await card(page, "Water the plants").hover();
     await card(page, "Water the plants")
       .getByRole("button", { name: /Delete task/ })
       .click();

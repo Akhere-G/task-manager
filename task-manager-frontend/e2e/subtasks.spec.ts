@@ -20,6 +20,7 @@ test.describe("subtasks", () => {
     });
     await page.goto("/");
 
+    await card(page, "Plan launch").hover();
     await card(page, "Plan launch")
       .getByRole("button", { name: /Break down task/ })
       .click();

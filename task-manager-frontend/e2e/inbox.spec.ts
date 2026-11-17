@@ -33,6 +33,7 @@ test.describe("inbox", () => {
     );
     expect(stored?.startAt).toBeNull();
 
+    await card(page, "Call the dentist").hover();
     await card(page, "Call the dentist")
       .getByRole("button", { name: /Edit task/ })
       .click();

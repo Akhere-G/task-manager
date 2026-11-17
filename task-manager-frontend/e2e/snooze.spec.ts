@@ -16,6 +16,7 @@ test("snoozing a task to tomorrow moves it out of Today", async ({
   await page.goto("/?view=today");
   await expect(card(page, "Pay the invoice")).toBeVisible();
 
+  await card(page, "Pay the invoice").hover();
   await card(page, "Pay the invoice")
     .getByRole("button", { name: /Snooze task/ })
     .click();
