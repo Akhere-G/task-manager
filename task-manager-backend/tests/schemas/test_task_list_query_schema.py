@@ -61,3 +61,24 @@ def test_a_project_filter_is_a_positive_id() -> None:
     assert TaskListQuerySchema().load({"project": "12"}).project == 12
     assert "project" in load_errors(TaskListQuerySchema(), {"project": "0"})
     assert "project" in load_errors(TaskListQuerySchema(), {"project": "work"})
+
+
+def test_a_column_or_unassigned_filter_is_read_with_its_project() -> None:
+    by_column = TaskListQuerySchema().load({"project": "1", "column": "7"})
+    unassigned = TaskListQuerySchema().load({"project": "1", "unassigned": "true"})
+
+    assert (by_column.column, by_column.unassigned) == (7, False)
+    assert (unassigned.column, unassigned.unassigned) == (None, True)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        {"column": "7"},
+        {"unassigned": "true"},
+        {"project": "1", "column": "7", "unassigned": "true"},
+        {"project": "1", "column": "0"},
+    ],
+)
+def test_a_bad_column_filter_is_rejected(args: dict[str, str]) -> None:
+    assert "column" in load_errors(TaskListQuerySchema(), args)

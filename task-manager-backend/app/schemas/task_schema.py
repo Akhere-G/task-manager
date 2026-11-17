@@ -352,6 +352,8 @@ class TaskListQuerySchema(Schema):
         unknown = EXCLUDE
 
     project = fields.Integer(validate=validate.Range(min=1))
+    column = fields.Integer(validate=validate.Range(min=1))
+    unassigned = fields.Boolean(load_default=False)
     label = fields.String()
     view = fields.String(validate=validate.OneOf(TASK_VIEWS))
     zone = fields.String(validate=_validate_query_zone)
@@ -397,6 +399,19 @@ class TaskListQuerySchema(Schema):
                     f"Date range must be {MAX_PROJECTION_DAYS} days or fewer.",
                     field_name="project_repeating",
                 )
+
+    @validates_schema
+    def validate_column(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if "column" not in data and not data["unassigned"]:
+            return
+        if "column" in data and data["unassigned"]:
+            raise ValidationError(
+                "column and unassigned cannot be combined.", field_name="column"
+            )
+        if "project" not in data:
+            raise ValidationError(
+                "A column filter needs a project.", field_name="column"
+            )
 
     @validates_schema
     def validate_label(self, data: dict[str, Any], **kwargs: Any) -> None:
