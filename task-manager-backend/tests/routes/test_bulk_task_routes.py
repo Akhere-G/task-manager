@@ -26,7 +26,7 @@ def test_tasks_are_completed_in_bulk(
 
     response = session.post("/api/tasks/bulk-complete", json={"ids": ids[:2]})
 
-    assert response.get_json() == {"updated": 2}
+    assert response.get_json() == {"updated": 2, "matched": 2}
     done = [session.get(f"/api/tasks/{task_id}").get_json() for task_id in ids]
     assert [task["isCompleted"] for task in done] == [True, True, False]
 
@@ -61,7 +61,7 @@ def test_tasks_are_snoozed_in_bulk_and_undated_ones_are_skipped(
         },
     )
 
-    assert response.get_json() == {"updated": 2}
+    assert response.get_json() == {"updated": 2, "matched": 3}
     moved = session.get(f"/api/tasks/{ids[0]}").get_json()
     assert moved["startAt"].startswith("2031-05-06")
 
@@ -73,7 +73,7 @@ def test_tasks_are_deleted_to_the_trash_in_bulk(
 
     response = session.post("/api/tasks/bulk-delete", json={"ids": ids[:2]})
 
-    assert response.get_json() == {"updated": 2}
+    assert response.get_json() == {"updated": 2, "matched": 2}
     assert session.get(f"/api/tasks/{ids[0]}").status_code == 404
     assert session.get("/api/tasks/trash").get_json()["totalTasks"] == 2
 
@@ -109,7 +109,7 @@ def test_other_users_tasks_are_skipped(
 
     for endpoint in ("bulk-complete", "bulk-delete"):
         response = other.post(f"/api/tasks/{endpoint}", json={"ids": ids})
-        assert response.get_json() == {"updated": 0}
+        assert response.get_json() == {"updated": 0, "matched": 2}
 
     still_open = owner.get(f"/api/tasks/{ids[0]}").get_json()
     assert still_open["isCompleted"] is False

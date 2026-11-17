@@ -1,14 +1,20 @@
+from collections.abc import Callable
+from typing import Any
+
 from flask import Blueprint, jsonify, request
 from flask.typing import ResponseReturnValue
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from marshmallow import Schema
 
 from app.schemas.task_schema import (
+    BulkMoveSchema,
+    BulkPrioritySchema,
     BulkSnoozeSchema,
+    BulkTargetSchema,
     SubtaskOrderSchema,
     SubtaskSchema,
     SubtasksCreateSchema,
     TaskCountsQuerySchema,
-    TaskIdsSchema,
     TaskListQuerySchema,
     TaskMoveSchema,
     TaskPageSchema,
@@ -20,7 +26,14 @@ from app.schemas.task_schema import (
     TrashPageSchema,
     TrashQuerySchema,
 )
-from app.services.bulk_task_service import complete_tasks, delete_tasks, snooze_tasks
+from app.services.bulk_target import resolve_task_ids
+from app.services.bulk_task_service import (
+    complete_tasks,
+    delete_tasks,
+    move_tasks_to_column,
+    set_priority,
+    snooze_tasks,
+)
 from app.services.order_service import move_task
 from app.services.snooze_service import snooze_task
 from app.services.subtask_service import (
@@ -42,6 +55,8 @@ from app.services.task_service import (
 from app.utils.http import get_json_body
 
 task_bp = Blueprint("tasks", __name__)
+
+BulkAction = Callable[[int, list[int], dict[str, Any]], int]
 
 
 @task_bp.route("/api/tasks", methods=["GET"])
@@ -95,25 +110,54 @@ def add_task_list() -> ResponseReturnValue:
     return jsonify({"tasks_created": len(tasks)}), 201
 
 
+def _run_bulk(schema: Schema, action: BulkAction) -> ResponseReturnValue:
+    data = schema.load(get_json_body())
+    user_id = get_jwt_identity()
+    task_ids = resolve_task_ids(user_id, data)
+    updated = action(user_id, task_ids, data)
+    return jsonify({"updated": updated, "matched": len(task_ids)})
+
+
 @task_bp.route("/api/tasks/bulk-complete", methods=["POST"])
 @jwt_required()
 def complete_task_list() -> ResponseReturnValue:
-    data = TaskIdsSchema().load(get_json_body())
-    return jsonify({"updated": complete_tasks(get_jwt_identity(), data["ids"])})
+    return _run_bulk(
+        BulkTargetSchema(), lambda user_id, ids, data: complete_tasks(user_id, ids)
+    )
 
 
 @task_bp.route("/api/tasks/bulk-snooze", methods=["POST"])
 @jwt_required()
 def snooze_task_list() -> ResponseReturnValue:
-    data = BulkSnoozeSchema().load(get_json_body())
-    return jsonify({"updated": snooze_tasks(get_jwt_identity(), data["ids"], data)})
+    return _run_bulk(BulkSnoozeSchema(), snooze_tasks)
 
 
 @task_bp.route("/api/tasks/bulk-delete", methods=["POST"])
 @jwt_required()
 def delete_task_list() -> ResponseReturnValue:
-    data = TaskIdsSchema().load(get_json_body())
-    return jsonify({"updated": delete_tasks(get_jwt_identity(), data["ids"])})
+    return _run_bulk(
+        BulkTargetSchema(), lambda user_id, ids, data: delete_tasks(user_id, ids)
+    )
+
+
+@task_bp.route("/api/tasks/bulk-priority", methods=["POST"])
+@jwt_required()
+def prioritise_task_list() -> ResponseReturnValue:
+    return _run_bulk(
+        BulkPrioritySchema(),
+        lambda user_id, ids, data: set_priority(user_id, ids, data["priority"]),
+    )
+
+
+@task_bp.route("/api/tasks/bulk-move", methods=["POST"])
+@jwt_required()
+def move_task_list() -> ResponseReturnValue:
+    return _run_bulk(
+        BulkMoveSchema(),
+        lambda user_id, ids, data: move_tasks_to_column(
+            user_id, ids, data["column_id"]
+        ),
+    )
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["PATCH"])

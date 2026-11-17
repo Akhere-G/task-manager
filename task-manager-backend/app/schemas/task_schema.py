@@ -334,29 +334,6 @@ class TaskSnoozeSchema(CamelSchema):
             )
 
 
-class TaskIdsSchema(CamelSchema):
-    ids = fields.List(
-        fields.Integer(strict=True, validate=validate.Range(min=1)),
-        required=True,
-        validate=validate.Length(min=1, max=MAX_BULK_TASKS),
-    )
-
-    @post_load
-    def drop_duplicate_ids(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
-        data["ids"] = list(dict.fromkeys(data["ids"]))
-        return data
-
-
-class BulkSnoozeSchema(TaskIdsSchema, TaskSnoozeSchema):
-    @validates_schema
-    def reject_projected_occurrences(self, data: dict[str, Any], **kwargs: Any) -> None:
-        if data["is_ghost"]:
-            raise ValidationError(
-                "Projected occurrences cannot be snoozed in bulk.",
-                field_name="is_ghost",
-            )
-
-
 class TaskMoveSchema(CamelSchema):
     after_id = fields.Integer(strict=True, allow_none=True)
     before_id = fields.Integer(strict=True, allow_none=True)
@@ -473,6 +450,58 @@ class TaskListQuerySchema(Schema):
         if "label" in data:
             data["label"] = _parse_ids(data["label"])
         return TaskQuery(**data)
+
+
+class BulkTargetSchema(CamelSchema):
+    """The tasks a bulk action applies to: listed ids, or everything in a category."""
+
+    ids = fields.List(
+        fields.Integer(strict=True, validate=validate.Range(min=1)),
+        validate=validate.Length(min=1, max=MAX_BULK_TASKS),
+    )
+    filter = fields.Nested(TaskListQuerySchema)
+
+    @validates_schema
+    def validate_one_target(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if ("ids" in data) == ("filter" in data):
+            raise ValidationError("Send either ids or filter.", field_name="ids")
+
+    @validates_schema
+    def validate_category_filter(self, data: dict[str, Any], **kwargs: Any) -> None:
+        query = data.get("filter")
+        if query is None:
+            return
+        if not (query.group or query.priority or query.column or query.unassigned):
+            raise ValidationError(
+                "A bulk filter needs a group, priority, column or unassigned.",
+                field_name="filter",
+            )
+
+    @post_load
+    def drop_duplicate_ids(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+        if "ids" in data:
+            data["ids"] = list(dict.fromkeys(data["ids"]))
+        return data
+
+
+class BulkSnoozeSchema(BulkTargetSchema, TaskSnoozeSchema):
+    @validates_schema
+    def reject_projected_occurrences(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if data["is_ghost"]:
+            raise ValidationError(
+                "Projected occurrences cannot be snoozed in bulk.",
+                field_name="is_ghost",
+            )
+
+
+class BulkPrioritySchema(BulkTargetSchema):
+    priority = fields.Integer(
+        required=True, strict=True, validate=validate.OneOf(PRIORITIES)
+    )
+
+
+class BulkMoveSchema(BulkTargetSchema):
+    column_id = fields.Integer(required=True, strict=True, allow_none=True)
 
 
 class TrashedTaskSchema(TaskSchema):

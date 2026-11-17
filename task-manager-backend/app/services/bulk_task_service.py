@@ -6,6 +6,7 @@ from sqlalchemy import select
 from app.database import db
 from app.exceptions import AppError
 from app.models import Task
+from app.services.board_service import move_task_to_column
 from app.services.snooze_service import snooze_task
 from app.services.task_service import delete_task, update_task
 from app.utils.task_utils import live_tasks_of
@@ -54,3 +55,21 @@ def snooze_tasks(user_id: int, task_ids: list[int], data: dict[str, Any]) -> int
 
 def delete_tasks(user_id: int, task_ids: list[int]) -> int:
     return _apply_each(user_id, task_ids, delete_task)
+
+
+def set_priority(user_id: int, task_ids: list[int], priority: int) -> int:
+    return _apply_each(
+        user_id,
+        task_ids,
+        lambda user, task_id: update_task(user, task_id, {"priority": priority}),
+    )
+
+
+def move_tasks_to_column(
+    user_id: int, task_ids: list[int], column_id: int | None
+) -> int:
+    return _apply_each(
+        user_id,
+        task_ids,
+        lambda user, task_id: move_task_to_column(user, task_id, column_id, None, None),
+    )
