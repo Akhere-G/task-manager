@@ -22,7 +22,7 @@ describe("filtering tasks by priority", () => {
   it("reads the priority filter from the page address", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    renderHookWithProviders(() => useTasks(), {
       route: "/?priority=1,2",
     });
 
@@ -32,7 +32,7 @@ describe("filtering tasks by priority", () => {
 
   it("refetches with the new priority and counts it as a search", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }));
+    const { result } = renderHookWithProviders(() => useTasks());
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(lastRequestParams().has("priority")).toBe(false);
 
@@ -47,7 +47,7 @@ describe("smart views", () => {
   it("asks the server for the view in the viewer's zone and projects repeats", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    renderHookWithProviders(() => useTasks(), {
       route: "/?view=upcoming",
     });
 
@@ -62,7 +62,7 @@ describe("smart views", () => {
   it("sends no view for all tasks", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    renderHookWithProviders(() => useTasks({ perPage: 10 }));
+    renderHookWithProviders(() => useTasks());
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(lastRequestParams().has("view")).toBe(false);
@@ -70,7 +70,7 @@ describe("smart views", () => {
 
   it("refetches when another view is selected", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }));
+    const { result } = renderHookWithProviders(() => useTasks());
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
 
     act(() => result.current.selectView("overdue"));
@@ -83,12 +83,9 @@ describe("smart views", () => {
 
   it("clears the project filter when the inbox is selected", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
-    const { result } = renderHookWithProviders(
-      () => useTasks({ perPage: 10 }),
-      {
-        route: "/?project=4",
-      },
-    );
+    const { result } = renderHookWithProviders(() => useTasks(), {
+      route: "/?project=4",
+    });
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(lastRequestParams().get("project")).toBe("4");
 
@@ -101,7 +98,7 @@ describe("smart views", () => {
   it("loads the visible range and no view in the calendar layout", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    renderHookWithProviders(() => useTasks(), {
       route: "/?layout=calendar&view=month",
     });
 
@@ -116,7 +113,7 @@ describe("smart views", () => {
   it("asks the matrix layout for one task, only to total it", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    const { result } = renderHookWithProviders(() => useTasks(), {
       route: "/?layout=matrix",
     });
 
@@ -129,13 +126,24 @@ describe("smart views", () => {
   it("falls back to the list layout for an unknown layout", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    const { result } = renderHookWithProviders(() => useTasks(), {
       route: "/?layout=timeline",
     });
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(result.current.layout).toBe("list");
-    expect(lastRequestParams().get("limit")).toBe("10");
+    expect(lastRequestParams().get("limit")).toBe("1");
+  });
+
+  it("does not filter the list by completion, since it shows a group for it", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+
+    renderHookWithProviders(() => useTasks(), {
+      route: "/?is_completed=true",
+    });
+
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+    expect(lastRequestParams().has("is_completed")).toBe(false);
   });
 });
 
@@ -143,7 +151,7 @@ describe("board layout", () => {
   it("asks for every task of the project in manual order, done or not", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    const { result } = renderHookWithProviders(() => useTasks(), {
       route: "/?layout=kanban&project=7&is_completed=false",
     });
 

@@ -1,108 +1,23 @@
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  Pagination,
-} from "../components/ui";
+import { ErrorState, LoadingState } from "../components/ui";
 import { DailyBrief } from "../features/ai/components";
-import KanbanBoard from "../features/columns/components/KanbanBoard";
-import {
-  EisenhowerMatrix,
-  TaskCalendar,
-  TaskList,
-  TasksHeader,
-} from "../features/tasks/components";
+import { TasksHeader } from "../features/tasks/components";
 import LayoutToggle from "../features/tasks/components/LayoutToggle";
 import { BulkActionBar } from "../features/tasks/components/BulkActionBar";
-import ShowingRange from "../features/tasks/components/ShowingRange";
+import TasksBody from "../features/tasks/components/TasksBody";
 import QuickCapture from "../features/tasks/components/QuickCapture";
 import TaskPopups from "../features/tasks/components/TaskPopups";
 import TasksSidebar from "../features/tasks/components/TasksSidebar";
 import useTaskCounts from "../features/tasks/hooks/useTaskCounts";
 import { useTasks } from "../features/tasks/hooks/useTasks";
 import { SelectionProvider } from "../features/tasks/selection/SelectionProvider";
-import type { TaskFilters } from "../features/tasks/taskParams";
-import type { Task } from "../features/tasks/types";
-import type { TaskLayout, TaskView } from "../features/tasks/views";
-
-const PER_PAGE = 10;
-
-interface TasksBodyProps {
-  tasks: Task[];
-  layout: TaskLayout;
-  filters: TaskFilters;
-  search: string;
-  view: TaskView;
-  currentDate: string;
-  setCurrentDate: (date: Date) => void;
-  projectId: number | null;
-  isInbox: boolean;
-  sortable: boolean;
-  groupByDate: boolean;
-}
-
-function TasksBody({
-  tasks,
-  layout,
-  filters,
-  search,
-  view,
-  currentDate,
-  setCurrentDate,
-  projectId,
-  isInbox,
-  sortable,
-  groupByDate,
-}: TasksBodyProps) {
-  if (layout === "calendar") {
-    return (
-      <TaskCalendar
-        tasks={tasks}
-        currentDate={new Date(currentDate)}
-        setCurrentDate={setCurrentDate}
-      />
-    );
-  }
-  if (layout === "kanban") {
-    return projectId === null ? (
-      <EmptyState searchMessage="Select a project to see its board." />
-    ) : (
-      <KanbanBoard
-        projectId={projectId}
-        filters={filters}
-        search={search}
-        view={view}
-      />
-    );
-  }
-  if (layout === "matrix") {
-    return <EisenhowerMatrix filters={filters} search={search} view={view} />;
-  }
-  if (tasks.length === 0) {
-    return (
-      <EmptyState
-        searchMessage={
-          isInbox
-            ? "Your inbox is empty. Capture something above."
-            : "No tasks found. Time to relax!"
-        }
-      />
-    );
-  }
-  return (
-    <TaskList tasks={tasks} sortable={sortable} groupByDate={groupByDate} />
-  );
-}
 
 export default function TasksPage() {
   const {
     data,
     isLoading,
     error,
-    pageDetails,
-    setPage,
     isStale,
     isSearching,
     filters,
@@ -113,7 +28,7 @@ export default function TasksPage() {
     selectLayout,
     resetFilters,
     updateFilters,
-  } = useTasks({ perPage: PER_PAGE });
+  } = useTasks();
   const { data: counts } = useTaskCounts();
   const navigate = useNavigate();
 
@@ -121,27 +36,21 @@ export default function TasksPage() {
   const projectId = filters.project ? Number(filters.project) : null;
   const isCalendar = layout === "calendar";
   const hasTasks = tasks.length > 0;
-  const showsPagination = layout === "list";
 
   let content = (
     <TasksBody
-      tasks={tasks}
       layout={layout}
       filters={filters}
       search={search}
       view={view}
+      projectId={projectId}
+      calendarTasks={tasks}
+      totalTasks={data?.totalTasks ?? 0}
+      isInbox={view === "inbox" && !isSearching}
       currentDate={filters.currentDate}
       setCurrentDate={(date) =>
         updateFilters("currentDate", date.toISOString())
       }
-      projectId={projectId}
-      isInbox={view === "inbox" && !isSearching}
-      sortable={
-        layout === "list" &&
-        filters.sortBy === "manual" &&
-        filters.order === "asc"
-      }
-      groupByDate={filters.sortBy === "start_at"}
     />
   );
   if (error) {
@@ -159,6 +68,7 @@ export default function TasksPage() {
           totalTasks={data?.totalTasks ?? 0}
           updateFilters={updateFilters}
           sortable={!isCalendar}
+          canFilterCompleted={layout !== "list"}
         />
         <div className="grid grid-cols-[auto_1fr] items-start gap-3 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-x-6">
           <div className="md:row-span-2 md:self-baseline">
@@ -183,9 +93,6 @@ export default function TasksPage() {
             {!isCalendar && hasTasks && (
               <div className="flex flex-wrap justify-center gap-4 ">
                 <DailyBrief />
-                {showsPagination && (
-                  <Pagination {...pageDetails} setPage={setPage} />
-                )}
               </div>
             )}
 
@@ -194,22 +101,6 @@ export default function TasksPage() {
             >
               {content}
             </section>
-
-            {showsPagination && hasTasks && (
-              <div className="flex flex-col items-center justify-between gap-2 md:flex-row">
-                <ShowingRange
-                  currentPage={pageDetails.currentPage}
-                  perPage={PER_PAGE}
-                  totalItems={pageDetails.totalItems}
-                  isCompleted={filters.isCompleted}
-                />
-                <Pagination
-                  {...pageDetails}
-                  setPage={setPage}
-                  scrollUpOnNavigate
-                />
-              </div>
-            )}
 
             <TaskPopups />
             <BulkActionBar />

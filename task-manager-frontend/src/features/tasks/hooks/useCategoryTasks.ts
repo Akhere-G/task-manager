@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 import { taskService } from "../api";
 import {
@@ -48,11 +49,16 @@ export const useCategoryTasks = ({
     enabled,
   });
 
-  const pages = result.data?.pages ?? [];
-  const latest = pages.at(-1);
+  const pages = result.data?.pages;
+  // A stable list lets the sortable list tell a refetch from a re-render.
+  const tasks = useMemo(
+    () => uniqueById((pages ?? []).flatMap((page) => page.tasks)),
+    [pages],
+  );
+  const latest = pages?.at(-1);
 
   return {
-    tasks: uniqueById(pages.flatMap((page) => page.tasks)),
+    tasks,
     total: latest?.totalTasks ?? 0,
     totalMinutes: latest?.totalMinutes ?? 0,
     hasNextPage: result.hasNextPage,

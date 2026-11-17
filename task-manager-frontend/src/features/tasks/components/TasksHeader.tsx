@@ -26,6 +26,8 @@ interface TasksHeaderProps {
   resetFilters: () => void;
   totalTasks: number;
   sortable?: boolean;
+  /** The list has a group for completed tasks, so it cannot filter on them. */
+  canFilterCompleted?: boolean;
 }
 
 export default function TasksHeader({
@@ -34,6 +36,7 @@ export default function TasksHeader({
   resetFilters,
   totalTasks,
   sortable = true,
+  canFilterCompleted = true,
 }: TasksHeaderProps) {
   const [openFilters, setOpenFilters] = useState(false);
   const { data: labels = [] } = useLabels();
@@ -110,14 +113,16 @@ export default function TasksHeader({
             options={taskDurationOptions}
             formClassNames={formClassNames}
           />
-          <FormInput
-            name="isCompleted"
-            value={filters.isCompleted}
-            handleChange={handleChange}
-            label="Is Complete"
-            options={completedTasksOptions}
-            formClassNames={formClassNames}
-          />
+          {canFilterCompleted && (
+            <FormInput
+              name="isCompleted"
+              value={filters.isCompleted}
+              handleChange={handleChange}
+              label="Is Complete"
+              options={completedTasksOptions}
+              formClassNames={formClassNames}
+            />
+          )}
           {sortable && (
             <>
               <FormInput
