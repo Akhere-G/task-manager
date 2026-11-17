@@ -3,10 +3,12 @@ from flask.typing import ResponseReturnValue
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.schemas.task_schema import (
+    BulkSnoozeSchema,
     SubtaskOrderSchema,
     SubtaskSchema,
     SubtasksCreateSchema,
     TaskCountsQuerySchema,
+    TaskIdsSchema,
     TaskListQuerySchema,
     TaskMoveSchema,
     TaskPageSchema,
@@ -18,6 +20,7 @@ from app.schemas.task_schema import (
     TrashPageSchema,
     TrashQuerySchema,
 )
+from app.services.bulk_task_service import complete_tasks, delete_tasks, snooze_tasks
 from app.services.order_service import move_task
 from app.services.snooze_service import snooze_task
 from app.services.subtask_service import (
@@ -90,6 +93,27 @@ def add_task_list() -> ResponseReturnValue:
 
     tasks = create_tasks(get_jwt_identity(), TaskSchema(many=True).load(data))
     return jsonify({"tasks_created": len(tasks)}), 201
+
+
+@task_bp.route("/api/tasks/bulk-complete", methods=["POST"])
+@jwt_required()
+def complete_task_list() -> ResponseReturnValue:
+    data = TaskIdsSchema().load(get_json_body())
+    return jsonify({"updated": complete_tasks(get_jwt_identity(), data["ids"])})
+
+
+@task_bp.route("/api/tasks/bulk-snooze", methods=["POST"])
+@jwt_required()
+def snooze_task_list() -> ResponseReturnValue:
+    data = BulkSnoozeSchema().load(get_json_body())
+    return jsonify({"updated": snooze_tasks(get_jwt_identity(), data["ids"], data)})
+
+
+@task_bp.route("/api/tasks/bulk-delete", methods=["POST"])
+@jwt_required()
+def delete_task_list() -> ResponseReturnValue:
+    data = TaskIdsSchema().load(get_json_body())
+    return jsonify({"updated": delete_tasks(get_jwt_identity(), data["ids"])})
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["PATCH"])

@@ -14,6 +14,7 @@ from marshmallow import (
 from marshmallow_sqlalchemy import auto_field
 
 from app.constants import (
+    MAX_BULK_TASKS,
     MAX_LABEL_NAME_LENGTH,
     MAX_LABELS_PER_TASK,
     MAX_PAGE_SIZE,
@@ -329,6 +330,29 @@ class TaskSnoozeSchema(CamelSchema):
             raise ValidationError(
                 "A projected occurrence needs its start.",
                 field_name="previous_start_at",
+            )
+
+
+class TaskIdsSchema(CamelSchema):
+    ids = fields.List(
+        fields.Integer(strict=True, validate=validate.Range(min=1)),
+        required=True,
+        validate=validate.Length(min=1, max=MAX_BULK_TASKS),
+    )
+
+    @post_load
+    def drop_duplicate_ids(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+        data["ids"] = list(dict.fromkeys(data["ids"]))
+        return data
+
+
+class BulkSnoozeSchema(TaskIdsSchema, TaskSnoozeSchema):
+    @validates_schema
+    def reject_projected_occurrences(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if data["is_ghost"]:
+            raise ValidationError(
+                "Projected occurrences cannot be snoozed in bulk.",
+                field_name="is_ghost",
             )
 
 
