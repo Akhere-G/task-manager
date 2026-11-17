@@ -318,3 +318,14 @@ def test_order_on_a_subtask_is_rejected(
     status, _body = put_order(session, child["id"], [child["id"]])
 
     assert status == 400
+
+
+def test_order_of_a_task_without_subtasks_is_a_no_op(
+    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
+) -> None:
+    parent = add_task(session, task_payload)
+
+    status, body = put_order(session, parent["id"], [])
+
+    assert status == 200
+    assert body["subtasks"] == []
