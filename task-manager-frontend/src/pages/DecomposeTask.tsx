@@ -71,7 +71,10 @@ export default function DecomposeTask() {
     try {
       const { tasks } = await aiService.decomposeTask(
         parentTask,
-        parentTask.subtasks?.map((subtask) => subtask.title),
+        parentTask.subtasks?.map(({ title, description }) => ({
+          title,
+          description,
+        })),
       );
       trackEvent("ai_task_breakdown_succeeded", {
         subtask_count: tasks.length,

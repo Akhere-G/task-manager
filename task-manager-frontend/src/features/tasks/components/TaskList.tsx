@@ -102,11 +102,11 @@ export default function TaskList({
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     const result = over && reorder(tasks, Number(active.id), Number(over.id));
     if (result) {
-      setDropped({ from: loaded, to: result.tasks });
+      setDropped({ from: loaded, to: result.items });
       moveTask({
         id: Number(active.id),
         move: result.move,
-        reordered: result.tasks,
+        reordered: result.items,
       });
     }
   };

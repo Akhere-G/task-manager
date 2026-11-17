@@ -90,7 +90,7 @@ describe("DecomposeTask", () => {
 
     await waitFor(() => expect(mock.history.post).toHaveLength(1));
     expect(JSON.parse(mock.history.post[0].data).existingSubtasks).toEqual([
-      "Pack",
+      { title: "Pack", description: null },
     ]);
   });
 });

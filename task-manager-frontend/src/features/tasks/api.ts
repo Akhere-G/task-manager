@@ -69,6 +69,26 @@ export const taskService = {
     );
     return response.data.subtasks;
   },
+  replaceSubtasks: async (
+    parentId: number,
+    subtasks: SubtaskInput[],
+  ): Promise<Subtask[]> => {
+    const response = await apiClient.put<{ subtasks: Subtask[] }>(
+      `/tasks/${parentId}/subtasks`,
+      { subtasks },
+    );
+    return response.data.subtasks;
+  },
+  reorderSubtasks: async (
+    parentId: number,
+    ids: number[],
+  ): Promise<Subtask[]> => {
+    const response = await apiClient.put<{ subtasks: Subtask[] }>(
+      `/tasks/${parentId}/subtasks/order`,
+      { ids },
+    );
+    return response.data.subtasks;
+  },
   createAll: async (tasksData: CreateTaskInput[]) => {
     const response = await apiClient.post("/tasks/bulk", tasksData);
     return response.data;
