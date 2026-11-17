@@ -6,7 +6,10 @@ import {
   FolderTree,
   Tags,
   ShieldCheck,
+  Timer,
 } from "lucide-react";
+import { PomodoroSettingsForm } from "../features/pomodoro/components/PomodoroSettingsForm";
+import { usePomodoroSettings } from "../features/pomodoro/usePomodoroSettings";
 import { useTheme } from "../features/users/ThemeContext";
 import { taskService } from "../features/tasks/api";
 import type { Task } from "../features/tasks/types";
@@ -27,6 +30,8 @@ export default function SettingsPage() {
   const [isError, setIsError] = React.useState(false);
   const { data: projects = [] } = useProjects();
   const { openPreferences, preferences } = useCookieConsent();
+  const { settings: pomodoroSettings, updateSettings: updatePomodoroSettings } =
+    usePomodoroSettings();
 
   const downloadTasks = (tasks: Task[]) => {
     const headers = [
@@ -185,6 +190,12 @@ export default function SettingsPage() {
             />
           </button>
         </div>
+      </SettingsCard>
+      <SettingsCard icon={<Timer className="text-brand" />} title="Pomodoro">
+        <PomodoroSettingsForm
+          settings={pomodoroSettings}
+          onChange={updatePomodoroSettings}
+        />
       </SettingsCard>
       <SettingsCard
         icon={<FolderTree className="text-brand" />}
