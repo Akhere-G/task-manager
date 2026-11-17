@@ -90,6 +90,30 @@ export const taskService = {
     );
     return response.data.subtasks;
   },
+  bulkComplete: async (ids: number[]): Promise<number> => {
+    const response = await apiClient.post<{ updated: number }>(
+      "/tasks/bulk-complete",
+      { ids },
+    );
+    return response.data.updated;
+  },
+  bulkDelete: async (ids: number[]): Promise<number> => {
+    const response = await apiClient.post<{ updated: number }>(
+      "/tasks/bulk-delete",
+      { ids },
+    );
+    return response.data.updated;
+  },
+  bulkSnooze: async (
+    ids: number[],
+    snooze: Omit<SnoozeInput, "isGhost" | "previousStartAt">,
+  ): Promise<number> => {
+    const response = await apiClient.post<{ updated: number }>(
+      "/tasks/bulk-snooze",
+      { ids, ...snooze },
+    );
+    return response.data.updated;
+  },
   createAll: async (tasksData: CreateTaskInput[]) => {
     const response = await apiClient.post("/tasks/bulk", tasksData);
     return response.data;

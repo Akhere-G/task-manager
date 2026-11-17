@@ -4,7 +4,8 @@ import { AlarmClockPlus } from "lucide-react";
 import type { SnoozePreset, Task } from "../types";
 
 interface SnoozeMenuProps {
-  task: Task;
+  task?: Task;
+  label?: string;
   onSnooze: (preset: SnoozePreset, day?: string) => void;
 }
 
@@ -17,7 +18,7 @@ const DAY_PRESETS = [
 const itemClass =
   "w-full rounded px-3 py-1.5 text-left text-sm hover:bg-brand/10";
 
-export default function SnoozeMenu({ task, onSnooze }: SnoozeMenuProps) {
+export default function SnoozeMenu({ task, label, onSnooze }: SnoozeMenuProps) {
   const [open, setOpen] = useState(false);
   const [day, setDay] = useState("");
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
@@ -55,7 +56,7 @@ export default function SnoozeMenu({ task, onSnooze }: SnoozeMenuProps) {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Snooze task: ${task.title}`}
+        aria-label={label ?? `Snooze task: ${task?.title}`}
         title="Snooze task"
         onClick={toggle}
         className="p-1.5 rounded-md hover:bg-slate-500/10 transition-colors cursor-pointer"
@@ -102,7 +103,7 @@ export default function SnoozeMenu({ task, onSnooze }: SnoozeMenuProps) {
                 Snooze to date
               </button>
             </div>
-            {task.repeatBy && (
+            {task?.repeatBy && (
               <button
                 role="menuitem"
                 className={itemClass}

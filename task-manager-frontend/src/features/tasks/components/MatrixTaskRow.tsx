@@ -3,6 +3,7 @@ import { AlertCircle, GripVertical, Repeat } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import ProjectLabel from "../../projects/ProjectLabel";
 import { priorityRingClasses } from "../constants";
+import { SelectBox } from "./SelectBox";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import { describeRecurrence } from "../recurrence";
 import type { Task } from "../types";
@@ -51,6 +52,7 @@ export function MatrixTaskRow({
         size={14}
         className="shrink-0 text-text-sub/50 group-hover:text-text-sub"
       />
+      <SelectBox task={task} />
       <button
         type="button"
         onClick={complete}

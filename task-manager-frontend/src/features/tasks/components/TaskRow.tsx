@@ -24,6 +24,7 @@ import {
   taskMinutes,
 } from "../utils";
 import PriorityBadge from "./PriorityBadge";
+import { SelectBox } from "./SelectBox";
 import SnoozeMenu from "./SnoozeMenu";
 import SubtaskCount from "./SubtaskCount";
 
@@ -67,6 +68,7 @@ export function TaskRow({
     <article
       className={`group flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border-b border-surface-muted px-2 py-2.5 transition-colors hover:bg-surface-muted/60 focus-within:bg-surface-muted/60 ${isCompleted ? "opacity-60" : ""}`}
     >
+      <SelectBox task={task} />
       <button
         type="button"
         onClick={complete}

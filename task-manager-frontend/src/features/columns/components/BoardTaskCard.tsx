@@ -4,6 +4,7 @@ import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import LabelChips from "../../labels/LabelChips";
 import ProjectLabel from "../../projects/ProjectLabel";
 import PriorityBadge from "../../tasks/components/PriorityBadge";
+import { SelectBox } from "../../tasks/components/SelectBox";
 import SubtaskCount from "../../tasks/components/SubtaskCount";
 import { priorityRingClasses } from "../../tasks/constants";
 import useSetIsCompleted from "../../tasks/hooks/useSetIsCompleted";
@@ -45,6 +46,7 @@ export function BoardTaskCard({
       className={`flex flex-col gap-1.5 rounded-lg border bg-surface p-2.5 shadow-sm transition-shadow hover:shadow-md ${task.isCompleted ? "opacity-60" : ""}`}
     >
       <div className="flex items-start gap-2">
+        <SelectBox task={task} />
         <button
           type="button"
           onClick={complete}
