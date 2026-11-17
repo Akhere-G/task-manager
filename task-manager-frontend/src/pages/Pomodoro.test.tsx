@@ -162,6 +162,22 @@ describe("Pomodoro page", () => {
     expect(screen.getByText(/^(15:00|14:5\d)$/)).toBeInTheDocument();
   });
 
+  it("applies a changed focus length at once if the block has not started", async () => {
+    mock.onGet("/tasks/1").reply(200, makeTask());
+    renderPomodoro();
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Timer settings" }),
+    );
+    const focus = screen.getByLabelText("Focus (1-180 min)");
+    await userEvent.clear(focus);
+    await userEvent.type(focus, "50");
+    await userEvent.tab();
+
+    expect(screen.getByText("50:00")).toBeInTheDocument();
+    expect(screen.getByText("Session 1 of 2")).toBeInTheDocument();
+  });
+
   it("applies changed durations from the next block, not the running one", async () => {
     mock.onGet("/tasks/1").reply(200, makeTask());
     renderPomodoro();

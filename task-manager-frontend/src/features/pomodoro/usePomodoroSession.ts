@@ -11,6 +11,7 @@ import {
   saveSession,
   startNextSession,
   startRest,
+  withIdleDuration,
   type SessionState,
 } from "./session";
 import type { PomodoroSettings } from "./types";
@@ -18,15 +19,16 @@ import type { PomodoroSettings } from "./types";
 const TICK_MS = 250;
 
 export function usePomodoroSession(taskId: number, settings: PomodoroSettings) {
-  const [state, setState] = useState(
+  const [stored, setStored] = useState(
     () => loadSession(taskId) ?? initialSession(settings),
   );
+  const state = withIdleDuration(stored, settings);
   const [now, setNow] = useState(() => Date.now());
   const running = isRunning(state);
 
   useEffect(() => {
-    saveSession(taskId, state);
-  }, [taskId, state]);
+    saveSession(taskId, stored);
+  }, [taskId, stored]);
 
   useEffect(() => {
     if (!running) return;
@@ -39,7 +41,7 @@ export function usePomodoroSession(taskId: number, settings: PomodoroSettings) {
   ) => {
     const at = Date.now();
     setNow(at);
-    setState((current) => transition(current, at));
+    setStored((current) => transition(withIdleDuration(current, settings), at));
   };
 
   const remaining = remainingSeconds(state, now);

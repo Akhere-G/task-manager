@@ -32,6 +32,15 @@ export const remainingSeconds = (state: SessionState, now: number) =>
 export const hasStarted = (state: SessionState, now: number) =>
   isRunning(state) || elapsedMs(state, now) > 0;
 
+/** A block that has not begun yet takes the current settings; one in progress keeps its length. */
+export const withIdleDuration = (
+  state: SessionState,
+  settings: PomodoroSettings,
+): SessionState =>
+  hasStarted(state, 0)
+    ? state
+    : { ...state, durationSeconds: phaseSeconds(state.phase, settings) };
+
 export const pause = (state: SessionState, now: number): SessionState =>
   isRunning(state)
     ? { ...state, elapsedMs: elapsedMs(state, now), runningSince: null }

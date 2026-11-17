@@ -12,6 +12,7 @@ import {
   saveSession,
   startNextSession,
   startRest,
+  withIdleDuration,
 } from "./session";
 
 const T0 = 1_000_000;
@@ -95,6 +96,22 @@ describe("phase transitions", () => {
     const rest = startRest(working, longer, T0);
     expect(rest.durationSeconds).toBe(600);
     expect(startNextSession(rest, longer, T0).durationSeconds).toBe(3000);
+  });
+});
+
+describe("withIdleDuration", () => {
+  const longer = { ...DEFAULT_SETTINGS, workMinutes: 50 };
+
+  it("gives a block that has not begun the new length", () => {
+    const state = withIdleDuration(initialSession(DEFAULT_SETTINGS), longer);
+    expect(remainingSeconds(state, T0)).toBe(3000);
+  });
+
+  it("keeps a running or partly elapsed block as it was", () => {
+    const running = resume(initialSession(DEFAULT_SETTINGS), T0);
+    expect(withIdleDuration(running, longer)).toBe(running);
+    const paused = pause(running, T0 + seconds(30));
+    expect(withIdleDuration(paused, longer)).toBe(paused);
   });
 });
 
