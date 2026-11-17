@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from datetime import UTC, date, datetime
-from typing import Any
+from typing import Any, TypedDict
 
 from google import genai
 from google.genai import types
@@ -22,6 +22,12 @@ from app.services.task_query import TaskQuery
 from app.utils.dates import local_today
 
 logger = logging.getLogger(__name__)
+
+
+class ExistingSubtask(TypedDict):
+    title: str
+    description: str | None
+
 
 GEMINI_TIMEOUT_MS = 10_000
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
@@ -210,17 +216,24 @@ def _decompose_prompt(
     description: str,
     start_at: str | datetime,
     end_at: str | datetime,
-    existing_subtasks: list[str],
+    existing_subtasks: list[ExistingSubtask],
 ) -> str:
-    existing = "\n".join(f"    - {subtask}" for subtask in existing_subtasks)
-    already_done = (
-        f"\n    It already has these subtasks, so do not repeat them:\n{existing}"
+    existing = "\n".join(
+        f"    - {subtask['title']}: {subtask['description']}"
+        if subtask["description"]
+        else f"    - {subtask['title']}"
+        for subtask in existing_subtasks
+    )
+    already_there = (
+        "\n    It already has these subtasks. Factor them in where they fit, but "
+        "ultimately return the best list of steps for the task, even if that "
+        f"means dropping or rewording some of them:\n{existing}"
         if existing
         else ""
     )
     return f"""
     Decompose this task into 3-7 substasks that will help the user complete the task.
-    - {title} ({description}, {start_at} to {end_at}){already_done}
+    - {title} ({description}, {start_at} to {end_at}){already_there}
     Return only a json list of objects of this format
     - title: (string)
     - description: (string or null)
@@ -272,7 +285,7 @@ def decompose_task(
     description: str,
     start_at: str | datetime,
     end_at: str | datetime,
-    existing_subtasks: list[str] | None = None,
+    existing_subtasks: list[ExistingSubtask] | None = None,
 ) -> list[dict[str, Any]]:
     existing = existing_subtasks or []
     try:
@@ -283,11 +296,9 @@ def decompose_task(
         tasks = schema.dump(schema.load(_extract_json(reply)))
     except (AIUnavailable, ValueError, ValidationError):
         return []
-    known = {subtask.strip().lower() for subtask in existing}
-    new_tasks = [task for task in tasks if task["title"].strip().lower() not in known]
-    for task in new_tasks:
+    for task in tasks:
         task.pop("project", None)
-    return new_tasks
+    return tasks
 
 
 def _priority_prompt(tasks: list[Task], paths: dict[int, str]) -> str:

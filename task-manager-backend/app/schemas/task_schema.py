@@ -98,6 +98,10 @@ class SubtaskCreateSchema(CamelSchema):
     )
 
 
+class SubtaskOrderSchema(CamelSchema):
+    ids = fields.List(fields.Integer(strict=True), required=True)
+
+
 class SubtasksCreateSchema(CamelSchema):
     subtasks = fields.List(
         fields.Nested(SubtaskCreateSchema),

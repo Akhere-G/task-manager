@@ -145,15 +145,20 @@ def test_decompose_returns_valid_steps_and_empty_list_otherwise() -> None:
         assert decompose_task("Trip", "", "", "") == []
 
 
-def test_decompose_tells_the_model_about_existing_subtasks_and_drops_repeats() -> None:
-    steps = [{"title": "Book flights"}, {"title": "pack "}]
+def test_decompose_shows_the_model_existing_subtasks_and_keeps_its_whole_answer() -> (
+    None
+):
+    steps = [{"title": "Book flights"}, {"title": "Pack"}]
+    existing = [{"title": "Pack", "description": "Light bag"}]
     with mock.patch.object(
         ai_service, "get_generated_text", return_value=reply(steps)
     ) as generate:
-        result = decompose_task("Trip", "", "", "", ["Pack"])
+        result = decompose_task("Trip", "", "", "", existing)
 
-    assert [t["title"] for t in result] == ["Book flights"]
-    assert "- Pack" in generate.call_args.args[0]
+    assert [t["title"] for t in result] == ["Book flights", "Pack"]
+    prompt = generate.call_args.args[0]
+    assert "- Pack: Light bag" in prompt
+    assert "even if" in prompt
 
 
 def test_generation_falls_back_to_groq_when_gemini_is_empty() -> None:

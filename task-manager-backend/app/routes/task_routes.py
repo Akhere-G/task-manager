@@ -3,6 +3,7 @@ from flask.typing import ResponseReturnValue
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.schemas.task_schema import (
+    SubtaskOrderSchema,
     SubtaskSchema,
     SubtasksCreateSchema,
     TaskCountsQuerySchema,
@@ -19,7 +20,11 @@ from app.schemas.task_schema import (
 )
 from app.services.order_service import move_task
 from app.services.snooze_service import snooze_task
-from app.services.subtask_service import add_subtasks
+from app.services.subtask_service import (
+    add_subtasks,
+    reorder_subtasks,
+    replace_subtasks,
+)
 from app.services.task_listing import count_open_tasks_by_view, get_all_tasks
 from app.services.task_service import (
     create_task,
@@ -127,6 +132,22 @@ def add_task_subtasks(task_id: int) -> ResponseReturnValue:
     data = SubtasksCreateSchema().load(get_json_body())
     subtasks = add_subtasks(get_jwt_identity(), task_id, data["subtasks"])
     return jsonify({"subtasks": SubtaskSchema(many=True).dump(subtasks)}), 201
+
+
+@task_bp.route("/api/tasks/<int:task_id>/subtasks", methods=["PUT"])
+@jwt_required()
+def replace_task_subtasks(task_id: int) -> ResponseReturnValue:
+    data = SubtasksCreateSchema().load(get_json_body())
+    subtasks = replace_subtasks(get_jwt_identity(), task_id, data["subtasks"])
+    return jsonify({"subtasks": SubtaskSchema(many=True).dump(subtasks)})
+
+
+@task_bp.route("/api/tasks/<int:task_id>/subtasks/order", methods=["PUT"])
+@jwt_required()
+def reorder_task_subtasks(task_id: int) -> ResponseReturnValue:
+    data = SubtaskOrderSchema().load(get_json_body())
+    subtasks = reorder_subtasks(get_jwt_identity(), task_id, data["ids"])
+    return jsonify({"subtasks": SubtaskSchema(many=True).dump(subtasks)})
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["DELETE"])

@@ -49,6 +49,7 @@ function SortableItem({
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -60,7 +61,11 @@ function SortableItem({
 
   return (
     <li
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        // Without an activator, Enter or Space on a button inside the card starts a drag.
+        setActivatorNodeRef(node);
+      }}
       className={`${sortableItemClass} ${isDragging ? draggingClass : ""}`}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       {...attributes}
@@ -102,11 +107,11 @@ export default function TaskList({
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     const result = over && reorder(tasks, Number(active.id), Number(over.id));
     if (result) {
-      setDropped({ from: loaded, to: result.tasks });
+      setDropped({ from: loaded, to: result.items });
       moveTask({
         id: Number(active.id),
         move: result.move,
-        reordered: result.tasks,
+        reordered: result.items,
       });
     }
   };

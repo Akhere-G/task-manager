@@ -1,5 +1,7 @@
 import apiClient from "../../services/api";
-import type { CreateTaskInput, Priority } from "../tasks/types";
+import type { CreateTaskInput, Priority, Subtask } from "../tasks/types";
+
+export type ExistingSubtask = Pick<Subtask, "title" | "description">;
 
 export interface DailyBrief {
   brief: string;
@@ -34,7 +36,7 @@ export const aiService = {
   },
   decomposeTask: async (
     task: CreateTaskInput,
-    existingSubtasks: string[] = [],
+    existingSubtasks: ExistingSubtask[] = [],
   ): Promise<DecomposeTaskResult> => {
     const response = await apiClient.post("ai/decompose", {
       ...task,
