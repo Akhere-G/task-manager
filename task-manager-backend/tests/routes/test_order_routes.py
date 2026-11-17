@@ -80,3 +80,23 @@ def test_a_move_beside_a_missing_task_is_refused(session: FlaskClient) -> None:
     task = add(session, "alone")
 
     assert move(session, task, afterId=999999).status_code == 404
+
+
+def test_one_neighbour_places_the_task_right_beside_it(session: FlaskClient) -> None:
+    e, d, c, b, a = (add(session, name) for name in "edcba")  # list: a b c d e
+
+    move(session, e, afterId=a)
+    assert manual(session) == ["a", "e", "b", "c", "d"]
+
+    move(session, a, beforeId=d)
+    assert manual(session) == ["e", "b", "c", "a", "d"]
+
+
+def test_a_task_dropped_after_the_last_task_goes_to_the_bottom(
+    session: FlaskClient,
+) -> None:
+    c, b, a = (add(session, name) for name in "cba")
+
+    move(session, a, afterId=c)
+
+    assert manual(session) == ["b", "c", "a"]

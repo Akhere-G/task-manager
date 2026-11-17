@@ -48,7 +48,7 @@ def _renumber(user_id: int) -> None:
 def move_task(
     user_id: int, task_id: int, after_id: int | None, before_id: int | None
 ) -> None:
-    """Puts the task after `after_id` and before `before_id`; None is an edge."""
+    """Puts the task after `after_id` and before `before_id`; None is open-ended."""
     if after_id is None and before_id is None:
         raise InvalidMove()
     task = _lock_task(user_id, task_id)
@@ -56,17 +56,43 @@ def move_task(
     db.session.commit()
 
 
+def _next_position(user_id: int, task: Task, above: int) -> int | None:
+    return db.session.scalar(
+        select(func.min(Task.sort_order)).where(
+            top_level_tasks_of(user_id), Task.id != task.id, Task.sort_order > above
+        )
+    )
+
+
+def _previous_position(user_id: int, task: Task, below: int) -> int | None:
+    return db.session.scalar(
+        select(func.max(Task.sort_order)).where(
+            top_level_tasks_of(user_id), Task.id != task.id, Task.sort_order < below
+        )
+    )
+
+
+def _target_position(
+    user_id: int, task: Task, after_id: int | None, before_id: int | None
+) -> int | None:
+    above = _position_of(user_id, after_id)
+    below = _position_of(user_id, before_id)
+    # A list can show only part of the order, so one neighbour means "right
+    # beside it", not the edge: tasks the list has not loaded may sit past it.
+    if above is not None and below is None:
+        below = _next_position(user_id, task, above)
+    elif below is not None and above is None:
+        above = _previous_position(user_id, task, below)
+    return position_between(above, below)
+
+
 def place_task(
     user_id: int, task: Task, after_id: int | None, before_id: int | None
 ) -> None:
     """Sets the task's order between the two neighbours without committing."""
-    position = position_between(
-        _position_of(user_id, after_id), _position_of(user_id, before_id)
-    )
+    position = _target_position(user_id, task, after_id, before_id)
     if position is None:
         _renumber(user_id)
         db.session.refresh(task)
-        position = position_between(
-            _position_of(user_id, after_id), _position_of(user_id, before_id)
-        )
+        position = _target_position(user_id, task, after_id, before_id)
     task.sort_order = position  # type: ignore

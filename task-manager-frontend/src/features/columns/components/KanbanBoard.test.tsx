@@ -1,8 +1,10 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { mockApi } from "../../../test/api";
 import { makeTask, renderWithProviders } from "../../../test/render";
+import type { TaskFilters } from "../../tasks/taskParams";
+import type { Task } from "../../tasks/types";
 import type { ProjectColumn } from "../types";
 import KanbanBoard from "./KanbanBoard";
 
@@ -29,6 +31,18 @@ const columns = [
   column(3, "Done", { onDrop: "complete" }),
 ];
 
+const filters: TaskFilters = {
+  search: "",
+  project: "7",
+  label: "",
+  priority: "",
+  duration: "",
+  isCompleted: "all",
+  sortBy: "manual",
+  order: "asc",
+  currentDate: "",
+};
+
 const tasks = [
   makeTask({ id: 11, title: "Plan", projectId: 7, columnId: 1 }),
   makeTask({ id: 12, title: "Build", projectId: 7, columnId: 2 }),
@@ -39,16 +53,47 @@ const tasks = [
     columnId: 3,
     isCompleted: true,
   }),
-  makeTask({ id: 14, title: "Elsewhere", projectId: 8, columnId: null }),
   makeTask({ id: 15, title: "Loose end", projectId: 7, columnId: null }),
 ];
 
-const board = () => {
+const PAGE_SIZE = 10;
+
+/** Answers each column's request with its own page of `all`. */
+function serveTasks(all: Task[]) {
+  mock.onGet(/\/tasks/).reply((config) => {
+    const params = new URL(config.url ?? "", "http://api").searchParams;
+    const inColumn = all.filter((task) =>
+      params.get("unassigned") === "true"
+        ? task.columnId === null
+        : String(task.columnId) === params.get("column"),
+    );
+    const page = Number(params.get("page"));
+    return [
+      200,
+      {
+        tasks: inColumn.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+        totalTasks: inColumn.length,
+        totalMinutes: inColumn.length * 60,
+        totalPages: Math.ceil(inColumn.length / PAGE_SIZE),
+        currentPage: page,
+      },
+    ];
+  });
+}
+
+const board = (boardTasks: Task[] = tasks) => {
   mock.onGet("/projects/7/columns").reply(200, { columns });
   mock.onGet("/projects").reply(200, { projects: [] });
   mock.onGet("/labels").reply(200, { labels: [] });
-  return renderWithProviders(<KanbanBoard projectId={7} tasks={tasks} />);
+  serveTasks(boardTasks);
+  return renderWithProviders(
+    <KanbanBoard projectId={7} filters={filters} search="" view="all" />,
+  );
 };
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 const region = (name: string) => screen.findByRole("region", { name });
 
@@ -56,19 +101,89 @@ describe("KanbanBoard", () => {
   it("shows each task of the project in its column", async () => {
     board();
 
-    expect(within(await region("To Do")).getByText("Plan")).toBeVisible();
     expect(
-      within(await region("In Progress")).getByText("Build"),
+      await within(await region("To Do")).findByText("Plan"),
     ).toBeVisible();
-    expect(within(await region("Done")).getByText("Ship")).toBeVisible();
-    expect(screen.queryByText("Elsewhere")).not.toBeInTheDocument();
+    expect(
+      await within(await region("In Progress")).findByText("Build"),
+    ).toBeVisible();
+    expect(await within(await region("Done")).findByText("Ship")).toBeVisible();
+  });
+
+  it("asks for ten tasks per column, not the whole board", async () => {
+    board();
+
+    await region("To Do");
+    await waitFor(() => expect(mock.history.get.length).toBeGreaterThan(3));
+    const taskRequests = mock.history.get
+      .filter((request) => request.url?.startsWith("/tasks"))
+      .map((request) => new URL(request.url ?? "", "http://api").searchParams);
+    expect(taskRequests).toHaveLength(4);
+    taskRequests.forEach((params) => {
+      expect(params.get("limit")).toBe("10");
+      expect(params.get("project")).toBe("7");
+    });
+    expect(taskRequests.map((params) => params.get("column"))).toEqual(
+      expect.arrayContaining(["1", "2", "3"]),
+    );
+    expect(
+      taskRequests.some((params) => params.get("unassigned") === "true"),
+    ).toBe(true);
+  });
+
+  it("totals a column and shows how many of its tasks are unloaded", async () => {
+    board(
+      Array.from({ length: 12 }, (_, index) =>
+        makeTask({
+          id: index + 1,
+          title: `Card ${index + 1}`,
+          projectId: 7,
+          columnId: 1,
+        }),
+      ),
+    );
+
+    const todo = await region("To Do");
+    expect(await within(todo).findByText("12 tasks · 12h")).toBeVisible();
+    expect(within(todo).getByText("Showing 10 of 12")).toBeVisible();
+    expect(within(todo).getByText("Scroll for 2 more ↓")).toBeVisible();
+    expect(within(todo).queryByText("Card 11")).not.toBeInTheDocument();
+  });
+
+  it("loads the next ten when a column is scrolled to its end", async () => {
+    const reveals: (() => void)[] = [];
+    class FakeObserver {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        reveals.push(() => callback([{ isIntersecting: true }]));
+      }
+      observe() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    board(
+      Array.from({ length: 12 }, (_, index) =>
+        makeTask({
+          id: index + 1,
+          title: `Card ${index + 1}`,
+          projectId: 7,
+          columnId: 1,
+        }),
+      ),
+    );
+    const todo = await region("To Do");
+    await within(todo).findByText("Card 10");
+
+    reveals.forEach((reveal) => reveal());
+
+    expect(await within(todo).findByText("Card 12")).toBeVisible();
+    expect(within(todo).getByText("Showing 12 of 12")).toBeVisible();
   });
 
   it("shows tasks with no column in Unassigned, the first column", async () => {
     board();
 
     const unassigned = await region("Unassigned");
-    expect(within(unassigned).getByText("Loose end")).toBeVisible();
+    expect(await within(unassigned).findByText("Loose end")).toBeVisible();
     const regions = screen.getAllByRole("region").map((r) => r.ariaLabel);
     expect(regions[0]).toBe("Unassigned");
   });

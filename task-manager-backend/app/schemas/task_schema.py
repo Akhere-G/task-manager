@@ -14,6 +14,7 @@ from marshmallow import (
 from marshmallow_sqlalchemy import auto_field
 
 from app.constants import (
+    MAX_BULK_TASKS,
     MAX_LABEL_NAME_LENGTH,
     MAX_LABELS_PER_TASK,
     MAX_PAGE_SIZE,
@@ -29,10 +30,11 @@ from app.constants import (
 from app.models import Task
 from app.services.task_query import TaskQuery
 from app.utils.dates import is_valid_zone, to_iso_z, utc_now
+from app.utils.groups import TASK_GROUPS
 from app.utils.recurrence import is_valid_month_day
 from app.utils.reminders import REMINDER_KINDS
 from app.utils.snooze import SNOOZE_PRESETS
-from app.utils.views import RANGED_VIEWS, TASK_VIEWS
+from app.utils.views import TASK_VIEWS
 
 from .base import CamelAutoSchema, CamelSchema
 from .fields import IsoDateTime, StrippedString, UtcDateTime
@@ -337,23 +339,16 @@ class TaskMoveSchema(CamelSchema):
     before_id = fields.Integer(strict=True, allow_none=True)
 
 
-class TaskCountsQuerySchema(Schema):
-    class Meta:
-        unknown = EXCLUDE
-
-    zone_name = fields.String(
-        data_key="zone",
-        validate=_validate_query_zone,
-    )
-
-
 class TaskListQuerySchema(Schema):
     class Meta:
         unknown = EXCLUDE
 
     project = fields.Integer(validate=validate.Range(min=1))
+    column = fields.Integer(validate=validate.Range(min=1))
+    unassigned = fields.Boolean(load_default=False)
     label = fields.String()
     view = fields.String(validate=validate.OneOf(TASK_VIEWS))
+    group = fields.String(validate=validate.OneOf(TASK_GROUPS))
     zone = fields.String(validate=_validate_query_zone)
     priority = fields.String()
     search = fields.String(data_key="q")
@@ -385,11 +380,9 @@ class TaskListQuerySchema(Schema):
             )
 
         if data["project_repeating"]:
-            if data.get("view") in RANGED_VIEWS and not start:
-                return
             if not start:
                 raise ValidationError(
-                    "project_repeating needs a ranged view or start_date and end_date.",
+                    "project_repeating needs start_date and end_date.",
                     field_name="project_repeating",
                 )
             if (end - start).days > MAX_PROJECTION_DAYS:
@@ -397,6 +390,28 @@ class TaskListQuerySchema(Schema):
                     f"Date range must be {MAX_PROJECTION_DAYS} days or fewer.",
                     field_name="project_repeating",
                 )
+
+    @validates_schema
+    def validate_group(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if "group" not in data:
+            return
+        if "is_completed" in data:
+            raise ValidationError(
+                "group and is_completed cannot be combined.", field_name="group"
+            )
+
+    @validates_schema
+    def validate_column(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if "column" not in data and not data["unassigned"]:
+            return
+        if "column" in data and data["unassigned"]:
+            raise ValidationError(
+                "column and unassigned cannot be combined.", field_name="column"
+            )
+        if "project" not in data:
+            raise ValidationError(
+                "A column filter needs a project.", field_name="column"
+            )
 
     @validates_schema
     def validate_label(self, data: dict[str, Any], **kwargs: Any) -> None:
@@ -421,6 +436,58 @@ class TaskListQuerySchema(Schema):
         if "label" in data:
             data["label"] = _parse_ids(data["label"])
         return TaskQuery(**data)
+
+
+class BulkTargetSchema(CamelSchema):
+    """The tasks a bulk action applies to: listed ids, or everything in a category."""
+
+    ids = fields.List(
+        fields.Integer(strict=True, validate=validate.Range(min=1)),
+        validate=validate.Length(min=1, max=MAX_BULK_TASKS),
+    )
+    filter = fields.Nested(TaskListQuerySchema)
+
+    @validates_schema
+    def validate_one_target(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if ("ids" in data) == ("filter" in data):
+            raise ValidationError("Send either ids or filter.", field_name="ids")
+
+    @validates_schema
+    def validate_category_filter(self, data: dict[str, Any], **kwargs: Any) -> None:
+        query = data.get("filter")
+        if query is None:
+            return
+        if not (query.group or query.priority or query.column or query.unassigned):
+            raise ValidationError(
+                "A bulk filter needs a group, priority, column or unassigned.",
+                field_name="filter",
+            )
+
+    @post_load
+    def drop_duplicate_ids(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+        if "ids" in data:
+            data["ids"] = list(dict.fromkeys(data["ids"]))
+        return data
+
+
+class BulkSnoozeSchema(BulkTargetSchema, TaskSnoozeSchema):
+    @validates_schema
+    def reject_projected_occurrences(self, data: dict[str, Any], **kwargs: Any) -> None:
+        if data["is_ghost"]:
+            raise ValidationError(
+                "Projected occurrences cannot be snoozed in bulk.",
+                field_name="is_ghost",
+            )
+
+
+class BulkPrioritySchema(BulkTargetSchema):
+    priority = fields.Integer(
+        required=True, strict=True, validate=validate.OneOf(PRIORITIES)
+    )
+
+
+class BulkMoveSchema(BulkTargetSchema):
+    column_id = fields.Integer(required=True, strict=True, allow_none=True)
 
 
 class TrashedTaskSchema(TaskSchema):
@@ -456,5 +523,6 @@ class TrashQuerySchema(Schema):
 class TaskPageSchema(CamelSchema):
     tasks = fields.Nested(TaskSchema, many=True)
     total_tasks = fields.Integer()
+    total_minutes = fields.Integer()
     total_pages = fields.Integer()
     current_page = fields.Integer()

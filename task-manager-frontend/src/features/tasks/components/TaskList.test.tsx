@@ -34,4 +34,23 @@ describe("TaskList", () => {
 
     expect(screen.getByTestId("popup")).toHaveTextContent("View:Plan trip");
   });
+
+  it("shows plain rows when not sortable", () => {
+    renderWithProviders(
+      <TaskList tasks={[makeTask({ id: 1, title: "One" })]} />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Open task: One" }),
+    ).toBeVisible();
+    expect(screen.queryByLabelText("Drag to reorder")).not.toBeInTheDocument();
+  });
+
+  it("labels the list when rows can be dragged", () => {
+    renderWithProviders(
+      <TaskList tasks={[makeTask({ id: 1, title: "One" })]} sortable />,
+    );
+
+    expect(screen.getByLabelText("Drag to reorder")).toBeInTheDocument();
+  });
 });

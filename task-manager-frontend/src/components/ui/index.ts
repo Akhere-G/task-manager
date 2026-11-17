@@ -1,3 +1,4 @@
+export { default as ButtonGroup } from "./ButtonGroup";
 export { default as CountChip } from "./CountChip";
 export { default as EmptyState } from "./EmptyState";
 export { default as ErrorState } from "./ErrorState";

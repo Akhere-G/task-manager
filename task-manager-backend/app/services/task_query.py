@@ -5,9 +5,12 @@ from datetime import datetime
 @dataclass(frozen=True)
 class TaskQuery:
     project: int | None = None
+    column: int | None = None
+    unassigned: bool = False
     priority: tuple[int, ...] | None = None
     label: tuple[int, ...] | None = None
     view: str | None = None
+    group: str | None = None
     zone: str | None = None
     search: str | None = None
     duration: str | None = None

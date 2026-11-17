@@ -26,6 +26,7 @@ from app.utils.dates import (
     start_of_day,
     utc_now,
 )
+from app.utils.groups import group_clause
 from app.utils.project_tree import descendant_ids
 from app.utils.recurrence import next_occurrence
 from app.utils.views import view_clause
@@ -39,6 +40,9 @@ MAX_SEARCH_LENGTH = 100
 MAX_SEARCH_TERMS = 8
 FULLTEXT_MIN_TERM_LENGTH = 3
 SHORT_TASK_MINUTES = 30
+DURATION_MINUTES = func.timestampdiff(
+    literal_column("MINUTE"), Task.start_at, Task.end_at
+)
 MAX_GHOSTS = 5000
 
 GHOST_COPIED_FIELDS = (
@@ -120,11 +124,10 @@ def _date_range_clause(
 
 
 def _duration_clause(duration: str | None) -> Clause | None:
-    minutes = func.timestampdiff(literal_column("MINUTE"), Task.start_at, Task.end_at)
     if duration == "short_tasks":
-        return minutes <= SHORT_TASK_MINUTES
+        return DURATION_MINUTES <= SHORT_TASK_MINUTES
     if duration == "long_tasks":
-        return minutes > SHORT_TASK_MINUTES
+        return DURATION_MINUTES > SHORT_TASK_MINUTES
     return None
 
 
@@ -144,6 +147,10 @@ def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
         clauses.append(
             Task.project_id.in_(_project_and_descendants(user_id, query.project))
         )
+    if query.column:
+        clauses.append(Task.column_id == query.column)
+    if query.unassigned:
+        clauses.append(Task.column_id.is_(None))
     if query.label:
         labelled = select(TaskLabel.task_id).where(TaskLabel.label_id.in_(query.label))
         clauses.append(Task.id.in_(labelled))
@@ -155,7 +162,8 @@ def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
         _completion_clause(query.is_completed),
         _date_range_clause(query.start_date, query.end_date),
         _duration_clause(query.duration),
-        view_clause(query.view, query.zone),
+        view_clause(query.view),
+        group_clause(query.group, query.zone),
     )
     for clause in optional_clauses:
         if clause is not None:

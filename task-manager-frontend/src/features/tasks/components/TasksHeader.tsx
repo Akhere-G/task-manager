@@ -1,31 +1,17 @@
 import { useState } from "react";
-import { CountChip, FormInput } from "../../../components/ui";
-import {
-  completedTasksOptions,
-  isAscOptions,
-  priorityFilterOptions,
-  sortByOptions,
-  taskDurationOptions,
-} from "../constants";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import useLabels from "../../labels/hooks/useLabels";
+import { CountChip } from "../../../components/ui";
+import type { TaskFilters } from "../taskParams";
+import FilterPanel from "./FilterPanel";
+import FilterToolbar from "./FilterToolbar";
 
-interface TaskFilters {
-  search: string;
-  project: string;
-  label: string;
-  priority: string;
-  duration: string;
-  isCompleted: string;
-  sortBy: string;
-  order: string;
-}
 interface TasksHeaderProps {
   filters: TaskFilters;
   updateFilters: (name: string, value: string) => void;
   resetFilters: () => void;
   totalTasks: number;
   sortable?: boolean;
+  /** The list has a group for completed tasks, so it cannot filter on them. */
+  canFilterCompleted?: boolean;
 }
 
 export default function TasksHeader({
@@ -34,119 +20,34 @@ export default function TasksHeader({
   resetFilters,
   totalTasks,
   sortable = true,
+  canFilterCompleted = true,
 }: TasksHeaderProps) {
-  const [openFilters, setOpenFilters] = useState(false);
-  const { data: labels = [] } = useLabels();
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
-    const { name, value } = e.target;
-    updateFilters(name, value);
-  };
-  const ButtonIcon = openFilters ? ChevronUp : ChevronDown;
-  const formClassNames = "grow lg:grow-[0.9] max-w-80";
   return (
-    <div className="card flex flex-col gap-2">
-      <div className="flex justify-between items-start gap-2">
-        <header className="w-full max-w-52 flex flex-col">
-          <h1 className="text-3xl font-bold text-text-main transition-colors">
-            Tasks <CountChip count={totalTasks} />
-          </h1>
-          <p className="text-text-sub">Manage your daily goals.</p>
-        </header>
+    <div className="card flex flex-col gap-3">
+      <header className="flex flex-wrap items-baseline gap-x-3">
+        <h1 className="text-3xl font-bold text-text-main transition-colors">
+          Tasks <CountChip count={totalTasks} />
+        </h1>
+        <p className="text-text-sub">Manage your daily goals.</p>
+      </header>
 
-        <button
-          className=""
-          title="Show filters"
-          aria-label="Show filters"
-          onClick={() => setOpenFilters(!openFilters)}
-        >
-          {<ButtonIcon aria-hidden />}
-        </button>
-      </div>
-
-      {openFilters && (
-        <form
-          className="flex gap-4 items-baseline flex-row flex-wrap"
-          onSubmit={(e) => e.preventDefault()}
-        >
-          <FormInput
-            name="search"
-            value={filters.search}
-            handleChange={handleChange}
-            label="Search"
-            formClassNames={formClassNames}
-          />
-          <FormInput
-            name="label"
-            value={filters.label}
-            handleChange={handleChange}
-            label="Label"
-            options={[
-              { name: "All", value: "" },
-              ...labels.map((label) => ({
-                name: label.name,
-                value: String(label.id),
-              })),
-            ]}
-            formClassNames={formClassNames}
-          />
-          <FormInput
-            name="priority"
-            value={filters.priority}
-            handleChange={handleChange}
-            label="Priority"
-            options={priorityFilterOptions}
-            formClassNames={formClassNames}
-          />
-          <FormInput
-            name="duration"
-            value={filters.duration}
-            handleChange={handleChange}
-            label="Duration"
-            options={taskDurationOptions}
-            formClassNames={formClassNames}
-          />
-          <FormInput
-            name="isCompleted"
-            value={filters.isCompleted}
-            handleChange={handleChange}
-            label="Is Complete"
-            options={completedTasksOptions}
-            formClassNames={formClassNames}
-          />
-          {sortable && (
-            <>
-              <FormInput
-                name="sortBy"
-                value={filters.sortBy}
-                handleChange={handleChange}
-                label="Sort By"
-                options={sortByOptions}
-                formClassNames={formClassNames}
-              />
-              <FormInput
-                name="order"
-                value={filters.order}
-                handleChange={handleChange}
-                label="Order"
-                options={isAscOptions}
-                formClassNames={formClassNames}
-              />
-            </>
-          )}
-          <button
-            type="button"
-            aria-label="Reset Filters"
-            className="self-end mb-1 btn-primary h-10"
-            onClick={resetFilters}
-          >
-            Reset Filters
-          </button>
-        </form>
+      <FilterToolbar
+        filters={filters}
+        updateFilters={updateFilters}
+        resetFilters={resetFilters}
+        canFilterCompleted={canFilterCompleted}
+        isOpen={isOpen}
+        onToggle={() => setIsOpen(!isOpen)}
+      />
+      {isOpen && (
+        <FilterPanel
+          filters={filters}
+          updateFilters={updateFilters}
+          sortable={sortable}
+          canFilterCompleted={canFilterCompleted}
+        />
       )}
     </div>
   );

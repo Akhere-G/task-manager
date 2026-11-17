@@ -12,6 +12,7 @@ test("working through a Pomodoro session completes the task and updates the stat
   });
   await page.goto("/");
 
+  await page.getByRole("article").filter({ hasText: "Deep work" }).hover();
   await page.getByRole("button", { name: "Start task: Deep work" }).click();
   await expect(
     page.getByRole("heading", { name: "Pomodoro Mode", exact: true }),

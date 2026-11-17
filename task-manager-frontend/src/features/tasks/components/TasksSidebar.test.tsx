@@ -14,20 +14,20 @@ const projects = [
 function setup(project = "") {
   mock.onGet("/projects").reply(200, { projects });
   const onSelectProject = vi.fn();
-  const onSelectView = vi.fn();
+  const onSelectInbox = vi.fn();
   renderWithProviders(
     <TasksSidebar
       view="all"
       project={project}
-      onSelectView={onSelectView}
+      onSelectInbox={onSelectInbox}
       onSelectProject={onSelectProject}
     />,
   );
-  return { onSelectProject, onSelectView };
+  return { onSelectProject, onSelectInbox };
 }
 
 describe("TasksSidebar", () => {
-  it("lists All projects first, then the projects with sub-projects indented", async () => {
+  it("lists the inbox and All projects first, then the projects with sub-projects indented", async () => {
     setup();
 
     const nav = await screen.findByRole("navigation", { name: "Projects" });
@@ -36,7 +36,7 @@ describe("TasksSidebar", () => {
       within(nav)
         .getAllByRole("button")
         .map((button) => button.textContent),
-    ).toEqual(["All projects", "Work", "Reports"]);
+    ).toEqual(["Inbox", "All projects", "Work", "Reports"]);
   });
 
   it("marks the selected project and reports a choice", async () => {
@@ -50,26 +50,29 @@ describe("TasksSidebar", () => {
   });
 
   it("opens as a closable drawer and closes after a choice", async () => {
-    const { onSelectView } = setup();
+    const { onSelectInbox } = setup();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Views / projects" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Projects" }));
     expect(
-      screen.getByRole("dialog", { name: "Views / projects" }),
+      screen.getByRole("dialog", { name: "Projects" }),
     ).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: /^Inbox/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Inbox" }));
 
-    expect(onSelectView).toHaveBeenCalledWith("inbox");
+    expect(onSelectInbox).toHaveBeenCalledOnce();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("has no Views section", () => {
+    setup();
+
+    expect(screen.queryByRole("navigation", { name: "Task views" })).toBeNull();
+    expect(screen.queryByText("Views")).toBeNull();
   });
 
   it("closes from the close button", async () => {
     setup();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Views / projects" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Projects" }));
 
     await userEvent.click(
       screen.getByRole("button", { name: "Close sidebar" }),

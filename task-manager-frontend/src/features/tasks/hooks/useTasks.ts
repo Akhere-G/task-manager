@@ -3,12 +3,15 @@ import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { taskService } from "../api";
-import { getBrowserTimeZone } from "../recurrence";
-import { calendarRange } from "../utils";
+import {
+  apiParamMap,
+  buildCalendarParams,
+  buildListParams,
+  getDefaultFilters,
+  type TaskFilters,
+} from "../taskParams";
 import {
   DEFAULT_VIEW,
-  calendarZoomFor,
-  isRangedView,
   isTaskLayout,
   isTaskView,
   type TaskLayout,
@@ -16,57 +19,18 @@ import {
 } from "../views";
 import { trackEvent } from "../../../services/analytics";
 
-export interface TaskFilters {
-  search: string;
-  project: string;
-  label: string;
-  priority: string;
-  duration: string;
-  isCompleted: string;
-  sortBy: string;
-  order: string;
-  currentDate: string;
-}
-
-export interface PageDetails {
-  currentPage: number;
-  totalItems: number;
-  totalPages: number;
-}
+export type { TaskFilters };
 
 interface UseTasksProps {
-  perPage: number;
   enabled?: boolean;
 }
-
-const getDefaultFilters = (): TaskFilters => ({
-  search: "",
-  project: "",
-  label: "",
-  priority: "",
-  duration: "",
-  isCompleted: "false",
-  sortBy: "start_at",
-  order: "asc",
-  currentDate: new Date().toISOString(),
-});
-
-const apiParamMap: Record<keyof TaskFilters, string> = {
-  search: "q",
-  project: "project",
-  label: "label",
-  priority: "priority",
-  duration: "duration",
-  isCompleted: "is_completed",
-  sortBy: "sort_by",
-  order: "order",
-  currentDate: "current_date",
-};
 
 /** URL params that describe where the user is, not what they filtered. */
 const LOCATION_PARAMS = ["view", "layout", "cal"];
 
-const BOARD_PAGE_SIZE = 200;
+// Lists, matrix quadrants and board columns load their own tasks, so this
+// query only supplies the header total.
+const TOTAL_ONLY_PAGE_SIZE = 1;
 
 const readLayout = (value: string | null): TaskLayout =>
   isTaskLayout(value) ? value : "list";
@@ -74,14 +38,26 @@ const readLayout = (value: string | null): TaskLayout =>
 const readView = (value: string | null): TaskView =>
   isTaskView(value) ? value : DEFAULT_VIEW;
 
-export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
+// A board shows every task of its project, done or not, in manual order. The
+// list shows every group, so completion is not a filter there.
+const filtersForLayout = (
+  layout: TaskLayout,
+  filters: TaskFilters,
+): TaskFilters => {
+  if (layout === "kanban") {
+    return { ...filters, isCompleted: "all", sortBy: "manual", order: "asc" };
+  }
+  if (layout === "list") return { ...filters, isCompleted: "" };
+  return filters;
+};
+
+export const useTasks = ({ enabled = true }: UseTasksProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [defaults] = useState(getDefaultFilters);
 
   const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
   const deferredSearch = useDeferredValue(searchInput);
 
-  const currentPage = Number(searchParams.get("page")) || 1;
   const view = readView(searchParams.get("view"));
   const layout = readLayout(searchParams.get("layout"));
 
@@ -94,7 +70,6 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
         } else {
           next.delete("q");
         }
-        next.set("page", "1");
         setSearchParams(next, { replace: true });
         trackEvent("tasks_searched", { has_query: Boolean(deferredSearch) });
       }
@@ -115,14 +90,8 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     currentDate: searchParams.get("current_date") ?? defaults.currentDate,
   };
 
-  const isKanban = layout === "kanban";
-  // A board shows every task of its project, done or not, in manual order.
-  const filters: TaskFilters = isKanban
-    ? { ...searchFilters, isCompleted: "all", sortBy: "manual", order: "asc" }
-    : searchFilters;
-
   const isCalendar = layout === "calendar";
-  const pageSize = layout === "matrix" || isKanban ? BOARD_PAGE_SIZE : perPage;
+  const filters = filtersForLayout(layout, searchFilters);
 
   const result = useQuery({
     queryKey: [
@@ -132,54 +101,24 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
         search: deferredSearch,
         view,
         layout,
-        page: currentPage,
-        perPage: pageSize,
       },
     ],
-    queryFn: () => {
-      const params = new URLSearchParams();
-      const ranged = isRangedView(view);
-
-      (Object.keys(filters) as (keyof TaskFilters)[]).forEach((key) => {
-        const value = key === "search" ? deferredSearch : filters[key];
-        if (value && key !== "currentDate") params.set(apiParamMap[key], value);
-      });
-
-      if (isCalendar) {
-        const { start, end } = calendarRange(filters.currentDate);
-        params.set("start_date", start.toISOString());
-        params.set("end_date", end.toISOString());
-        params.set("project_repeating", "true");
-        if (!ranged && view !== "all") params.set("view", view);
-      } else {
-        if (view !== "all") params.set("view", view);
-        params.set("project_repeating", String(ranged));
-        params.set("page", String(currentPage));
-        params.set("limit", String(pageSize));
-      }
-      if (ranged || view === "overdue") {
-        params.set("zone", getBrowserTimeZone() ?? "UTC");
-      }
-
-      return taskService.getAll(params);
-    },
+    queryFn: () =>
+      taskService.getAll(
+        isCalendar
+          ? buildCalendarParams(filters, deferredSearch, view)
+          : buildListParams({
+              filters,
+              search: deferredSearch,
+              view,
+              page: 1,
+              limit: TOTAL_ONLY_PAGE_SIZE,
+            }),
+      ),
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5,
     enabled,
   });
-
-  const loadedPage = result.data;
-  useEffect(() => {
-    if (
-      loadedPage &&
-      loadedPage.totalPages > 0 &&
-      loadedPage.currentPage > loadedPage.totalPages
-    ) {
-      const next = new URLSearchParams(searchParams);
-      next.set("page", String(loadedPage.totalPages));
-      setSearchParams(next, { replace: true });
-    }
-  }, [loadedPage, searchParams, setSearchParams]);
 
   const updateFilters = (name: string, value: string) => {
     if (name !== "search" && name !== "currentDate") {
@@ -196,7 +135,6 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
         next.delete(apiKey);
       }
     }
-    next.set("page", "1");
     setSearchParams(next);
   };
 
@@ -210,27 +148,30 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     setSearchParams(params);
   };
 
-  const setPage = (page: number) => {
+  const selectInbox = () => {
+    trackEvent("tasks_view_selected", { view: "inbox" });
     const next = new URLSearchParams(searchParams);
-    next.set("page", String(page));
+    next.set("view", "inbox");
+    next.delete("project");
     setSearchParams(next);
   };
 
-  const selectView = (nextView: TaskView) => {
-    trackEvent("tasks_view_selected", { view: nextView });
+  // Choosing a project, or all of them, leaves the inbox.
+  const selectProject = (projectId: string) => {
+    trackEvent("tasks_filtered", { filter: "project" });
     const next = new URLSearchParams(searchParams);
-    next.set("view", nextView);
-    if (nextView === "inbox") next.delete("project");
-    next.set("cal", calendarZoomFor(nextView));
-    next.delete("current_date");
-    next.set("page", "1");
+    next.delete("view");
+    if (projectId) {
+      next.set("project", projectId);
+    } else {
+      next.delete("project");
+    }
     setSearchParams(next);
   };
 
   const selectLayout = (nextLayout: TaskLayout) => {
     const next = new URLSearchParams(searchParams);
     next.set("layout", nextLayout);
-    next.set("page", "1");
     setSearchParams(next);
   };
 
@@ -244,19 +185,16 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     !!filters.duration ||
     (filters.isCompleted !== "" && filters.isCompleted !== "false");
 
-  const totalPages = result.data?.totalPages || 0;
-  const totalItems = result.data?.totalTasks || 0;
-
   return {
     ...result,
     resetFilters,
-    pageDetails: { currentPage, totalPages, totalItems },
     filters,
+    search: deferredSearch,
     view,
     layout,
-    selectView,
+    selectInbox,
+    selectProject,
     selectLayout,
-    setPage,
     updateFilters,
     isStale,
     isSearching,

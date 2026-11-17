@@ -232,3 +232,21 @@ def test_reschedule_rejects_a_bad_payload_and_a_missing_task(
     assert backwards.status_code == 400
     assert "endAt" in backwards.get_json()["errors"]
     assert reschedule(session, 999, MONDAY, TUESDAY).status_code == 404
+
+
+def test_a_page_reports_the_total_minutes_of_every_matching_task(
+    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
+) -> None:
+    for number in range(3):
+        session.post("/api/tasks", json=task_payload(title=f"Hour {number}"))
+    session.post(
+        "/api/tasks",
+        json=task_payload(
+            title="Half", startAt="2026-03-03 10:00:00", endAt="2026-03-03 10:30:00"
+        ),
+    )
+    session.post("/api/tasks", json={"title": "Undated"})
+
+    page = session.get("/api/tasks?limit=1").get_json()
+
+    assert (page["totalTasks"], page["totalMinutes"]) == (5, 210)

@@ -9,22 +9,6 @@ export type TasksByColumn = Map<ColumnKey, Task[]>;
 export type DropTarget =
   { type: "task"; taskId: number } | { type: "column"; columnId: ColumnKey };
 
-/** Tasks of a board by column, Unassigned first; one with an unknown column is unassigned. */
-export function groupByColumn(
-  tasks: Task[],
-  columns: ProjectColumn[],
-): TasksByColumn {
-  const groups: TasksByColumn = new Map<ColumnKey, Task[]>([
-    [null, []],
-    ...columns.map((column): [ColumnKey, Task[]] => [column.id, []]),
-  ]);
-  tasks.forEach((task) => {
-    const key = groups.has(task.columnId) ? task.columnId : null;
-    groups.get(key)?.push(task);
-  });
-  return groups;
-}
-
 export interface BoardDrop {
   columns: TasksByColumn;
   move: BoardMoveInput;

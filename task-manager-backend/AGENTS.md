@@ -91,8 +91,9 @@ routes or services.
 | `on_drop`       | What dropping a task on a column does: `nothing`, `complete`, `uncomplete` or `delete` (to trash). |
 | label           | A user-made tag (`labels`); a task has up to `MAX_LABELS_PER_TASK`.           |
 | inbox           | Tasks with no `project_id`.                                                   |
-| smart view      | A named filter (inbox, today, upcoming, overdue, week, month) resolved in the viewer's zone. |
-| window          | The `[start, end)` span of a ranged smart view, as naive UTC.                 |
+| view            | `inbox` (tasks with no project) or `all`.                                     |
+| group           | A disjoint bucket of a list: overdue, today, upcoming, undated or completed, split at the viewer's now and tomorrow. |
+| bulk target     | The tasks a bulk action applies to: listed `ids`, or a `filter` naming a category (group, priority, column or unassigned). |
 | undated task    | A task with no `start_at` and `end_at`; never repeating.                      |
 | subtask         | A task with a `parent_id`; one level deep, never repeating, hidden from lists. |
 | snooze          | Moving a task to a later day, keeping its time of day and length.             |

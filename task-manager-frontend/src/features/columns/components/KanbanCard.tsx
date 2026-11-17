@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import TaskCardSmallConnected from "../../tasks/components/TaskCardSmall";
 import type { Task } from "../../tasks/types";
+import BoardTaskCard from "./BoardTaskCard";
 
 export const taskDragId = (id: number) => `task-${id}`;
 
@@ -27,7 +27,7 @@ export default function KanbanCard({ task }: { task: Task }) {
       {...attributes}
       {...listeners}
     >
-      <TaskCardSmallConnected {...task} />
+      <BoardTaskCard task={task} />
     </li>
   );
 }

@@ -5,7 +5,13 @@ import { renderHookWithProviders } from "../../../test/render";
 import { useTasks } from "./useTasks";
 
 const mock = mockApi();
-const emptyPage = { tasks: [], totalTasks: 0, totalPages: 0, currentPage: 1 };
+const emptyPage = {
+  tasks: [],
+  totalTasks: 0,
+  totalMinutes: 0,
+  totalPages: 0,
+  currentPage: 1,
+};
 
 function lastRequestParams() {
   const url = mock.history.get.at(-1)?.url ?? "";
@@ -16,7 +22,7 @@ describe("filtering tasks by priority", () => {
   it("reads the priority filter from the page address", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    renderHookWithProviders(() => useTasks(), {
       route: "/?priority=1,2",
     });
 
@@ -26,7 +32,7 @@ describe("filtering tasks by priority", () => {
 
   it("refetches with the new priority and counts it as a search", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }));
+    const { result } = renderHookWithProviders(() => useTasks());
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(lastRequestParams().has("priority")).toBe(false);
 
@@ -37,65 +43,72 @@ describe("filtering tasks by priority", () => {
   });
 });
 
-describe("smart views", () => {
-  it("asks the server for the view in the viewer's zone and projects repeats", async () => {
-    mock.onGet(/\/tasks/).reply(200, emptyPage);
-
-    renderHookWithProviders(() => useTasks({ perPage: 10 }), {
-      route: "/?view=upcoming",
-    });
-
-    await waitFor(() => expect(mock.history.get).toHaveLength(1));
-    const params = lastRequestParams();
-    expect(params.get("view")).toBe("upcoming");
-    expect(params.get("zone")).toBeTruthy();
-    expect(params.get("project_repeating")).toBe("true");
-    expect(params.has("start_date")).toBe(false);
-  });
-
+describe("inbox and projects", () => {
   it("sends no view for all tasks", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    renderHookWithProviders(() => useTasks({ perPage: 10 }));
+    renderHookWithProviders(() => useTasks());
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(lastRequestParams().has("view")).toBe(false);
   });
 
-  it("refetches when another view is selected", async () => {
+  it("falls back to all tasks for a view that no longer exists", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }));
+
+    const { result } = renderHookWithProviders(() => useTasks(), {
+      route: "/?view=today",
+    });
+
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
-
-    act(() => result.current.selectView("overdue"));
-
-    await waitFor(() =>
-      expect(lastRequestParams().get("view")).toBe("overdue"),
-    );
-    expect(result.current.view).toBe("overdue");
+    expect(result.current.view).toBe("all");
+    expect(lastRequestParams().has("view")).toBe(false);
   });
 
   it("clears the project filter when the inbox is selected", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
-    const { result } = renderHookWithProviders(
-      () => useTasks({ perPage: 10 }),
-      {
-        route: "/?project=4",
-      },
-    );
+    const { result } = renderHookWithProviders(() => useTasks(), {
+      route: "/?project=4",
+    });
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(lastRequestParams().get("project")).toBe("4");
 
-    act(() => result.current.selectView("inbox"));
+    act(() => result.current.selectInbox());
 
     await waitFor(() => expect(lastRequestParams().get("view")).toBe("inbox"));
     expect(lastRequestParams().has("project")).toBe(false);
   });
 
+  it("leaves the inbox when a project is selected", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+    const { result } = renderHookWithProviders(() => useTasks(), {
+      route: "/?view=inbox",
+    });
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+
+    act(() => result.current.selectProject("7"));
+
+    await waitFor(() => expect(lastRequestParams().get("project")).toBe("7"));
+    expect(lastRequestParams().has("view")).toBe(false);
+    expect(result.current.view).toBe("all");
+  });
+
+  it("selecting all projects clears the project filter", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+    const { result } = renderHookWithProviders(() => useTasks(), {
+      route: "/?project=4",
+    });
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+
+    act(() => result.current.selectProject(""));
+
+    await waitFor(() => expect(lastRequestParams().has("project")).toBe(false));
+  });
+
   it("loads the visible range and no view in the calendar layout", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    renderHookWithProviders(() => useTasks(), {
       route: "/?layout=calendar&view=month",
     });
 
@@ -107,29 +120,40 @@ describe("smart views", () => {
     expect(params.has("limit")).toBe(false);
   });
 
-  it("loads one large page of tasks in the matrix layout", async () => {
+  it("asks the matrix layout for one task, only to total it", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    const { result } = renderHookWithProviders(() => useTasks(), {
       route: "/?layout=matrix",
     });
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(result.current.layout).toBe("matrix");
-    expect(lastRequestParams().get("limit")).toBe("200");
+    expect(lastRequestParams().get("limit")).toBe("1");
     expect(lastRequestParams().get("page")).toBe("1");
   });
 
   it("falls back to the list layout for an unknown layout", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    const { result } = renderHookWithProviders(() => useTasks(), {
       route: "/?layout=timeline",
     });
 
     await waitFor(() => expect(mock.history.get).toHaveLength(1));
     expect(result.current.layout).toBe("list");
-    expect(lastRequestParams().get("limit")).toBe("10");
+    expect(lastRequestParams().get("limit")).toBe("1");
+  });
+
+  it("does not filter the list by completion, since it shows a group for it", async () => {
+    mock.onGet(/\/tasks/).reply(200, emptyPage);
+
+    renderHookWithProviders(() => useTasks(), {
+      route: "/?is_completed=true",
+    });
+
+    await waitFor(() => expect(mock.history.get).toHaveLength(1));
+    expect(lastRequestParams().has("is_completed")).toBe(false);
   });
 });
 
@@ -137,7 +161,7 @@ describe("board layout", () => {
   it("asks for every task of the project in manual order, done or not", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);
 
-    const { result } = renderHookWithProviders(() => useTasks({ perPage: 10 }), {
+    const { result } = renderHookWithProviders(() => useTasks(), {
       route: "/?layout=kanban&project=7&is_completed=false",
     });
 
@@ -147,6 +171,6 @@ describe("board layout", () => {
     expect(params.get("project")).toBe("7");
     expect(params.get("is_completed")).toBe("all");
     expect(params.get("sort_by")).toBe("manual");
-    expect(params.get("limit")).toBe("200");
+    expect(params.get("limit")).toBe("1");
   });
 });
