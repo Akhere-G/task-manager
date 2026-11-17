@@ -191,6 +191,7 @@ export default function DecomposeTask() {
           {parentTask && (
             <TaskCard
               {...parentTask}
+              showOpen={false}
               showSetIsComplete={false}
               showDelete={false}
               showEdit={false}
@@ -327,6 +328,7 @@ function TaskList({
           <TaskCard
             {...task}
             titleIcon={<Move width={20} height={20} />}
+            showOpen={false}
             showSetIsComplete={false}
             showPomodoro={false}
             showDecompose={false}

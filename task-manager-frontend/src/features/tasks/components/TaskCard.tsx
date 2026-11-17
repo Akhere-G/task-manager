@@ -29,6 +29,8 @@ interface TaskCardProps extends Task {
   setIsCompleted: (id: number, isComplete: boolean, task?: Task) => void;
   onDelete: (task: Task) => void;
   onEdit: (task: Task) => void;
+  onOpen: (task: Task) => void;
+  showOpen?: boolean;
   showDelete?: boolean;
   showEdit?: boolean;
   showPomodoro?: boolean;
@@ -44,6 +46,8 @@ function TaskCard({
   setIsCompleted,
   onDelete,
   onEdit,
+  onOpen,
+  showOpen = true,
   showDelete = true,
   showEdit = true,
   showPomodoro = true,
@@ -123,7 +127,18 @@ function TaskCard({
           className={`flex gap-2 font-semibold truncate text-text-inverse ${isCompleted ? "line-through opacity-80 text-text-main" : ""}`}
         >
           {titleIcon}
-          <span className="truncate">{title}</span>
+          {showOpen ? (
+            <button
+              type="button"
+              aria-label={`Open task: ${title}`}
+              onClick={() => onOpen(task)}
+              className="truncate text-left cursor-pointer hover:underline"
+            >
+              {title}
+            </button>
+          ) : (
+            <span className="truncate">{title}</span>
+          )}
         </h3>
       </header>
 
@@ -256,6 +271,7 @@ interface TaskCardConnectedProps extends Task {
   setIsCompleted?: (id: number, isCompleted: boolean, task?: Task) => void;
   onDelete?: (task: Task) => void;
   onEdit?: (task: Task) => void;
+  showOpen?: boolean;
   showDelete?: boolean;
   showEdit?: boolean;
   showPomodoro?: boolean;
@@ -274,6 +290,7 @@ export default function TaskCardConnected(props: TaskCardConnectedProps) {
       setIsCompleted={setIsCompleted}
       onDelete={(task) => openPopup(task, PopupModes.Delete)}
       onEdit={(task) => openPopup(task, PopupModes.Edit)}
+      onOpen={(task) => openPopup(task, PopupModes.View)}
       snoozeTask={(task, preset, day) => snooze({ task, preset, day })}
       {...props}
     />

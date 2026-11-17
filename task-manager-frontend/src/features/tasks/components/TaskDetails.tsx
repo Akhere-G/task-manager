@@ -17,7 +17,7 @@ export default function TaskDetails({ task, ...actions }: TaskDetailsProps) {
   return (
     <div className="flex max-h-[85vh] flex-col gap-3 overflow-y-auto md:flex-row md:items-start">
       <div className="min-w-0 md:flex-3">
-        <TaskCard {...shown} {...actions} />
+        <TaskCard {...shown} {...actions} showOpen={false} />
       </div>
       <div className="rounded-md border border-surface bg-surface p-3 shadow-sm md:flex-2">
         <SubtaskChecklist
