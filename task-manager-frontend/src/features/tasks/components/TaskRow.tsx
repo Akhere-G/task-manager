@@ -40,9 +40,17 @@ interface TaskRowProps {
 const actionClass =
   "cursor-pointer rounded-md p-1.5 transition-colors hover:bg-surface-muted";
 
-// Shown on hover or keyboard focus; always on touch screens, which cannot hover.
-const actionsClass =
-  "hidden items-center gap-0.5 rounded-lg border bg-surface px-1 shadow-sm group-hover:flex group-focus-within:flex [@media(pointer:coarse)]:flex";
+// Always laid out so revealing it never resizes the row: on hover or keyboard
+// focus it fades in over the row's right edge. Touch screens cannot hover, so
+// there it stays in the flow and visible.
+const actionsClass = [
+  "pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5",
+  "rounded-lg border bg-surface px-1 opacity-0 shadow-sm transition-opacity",
+  "group-hover:pointer-events-auto group-hover:opacity-100",
+  "group-focus-within:pointer-events-auto group-focus-within:opacity-100",
+  "[@media(pointer:coarse)]:pointer-events-auto [@media(pointer:coarse)]:static",
+  "[@media(pointer:coarse)]:translate-y-0 [@media(pointer:coarse)]:opacity-100",
+].join(" ");
 
 export function TaskRow({
   task,
@@ -66,7 +74,7 @@ export function TaskRow({
 
   return (
     <article
-      className={`group flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border-b border-surface-muted px-2 py-2.5 transition-colors hover:bg-surface-muted/60 focus-within:bg-surface-muted/60 ${isCompleted ? "opacity-60" : ""}`}
+      className={`group relative flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded-md border-b border-surface-muted px-2 py-2.5 transition-colors hover:bg-surface-muted/60 focus-within:bg-surface-muted/60 ${isCompleted ? "opacity-60" : ""}`}
     >
       <SelectBox task={task} />
       <button

@@ -114,3 +114,14 @@ describe("TaskRow", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("TaskRow hover actions", () => {
+  it("keeps the actions in the layout so revealing them cannot resize the row", () => {
+    renderRow(makeTask({ title: "Steady" }));
+    const actions = screen.getByRole("button", {
+      name: "Delete task: Steady",
+    }).parentElement;
+    expect(actions).not.toHaveClass("hidden");
+    expect(actions).toHaveClass("absolute", "opacity-0");
+  });
+});
