@@ -1,4 +1,5 @@
 import {
+  differenceInMinutes,
   format,
   isSameDay,
   isSameYear,
@@ -208,3 +209,23 @@ export const groupByPriority = (tasks: Task[]): Record<Priority, Task[]> => {
   tasks.forEach((task) => groups[task.priority].push(task));
   return groups;
 };
+
+export const taskMinutes = ({
+  startAt,
+  endAt,
+}: Pick<Task, "startAt" | "endAt">) =>
+  startAt && endAt
+    ? Math.max(differenceInMinutes(parseISO(endAt), parseISO(startAt)), 0)
+    : 0;
+
+export const formatMinutes = (minutes: number) => {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest}m`;
+  return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
+};
+
+export const isTaskOverdue = (
+  { isCompleted, endAt }: Pick<Task, "isCompleted" | "endAt">,
+  now = new Date(),
+) => !isCompleted && !!endAt && parseISO(endAt) < now;

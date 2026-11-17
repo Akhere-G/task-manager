@@ -21,6 +21,20 @@ export const priorityColours: Record<number, string> = {
   3: "text-blue-500",
 };
 
+export const priorityBadgeClasses: Record<Priority, string> = {
+  1: "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400",
+  2: "bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400",
+  3: "bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
+  4: "bg-surface-muted text-text-sub",
+};
+
+export const priorityRingClasses: Record<Priority, string> = {
+  1: "border-red-500",
+  2: "border-orange-500",
+  3: "border-blue-500",
+  4: "border-slate-300 dark:border-slate-600",
+};
+
 export const matrixQuadrants: {
   priority: Priority;
   title: string;

@@ -34,4 +34,35 @@ describe("TaskList", () => {
 
     expect(screen.getByTestId("popup")).toHaveTextContent("View:Plan trip");
   });
+
+  it("puts tasks under date headers and collapses a group", async () => {
+    const soon = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const later = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    renderWithProviders(
+      <TaskList
+        groupByDate
+        tasks={[
+          makeTask({ id: 1, title: "Soon", startAt: soon, endAt: later }),
+        ]}
+      />,
+    );
+
+    const header = screen.getByRole("button", { name: /^Today/ });
+    expect(screen.getByText("Soon")).toBeInTheDocument();
+
+    await userEvent.click(header);
+
+    expect(screen.queryByText("Soon")).not.toBeInTheDocument();
+  });
+
+  it("shows flat rows without headers when grouping is off", () => {
+    renderWithProviders(
+      <TaskList tasks={[makeTask({ id: 1, title: "Plain" })]} />,
+    );
+
+    expect(screen.getByText("Plain")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /tasks$/ }),
+    ).not.toBeInTheDocument();
+  });
 });

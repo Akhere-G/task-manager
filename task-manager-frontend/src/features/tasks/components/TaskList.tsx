@@ -10,31 +10,33 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  rectSortingStrategy,
+  verticalListSortingStrategy,
   sortableKeyboardCoordinates,
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useState } from "react";
-import { useBreakpoint } from "../../../hooks/useBreakpoint";
+import { useMemo, useState } from "react";
+import { groupTasksByDate } from "../dateGroups";
 import useMoveTask from "../hooks/useMoveTask";
 import { reorder } from "../order";
 import type { Task } from "../types";
-import TaskCard from "./TaskCard";
-import TaskCardSmallConnected from "./TaskCardSmall";
+import DateGroupHeader from "./DateGroupHeader";
+import TaskRow from "./TaskRow";
 
 interface TaskListProps {
   tasks: Task[];
-  /** Lets the user drag cards into a new order. */
+  /** Lets the user drag rows into a new order. */
   sortable?: boolean;
+  /** Puts rows under Overdue, Today, Tomorrow and Upcoming headers. */
+  groupByDate?: boolean;
 }
 
 const itemClass =
   "transition-all duration-150 animate-in fade-in slide-in-from-bottom-2";
 // dnd-kit owns transform and transition here; CSS transitions or slide-in
-// animations on the same element make the dragged card trail the pointer.
-// Cards are dropped where the pointer left them, so animating from the old
-// slot to the new one only makes the dropped card fly in from the side.
+// animations on the same element make the dragged row trail the pointer.
+// Rows are dropped where the pointer left them, so animating from the old
+// slot to the new one only makes the dropped row fly in from the side.
 const sortableItemClass = "touch-manipulation";
 const draggingClass = "relative z-10 cursor-grabbing shadow-lg";
 
@@ -63,7 +65,7 @@ function SortableItem({
     <li
       ref={(node) => {
         setNodeRef(node);
-        // Without an activator, Enter or Space on a button inside the card starts a drag.
+        // Without an activator, Enter or Space on a button inside the row starts a drag.
         setActivatorNodeRef(node);
       }}
       className={`${sortableItemClass} ${isDragging ? draggingClass : ""}`}
@@ -80,6 +82,7 @@ function SortableItem({
 export default function TaskList({
   tasks: loaded,
   sortable = false,
+  groupByDate = false,
 }: TaskListProps) {
   // React Query tells its subscribers a task later than dnd-kit clears its
   // offsets, which flashes the old order. Show the dropped order until the
@@ -88,8 +91,7 @@ export default function TaskList({
     null,
   );
   const tasks = dropped?.from === loaded ? dropped.to : loaded;
-  const breakpoint = useBreakpoint();
-  const isMobile = ["xs", "sm"].includes(breakpoint);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const { mutate: moveTask } = useMoveTask();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -101,8 +103,17 @@ export default function TaskList({
     }),
   );
 
-  const card = (task: Task) =>
-    isMobile ? <TaskCardSmallConnected {...task} /> : <TaskCard {...task} />;
+  const groups = useMemo(
+    () => (groupByDate && !sortable ? groupTasksByDate(tasks) : null),
+    [groupByDate, sortable, tasks],
+  );
+
+  const toggleGroup = (key: string) =>
+    setCollapsed((previous) => {
+      const next = new Set(previous);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     const result = over && reorder(tasks, Number(active.id), Number(over.id));
@@ -116,15 +127,40 @@ export default function TaskList({
     }
   };
 
-  const gridClass =
-    "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6";
+  if (groups) {
+    return (
+      <div>
+        {groups.map((group) => {
+          const isOpen = !collapsed.has(group.key);
+          return (
+            <section key={group.key} aria-label={group.label}>
+              <DateGroupHeader
+                group={group}
+                isOpen={isOpen}
+                onToggle={() => toggleGroup(group.key)}
+              />
+              {isOpen && (
+                <ul>
+                  {group.tasks.map((task) => (
+                    <li key={task.id} className={itemClass}>
+                      <TaskRow task={task} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    );
+  }
 
   if (!sortable) {
     return (
-      <ul className={gridClass}>
+      <ul>
         {tasks.map((task) => (
           <li key={task.id} className={itemClass}>
-            {card(task)}
+            <TaskRow task={task} />
           </li>
         ))}
       </ul>
@@ -139,12 +175,12 @@ export default function TaskList({
     >
       <SortableContext
         items={tasks.map((task) => task.id)}
-        strategy={rectSortingStrategy}
+        strategy={verticalListSortingStrategy}
       >
-        <ul className={gridClass} aria-label="Drag to reorder">
+        <ul aria-label="Drag to reorder">
           {tasks.map((task) => (
             <SortableItem key={task.id} task={task}>
-              {card(task)}
+              <TaskRow task={task} />
             </SortableItem>
           ))}
         </ul>

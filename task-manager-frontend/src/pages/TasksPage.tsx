@@ -15,6 +15,7 @@ import {
   TasksHeader,
 } from "../features/tasks/components";
 import LayoutToggle from "../features/tasks/components/LayoutToggle";
+import ShowingRange from "../features/tasks/components/ShowingRange";
 import QuickCapture from "../features/tasks/components/QuickCapture";
 import TaskPopups from "../features/tasks/components/TaskPopups";
 import TasksSidebar from "../features/tasks/components/TasksSidebar";
@@ -33,6 +34,7 @@ interface TasksBodyProps {
   projectId: number | null;
   isInbox: boolean;
   sortable: boolean;
+  groupByDate: boolean;
 }
 
 function TasksBody({
@@ -43,6 +45,7 @@ function TasksBody({
   projectId,
   isInbox,
   sortable,
+  groupByDate,
 }: TasksBodyProps) {
   if (layout === "calendar") {
     return (
@@ -72,7 +75,9 @@ function TasksBody({
     );
   }
   if (layout === "matrix") return <EisenhowerMatrix tasks={tasks} />;
-  return <TaskList tasks={tasks} sortable={sortable} />;
+  return (
+    <TaskList tasks={tasks} sortable={sortable} groupByDate={groupByDate} />
+  );
 }
 
 export default function TasksPage() {
@@ -117,6 +122,7 @@ export default function TasksPage() {
         filters.sortBy === "manual" &&
         filters.order === "asc"
       }
+      groupByDate={filters.sortBy === "start_at"}
     />
   );
   if (error) {
@@ -170,7 +176,19 @@ export default function TasksPage() {
           </section>
 
           {showsPagination && hasTasks && (
-            <Pagination {...pageDetails} setPage={setPage} scrollUpOnNavigate />
+            <div className="flex flex-col items-center justify-between gap-2 md:flex-row">
+              <ShowingRange
+                currentPage={pageDetails.currentPage}
+                perPage={PER_PAGE}
+                totalItems={pageDetails.totalItems}
+                isCompleted={filters.isCompleted}
+              />
+              <Pagination
+                {...pageDetails}
+                setPage={setPage}
+                scrollUpOnNavigate
+              />
+            </div>
           )}
 
           <TaskPopups />
