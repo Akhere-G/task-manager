@@ -4,10 +4,13 @@ import { GripVertical, Settings } from "lucide-react";
 import { useState } from "react";
 
 import TotalsChip from "../../../components/ui/TotalsChip";
+import type { CategoryQuery } from "../../tasks/taskParams";
 import { useCategoryTasks } from "../../tasks/hooks/useCategoryTasks";
 import type { Task } from "../../tasks/types";
 import { columnCategoryParams } from "../boardCache";
 import type { BoardQuery, ProjectColumn } from "../types";
+import GroupActionsMenu from "../../tasks/components/GroupActionsMenu";
+import type { ColumnChoice } from "../../tasks/components/GroupActionItems";
 import ColumnCards from "./ColumnCards";
 import ColumnSettings from "./ColumnSettings";
 import QuickAddCard from "./QuickAddCard";
@@ -18,6 +21,8 @@ interface KanbanColumnProps extends BoardQuery {
   column: ProjectColumn;
   /** The board as just dropped, shown until the server's answer is loaded. */
   droppedTasks?: Task[];
+  /** Where this column's tasks can be moved in bulk. */
+  moveChoices: ColumnChoice[];
   onDelete: () => void;
 }
 
@@ -27,15 +32,17 @@ export default function KanbanColumn({
   search,
   view,
   droppedTasks,
+  moveChoices,
   onDelete,
 }: KanbanColumnProps) {
   const [showSettings, setShowSettings] = useState(false);
-  const feed = useCategoryTasks({
+  const query: CategoryQuery = {
     filters,
     search,
     view,
     params: columnCategoryParams(column.projectId, column.id),
-  });
+  };
+  const feed = useCategoryTasks(query);
   const {
     attributes,
     listeners,
@@ -79,6 +86,12 @@ export default function KanbanColumn({
           {column.name}
         </h2>
         <TotalsChip total={feed.total} totalMinutes={feed.totalMinutes} />
+        <GroupActionsMenu
+          name={column.name}
+          count={feed.total}
+          query={query}
+          columnChoices={moveChoices}
+        />
         <button
           type="button"
           aria-label={`Settings for ${column.name}`}

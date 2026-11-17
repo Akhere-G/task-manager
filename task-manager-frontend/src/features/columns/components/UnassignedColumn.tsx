@@ -1,10 +1,13 @@
 import { useDroppable } from "@dnd-kit/core";
 
 import TotalsChip from "../../../components/ui/TotalsChip";
+import type { CategoryQuery } from "../../tasks/taskParams";
 import { useCategoryTasks } from "../../tasks/hooks/useCategoryTasks";
 import type { Task } from "../../tasks/types";
 import { columnCategoryParams } from "../boardCache";
 import type { BoardQuery } from "../types";
+import GroupActionsMenu from "../../tasks/components/GroupActionsMenu";
+import type { ColumnChoice } from "../../tasks/components/GroupActionItems";
 import ColumnCards from "./ColumnCards";
 import QuickAddCard from "./QuickAddCard";
 
@@ -14,6 +17,8 @@ interface UnassignedColumnProps extends BoardQuery {
   projectId: number;
   /** The board as just dropped, shown until the server's answer is loaded. */
   droppedTasks?: Task[];
+  /** Where the unassigned tasks can be moved in bulk. */
+  moveChoices: ColumnChoice[];
 }
 
 export default function UnassignedColumn({
@@ -22,17 +27,19 @@ export default function UnassignedColumn({
   search,
   view,
   droppedTasks,
+  moveChoices,
 }: UnassignedColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: UNASSIGNED_DRAG_ID,
     data: { type: "unassigned" },
   });
-  const feed = useCategoryTasks({
+  const query: CategoryQuery = {
     filters,
     search,
     view,
     params: columnCategoryParams(projectId, null),
-  });
+  };
+  const feed = useCategoryTasks(query);
 
   return (
     <section
@@ -49,6 +56,12 @@ export default function UnassignedColumn({
           Unassigned
         </h2>
         <TotalsChip total={feed.total} totalMinutes={feed.totalMinutes} />
+        <GroupActionsMenu
+          name="Unassigned"
+          count={feed.total}
+          query={query}
+          columnChoices={moveChoices}
+        />
       </header>
       <ColumnCards {...feed} tasks={droppedTasks ?? feed.tasks} />
       <div className="px-2 pb-2">

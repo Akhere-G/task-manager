@@ -76,6 +76,9 @@ describe("GroupedTaskList", () => {
     expect(
       within(overdue).getByText("Showing 1 of 30 in Overdue"),
     ).toBeVisible();
+    expect(
+      within(overdue).getByRole("button", { name: "Actions for Overdue" }),
+    ).toBeVisible();
     expect(screen.getByRole("region", { name: "Completed" })).toBeVisible();
     expect(screen.queryByRole("region", { name: "Today" })).toBeNull();
     expect(screen.queryByRole("region", { name: "Upcoming" })).toBeNull();

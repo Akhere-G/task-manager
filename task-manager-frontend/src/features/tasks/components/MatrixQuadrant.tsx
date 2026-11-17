@@ -4,11 +4,16 @@ import { useNavigate } from "react-router-dom";
 import CategoryFooter from "../../../components/ui/CategoryFooter";
 import ScrollFeed from "../../../components/ui/ScrollFeed";
 import TotalsChip from "../../../components/ui/TotalsChip";
-import { priorityBadgeSolidClasses, quadrantPanelClasses } from "../constants";
+import {
+  matrixQuadrants,
+  priorityBadgeSolidClasses,
+  quadrantPanelClasses,
+} from "../constants";
 import { useCategoryTasks } from "../hooks/useCategoryTasks";
-import type { TaskFilters } from "../taskParams";
+import type { CategoryQuery, TaskFilters } from "../taskParams";
 import type { Priority, Task } from "../types";
 import type { TaskView } from "../views";
+import GroupActionsMenu from "./GroupActionsMenu";
 import MatrixTaskRow from "./MatrixTaskRow";
 
 interface MatrixQuadrantProps {
@@ -36,6 +41,12 @@ export default function MatrixQuadrant({
   onDropTask,
 }: MatrixQuadrantProps) {
   const navigate = useNavigate();
+  const query: CategoryQuery = {
+    filters,
+    search,
+    view,
+    overrides: { priority: String(priority) },
+  };
   const {
     tasks,
     total,
@@ -45,12 +56,12 @@ export default function MatrixQuadrant({
     isFetchingNextPage,
     isLoading,
   } = useCategoryTasks({
-    filters,
-    search,
-    view,
-    overrides: { priority: String(priority) },
+    ...query,
     enabled: allowsPriority(filters.priority, priority),
   });
+  const otherQuadrants = matrixQuadrants.filter(
+    (quadrant) => quadrant.priority !== priority,
+  );
 
   return (
     <section
@@ -82,6 +93,12 @@ export default function MatrixQuadrant({
           >
             <Plus aria-hidden size={14} />
           </button>
+          <GroupActionsMenu
+            name={title}
+            count={total}
+            query={query}
+            priorityChoices={otherQuadrants}
+          />
         </div>
       </header>
 

@@ -5,6 +5,7 @@ import ScrollFeed from "../../../components/ui/ScrollFeed";
 import { useCategoryTasks } from "../hooks/useCategoryTasks";
 import type { TaskGroupDefinition } from "../taskGroups";
 import type { CategoryQuery } from "../taskParams";
+import GroupActionsMenu from "./GroupActionsMenu";
 import TaskGroupHeader from "./TaskGroupHeader";
 import TaskList from "./TaskList";
 
@@ -21,11 +22,12 @@ export default function TaskGroup({
   sortable,
 }: TaskGroupProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const feed = useCategoryTasks({
+  const groupQuery: CategoryQuery = {
     ...query,
     overrides: { ...query.overrides, ...definition.sortOverrides },
     params: { group: definition.id },
-  });
+  };
+  const feed = useCategoryTasks(groupQuery);
 
   // Nothing to show while loading or when empty, so a group never flashes as "0".
   if (feed.total === 0) return null;
@@ -40,6 +42,14 @@ export default function TaskGroup({
         isUrgent={definition.isUrgent}
         isOpen={isOpen}
         onToggle={() => setIsOpen(!isOpen)}
+        actions={
+          <GroupActionsMenu
+            name={definition.title}
+            count={feed.total}
+            query={groupQuery}
+            canComplete={definition.id !== "completed"}
+          />
+        }
       />
       {isOpen && (
         <>

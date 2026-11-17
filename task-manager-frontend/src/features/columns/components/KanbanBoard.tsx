@@ -21,6 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import type { ColumnChoice } from "../../tasks/components/GroupActionItems";
 import { createPortal } from "react-dom";
 import { ErrorState, LoadingState } from "../../../components/ui";
 import type { Task } from "../../tasks/types";
@@ -161,6 +162,14 @@ export default function KanbanBoard({
     }
   };
 
+  const moveChoices = (exceptId: number | null): ColumnChoice[] => {
+    const choices: ColumnChoice[] = [{ id: null, name: "Unassigned" }];
+    for (const column of columns) {
+      choices.push({ id: column.id, name: column.name });
+    }
+    return choices.filter((choice) => choice.id !== exceptId);
+  };
+
   return (
     <DndContext
       sensors={sensors}
@@ -183,6 +192,7 @@ export default function KanbanBoard({
             search={search}
             view={view}
             droppedTasks={dropped?.get(null)}
+            moveChoices={moveChoices(null)}
           />
           {columns.map((column) => (
             <KanbanColumn
@@ -192,6 +202,7 @@ export default function KanbanBoard({
               search={search}
               view={view}
               droppedTasks={dropped?.get(column.id)}
+              moveChoices={moveChoices(column.id)}
               onDelete={() => setDeleting(column)}
             />
           ))}
