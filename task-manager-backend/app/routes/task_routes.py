@@ -14,7 +14,6 @@ from app.schemas.task_schema import (
     SubtaskOrderSchema,
     SubtaskSchema,
     SubtasksCreateSchema,
-    TaskCountsQuerySchema,
     TaskListQuerySchema,
     TaskMoveSchema,
     TaskPageSchema,
@@ -41,7 +40,7 @@ from app.services.subtask_service import (
     reorder_subtasks,
     replace_subtasks,
 )
-from app.services.task_listing import count_open_tasks_by_view, get_all_tasks
+from app.services.task_listing import get_all_tasks
 from app.services.task_service import (
     create_task,
     create_tasks,
@@ -64,13 +63,6 @@ BulkAction = Callable[[int, list[int], dict[str, Any]], int]
 def list_tasks() -> ResponseReturnValue:
     query = TaskListQuerySchema().load(request.args)
     return jsonify(TaskPageSchema().dump(get_all_tasks(get_jwt_identity(), query)))  # type: ignore
-
-
-@task_bp.route("/api/tasks/counts", methods=["GET"])
-@jwt_required()
-def view_counts() -> ResponseReturnValue:
-    query = TaskCountsQuerySchema().load(request.args)
-    return jsonify({"counts": count_open_tasks_by_view(get_jwt_identity(), **query)})
 
 
 @task_bp.route("/api/tasks/trash", methods=["GET"])

@@ -162,7 +162,7 @@ def build_task_clauses(user_id: int, query: "TaskQuery") -> list[Clause]:
         _completion_clause(query.is_completed),
         _date_range_clause(query.start_date, query.end_date),
         _duration_clause(query.duration),
-        view_clause(query.view, query.zone),
+        view_clause(query.view),
         group_clause(query.group, query.zone),
     )
     for clause in optional_clauses:

@@ -115,3 +115,7 @@ def test_a_group_can_be_limited_to_the_inbox(session: FlaskClient) -> None:
     add_dated(session, "In inbox", datetime.now(UTC) - HOUR)
 
     assert titles(session, "overdue", "&view=inbox") == ["In inbox"]
+
+
+def test_an_unknown_zone_is_a_400(session: FlaskClient) -> None:
+    assert session.get("/api/tasks?group=today&zone=Mars/Base").status_code == 400

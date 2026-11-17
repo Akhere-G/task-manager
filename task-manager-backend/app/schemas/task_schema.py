@@ -34,7 +34,7 @@ from app.utils.groups import TASK_GROUPS
 from app.utils.recurrence import is_valid_month_day
 from app.utils.reminders import REMINDER_KINDS
 from app.utils.snooze import SNOOZE_PRESETS
-from app.utils.views import RANGED_VIEWS, TASK_VIEWS
+from app.utils.views import TASK_VIEWS
 
 from .base import CamelAutoSchema, CamelSchema
 from .fields import IsoDateTime, StrippedString, UtcDateTime
@@ -339,16 +339,6 @@ class TaskMoveSchema(CamelSchema):
     before_id = fields.Integer(strict=True, allow_none=True)
 
 
-class TaskCountsQuerySchema(Schema):
-    class Meta:
-        unknown = EXCLUDE
-
-    zone_name = fields.String(
-        data_key="zone",
-        validate=_validate_query_zone,
-    )
-
-
 class TaskListQuerySchema(Schema):
     class Meta:
         unknown = EXCLUDE
@@ -390,11 +380,9 @@ class TaskListQuerySchema(Schema):
             )
 
         if data["project_repeating"]:
-            if data.get("view") in RANGED_VIEWS and not start:
-                return
             if not start:
                 raise ValidationError(
-                    "project_repeating needs a ranged view or start_date and end_date.",
+                    "project_repeating needs start_date and end_date.",
                     field_name="project_repeating",
                 )
             if (end - start).days > MAX_PROJECTION_DAYS:
