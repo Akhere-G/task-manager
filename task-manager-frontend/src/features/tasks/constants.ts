@@ -9,10 +9,10 @@ export const priorityOptions = [
 
 export const priorityFilterOptions = [
   { name: "All", value: "" },
-  { name: "P1 only", value: "1" },
-  { name: "P1 and P2", value: "1,2" },
-  { name: "P1 to P3", value: "1,2,3" },
-  { name: "P4 only", value: "4" },
+  { name: "P1", value: "1" },
+  { name: "P1–P2", value: "1,2" },
+  { name: "P1–P3", value: "1,2,3" },
+  { name: "P4", value: "4" },
 ];
 
 export const priorityColours: Record<number, string> = {
@@ -62,8 +62,8 @@ export const matrixQuadrants: {
 
 export const taskDurationOptions = [
   { name: "All", value: "" },
-  { name: "Long Tasks", value: "long_tasks" },
-  { name: "Short Tasks", value: "short_tasks" },
+  { name: "Short", value: "short_tasks" },
+  { name: "Long", value: "long_tasks" },
 ];
 
 export const completedTasksOptions = [

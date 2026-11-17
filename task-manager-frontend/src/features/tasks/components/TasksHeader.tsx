@@ -1,16 +1,9 @@
+import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
-import { CountChip, FormInput } from "../../../components/ui";
-import {
-  completedTasksOptions,
-  isAscOptions,
-  priorityFilterOptions,
-  sortByOptions,
-  taskDurationOptions,
-} from "../constants";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import useLabels from "../../labels/hooks/useLabels";
+import { CountChip } from "../../../components/ui";
+import FilterPanel from "./FilterPanel";
 
-interface TaskFilters {
+export interface TaskFilters {
   search: string;
   project: string;
   label: string;
@@ -20,6 +13,7 @@ interface TaskFilters {
   sortBy: string;
   order: string;
 }
+
 interface TasksHeaderProps {
   filters: TaskFilters;
   updateFilters: (name: string, value: string) => void;
@@ -39,22 +33,11 @@ export default function TasksHeader({
   canFilterCompleted = true,
 }: TasksHeaderProps) {
   const [openFilters, setOpenFilters] = useState(false);
-  const { data: labels = [] } = useLabels();
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
-    const { name, value } = e.target;
-    updateFilters(name, value);
-  };
-  const ButtonIcon = openFilters ? ChevronUp : ChevronDown;
-  const formClassNames = "grow lg:grow-[0.9] max-w-80";
   return (
-    <div className="card flex flex-col gap-2">
-      <div className="flex justify-between items-start gap-2">
-        <header className="w-full max-w-52 flex flex-col">
+    <div className="card flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-2">
+        <header className="flex flex-col">
           <h1 className="text-3xl font-bold text-text-main transition-colors">
             Tasks <CountChip count={totalTasks} />
           </h1>
@@ -62,96 +45,26 @@ export default function TasksHeader({
         </header>
 
         <button
-          className=""
+          type="button"
           title="Show filters"
           aria-label="Show filters"
+          aria-expanded={openFilters}
           onClick={() => setOpenFilters(!openFilters)}
+          className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium ${openFilters ? "bg-brand text-white" : "bg-surface text-text-main hover:bg-brand/10"}`}
         >
-          {<ButtonIcon aria-hidden />}
+          <SlidersHorizontal aria-hidden size={16} />
+          Filters
         </button>
       </div>
 
       {openFilters && (
-        <form
-          className="flex gap-4 items-baseline flex-row flex-wrap"
-          onSubmit={(e) => e.preventDefault()}
-        >
-          <FormInput
-            name="search"
-            value={filters.search}
-            handleChange={handleChange}
-            label="Search"
-            formClassNames={formClassNames}
-          />
-          <FormInput
-            name="label"
-            value={filters.label}
-            handleChange={handleChange}
-            label="Label"
-            options={[
-              { name: "All", value: "" },
-              ...labels.map((label) => ({
-                name: label.name,
-                value: String(label.id),
-              })),
-            ]}
-            formClassNames={formClassNames}
-          />
-          <FormInput
-            name="priority"
-            value={filters.priority}
-            handleChange={handleChange}
-            label="Priority"
-            options={priorityFilterOptions}
-            formClassNames={formClassNames}
-          />
-          <FormInput
-            name="duration"
-            value={filters.duration}
-            handleChange={handleChange}
-            label="Duration"
-            options={taskDurationOptions}
-            formClassNames={formClassNames}
-          />
-          {canFilterCompleted && (
-            <FormInput
-              name="isCompleted"
-              value={filters.isCompleted}
-              handleChange={handleChange}
-              label="Is Complete"
-              options={completedTasksOptions}
-              formClassNames={formClassNames}
-            />
-          )}
-          {sortable && (
-            <>
-              <FormInput
-                name="sortBy"
-                value={filters.sortBy}
-                handleChange={handleChange}
-                label="Sort By"
-                options={sortByOptions}
-                formClassNames={formClassNames}
-              />
-              <FormInput
-                name="order"
-                value={filters.order}
-                handleChange={handleChange}
-                label="Order"
-                options={isAscOptions}
-                formClassNames={formClassNames}
-              />
-            </>
-          )}
-          <button
-            type="button"
-            aria-label="Reset Filters"
-            className="self-end mb-1 btn-primary h-10"
-            onClick={resetFilters}
-          >
-            Reset Filters
-          </button>
-        </form>
+        <FilterPanel
+          filters={filters}
+          updateFilters={updateFilters}
+          resetFilters={resetFilters}
+          sortable={sortable}
+          canFilterCompleted={canFilterCompleted}
+        />
       )}
     </div>
   );

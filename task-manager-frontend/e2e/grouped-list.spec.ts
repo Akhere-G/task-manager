@@ -94,7 +94,7 @@ test.describe("grouped list", () => {
 
     await page.getByRole("button", { name: "Show filters" }).click();
 
-    await expect(page.getByLabel("Is Complete")).toBeHidden();
+    await expect(page.getByRole("group", { name: "Status" })).toBeHidden();
   });
 });
 
