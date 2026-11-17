@@ -1,101 +1,84 @@
+import { RefreshCw, Sparkles } from "lucide-react";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, RefreshCw, X } from "lucide-react";
-import { useGetDailyBrief } from "../hooks";
+import { Popup } from "../../../components/ui";
 import { trackEvent } from "../../../services/analytics";
+import { useGetDailyBrief } from "../hooks";
 
-const DailyBrief = () => {
-  const { data: brief, isLoading, isError, refetch } = useGetDailyBrief();
-  const [isOpen, setIsOpen] = useState(false);
+const buttonClass =
+  "flex items-center gap-1 rounded-lg bg-surface px-3 py-1.5 text-sm text-brand hover:bg-brand/20";
 
-  if (isLoading)
-    return (
-      <div
-        className="flex items-center justify-center bg-surface dark:bg-surface-muted  shadow-sm text-slate-500 w-12 h-12 rounded-full
-        "
-      >
-        <Sparkles size={24} fill="currentColor" />
-      </div>
-    );
-  if (isError)
-    return <div className="text-red-500">Error loading brief...</div>;
-  if (!brief) return null;
+function BriefModal({ onClose }: { onClose: () => void }) {
+  const {
+    data: brief,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useGetDailyBrief();
 
   return (
-    <div className="relative antialiase ">
-      <button
-        aria-label={isOpen ? "Close daily brief" : "Open daily brief"}
-        onClick={() => {
-          setIsOpen(true);
-          trackEvent("ai_daily_brief_viewed");
-        }}
-        className={`
-          flex items-center justify-center bg-surface dark:bg-surface-muted shadow-md text-brand
-          transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)
-          hover:scale-110 hover:shadow-lg active:scale-95 mx-auto
-          ${
-            isOpen
-              ? "opacity-0 scale-0 pointer-events-none"
-              : "opacity-100 scale-100 w-12 h-12 rounded-full"
-          }
-        `}
-      >
-        <Sparkles size={24} fill="currentColor" className="animate-pulse" />
-      </button>
-
-      <div
-        className={`
-          bg-white shadow-sm 
-          transition-all duration-150 cubic-bezier(0.4, 0, 0.2, 1)
-          ${
-            isOpen
-              ? "opacity-100 scale-100 w-full translate-y-0"
-              : "opacity-0 scale-95 w-full -translate-y-4 pointer-events-none absolute"
-          }
-          rounded-xl
-        `}
-      >
-        <div className="absolute top-0 left-0 w-1 h-full bg-accent" />
-
-        <div className="card ">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-accent">
-              <Sparkles size={20} fill="currentColor" />
-              <h2 className="font-semibold text-text-primary text-xl">
-                Daily Brief
-              </h2>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                aria-label="Reload daily brief"
-                onClick={() => refetch()}
-                className="p-2 text-text-primary hover:text-brand cursor-pointer bg-brand/10 rounded-full hover:brightness-125"
-              >
-                <RefreshCw size={20} />
-              </button>
-              <button
-                aria-label="Close daily brief"
-                onClick={() => setIsOpen(false)}
-                className="p-2 text-text-primary hover:text-failure cursor-pointer bg-failure/10 rounded-full hover:brightness-125"
-              >
-                <X size={20} />
-              </button>
-            </div>
-          </div>
-          <div
-            className={`${isOpen ? "h-full" : "max-h-0 overflow-clip"} daily-brief `}
+    <Popup title="Daily Brief" close={onClose} showCloseButton={false} sleek>
+      <div className="card flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-accent">
+            <Sparkles aria-hidden size={20} fill="currentColor" />
+            Daily Brief
+          </h2>
+          <button
+            type="button"
+            aria-label="Reload daily brief"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="cursor-pointer rounded-full bg-brand/10 p-2 hover:brightness-125 disabled:opacity-50"
           >
+            <RefreshCw
+              aria-hidden
+              size={18}
+              className={isFetching ? "animate-spin" : ""}
+            />
+          </button>
+        </div>
+        {isLoading && <p className="text-text-sub">Writing your brief...</p>}
+        {isError && <p className="text-failure">Error loading brief...</p>}
+        {brief && (
+          <div className="daily-brief">
             <ReactMarkdown
               allowedElements={["h1", "h2", "h3", "h4", "p", "strong"]}
             >
               {brief}
             </ReactMarkdown>
           </div>
-        </div>
+        )}
       </div>
-    </div>
+    </Popup>
   );
-};
+}
 
-export default DailyBrief;
+export default function DailyBrief() {
+  const { data: brief, isLoading, isError } = useGetDailyBrief();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const hasNothingToShow = !isLoading && !isError && !brief;
+  if (hasNothingToShow) return null;
+
+  const open = () => {
+    setIsOpen(true);
+    trackEvent("ai_daily_brief_viewed");
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Open daily brief"
+        onClick={open}
+        className={buttonClass}
+      >
+        <Sparkles aria-hidden size={16} fill="currentColor" />
+        Brief
+      </button>
+      {isOpen && <BriefModal onClose={() => setIsOpen(false)} />}
+    </>
+  );
+}

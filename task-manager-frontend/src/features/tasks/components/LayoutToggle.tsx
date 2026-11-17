@@ -5,6 +5,7 @@ import {
   List,
   type LucideIcon,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import type { TaskLayout } from "../views";
 
 interface LayoutToggleProps {
@@ -12,12 +13,14 @@ interface LayoutToggleProps {
   /** The board shows one project, so it needs one selected. */
   hasProject: boolean;
   onSelect: (layout: TaskLayout) => void;
+  children?: ReactNode;
 }
 
 export default function LayoutToggle({
   layout,
   hasProject,
   onSelect,
+  children,
 }: LayoutToggleProps) {
   const OPTIONS: { value: TaskLayout; label: string; Icon: LucideIcon }[] = [
     { value: "list", label: "List", Icon: List },
@@ -46,6 +49,7 @@ export default function LayoutToggle({
           {label}
         </button>
       ))}
+      {children}
     </div>
   );
 }

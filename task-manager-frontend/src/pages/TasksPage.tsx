@@ -83,16 +83,12 @@ export default function TasksPage() {
               layout={layout}
               hasProject={projectId !== null}
               onSelect={selectLayout}
-            />
+            >
+              {!isCalendar && hasTasks && <DailyBrief />}
+            </LayoutToggle>
           </div>
           <div className="col-span-2 flex min-w-0 flex-col gap-3 md:col-span-1 md:col-start-2 md:row-start-1 md:translate-y-12 md:pb-12">
             {view === "inbox" && <QuickCapture />}
-
-            {!isCalendar && hasTasks && (
-              <div className="flex flex-wrap justify-center gap-4 ">
-                <DailyBrief />
-              </div>
-            )}
 
             <section
               className={`transition-opacity duration-150 -row-start-1 ${isStale ? "opacity-75" : "opacity-100"}`}
