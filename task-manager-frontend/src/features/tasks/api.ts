@@ -12,6 +12,7 @@ import type {
 export interface GetTaskResult {
   tasks: Task[];
   totalTasks: number;
+  totalMinutes: number;
   totalPages: number;
   currentPage: number;
 }

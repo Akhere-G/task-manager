@@ -11,6 +11,7 @@ const tasks = [1, 2, 3].map((id) => makeTask({ id }));
 const page: GetTaskResult = {
   tasks,
   totalTasks: 3,
+  totalMinutes: 0,
   totalPages: 1,
   currentPage: 1,
 };

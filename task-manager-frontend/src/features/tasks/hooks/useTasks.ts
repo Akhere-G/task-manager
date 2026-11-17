@@ -3,8 +3,12 @@ import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { taskService } from "../api";
-import { getBrowserTimeZone } from "../recurrence";
-import { calendarRange } from "../utils";
+import {
+  apiParamMap,
+  buildCalendarParams,
+  buildListParams,
+  type TaskFilters,
+} from "../taskParams";
 import {
   DEFAULT_VIEW,
   calendarZoomFor,
@@ -16,17 +20,7 @@ import {
 } from "../views";
 import { trackEvent } from "../../../services/analytics";
 
-export interface TaskFilters {
-  search: string;
-  project: string;
-  label: string;
-  priority: string;
-  duration: string;
-  isCompleted: string;
-  sortBy: string;
-  order: string;
-  currentDate: string;
-}
+export type { TaskFilters };
 
 export interface PageDetails {
   currentPage: number;
@@ -50,18 +44,6 @@ const getDefaultFilters = (): TaskFilters => ({
   order: "asc",
   currentDate: new Date().toISOString(),
 });
-
-const apiParamMap: Record<keyof TaskFilters, string> = {
-  search: "q",
-  project: "project",
-  label: "label",
-  priority: "priority",
-  duration: "duration",
-  isCompleted: "is_completed",
-  sortBy: "sort_by",
-  order: "order",
-  currentDate: "current_date",
-};
 
 /** URL params that describe where the user is, not what they filtered. */
 const LOCATION_PARAMS = ["view", "layout", "cal"];
@@ -122,7 +104,8 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
     : searchFilters;
 
   const isCalendar = layout === "calendar";
-  const pageSize = layout === "matrix" || isKanban ? BOARD_PAGE_SIZE : perPage;
+  const pageSize =
+    layout === "matrix" || isKanban ? BOARD_PAGE_SIZE : perPage;
 
   const result = useQuery({
     queryKey: [
@@ -136,33 +119,19 @@ export const useTasks = ({ perPage, enabled = true }: UseTasksProps) => {
         perPage: pageSize,
       },
     ],
-    queryFn: () => {
-      const params = new URLSearchParams();
-      const ranged = isRangedView(view);
-
-      (Object.keys(filters) as (keyof TaskFilters)[]).forEach((key) => {
-        const value = key === "search" ? deferredSearch : filters[key];
-        if (value && key !== "currentDate") params.set(apiParamMap[key], value);
-      });
-
-      if (isCalendar) {
-        const { start, end } = calendarRange(filters.currentDate);
-        params.set("start_date", start.toISOString());
-        params.set("end_date", end.toISOString());
-        params.set("project_repeating", "true");
-        if (!ranged && view !== "all") params.set("view", view);
-      } else {
-        if (view !== "all") params.set("view", view);
-        params.set("project_repeating", String(ranged));
-        params.set("page", String(currentPage));
-        params.set("limit", String(pageSize));
-      }
-      if (ranged || view === "overdue") {
-        params.set("zone", getBrowserTimeZone() ?? "UTC");
-      }
-
-      return taskService.getAll(params);
-    },
+    queryFn: () =>
+      taskService.getAll(
+        isCalendar
+          ? buildCalendarParams(filters, deferredSearch, view)
+          : buildListParams({
+              filters,
+              search: deferredSearch,
+              view,
+              page: currentPage,
+              limit: pageSize,
+              includeProjections: isRangedView(view),
+            }),
+      ),
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5,
     enabled,
