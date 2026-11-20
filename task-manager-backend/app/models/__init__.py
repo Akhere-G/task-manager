@@ -1,4 +1,5 @@
 from app.models.ai import DailyBrief
+from app.models.api_tokens import ApiToken, TokenScope
 from app.models.labels import Label, TaskLabel
 from app.models.notifications import Notification, NotificationSubscription
 from app.models.project_columns import OnDrop, ProjectColumn
@@ -11,6 +12,8 @@ __all__ = [
     "User",
     "PasswordReset",
     "RefreshToken",
+    "ApiToken",
+    "TokenScope",
     "DailyBrief",
     "Label",
     "TaskLabel",
