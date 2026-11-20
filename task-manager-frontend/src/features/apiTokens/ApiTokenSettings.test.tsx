@@ -46,6 +46,8 @@ describe("ApiTokenSettings", () => {
       "claude mcp add --transport http taskflow",
     );
     expect(notice).toHaveTextContent("Authorization: Bearer tm_secret-value");
+    expect(notice).toHaveTextContent("Claude on the web");
+    expect(notice).toHaveTextContent("Header valueBearer tm_secret-value");
 
     await userEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(screen.queryByText(/tm_secret-value/)).not.toBeInTheDocument();

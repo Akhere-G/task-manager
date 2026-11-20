@@ -8,6 +8,12 @@ export function mcpUrl(): string {
   return new URL("/mcp", apiBase).href;
 }
 
+export const AUTHORIZATION_HEADER = "Authorization";
+
+export function bearerValue(token: string): string {
+  return `Bearer ${token}`;
+}
+
 export function connectCommand(token: string): string {
-  return `claude mcp add --transport http taskflow ${mcpUrl()} --header "Authorization: Bearer ${token}"`;
+  return `claude mcp add --transport http taskflow ${mcpUrl()} --header "${AUTHORIZATION_HEADER}: ${bearerValue(token)}"`;
 }
