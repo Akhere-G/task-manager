@@ -3,7 +3,7 @@ from typing import Any
 
 from flask import Blueprint, jsonify, request
 from flask.typing import ResponseReturnValue
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 from marshmallow import Schema
 
 from app.schemas.task_schema import (
@@ -51,6 +51,7 @@ from app.services.task_service import (
     restore_task,
     update_task,
 )
+from app.utils.auth import authenticated_user_id
 from app.utils.http import get_json_body
 
 task_bp = Blueprint("tasks", __name__)
@@ -62,33 +63,35 @@ BulkAction = Callable[[int, list[int], dict[str, Any]], int]
 @jwt_required()
 def list_tasks() -> ResponseReturnValue:
     query = TaskListQuerySchema().load(request.args)
-    return jsonify(TaskPageSchema().dump(get_all_tasks(get_jwt_identity(), query)))  # type: ignore
+    return jsonify(TaskPageSchema().dump(get_all_tasks(authenticated_user_id(), query)))  # type: ignore
 
 
 @task_bp.route("/api/tasks/trash", methods=["GET"])
 @jwt_required()
 def list_trash() -> ResponseReturnValue:
     query = TrashQuerySchema().load(request.args)
-    return jsonify(TrashPageSchema().dump(get_trash(get_jwt_identity(), **query)))
+    return jsonify(TrashPageSchema().dump(get_trash(authenticated_user_id(), **query)))
 
 
 @task_bp.route("/api/tasks/<int:task_id>/restore", methods=["POST"])
 @jwt_required()
 def restore(task_id: int) -> ResponseReturnValue:
-    return jsonify(TrashedTaskSchema().dump(restore_task(get_jwt_identity(), task_id)))
+    return jsonify(
+        TrashedTaskSchema().dump(restore_task(authenticated_user_id(), task_id))
+    )
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["GET"])
 @jwt_required()
 def fetch_task(task_id: int) -> ResponseReturnValue:
-    return jsonify(TaskSchema().dump(get_task(get_jwt_identity(), task_id)))
+    return jsonify(TaskSchema().dump(get_task(authenticated_user_id(), task_id)))
 
 
 @task_bp.route("/api/tasks", methods=["POST"])
 @jwt_required()
 def add_task() -> ResponseReturnValue:
     data = TaskSchema().load(get_json_body())
-    return jsonify(TaskSchema().dump(create_task(get_jwt_identity(), data))), 201
+    return jsonify(TaskSchema().dump(create_task(authenticated_user_id(), data))), 201
 
 
 @task_bp.route("/api/tasks/bulk", methods=["POST"])
@@ -98,13 +101,13 @@ def add_task_list() -> ResponseReturnValue:
     if not data or not isinstance(data, list):
         return jsonify({"error": "Invalid data format"}), 400
 
-    tasks = create_tasks(get_jwt_identity(), TaskSchema(many=True).load(data))
+    tasks = create_tasks(authenticated_user_id(), TaskSchema(many=True).load(data))
     return jsonify({"tasks_created": len(tasks)}), 201
 
 
 def _run_bulk(schema: Schema, action: BulkAction) -> ResponseReturnValue:
     data = schema.load(get_json_body())
-    user_id = get_jwt_identity()
+    user_id = authenticated_user_id()
     task_ids = resolve_task_ids(user_id, data)
     updated = action(user_id, task_ids, data)
     return jsonify({"updated": updated, "matched": len(task_ids)})
@@ -156,7 +159,9 @@ def move_task_list() -> ResponseReturnValue:
 @jwt_required()
 def edit_task(task_id: int) -> ResponseReturnValue:
     data = TaskUpdateSchema().load(get_json_body())
-    return jsonify(TaskSchema().dump(update_task(get_jwt_identity(), task_id, data)))
+    return jsonify(
+        TaskSchema().dump(update_task(authenticated_user_id(), task_id, data))
+    )
 
 
 @task_bp.route("/api/tasks/<int:task_id>/reschedule", methods=["POST"])
@@ -164,7 +169,7 @@ def edit_task(task_id: int) -> ResponseReturnValue:
 def reschedule(task_id: int) -> ResponseReturnValue:
     data = TaskRescheduleSchema().load(get_json_body())
     return jsonify(
-        TaskSchema().dump(reschedule_task(get_jwt_identity(), task_id, data))  # type: ignore
+        TaskSchema().dump(reschedule_task(authenticated_user_id(), task_id, data))  # type: ignore
     )
 
 
@@ -172,7 +177,7 @@ def reschedule(task_id: int) -> ResponseReturnValue:
 @jwt_required()
 def move(task_id: int) -> ResponseReturnValue:
     data = TaskMoveSchema().load(get_json_body())
-    user_id = get_jwt_identity()
+    user_id = authenticated_user_id()
     move_task(user_id, task_id, data.get("after_id"), data.get("before_id"))
     return jsonify(TaskSchema().dump(get_task(user_id, task_id)))  # type: ignore
 
@@ -182,7 +187,7 @@ def move(task_id: int) -> ResponseReturnValue:
 def snooze(task_id: int) -> ResponseReturnValue:
     data = TaskSnoozeSchema().load(get_json_body())
     return jsonify(
-        TaskSchema().dump(snooze_task(get_jwt_identity(), task_id, data))  # type: ignore
+        TaskSchema().dump(snooze_task(authenticated_user_id(), task_id, data))  # type: ignore
     )
 
 
@@ -190,7 +195,7 @@ def snooze(task_id: int) -> ResponseReturnValue:
 @jwt_required()
 def add_task_subtasks(task_id: int) -> ResponseReturnValue:
     data = SubtasksCreateSchema().load(get_json_body())
-    subtasks = add_subtasks(get_jwt_identity(), task_id, data["subtasks"])
+    subtasks = add_subtasks(authenticated_user_id(), task_id, data["subtasks"])
     return jsonify({"subtasks": SubtaskSchema(many=True).dump(subtasks)}), 201
 
 
@@ -198,7 +203,7 @@ def add_task_subtasks(task_id: int) -> ResponseReturnValue:
 @jwt_required()
 def replace_task_subtasks(task_id: int) -> ResponseReturnValue:
     data = SubtasksCreateSchema().load(get_json_body())
-    subtasks = replace_subtasks(get_jwt_identity(), task_id, data["subtasks"])
+    subtasks = replace_subtasks(authenticated_user_id(), task_id, data["subtasks"])
     return jsonify({"subtasks": SubtaskSchema(many=True).dump(subtasks)})
 
 
@@ -206,12 +211,12 @@ def replace_task_subtasks(task_id: int) -> ResponseReturnValue:
 @jwt_required()
 def reorder_task_subtasks(task_id: int) -> ResponseReturnValue:
     data = SubtaskOrderSchema().load(get_json_body())
-    subtasks = reorder_subtasks(get_jwt_identity(), task_id, data["ids"])
+    subtasks = reorder_subtasks(authenticated_user_id(), task_id, data["ids"])
     return jsonify({"subtasks": SubtaskSchema(many=True).dump(subtasks)})
 
 
 @task_bp.route("/api/tasks/<int:task_id>", methods=["DELETE"])
 @jwt_required()
 def delete(task_id: int) -> ResponseReturnValue:
-    delete_task(get_jwt_identity(), task_id)
+    delete_task(authenticated_user_id(), task_id)
     return jsonify({"id": task_id, "message": "Deleted successfully"})

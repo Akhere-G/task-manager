@@ -7,13 +7,12 @@ from sqlalchemy import (
     ColumnElement,
     TextClause,
     and_,
+    extract,
     func,
     insert,
     literal,
-    literal_column,
     or_,
     select,
-    text,
 )
 
 from app.database import db
@@ -29,6 +28,7 @@ from app.utils.dates import (
 from app.utils.groups import group_clause
 from app.utils.project_tree import descendant_ids
 from app.utils.recurrence import next_occurrence
+from app.utils.search import search_document
 from app.utils.views import view_clause
 
 if TYPE_CHECKING:
@@ -40,9 +40,8 @@ MAX_SEARCH_LENGTH = 100
 MAX_SEARCH_TERMS = 8
 FULLTEXT_MIN_TERM_LENGTH = 3
 SHORT_TASK_MINUTES = 30
-DURATION_MINUTES = func.timestampdiff(
-    literal_column("MINUTE"), Task.start_at, Task.end_at
-)
+DURATION_SECONDS = func.trunc(extract("epoch", Task.end_at - Task.start_at))
+DURATION_MINUTES = func.trunc(DURATION_SECONDS / 60)
 MAX_GHOSTS = 5000
 
 GHOST_COPIED_FIELDS = (
@@ -72,30 +71,27 @@ def top_level_tasks_of(user_id: int) -> ColumnElement[bool]:
 
 
 def parse_search(search: str | None) -> tuple[str, str] | None:
-    """Full-text search only indexes terms of FULLTEXT_MIN_TERM_LENGTH or more, so
-    shorter terms fall back to LIKE."""
     cleaned = " ".join(str(search or "").split())[:MAX_SEARCH_LENGTH]
     terms = re.findall(r"\w+", cleaned)[:MAX_SEARCH_TERMS]
     if not terms:
         return None
     if all(len(term) >= FULLTEXT_MIN_TERM_LENGTH for term in terms):
-        return "fulltext", " ".join(f"+{term}*" for term in terms)
+        return "fulltext", " & ".join(f"{term}:*" for term in terms)
     return "like", cleaned
 
 
-def _fulltext_clause(value: str) -> TextClause:
-    table = Task.__tablename__
-    return text(
-        f"MATCH({table}.title, {table}.description) AGAINST(:search IN BOOLEAN MODE)"
-    ).bindparams(search=value)
+def _fulltext_clause(value: str) -> ColumnElement[bool]:
+    return search_document(Task.title, Task.description).bool_op("@@")(
+        func.to_tsquery("simple", value)
+    )
 
 
 def _like_clause(value: str) -> ColumnElement[bool]:
     escaped = value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     pattern = f"%{escaped}%"
     return or_(
-        Task.title.like(pattern, escape="\\"),
-        Task.description.like(pattern, escape="\\"),
+        Task.title.ilike(pattern, escape="\\"),
+        Task.description.ilike(pattern, escape="\\"),
     )
 
 

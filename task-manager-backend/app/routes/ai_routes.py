@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask.typing import ResponseReturnValue
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 
 from app.exceptions import AIUnavailable
 from app.extensions import ai_daily_limit, limiter, user_key
@@ -11,6 +11,7 @@ from app.services.ai_service import (
     parse_task_with_ai,
     suggest_priorities,
 )
+from app.utils.auth import authenticated_user_id
 from app.utils.http import get_json_body
 
 ai_bp = Blueprint("ai", __name__)
@@ -19,7 +20,7 @@ ai_bp = Blueprint("ai", __name__)
 @ai_bp.route("/api/ai/daily-brief", methods=["GET"])
 @jwt_required()
 def get_daily_brief_route() -> ResponseReturnValue:
-    user_id = get_jwt_identity()
+    user_id = authenticated_user_id()
 
     brief_text, is_fallback = generate_daily_brief(user_id, request.args.get("tz"))
 
@@ -32,7 +33,7 @@ def get_daily_brief_route() -> ResponseReturnValue:
 @limiter.limit(ai_daily_limit, key_func=user_key, scope="ai-daily")
 def parse_task_route() -> ResponseReturnValue:
     data = ParseTaskRequestSchema().load(get_json_body())
-    return jsonify(parse_task_with_ai(get_jwt_identity(), data["text"]))
+    return jsonify(parse_task_with_ai(authenticated_user_id(), data["text"]))
 
 
 @ai_bp.route("/api/ai/decompose", methods=["POST"])
@@ -60,4 +61,4 @@ def decompose_task_route() -> ResponseReturnValue:
 @limiter.limit("10 per hour")
 @limiter.limit(ai_daily_limit, key_func=user_key, scope="ai-daily")
 def suggest_priorities_route() -> ResponseReturnValue:
-    return jsonify({"suggestions": suggest_priorities(get_jwt_identity())})
+    return jsonify({"suggestions": suggest_priorities(authenticated_user_id())})

@@ -2,7 +2,7 @@ import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import delete, or_, select, text, update
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -42,7 +42,7 @@ _DUMMY_PASSWORD_HASH = generate_password_hash("not-a-real-password")
 
 def login_user(email: str, password: str) -> User | None:
     user = db.session.execute(
-        select(User).where(User.email == email)
+        select(User).where(func.lower(User.email) == email.lower())
     ).scalar_one_or_none()
 
     if not user or user.is_demo:
@@ -63,10 +63,11 @@ def get_user(id: int | None = None, email: str | None = None) -> User | None:
         return None
 
     stmt = select(User)
-    if id:
-        stmt = stmt.where(User.id == id)
-    else:
-        stmt = stmt.where(User.email == email)
+    stmt = (
+        stmt.where(User.id == id)
+        if id
+        else stmt.where(func.lower(User.email) == func.lower(email))
+    )
 
     return db.session.execute(stmt).scalar_one_or_none()
 
@@ -154,17 +155,26 @@ def purge_expired_sessions(user_id: int) -> None:
         )
     )
     db.session.execute(
-        text(
-            "DELETE FROM refresh_tokens WHERE expires_at < :now "
-            f"OR replaced_at < :cutoff LIMIT {PURGE_BATCH_SIZE}"
-        ),
-        {"now": now, "cutoff": cutoff},
+        delete(RefreshToken).where(
+            RefreshToken.id.in_(
+                select(RefreshToken.id)
+                .where(
+                    or_(
+                        RefreshToken.expires_at < now, RefreshToken.replaced_at < cutoff
+                    )
+                )
+                .limit(PURGE_BATCH_SIZE)
+            )
+        )
     )
     db.session.execute(
-        text(
-            f"DELETE FROM password_resets WHERE expires_at < :now LIMIT {PURGE_BATCH_SIZE}"
-        ),
-        {"now": now},
+        delete(PasswordReset).where(
+            PasswordReset.id.in_(
+                select(PasswordReset.id)
+                .where(PasswordReset.expires_at < now)
+                .limit(PURGE_BATCH_SIZE)
+            )
+        )
     )
     db.session.commit()
 
