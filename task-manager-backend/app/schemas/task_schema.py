@@ -138,6 +138,7 @@ class TaskSchema(CamelAutoSchema):
     id = fields.Raw(dump_only=True)
     user_id = auto_field(dump_only=True)
     series_id = auto_field(dump_only=True)
+    sort_order = auto_field(dump_only=True)
     parent_id = fields.Integer(dump_only=True, allow_none=True)
     position = fields.Integer(dump_only=True)
     subtask_count = fields.Integer(dump_only=True, dump_default=0)

@@ -20,6 +20,13 @@ def test_a_task_is_loaded_as_naive_utc_and_starts_incomplete() -> None:
     assert data["completed_at"] is None
 
 
+@pytest.mark.parametrize("sort_order", [None, 1024])
+def test_the_order_of_a_task_is_ignored_when_loaded(sort_order: int | None) -> None:
+    data = TaskSchema().load({**TASK, "sortOrder": sort_order})
+
+    assert "sort_order" not in data
+
+
 def test_end_must_be_after_start() -> None:
     body = {**TASK, "endAt": TASK["startAt"]}
 
