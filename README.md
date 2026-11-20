@@ -89,5 +89,25 @@ The frontend sends custom product-usage events to PostHog. Before analytics-cook
 
 The root `Dockerfile` is the supported build: it builds the frontend and serves it from the Flask app on port 8080. On start it runs the database migrations (`migrate.py`, Alembic) and stops if a required step fails, then starts gunicorn (`WEB_CONCURRENCY`, `GUNICORN_THREADS` and `GUNICORN_TIMEOUT` tune it; `WEB_CONCURRENCY x 15` should stay below the database connection limit).
 
-For local development `docker compose up --build` starts MySQL, Redis and the app on http://localhost:8080 with development-only defaults; export `GEMINI_API_KEY`, `GROQ_API_KEY`, `MAIL_SEND_API_KEY` and `MAIL_SEND_EMAIL` first if you want AI and email features. Compose reads a `.env` file in the repository root if one exists, so keep it to `KEY=value` lines.
+For local development `docker compose up --build` starts PostgreSQL, Redis and the app on http://localhost:8080 with development-only defaults; export `GEMINI_API_KEY`, `GROQ_API_KEY`, `MAIL_SEND_API_KEY` and `MAIL_SEND_EMAIL` first if you want AI and email features. Compose reads a `.env` file in the repository root if one exists, so keep it to `KEY=value` lines.
 
+
+### PostgreSQL / Neon
+
+Set `DATABASE_URL` to the connection URL from the Neon dashboard, including its
+`sslmode` and `channel_binding` parameters. The app uses Psycopg 3; the standard
+`postgresql://` URL works without editing the scheme. Separate `DB_HOST`,
+`DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT` and `DB_SSL_CA` variables are no longer
+used. Install backend dependencies with `pip install -r requirements.txt`.
+
+Run `python migrate.py` from `task-manager-backend/` to create the schema in a new
+PostgreSQL database. These migrations create the PostgreSQL schema; they do not
+copy existing MySQL data. Transfer existing data separately before switching the
+production connection URL.
+
+Backend tests use a local `task_manager_test` database. Override its connection
+with `TEST_DATABASE_URL` (default
+`postgresql://postgres:postgres@127.0.0.1:5432/task_manager_test`). The role must be
+able to create databases. End-to-end tests use `E2E_DATABASE_URL` with the same
+local defaults and database name `task_manager_e2e`. Docker Compose exposes
+PostgreSQL on port 5433 for running these tests from the host.
