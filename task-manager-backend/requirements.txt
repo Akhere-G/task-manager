@@ -3,6 +3,7 @@ aiohttp==3.13.3
 aiosignal==1.4.0
 alembic==1.18.4
 annotated-types==0.7.0
+apispec==6.10.1
 anyio==4.12.1
 async-timeout==5.0.1
 attrs==25.4.0

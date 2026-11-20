@@ -35,14 +35,22 @@ def flatten_validation_errors(
     return flat
 
 
+def app_error_body(error: AppError) -> dict[str, Any]:
+    return format_json_response(error.to_dict())
+
+
+def validation_error_body(error: ValidationError) -> dict[str, Any]:
+    return {"errors": flatten_validation_errors(error.messages)}
+
+
 def register_error_handlers(app: Flask) -> None:
     @app.errorhandler(AppError)
     def handle_app_error(error: AppError) -> ResponseReturnValue:
-        return jsonify(format_json_response(error.to_dict())), error.status_code
+        return jsonify(app_error_body(error)), error.status_code
 
     @app.errorhandler(ValidationError)
     def handle_validation_error(error: ValidationError) -> ResponseReturnValue:
-        return jsonify({"errors": flatten_validation_errors(error.messages)}), 400
+        return jsonify(validation_error_body(error)), 400
 
     @app.errorhandler(RateLimitExceeded)
     def handle_rate_limit(error: RateLimitExceeded) -> ResponseReturnValue:

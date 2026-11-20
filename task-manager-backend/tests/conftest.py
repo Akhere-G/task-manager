@@ -45,6 +45,7 @@ TEST_TYPE_BY_LAYER = {
     "migrations": "integration",
     "services": "integration",
     "routes": "functional",
+    "mcp": "functional",
     "security": "security",
 }
 TEST_TYPES = {*TEST_TYPE_BY_LAYER.values(), "property"}
