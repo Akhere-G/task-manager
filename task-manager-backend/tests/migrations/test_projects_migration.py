@@ -2,6 +2,7 @@ from collections.abc import Iterator
 
 import pytest
 from alembic import command
+from psycopg import Cursor
 
 import migrate
 from tests.db import connect
@@ -16,33 +17,38 @@ def before_projects(clean_tables: None) -> Iterator[None]:
     command.upgrade(migrate._config(), "head")
 
 
-def _add_user(cursor, email: str) -> int:
+def _add_user(cursor: Cursor, email: str) -> int:
     cursor.execute(
         "INSERT INTO users (first_name, last_name, email, password_hash) "
-        "VALUES ('T', 'U', %s, 'x')",
+        "VALUES ('T', 'U', %s, 'x') RETURNING id",
         (email,),
     )
-    return cursor.lastrowid
+    return cursor.fetchone()[0]
 
 
 def _add_task(
-    cursor, user_id: int, category: str, completed: bool = False, deleted: bool = False
+    cursor: Cursor,
+    user_id: int,
+    category: str,
+    completed: bool = False,
+    deleted: bool = False,
 ) -> int:
     cursor.execute(
         "INSERT INTO tasks (user_id, title, category, start_at, end_at, "
         "is_completed, is_deleted) "
-        "VALUES (%s, 't', %s, '2026-03-02 10:00:00', '2026-03-02 11:00:00', %s, %s)",
+        "VALUES (%s, 't', %s, '2026-03-02 10:00:00', '2026-03-02 11:00:00', %s, %s) "
+        "RETURNING id",
         (user_id, category, completed, deleted),
     )
-    return cursor.lastrowid
+    return cursor.fetchone()[0]
 
 
-def _projects(cursor, user_id: int) -> dict[str, int]:
+def _projects(cursor: Cursor, user_id: int) -> dict[str, int]:
     cursor.execute("SELECT name, id FROM projects WHERE user_id = %s", (user_id,))
     return dict(cursor.fetchall())
 
 
-def _project_of(cursor, task_id: int) -> str | None:
+def _project_of(cursor: Cursor, task_id: int) -> str | None:
     cursor.execute(
         "SELECT p.name FROM tasks t LEFT JOIN projects p ON p.id = t.project_id "
         "WHERE t.id = %s",
@@ -54,9 +60,7 @@ def _project_of(cursor, task_id: int) -> str | None:
 def test_each_user_gets_a_project_for_every_category_they_use(
     before_projects: None,
 ) -> None:
-    import os
-
-    connection = connect(os.environ["DB_NAME"])
+    connection = connect()
     cursor = connection.cursor()
     ann, bob, nobody = (_add_user(cursor, f"{n}@example.com") for n in "abn")
     open_work = _add_task(cursor, ann, "work")
@@ -80,9 +84,7 @@ def test_each_user_gets_a_project_for_every_category_they_use(
 
 
 def test_downgrading_keeps_the_category_values(before_projects: None) -> None:
-    import os
-
-    connection = connect(os.environ["DB_NAME"])
+    connection = connect()
     cursor = connection.cursor()
     user = _add_user(cursor, "a@example.com")
     task = _add_task(cursor, user, "work")

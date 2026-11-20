@@ -1,36 +1,37 @@
-import os
+import psycopg
+from psycopg import sql
 
-import pymysql
+from app.config import build_database_url
 
 SCHEMA_TABLES = {"alembic_version"}
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
 
-def connect(database: str | None = None) -> pymysql.connections.Connection:
-    return pymysql.connect(
-        host=os.environ["DB_HOST"],
-        port=int(os.environ["DB_PORT"]),
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        database=database,
-        autocommit=True,
-    )
+def connect(database: str | None = None) -> psycopg.Connection:
+    url = build_database_url().set(drivername="postgresql")
+    if database is not None:
+        url = url.set(database=database)
+    return psycopg.connect(url.render_as_string(hide_password=False), autocommit=True)
 
 
 def create_database(name: str) -> None:
-    connection = connect()
-    with connection.cursor() as cursor:
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{name}`")
-    connection.close()
+    with connect("postgres") as connection, connection.cursor() as cursor:
+        cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (name,))
+        if cursor.fetchone() is None:
+            cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(name)))
 
 
 def empty_tables(database: str) -> None:
-    connection = connect(database)
-    with connection.cursor() as cursor:
-        cursor.execute("SHOW TABLES")
-        tables = [row[0] for row in cursor.fetchall() if row[0] not in SCHEMA_TABLES]
-        cursor.execute("SET FOREIGN_KEY_CHECKS=0")
-        for table in tables:
-            cursor.execute(f"TRUNCATE TABLE `{table}`")
-        cursor.execute("SET FOREIGN_KEY_CHECKS=1")
-    connection.close()
+    with connect(database) as connection, connection.cursor() as cursor:
+        cursor.execute("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+        tables = [
+            sql.Identifier("public", row[0])
+            for row in cursor.fetchall()
+            if row[0] not in SCHEMA_TABLES
+        ]
+        if tables:
+            cursor.execute(
+                sql.SQL("TRUNCATE TABLE {} RESTART IDENTITY CASCADE").format(
+                    sql.SQL(", ").join(tables)
+                )
+            )

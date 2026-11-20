@@ -1,4 +1,3 @@
-import os
 from collections.abc import Iterator
 
 import pytest
@@ -17,13 +16,13 @@ def at_head(clean_tables: None) -> Iterator[None]:
 def test_downgrading_gives_undated_tasks_dates_and_upgrading_keeps_them(
     at_head: None,
 ) -> None:
-    connection = connect(os.environ["DB_NAME"])
+    connection = connect()
     cursor = connection.cursor()
     cursor.execute(
         "INSERT INTO users (first_name, last_name, email, password_hash) "
-        "VALUES ('T', 'U', 'm@example.com', 'x')"
+        "VALUES ('T', 'U', 'm@example.com', 'x') RETURNING id"
     )
-    user_id = cursor.lastrowid
+    user_id = cursor.fetchone()[0]
     cursor.execute(
         "INSERT INTO tasks (user_id, title, created_at) "
         "VALUES (%s, 'someday', '2026-03-02 10:00:00')",

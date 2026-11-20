@@ -55,9 +55,7 @@ def test_brief_created_by_a_parallel_request_is_returned_instead_of_an_error(
     app: Flask, session: FlaskClient
 ) -> None:
     def generate_while_another_request_wins(prompt: str) -> str:
-        import os
-
-        conn = connect(os.environ["DB_NAME"])
+        conn = connect()
         with conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO daily_briefs (user_id, brief_text, generated_date) "

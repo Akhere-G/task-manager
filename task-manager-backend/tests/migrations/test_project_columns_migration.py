@@ -1,4 +1,3 @@
-import os
 from collections.abc import Iterator
 
 import pytest
@@ -18,18 +17,19 @@ def test_existing_projects_get_columns_and_tasks_are_sorted_into_them(
     at_head: None,
 ) -> None:
     command.downgrade(migrate._config(), "0011")
-    connection = connect(os.environ["DB_NAME"])
+    connection = connect()
     cursor = connection.cursor()
     cursor.execute(
         "INSERT INTO users (first_name, last_name, email, password_hash) "
-        "VALUES ('T', 'U', 'a@example.com', 'x')"
+        "VALUES ('T', 'U', 'a@example.com', 'x') RETURNING id"
     )
-    user_id = cursor.lastrowid
+    user_id = cursor.fetchone()[0]
     cursor.execute(
-        "INSERT INTO projects (user_id, name) VALUES (%s, 'Work')", (user_id,)
+        "INSERT INTO projects (user_id, name) VALUES (%s, 'Work') RETURNING id",
+        (user_id,),
     )
-    project_id = cursor.lastrowid
-    for title, is_completed in (("open", 0), ("finished", 1)):
+    project_id = cursor.fetchone()[0]
+    for title, is_completed in (("open", False), ("finished", True)):
         cursor.execute(
             "INSERT INTO tasks (user_id, project_id, title, is_completed) "
             "VALUES (%s, %s, %s, %s)",

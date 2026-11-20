@@ -1,4 +1,3 @@
-import os
 from collections.abc import Iterator
 
 import pytest
@@ -17,10 +16,13 @@ def at_head(clean_tables: None) -> Iterator[None]:
 
 
 def task_indexes() -> set[str]:
-    connection = connect(os.environ["DB_NAME"])
+    connection = connect()
     cursor = connection.cursor()
-    cursor.execute("SHOW INDEX FROM tasks")
-    names = {row[2] for row in cursor.fetchall()}
+    cursor.execute(
+        "SELECT indexname FROM pg_indexes "
+        "WHERE schemaname = 'public' AND tablename = 'tasks'"
+    )
+    names = {row[0] for row in cursor.fetchall()}
     connection.close()
     return names
 

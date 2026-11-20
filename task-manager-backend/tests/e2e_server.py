@@ -2,19 +2,21 @@
 
     python -m tests.e2e_server        (from task-manager-backend)
 
-It only talks to a local MySQL server and only to the `task_manager_e2e` database,
+It only talks to a local PostgreSQL server and only to the `task_manager_e2e` database,
 which it migrates and empties on every start. The database, secrets and AI settings
 are set explicitly, so a developer's .env cannot point it at a real database or real
 AI keys (other .env keys still load), and the AI providers are replaced with a
 deterministic stub.
 
-Connection settings: E2E_DB_HOST (default 127.0.0.1), E2E_DB_PORT (3306),
-E2E_DB_USER (root), E2E_DB_PASSWORD (empty), E2E_API_PORT (5001).
+Connection settings: E2E_DATABASE_URL (defaults to local PostgreSQL),
+E2E_API_PORT (5001).
 """
 
 import json
 import os
 import sys
+
+from sqlalchemy.engine import make_url
 
 from tests.db import LOCAL_HOSTS, create_database, empty_tables
 
@@ -22,17 +24,17 @@ E2E_DB_NAME = "task_manager_e2e"
 
 
 def configure_environment() -> None:
-    host = os.environ.get("E2E_DB_HOST", "127.0.0.1")
-    if host not in LOCAL_HOSTS:
-        sys.exit(f"Refusing to run the E2E suite against a non-local database: {host}")
+    url = make_url(
+        os.environ.get(
+            "E2E_DATABASE_URL",
+            "postgresql://postgres:postgres@127.0.0.1:5432/task_manager_e2e",
+        )
+    )
+    if url.host not in LOCAL_HOSTS or url.database != E2E_DB_NAME:
+        sys.exit("Refusing to run E2E outside a local task_manager_e2e database")
 
     os.environ.update(
-        DB_HOST=host,
-        DB_PORT=os.environ.get("E2E_DB_PORT", "3306"),
-        DB_USER=os.environ.get("E2E_DB_USER", "root"),
-        DB_PASSWORD=os.environ.get("E2E_DB_PASSWORD", ""),
-        DB_NAME=E2E_DB_NAME,
-        DB_SSL_CA="",
+        DATABASE_URL=url.render_as_string(hide_password=False),
         JWT_SECRET_KEY="e2e-secret-key-for-the-test-suite-only",
         JWT_COOKIE_SECURE="False",
         FRONTEND_URL=os.environ.get("E2E_FRONTEND_URL", "http://localhost:5173"),
