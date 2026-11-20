@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask.typing import ResponseReturnValue
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 
 from app.exceptions import DemoForbidden
 from app.schemas.notification_schema import (
@@ -9,6 +9,7 @@ from app.schemas.notification_schema import (
 )
 from app.services import notification as notification_service
 from app.services.auth_service import is_demo_user
+from app.utils.auth import authenticated_user_id
 from app.utils.http import get_json_body
 
 notification_bp = Blueprint("notifications", __name__)
@@ -17,7 +18,7 @@ notification_bp = Blueprint("notifications", __name__)
 @notification_bp.route("/api/notifications", methods=["GET"])
 @jwt_required()
 def get_notifications_route() -> ResponseReturnValue:
-    user_id = get_jwt_identity()
+    user_id = authenticated_user_id()
 
     limit = request.args.get("limit", default=50, type=int)
     before_id = request.args.get("before_id", type=int)
@@ -34,7 +35,7 @@ def get_notifications_route() -> ResponseReturnValue:
 )
 @jwt_required()
 def read_notification(notification_id: int) -> ResponseReturnValue:
-    user_id = get_jwt_identity()
+    user_id = authenticated_user_id()
 
     notification = notification_service.read_notifications(user_id, notification_id)
 
@@ -47,7 +48,7 @@ def read_notification(notification_id: int) -> ResponseReturnValue:
 @notification_bp.route("/api/notifications/subscribe", methods=["POST"])
 @jwt_required()
 def save_subscription_route() -> ResponseReturnValue:
-    user_id = get_jwt_identity()
+    user_id = authenticated_user_id()
 
     if is_demo_user(user_id):
         raise DemoForbidden()
@@ -67,7 +68,7 @@ def save_subscription_route() -> ResponseReturnValue:
 @notification_bp.route("/api/notifications/subscribe", methods=["DELETE"])
 @jwt_required()
 def delete_subscription_route() -> ResponseReturnValue:
-    user_id = get_jwt_identity()
+    user_id = authenticated_user_id()
     endpoint = get_json_body().get("endpoint")
 
     if not isinstance(endpoint, str) or not endpoint:

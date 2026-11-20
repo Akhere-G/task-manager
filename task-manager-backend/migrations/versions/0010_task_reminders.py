@@ -37,12 +37,12 @@ def upgrade() -> None:
         """
         INSERT INTO task_reminders
             (task_id, kind, minutes_before, fire_at, fired_for_start_at)
-        SELECT id, 'before', 30, DATE_SUB(start_at, INTERVAL 30 MINUTE),
+        SELECT id, 'before', 30, start_at - INTERVAL '30 minutes',
                reminded_for_start_at
         FROM tasks
         WHERE start_at IS NOT NULL
-          AND is_completed = 0
-          AND is_deleted = 0
+          AND is_completed = false
+          AND is_deleted = false
           AND parent_id IS NULL
         """
     )
@@ -53,13 +53,13 @@ def downgrade() -> None:
     op.add_column("tasks", sa.Column("reminded_for_start_at", sa.DateTime()))
     op.execute(
         """
-        UPDATE tasks
-        JOIN (
+        UPDATE tasks SET reminded_for_start_at = r.fired
+        FROM (
             SELECT task_id, MAX(fired_for_start_at) AS fired
             FROM task_reminders
             GROUP BY task_id
-        ) r ON r.task_id = tasks.id
-        SET tasks.reminded_for_start_at = r.fired
+        ) r
+        WHERE r.task_id = tasks.id
         """
     )
     op.drop_table("task_reminders")

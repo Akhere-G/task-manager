@@ -112,7 +112,10 @@ def test_a_deleted_repeating_task_stops_producing_ghosts(
         session,
         task_payload(startAt=MONDAY[0], endAt=MONDAY[1], repeatBy="daily"),
     )
-    ghosts = "/api/tasks?start_date=2026-03-03&end_date=2026-03-05T23:59:59&project_repeating=true"
+    ghosts = (
+        "/api/tasks?start_date=2026-03-03&end_date=2026-03-05T23:59:59"
+        "&project_repeating=true"
+    )
     assert len(session.get(ghosts).get_json()["tasks"]) == 3
 
     session.delete(f"/api/tasks/{task_id}")

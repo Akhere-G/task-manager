@@ -84,7 +84,7 @@ def _create_projects_from_categories() -> None:
         result = connection.execute(
             sa.text(
                 "INSERT INTO projects (user_id, name, colour, position) "
-                "VALUES (:user_id, :name, :colour, :position)"
+                "VALUES (:user_id, :name, :colour, :position) RETURNING id"
             ),
             {
                 "user_id": user_id,
@@ -99,7 +99,7 @@ def _create_projects_from_categories() -> None:
                 "WHERE user_id = :user_id AND LOWER(TRIM(category)) = :category"
             ),
             {
-                "project_id": result.lastrowid,
+                "project_id": result.scalar_one(),
                 "user_id": user_id,
                 "category": category,
             },

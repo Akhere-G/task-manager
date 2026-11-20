@@ -1,4 +1,4 @@
-"""Reset the shared demo account from fixtures/demo_data.json: python -m app.demo.seed"""
+"""Reset the shared demo account: python -m app.demo.seed"""
 
 import json
 import random
@@ -128,7 +128,7 @@ def build_history(
                     completed_at=done,
                 )
             )
-    for newer, older in zip(rows, rows[1:]):
+    for newer, older in zip(rows, rows[1:], strict=False):
         newer.created_at = older.completed_at
     rows[-1].created_at = resolve_time(h["series_created"], now, tz)
     return rows

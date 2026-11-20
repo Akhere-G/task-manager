@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from sqlalchemy import (
     JSON,
+    TIMESTAMP,
     BigInteger,
     CheckConstraint,
     DateTime,
@@ -13,11 +14,11 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.mysql import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.constants import DEFAULT_PRIORITY
 from app.database import Base
+from app.utils.search import search_document
 
 
 class Task(Base):
@@ -34,14 +35,14 @@ class Task(Base):
     priority: Mapped[int] = mapped_column(
         SmallInteger, default=DEFAULT_PRIORITY, server_default=str(DEFAULT_PRIORITY)
     )
-    is_completed: Mapped[bool] = mapped_column(server_default="0", nullable=True)
+    is_completed: Mapped[bool] = mapped_column(server_default="false", nullable=True)
     start_at: Mapped[datetime | None] = mapped_column(TIMESTAMP, nullable=True)
     end_at: Mapped[datetime | None] = mapped_column(TIMESTAMP, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP, server_default=func.current_timestamp(), nullable=True
     )
     completed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
-    is_repeating: Mapped[bool] = mapped_column(server_default="0", nullable=True)
+    is_repeating: Mapped[bool] = mapped_column(server_default="false", nullable=True)
     repeat_by: Mapped[str | None] = mapped_column(
         Enum("daily", "weekly", "monthly", "yearly", name="repeat_by_enum")
     )
@@ -56,7 +57,7 @@ class Task(Base):
     column_id: Mapped[int | None] = mapped_column(
         ForeignKey("project_columns.id", ondelete="SET NULL")
     )
-    is_deleted: Mapped[bool] = mapped_column(default=False, server_default="0")
+    is_deleted: Mapped[bool] = mapped_column(default=False, server_default="false")
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime)
     parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="CASCADE")
@@ -66,7 +67,11 @@ class Task(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
     __table_args__ = (
-        Index("idx_tasks_search", "title", "description", mysql_prefix="FULLTEXT"),
+        Index(
+            "idx_tasks_search",
+            search_document(title, description),
+            postgresql_using="gin",
+        ),
         Index("idx_tasks_user_end_at", "user_id", "end_at"),
         Index("idx_tasks_user_completed", "user_id", "is_completed", "completed_at"),
         Index("idx_tasks_user_project", "user_id", "project_id"),

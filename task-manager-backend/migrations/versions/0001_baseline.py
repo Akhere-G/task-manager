@@ -6,7 +6,6 @@ Revises:
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import mysql
 
 revision = "0001"
 down_revision = None
@@ -22,10 +21,11 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("first_name", sa.String(50), nullable=False),
         sa.Column("last_name", sa.String(50), nullable=False),
-        sa.Column("email", sa.String(100), nullable=False, unique=True),
+        sa.Column("email", sa.String(100), nullable=False),
         sa.Column("password_hash", sa.String(255), nullable=False),
-        sa.Column("is_demo", sa.Boolean, nullable=False, server_default=sa.text("0")),
+        sa.Column("is_demo", sa.Boolean, nullable=False, server_default=sa.false()),
     )
+    op.create_index("uq_users_email", "users", [sa.text("lower(email)")], unique=True)
 
     op.create_table(
         "tasks",
@@ -33,12 +33,12 @@ def upgrade() -> None:
         sa.Column("title", sa.String(255), nullable=False),
         sa.Column("description", sa.Text),
         sa.Column("category", sa.String(50), server_default="General"),
-        sa.Column("is_completed", sa.Boolean, server_default=sa.text("0")),
-        sa.Column("start_at", mysql.TIMESTAMP, nullable=False),
-        sa.Column("end_at", mysql.TIMESTAMP, nullable=False),
-        sa.Column("created_at", mysql.TIMESTAMP, server_default=NOW),
-        sa.Column("completed_at", mysql.TIMESTAMP, nullable=True),
-        sa.Column("is_repeating", sa.Boolean, server_default=sa.text("0")),
+        sa.Column("is_completed", sa.Boolean, server_default=sa.false()),
+        sa.Column("start_at", sa.TIMESTAMP, nullable=False),
+        sa.Column("end_at", sa.TIMESTAMP, nullable=False),
+        sa.Column("created_at", sa.TIMESTAMP, server_default=NOW),
+        sa.Column("completed_at", sa.TIMESTAMP, nullable=True),
+        sa.Column("is_repeating", sa.Boolean, server_default=sa.false()),
         sa.Column(
             "repeat_by",
             sa.Enum("daily", "weekly", "monthly", "yearly", name="repeat_by_enum"),
@@ -55,7 +55,15 @@ def upgrade() -> None:
         ),
     )
     op.create_index(
-        "idx_tasks_search", "tasks", ["title", "description"], mysql_prefix="FULLTEXT"
+        "idx_tasks_search",
+        "tasks",
+        [
+            sa.text(
+                "to_tsvector('simple', coalesce(title, '') || ' ' || "
+                "coalesce(description, ''))"
+            )
+        ],
+        postgresql_using="gin",
     )
     op.create_index("idx_tasks_user_end_at", "tasks", ["user_id", "end_at"])
     op.create_index(
@@ -68,7 +76,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer, nullable=False),
         sa.Column("brief_text", sa.Text, nullable=False),
         sa.Column("generated_date", sa.Date, nullable=False),
-        sa.Column("created_at", mysql.TIMESTAMP, server_default=NOW),
+        sa.Column("created_at", sa.TIMESTAMP, server_default=NOW),
         sa.UniqueConstraint("user_id", "generated_date", name="unique_user_day"),
         sa.ForeignKeyConstraint(
             ["user_id"], ["users.id"], name="fk_brief_user", ondelete="CASCADE"
@@ -108,8 +116,8 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer, nullable=False),
         sa.Column("title", sa.String(255), nullable=False),
         sa.Column("message", sa.Text, nullable=False),
-        sa.Column("is_read", sa.Boolean, server_default=sa.text("0")),
-        sa.Column("created_at", mysql.TIMESTAMP, server_default=NOW),
+        sa.Column("is_read", sa.Boolean, server_default=sa.false()),
+        sa.Column("created_at", sa.TIMESTAMP, server_default=NOW),
         sa.ForeignKeyConstraint(
             ["user_id"], ["users.id"], name="fk_notif_user", ondelete="CASCADE"
         ),
@@ -122,7 +130,7 @@ def upgrade() -> None:
         sa.Column("endpoint", sa.String(500), nullable=False, unique=True),
         sa.Column("p256dh", sa.String(255), nullable=False),
         sa.Column("auth", sa.String(255), nullable=False),
-        sa.Column("created_at", mysql.TIMESTAMP, server_default=NOW),
+        sa.Column("created_at", sa.TIMESTAMP, server_default=NOW),
         sa.ForeignKeyConstraint(
             ["user_id"], ["users.id"], name="fk_sub_user", ondelete="CASCADE"
         ),
@@ -130,22 +138,27 @@ def upgrade() -> None:
 
     op.execute(
         """
-        CREATE TRIGGER tr_ensure_completion_timestamp
-        BEFORE UPDATE ON tasks
-        FOR EACH ROW
+        CREATE FUNCTION ensure_completion_timestamp() RETURNS trigger AS $$
         BEGIN
-            IF NEW.is_completed = 1 AND NEW.completed_at IS NULL THEN
-                SET NEW.completed_at = NOW();
-            ELSEIF NEW.is_completed = 0 THEN
-                SET NEW.completed_at = NULL;
+            IF NEW.is_completed AND NEW.completed_at IS NULL THEN
+                NEW.completed_at = CURRENT_TIMESTAMP;
+            ELSIF NOT NEW.is_completed THEN
+                NEW.completed_at = NULL;
             END IF;
-        END
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql
         """
+    )
+    op.execute(
+        "CREATE TRIGGER tr_ensure_completion_timestamp BEFORE UPDATE ON tasks "
+        "FOR EACH ROW EXECUTE FUNCTION ensure_completion_timestamp()"
     )
 
 
 def downgrade() -> None:
-    op.execute("DROP TRIGGER IF EXISTS tr_ensure_completion_timestamp")
+    op.execute("DROP TRIGGER IF EXISTS tr_ensure_completion_timestamp ON tasks")
+    op.execute("DROP FUNCTION IF EXISTS ensure_completion_timestamp()")
     for table in (
         "notification_subscriptions",
         "notifications",
@@ -156,3 +169,4 @@ def downgrade() -> None:
         "users",
     ):
         op.drop_table(table)
+    sa.Enum(name="repeat_by_enum").drop(op.get_bind())

@@ -4,11 +4,10 @@ from typing import Any
 
 from flask import Flask
 
-os.environ.setdefault("DB_HOST", "127.0.0.1")
-os.environ.setdefault("DB_PORT", "3306")
-os.environ.setdefault("DB_USER", "root")
-os.environ.setdefault("DB_PASSWORD", "")
-os.environ["DB_NAME"] = os.environ.get("TEST_DB_NAME", "task_manager_test")
+os.environ["DATABASE_URL"] = os.environ.get(
+    "TEST_DATABASE_URL",
+    "postgresql://postgres:postgres@127.0.0.1:5432/task_manager_test",
+)
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-the-test-suite-only"
 os.environ["FRONTEND_URL"] = "http://localhost:5173"
 os.environ["JWT_COOKIE_SECURE"] = "False"
@@ -24,6 +23,7 @@ from hypothesis import settings
 from werkzeug.security import generate_password_hash
 
 import migrate
+from app.config import build_database_url
 from app.database import db
 from app.demo import DEMO_USER_EMAIL
 from app.extensions import limiter
@@ -58,16 +58,17 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(layer_type)
 
 
-def _refuse_unsafe_database() -> None:
-    host, name = os.environ["DB_HOST"], os.environ["DB_NAME"]
-    if host not in LOCAL_HOSTS or not name.endswith("_test"):
+def _test_database_name() -> str:
+    url = build_database_url()
+    host, name = url.host, url.database
+    if host not in LOCAL_HOSTS or not name or not name.endswith("_test"):
         pytest.exit(f"Refusing to empty {name} on {host}: use a local *_test database.")
+    return name
 
 
 @pytest.fixture(scope="session")
 def database() -> None:
-    _refuse_unsafe_database()
-    create_database(os.environ["DB_NAME"])
+    create_database(_test_database_name())
     migrate.run()
 
 
@@ -86,7 +87,7 @@ def flask_app(database: None) -> Flask:
 
 @pytest.fixture
 def clean_tables(database: None) -> None:
-    empty_tables(os.environ["DB_NAME"])
+    empty_tables(_test_database_name())
 
 
 @pytest.fixture

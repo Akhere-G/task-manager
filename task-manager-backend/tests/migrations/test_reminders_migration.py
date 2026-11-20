@@ -1,4 +1,3 @@
-import os
 from collections.abc import Iterator
 
 import pytest
@@ -18,17 +17,17 @@ def test_open_dated_tasks_get_the_default_reminder_and_keep_their_fired_marker(
     at_head: None,
 ) -> None:
     command.downgrade(migrate._config(), "0009")
-    connection = connect(os.environ["DB_NAME"])
+    connection = connect()
     cursor = connection.cursor()
     cursor.execute(
         "INSERT INTO users (first_name, last_name, email, password_hash) "
-        "VALUES ('T', 'U', 'm@example.com', 'x')"
+        "VALUES ('T', 'U', 'm@example.com', 'x') RETURNING id"
     )
-    user_id = cursor.lastrowid
+    user_id = cursor.fetchone()[0]
     rows = [
-        ("open", "2026-03-11 10:00:00", 0, "2026-03-11 10:00:00"),
-        ("done", "2026-03-11 11:00:00", 1, None),
-        ("undated", None, 0, None),
+        ("open", "2026-03-11 10:00:00", False, "2026-03-11 10:00:00"),
+        ("done", "2026-03-11 11:00:00", True, None),
+        ("undated", None, False, None),
     ]
     for title, start, completed, reminded in rows:
         end = start and "2026-03-11 12:00:00"

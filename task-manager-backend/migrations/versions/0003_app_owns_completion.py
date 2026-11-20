@@ -13,26 +13,31 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute("UPDATE tasks SET completed_at = NULL WHERE is_completed = 0")
+    op.execute("UPDATE tasks SET completed_at = NULL WHERE is_completed = false")
     op.execute(
         "UPDATE tasks SET completed_at = COALESCE(completed_at, NOW()) "
-        "WHERE is_completed = 1"
+        "WHERE is_completed = true"
     )
-    op.execute("DROP TRIGGER IF EXISTS tr_ensure_completion_timestamp")
+    op.execute("DROP TRIGGER IF EXISTS tr_ensure_completion_timestamp ON tasks")
+    op.execute("DROP FUNCTION IF EXISTS ensure_completion_timestamp()")
 
 
 def downgrade() -> None:
     op.execute(
         """
-        CREATE TRIGGER tr_ensure_completion_timestamp
-        BEFORE UPDATE ON tasks
-        FOR EACH ROW
+        CREATE FUNCTION ensure_completion_timestamp() RETURNS trigger AS $$
         BEGIN
-            IF NEW.is_completed = 1 AND NEW.completed_at IS NULL THEN
-                SET NEW.completed_at = NOW();
-            ELSEIF NEW.is_completed = 0 THEN
-                SET NEW.completed_at = NULL;
+            IF NEW.is_completed AND NEW.completed_at IS NULL THEN
+                NEW.completed_at = CURRENT_TIMESTAMP;
+            ELSIF NOT NEW.is_completed THEN
+                NEW.completed_at = NULL;
             END IF;
-        END
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql
         """
+    )
+    op.execute(
+        "CREATE TRIGGER tr_ensure_completion_timestamp BEFORE UPDATE ON tasks "
+        "FOR EACH ROW EXECUTE FUNCTION ensure_completion_timestamp()"
     )

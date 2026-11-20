@@ -42,6 +42,7 @@ from app.services.auth_service import (
     verify_reset_token,
 )
 from app.services.mail_service import send_email
+from app.utils.auth import authenticated_user_id
 from app.utils.cookies import (
     clear_auth_cookies,
     set_access_cookies,
@@ -55,16 +56,23 @@ logger = logging.getLogger(__name__)
 
 def get_password_reset_html(reset_link: str) -> str:
     return f"""
-    <div style="background-color: #f8fafc; padding: 40px 20px; font-family: sans-serif;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 40px; text-align: center;">
-            <h1 style="font-size: 24px; font-weight: 900; color: #4f46e5; letter-spacing: -0.05em; margin-bottom: 24px;">
+    <div style="background-color: #f8fafc; padding: 40px 20px; font-family:
+    sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border:
+        1px solid #e2e8f0; border-radius: 8px; padding: 40px; text-align: center;">
+            <h1 style="font-size: 24px; font-weight: 900; color: #4f46e5;
+            letter-spacing: -0.05em; margin-bottom: 24px;">
                 Task<span style="color: #0f172a;">Flow</span>
             </h1>
-            
+
             <h2 style="color: #1e293b; margin-top: 0;">Password Reset Request</h2>
-            <p style="color: #64748b; margin: 20px 0;">We received a request to reset your password. Click the button below to choose a new one.</p>
-            <a href="{reset_link}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
-            <p style="color: #94a3b8; font-size: 12px; margin-top: 30px;">If you did not request this, please ignore this email. This link expires in 15 minutes.</p>
+            <p style="color: #64748b; margin: 20px 0;">We received a request to reset
+            your password. Click the button below to choose a new one.</p>
+            <a href="{reset_link}" style="background-color: #4f46e5; color: #ffffff;
+            padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight:
+            bold; display: inline-block;">Reset Password</a>
+            <p style="color: #94a3b8; font-size: 12px; margin-top: 30px;">If you did not
+            request this, please ignore this email. This link expires in 15 minutes.</p>
         </div>
     </div>
     """
@@ -118,7 +126,8 @@ def login() -> ResponseReturnValue:
 def demo_login() -> ResponseReturnValue:
     try:
         verify_jwt_in_request(optional=True)
-        current_user_id = get_jwt_identity()
+        identity = get_jwt_identity()
+        current_user_id = int(identity) if identity else None
     except Exception:
         current_user_id = None
 
@@ -145,7 +154,7 @@ def logout() -> ResponseReturnValue:
 @auth_bp.route("/api/auth/me", methods=["GET"])
 @jwt_required()
 def get_me() -> ResponseReturnValue:
-    current_user_id = get_jwt_identity()
+    current_user_id = authenticated_user_id()
     user = get_user(current_user_id)
     if user:
         return jsonify({"message": "Logged in.", "user": UserSchema().dump(user)})

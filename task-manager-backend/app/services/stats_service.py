@@ -5,12 +5,14 @@ from typing import Any
 
 from sqlalchemy import (
     ColumnElement,
+    Date,
     Row,
     Select,
     and_,
     case,
+    cast,
+    extract,
     func,
-    literal_column,
     select,
 )
 
@@ -18,7 +20,12 @@ from app.database import db
 from app.models import Task
 from app.services.project_service import root_project_names
 from app.utils.dates import as_aware_utc, as_naive_utc, start_of_day, utc_now
-from app.utils.task_utils import top_level_tasks_of, with_repeating
+from app.utils.task_utils import (
+    DURATION_MINUTES,
+    DURATION_SECONDS,
+    top_level_tasks_of,
+    with_repeating,
+)
 
 Stats = list[dict[str, Any]]
 ProjectNames = dict[int | None, str]
@@ -32,12 +39,6 @@ MAX_TURNAROUND_DAYS = 50
 ACCURACY_DAYS = 30
 OVERDUE_BUCKETS = ("< 3 Days", "1 Week", "1 Month", "3 Months", "+3 Months")
 
-DURATION_MINUTES = func.timestampdiff(
-    literal_column("MINUTE"), Task.start_at, Task.end_at
-)
-DURATION_SECONDS = func.timestampdiff(
-    literal_column("SECOND"), Task.start_at, Task.end_at
-)
 COMPLETED_DATE = func.date(Task.completed_at)
 END_DATE = func.date(Task.end_at)
 
@@ -103,7 +104,7 @@ def _time_spent(user_id: int, names: ProjectNames) -> Stats:
 
 
 def _hourly_productivity(user_id: int) -> Stats:
-    hour = func.hour(Task.completed_at)
+    hour = extract("hour", Task.completed_at)
     rows = _rows(
         select(hour, func.count())
         .where(top_level_tasks_of(user_id), Task.is_completed)
@@ -114,7 +115,7 @@ def _hourly_productivity(user_id: int) -> Stats:
 
 
 def _turnaround_time(user_id: int) -> Stats:
-    days_taken = func.datediff(Task.completed_at, Task.created_at)
+    days_taken = cast(Task.completed_at, Date) - cast(Task.created_at, Date)
     rows = _rows(
         select(days_taken, func.count())
         .where(top_level_tasks_of(user_id), Task.is_completed, days_taken >= 0)
@@ -229,7 +230,7 @@ def _backlog_health(volume: Stats) -> Stats:
 
 
 def _overdue_distribution(user_id: int, now: datetime) -> Stats:
-    days_late = func.timestampdiff(literal_column("DAY"), Task.end_at, now)
+    days_late = func.trunc(extract("epoch", now - Task.end_at) / 86400)
     bucket = case(
         (days_late <= 3, OVERDUE_BUCKETS[0]),
         (days_late <= 7, OVERDUE_BUCKETS[1]),
@@ -253,7 +254,7 @@ def _overdue_distribution(user_id: int, now: datetime) -> Stats:
 def _deadline_proximity(
     user_id: int, now: datetime, ghosts: list[Task], names: ProjectNames
 ) -> Stats:
-    time_left = func.timestampdiff(literal_column("SECOND"), now, Task.end_at)
+    time_left = func.trunc(extract("epoch", Task.end_at - now))
     rows = _rows(
         select(Task.project_id, func.sum(time_left), func.count())
         .where(
