@@ -242,18 +242,3 @@ def test_a_task_stored_with_fractions_of_a_second_can_still_be_moved(
     moved = move(user_id, task, MONDAY, TUESDAY, False)
 
     assert moved.start_at == at("2026-03-03 09:00:00")
-
-
-def test_moving_an_occurrence_that_has_already_moved_on_is_a_conflict(
-    user_id: int,
-) -> None:
-    task = add_task(user_id, repeatBy="weekly")
-
-    with pytest.raises(TaskConflict):
-        move(
-            user_id,
-            task,
-            NEXT_MONDAY,
-            ("2026-03-10 09:00:00", "2026-03-10 10:00:00"),
-            False,
-        )

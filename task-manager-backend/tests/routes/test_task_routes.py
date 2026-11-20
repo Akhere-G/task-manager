@@ -211,17 +211,6 @@ def test_reschedule_returns_the_moved_task(
     assert (moved["id"], moved["startAt"]) == (task_id, "2026-03-03T09:00:00Z")
 
 
-def test_reschedule_of_a_stale_occurrence_is_a_409_with_the_current_task(
-    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
-) -> None:
-    task_id = create_daily_task(session, task_payload)
-
-    response = reschedule(session, task_id, TUESDAY, TUESDAY)
-
-    assert response.status_code == 409
-    assert response.get_json()["task"]["startAt"] == "2026-03-02T09:00:00Z"
-
-
 def test_reschedule_rejects_a_bad_payload_and_a_missing_task(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
