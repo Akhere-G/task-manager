@@ -18,7 +18,14 @@ from app.services.task_service import (
     update_task,
 )
 from app.utils.dates import as_naive_utc
-from tests.builders import MONDAY, NEXT_MONDAY, Slot, add_task, reschedule_body
+from tests.builders import (
+    MONDAY,
+    NEXT_MONDAY,
+    TUESDAY,
+    Slot,
+    add_task,
+    reschedule_body,
+)
 
 
 def edit(user_id: int, task: Task, **changes: Any) -> Task:
@@ -221,6 +228,20 @@ def test_moving_a_clamped_monthly_ghost_replaces_the_day_it_stands_for(
 
     assert task.repeat_days == [15]
     assert task.start_at == at("2026-02-15 09:00")
+
+
+def test_a_task_stored_with_fractions_of_a_second_can_still_be_moved(
+    user_id: int,
+) -> None:
+    task = add_task(
+        user_id,
+        startAt="2026-03-02 09:00:00.250000",
+        endAt="2026-03-02 10:00:00.250000",
+    )
+
+    moved = move(user_id, task, MONDAY, TUESDAY, False)
+
+    assert moved.start_at == at("2026-03-03 09:00:00")
 
 
 def test_moving_an_occurrence_that_has_already_moved_on_is_a_conflict(
