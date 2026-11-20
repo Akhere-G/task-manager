@@ -1,27 +1,10 @@
 from collections.abc import Callable
-from typing import Any
 
 import pytest
 
-from app.mcp.registry import ToolRegistry
-from app.mcp.tools.tasks import TASK_TOOLS
-from tests.mcp.helpers import call_tool
+from tests.mcp.helpers import REGISTRY, fail, run
 
 pytestmark = pytest.mark.integration
-
-REGISTRY = ToolRegistry(TASK_TOOLS)
-
-
-def run(user_id: int, name: str, **arguments: Any) -> dict[str, Any]:
-    is_error, payload = call_tool(REGISTRY, user_id, name, arguments)
-    assert not is_error, payload
-    return payload
-
-
-def fail(user_id: int, name: str, **arguments: Any) -> dict[str, Any]:
-    is_error, payload = call_tool(REGISTRY, user_id, name, arguments)
-    assert is_error, payload
-    return payload
 
 
 def test_a_task_goes_through_its_whole_life(user_id: int) -> None:
