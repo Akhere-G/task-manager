@@ -3,12 +3,16 @@ from app.exceptions import InvalidColumn, TaskNotFound
 from app.models import OnDrop, Task
 from app.services.column_service import get_column
 from app.services.order_service import place_task
-from app.services.task_service import delete_task, get_task, update_task
+from app.services.task_service import (
+    apply_task_trash,
+    apply_task_update,
+    get_task,
+)
 
 COMPLETION_BY_ON_DROP = {OnDrop.COMPLETE: True, OnDrop.UNCOMPLETE: False}
 
 
-def move_task_to_column(
+def apply_move_to_column(
     user_id: int,
     task_id: int,
     column_id: int | None,
@@ -29,10 +33,21 @@ def move_task_to_column(
 
     on_drop = OnDrop.NOTHING if column is None else column.on_drop
     if on_drop == OnDrop.DELETE:
-        delete_task(user_id, task_id)
+        apply_task_trash(user_id, task_id)
     elif on_drop in COMPLETION_BY_ON_DROP:
         is_completed = COMPLETION_BY_ON_DROP[on_drop]
         if task.is_completed != is_completed:
-            return update_task(user_id, task_id, {"is_completed": is_completed})
+            apply_task_update(user_id, task_id, {"is_completed": is_completed})
+    return task
+
+
+def move_task_to_column(
+    user_id: int,
+    task_id: int,
+    column_id: int | None,
+    after_id: int | None,
+    before_id: int | None,
+) -> Task:
+    task = apply_move_to_column(user_id, task_id, column_id, after_id, before_id)
     db.session.commit()
     return task

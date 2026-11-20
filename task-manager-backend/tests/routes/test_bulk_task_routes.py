@@ -4,6 +4,8 @@ from typing import Any
 import pytest
 from flask.testing import FlaskClient
 
+from app.services import bulk_task_service
+
 pytestmark = pytest.mark.integration
 
 TaskPayload = Callable[..., dict[str, Any]]
@@ -113,3 +115,57 @@ def test_other_users_tasks_are_skipped(
 
     still_open = owner.get(f"/api/tasks/{ids[0]}").get_json()
     assert still_open["isCompleted"] is False
+
+
+def fail_on_second_call(monkeypatch: pytest.MonkeyPatch, name: str) -> None:
+    real = getattr(bulk_task_service, name)
+    calls: list[int] = []
+
+    def flaky(*args: Any) -> object:
+        calls.append(1)
+        if len(calls) == 2:
+            raise RuntimeError("database went away")
+        return real(*args)
+
+    monkeypatch.setattr(bulk_task_service, name, flaky)
+
+
+def test_a_failure_part_way_changes_no_task_in_a_bulk_complete(
+    session: FlaskClient, task_payload: TaskPayload, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ids = add_tasks(session, task_payload)
+    fail_on_second_call(monkeypatch, "apply_task_update")
+
+    response = session.post("/api/tasks/bulk-complete", json={"ids": ids})
+
+    assert response.status_code == 500
+    done = [session.get(f"/api/tasks/{task_id}").get_json() for task_id in ids]
+    assert [task["isCompleted"] for task in done] == [False, False, False]
+
+
+def test_a_failure_part_way_deletes_no_task_in_a_bulk_delete(
+    session: FlaskClient, task_payload: TaskPayload, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ids = add_tasks(session, task_payload)
+    fail_on_second_call(monkeypatch, "apply_task_trash")
+
+    response = session.post("/api/tasks/bulk-delete", json={"ids": ids})
+
+    assert response.status_code == 500
+    statuses = [session.get(f"/api/tasks/{task_id}").status_code for task_id in ids]
+    assert statuses == [200, 200, 200]
+
+
+def test_a_task_that_cannot_be_updated_does_not_stop_the_others(
+    session: FlaskClient, task_payload: TaskPayload
+) -> None:
+    ids = add_tasks(session, task_payload, 2)
+    missing_id = 999_999
+
+    response = session.post(
+        "/api/tasks/bulk-complete", json={"ids": [ids[0], missing_id, ids[1]]}
+    )
+
+    assert response.get_json() == {"updated": 2, "matched": 3}
+    done = [session.get(f"/api/tasks/{task_id}").get_json() for task_id in ids]
+    assert [task["isCompleted"] for task in done] == [True, True]
