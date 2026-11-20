@@ -1,23 +1,17 @@
-from typing import Any
-
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from app.config import build_database_url, ssl_ca_path
+from app.config import build_database_url
 
 load_dotenv()
 
 DATABASE_URL = build_database_url()
 
 
-def build_connect_args() -> dict[str, Any]:
-    args = {"connect_timeout": 10, "read_timeout": 30, "write_timeout": 30}
-    ca = ssl_ca_path()
-    if ca:
-        args["ssl"] = {"ca": ca}  # type: ignore
-    return args
+def build_connect_args() -> dict[str, int]:
+    return {"connect_timeout": 10}
 
 
 ENGINE_OPTIONS = {

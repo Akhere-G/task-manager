@@ -1,22 +1,17 @@
 import os
 from collections.abc import Iterable
-from pathlib import Path
 
-from sqlalchemy.engine import URL
+from sqlalchemy.engine import URL, make_url
 
-DB_REQUIRED = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"]
+DB_REQUIRED = ["DATABASE_URL"]
 APP_REQUIRED = ["JWT_SECRET_KEY", "FRONTEND_URL"]
-
-# A database password may legitimately be empty (local development), so for
-# these variables being set is enough.
-MAY_BE_EMPTY = {"DB_PASSWORD"}
 
 
 def missing_env(names: Iterable[str]) -> list[str]:
     missing = []
     for name in names:
         value = os.getenv(name)
-        if value is None or (value == "" and name not in MAY_BE_EMPTY):
+        if not value:
             missing.append(name)
     return missing
 
@@ -31,26 +26,7 @@ def require_env(names: Iterable[str]) -> None:
 
 def build_database_url() -> URL:
     require_env(DB_REQUIRED)
-    return URL.create(
-        "mysql+pymysql",
-        username=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-        host=os.environ["DB_HOST"],
-        port=int(os.getenv("DB_PORT") or 3306),
-        database=os.environ["DB_NAME"],
-    )
-
-
-def ssl_ca_path() -> str | None:
-    configured = os.getenv("DB_SSL_CA")
-    if not configured:
-        return None
-    path = Path(configured)
-    if not path.is_absolute():
-        path = Path(__file__).resolve().parent.parent / path
-    if not path.is_file():
-        raise RuntimeError("DB_SSL_CA does not point to an existing file")
-    return str(path)
+    return make_url(os.environ["DATABASE_URL"]).set(drivername="postgresql+psycopg")
 
 
 AI_DAILY_LIMIT = 30
