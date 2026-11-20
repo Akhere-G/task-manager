@@ -16,8 +16,10 @@ LATEST_VERSION = SUPPORTED_VERSIONS[0]
 DEFAULT_VERSION = "2025-03-26"
 SERVER_INFO = {"name": "taskflow", "version": "1.0.0"}
 INSTRUCTIONS = (
-    "Manage the user's TaskFlow tasks, projects and labels. "
-    "Dates are ISO 8601 in UTC. Deleting a project or label is permanent."
+    "Manage the user's TaskFlow tasks, subtasks, projects, labels and kanban "
+    "columns, and read their productivity stats. Dates are ISO 8601 in UTC. "
+    "Deleting a project, label or column is permanent, and so is replacing "
+    "subtasks; deleting a task moves it to the trash."
 )
 
 PARSE_ERROR = -32700

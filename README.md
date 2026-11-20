@@ -63,7 +63,7 @@ The Daily Brief, AI quick-add, task breakdown and priority suggestions send task
 
 ### Connect Claude (MCP)
 
-The backend serves an [MCP](https://modelcontextprotocol.io) endpoint at `/mcp` so Claude Code and Claude Desktop can read and manage your tasks, projects and labels.
+The backend serves an [MCP](https://modelcontextprotocol.io) endpoint at `/mcp` so Claude Code and Claude Desktop can read and manage your tasks, subtasks, projects, labels and kanban columns, and read your productivity stats.
 
 1. In **Settings → Connect Claude**, create a token. Choose *Read only* if Claude should only look, or *Read and write*. The token is shown once; only a hash is stored.
 2. Run the command shown with the new token, for example:
@@ -72,10 +72,15 @@ The backend serves an [MCP](https://modelcontextprotocol.io) endpoint at `/mcp` 
    claude mcp add --transport http taskflow https://<your-host>/mcp --header "Authorization: Bearer <token>"
    ```
 
-3. Ask Claude to list, create, update or delete tasks, projects and labels.
+3. Ask Claude to list, create, update or delete tasks, projects, labels and columns, or how your backlog is looking.
 
-* Tools: `list_tasks`, `get_task`, `create_task`, `update_task` (also completes), `delete_task`, `restore_task`, `list_trash`, `list_projects`, `get_project`, `create_project`, `update_project`, `delete_project`, `list_labels`, `create_label`, `update_label`, `delete_label`.
-* Deleting a task moves it to the trash, so `restore_task` can bring it back for 30 days. Deleting a project or a label is permanent; the tools are marked destructive so Claude asks first.
+* Tools (36):
+  * Tasks: `list_tasks`, `get_task`, `create_task`, `update_task` (also completes and edits subtasks), `delete_task`, `restore_task`, `list_trash`.
+  * Subtasks: `add_subtasks`, `replace_subtasks`, `reorder_subtasks`.
+  * Projects and labels: `list_projects`, `get_project`, `create_project`, `update_project`, `delete_project`, `list_labels`, `create_label`, `update_label`, `delete_label`.
+  * Kanban columns: `list_columns`, `create_column`, `update_column`, `reorder_columns`, `delete_column`, `move_task_to_column`.
+  * Stats (read only): `get_productivity_trend`, `get_time_spent`, `get_hourly_productivity`, `get_turnaround_time`, `get_estimation_accuracy`, `get_distribution_trend`, `get_project_volume`, `get_backlog_health`, `get_overdue_distribution`, `get_deadline_proximity`, `get_week_overview`.
+* Deleting a task moves it to the trash, so `restore_task` can bring it back for 30 days; a subtask is deleted permanently. Deleting a project, label or column and replacing subtasks are permanent, and the tools are marked destructive so Claude asks first. Deleting a column keeps its tasks and moves them to the column you choose, or to Unassigned.
 * Tokens act as their owner, are rate limited per token (120 requests a minute) and can be revoked any time from Settings. The shared demo account cannot create them.
 * The endpoint is a stateless JSON-over-HTTP subset of MCP's Streamable HTTP transport (protocol versions 2025-06-18 and 2025-03-26): one `POST /mcp`, no sessions and no server-sent events, so it runs on the existing gunicorn setup. It does not support OAuth, so it works with clients that send a bearer header, not with claude.ai's web or mobile connectors.
 
