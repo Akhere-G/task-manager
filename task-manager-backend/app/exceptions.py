@@ -76,6 +76,20 @@ class LabelNotFound(NotFoundError):
     message = "No label with that id exists."
 
 
+class ApiTokenNotFound(NotFoundError):
+    message = "No token with that id exists."
+
+
+class InvalidApiToken(AppError):
+    status_code = 401
+    message = "The token is missing, invalid or has been revoked."
+
+
+class InsufficientScope(AppError):
+    status_code = 403
+    message = "This token is read-only."
+
+
 class TooManyLabels(AppError):
     field = "labelNames"
 

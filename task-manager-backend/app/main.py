@@ -16,6 +16,7 @@ from app.errors import register_error_handlers
 from app.extensions import limiter
 from app.headers import register_response_headers
 from app.routes.ai_routes import ai_bp
+from app.routes.api_token_routes import api_token_bp
 from app.routes.auth_routes import auth_bp
 from app.routes.column_routes import column_bp
 from app.routes.label_routes import label_bp
@@ -115,6 +116,7 @@ def create_app() -> Flask:
         app.register_blueprint(project_bp)
         app.register_blueprint(column_bp)
         app.register_blueprint(label_bp)
+        app.register_blueprint(api_token_bp)
 
         @app.route("/health")
         @limiter.exempt
