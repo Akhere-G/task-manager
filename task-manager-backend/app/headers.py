@@ -25,7 +25,7 @@ def register_response_headers(app: Flask) -> None:
     def set_response_headers(response: Response) -> Response:
         path = request.path
 
-        if path.startswith("/api/"):
+        if path.startswith("/api/") or path == "/mcp":
             response.headers["Cache-Control"] = "no-store"
         elif path.startswith("/assets/"):
             response.headers["Cache-Control"] = "public, max-age=31536000, immutable"

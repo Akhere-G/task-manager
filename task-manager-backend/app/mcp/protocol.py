@@ -13,12 +13,14 @@ logger = logging.getLogger(__name__)
 
 SUPPORTED_VERSIONS = ("2025-06-18", "2025-03-26")
 LATEST_VERSION = SUPPORTED_VERSIONS[0]
+DEFAULT_VERSION = "2025-03-26"
 SERVER_INFO = {"name": "taskflow", "version": "1.0.0"}
 INSTRUCTIONS = (
     "Manage the user's TaskFlow tasks, projects and labels. "
     "Dates are ISO 8601 in UTC. Deleting a project or label is permanent."
 )
 
+PARSE_ERROR = -32700
 INVALID_REQUEST = -32600
 METHOD_NOT_FOUND = -32601
 INVALID_PARAMS = -32602
@@ -29,6 +31,10 @@ class JsonRpcError(Exception):
         self.code = code
         self.message = message
         super().__init__(message)
+
+
+def parse_error_response() -> dict[str, Any]:
+    return _error_response(None, PARSE_ERROR, "Parse error.")
 
 
 def invalid_request_response() -> dict[str, Any]:
