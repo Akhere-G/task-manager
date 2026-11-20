@@ -7,7 +7,7 @@ from marshmallow import Schema
 from app.mcp.schemas import input_json_schema
 from app.models import TokenScope
 
-ToolRunner = Callable[[int, dict[str, Any]], dict[str, Any]]
+ToolRunner = Callable[[int, Any], dict[str, Any]]
 
 
 @dataclass(slots=True, frozen=True)
