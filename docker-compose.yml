@@ -1,15 +1,15 @@
 services:
   db:
-    image: mysql:8.0
+    image: postgres:18-alpine
     environment:
-      MYSQL_DATABASE: task_manager
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dev-only-password}
+      POSTGRES_DB: task_manager
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-password}
     ports:
-      - "3307:3306"
+      - "5433:5432"
     volumes:
-      - db_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -35,11 +35,7 @@ services:
       redis:
         condition: service_healthy
     environment:
-      DB_HOST: db
-      DB_PORT: "3306"
-      DB_USER: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dev-only-password}
-      DB_NAME: task_manager
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-dev-only-password}@db:5432/task_manager
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-secret-change-me-0123456789abcdef}
       JWT_COOKIE_SECURE: "False"
@@ -51,4 +47,4 @@ services:
       MAIL_SEND_EMAIL: ${MAIL_SEND_EMAIL:-}
 
 volumes:
-  db_data:
+  postgres_data:
