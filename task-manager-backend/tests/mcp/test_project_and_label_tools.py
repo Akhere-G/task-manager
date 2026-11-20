@@ -92,6 +92,6 @@ def test_deletes_of_projects_and_labels_are_flagged_destructive() -> None:
 def test_the_full_registry_advertises_valid_schemas() -> None:
     names = [tool.name for tool in REGISTRY]
 
-    assert len(names) == len(set(names)) == 25
+    assert len(names) == len(set(names)) == 36
     for tool in REGISTRY:
         assert tool.definition()["inputSchema"]["type"] == "object"
