@@ -24,7 +24,6 @@ export interface GetTrashResult {
 }
 export interface RescheduleTaskInput {
   previousStartAt: string;
-  previousEndAt: string;
   startAt: string;
   endAt: string;
   isGhost: boolean;

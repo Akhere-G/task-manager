@@ -80,7 +80,6 @@ describe("rescheduling on the calendar", () => {
     release();
     expect(sentBody()).toEqual({
       previousStartAt: "2026-03-02 09:00:00",
-      previousEndAt: "2026-03-02 10:00:00",
       startAt: "2026-03-03 09:00:00",
       endAt: "2026-03-03 10:00:00",
       isGhost: false,

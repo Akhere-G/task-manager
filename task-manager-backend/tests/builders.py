@@ -46,7 +46,6 @@ def reschedule_body(
 ) -> dict[str, Any]:
     return {
         "previousStartAt": previous[0],
-        "previousEndAt": previous[1],
         "startAt": new[0],
         "endAt": new[1],
         "isGhost": is_ghost,

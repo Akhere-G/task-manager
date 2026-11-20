@@ -18,7 +18,6 @@ function renderReschedule() {
 
 const MOVE = {
   previousStartAt: "2026-03-09T09:00:00Z",
-  previousEndAt: "2026-03-09T10:00:00Z",
   startAt: "2026-03-10T10:00:00+01:00",
   endAt: "2026-03-10T11:00:00+01:00",
   isGhost: true,
@@ -33,7 +32,6 @@ describe("useRescheduleTask", () => {
 
     expect(JSON.parse(mock.history.post[0].data)).toEqual({
       previousStartAt: "2026-03-09 09:00:00",
-      previousEndAt: "2026-03-09 10:00:00",
       startAt: "2026-03-10 09:00:00",
       endAt: "2026-03-10 10:00:00",
       isGhost: true,

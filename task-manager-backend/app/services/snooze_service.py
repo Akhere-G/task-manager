@@ -39,7 +39,6 @@ def _move_repeating(task: Task, day: date, data: dict[str, Any]) -> Task:
         task.id,
         {
             "previous_start_at": source,
-            "previous_end_at": source + length,
             "start_at": start,
             "end_at": end,
             "is_ghost": data["is_ghost"],

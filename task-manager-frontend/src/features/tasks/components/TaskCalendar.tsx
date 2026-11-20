@@ -119,7 +119,6 @@ export default function TaskCalendar({
         id: getCalendarTaskId(task),
         rescheduleData: {
           previousStartAt: task.startAt ?? startAt,
-          previousEndAt: task.endAt ?? endAt,
           startAt,
           endAt,
           isGhost: task.isGhost ?? false,

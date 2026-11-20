@@ -119,7 +119,6 @@ def test_a_reschedule_is_loaded_as_naive_utc() -> None:
 @pytest.mark.parametrize(
     "override, field",
     [
-        ({"previousEndAt": RESCHEDULE["previousStartAt"]}, "previousEndAt"),
         ({"endAt": RESCHEDULE["startAt"]}, "endAt"),
         ({"isGhost": "yes"}, "isGhost"),
         ({"startAt": "tomorrow"}, "startAt"),
