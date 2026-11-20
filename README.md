@@ -61,6 +61,24 @@ Reminders are sent by `python -m app.run_reminders` (run from `task-manager-back
 
 The Daily Brief, AI quick-add, task breakdown and priority suggestions send task titles, descriptions and project names to the configured AI providers (Google Gemini, with Groq as a fallback). Nothing is sent unless you use those features.
 
+### Connect Claude (MCP)
+
+The backend serves an [MCP](https://modelcontextprotocol.io) endpoint at `/mcp` so Claude Code and Claude Desktop can read and manage your tasks, projects and labels.
+
+1. In **Settings → Connect Claude**, create a token. Choose *Read only* if Claude should only look, or *Read and write*. The token is shown once; only a hash is stored.
+2. Run the command shown with the new token, for example:
+
+   ```bash
+   claude mcp add --transport http taskflow https://<your-host>/mcp --header "Authorization: Bearer <token>"
+   ```
+
+3. Ask Claude to list, create, update or delete tasks, projects and labels.
+
+* Tools: `list_tasks`, `get_task`, `create_task`, `update_task` (also completes), `delete_task`, `restore_task`, `list_trash`, `list_projects`, `get_project`, `create_project`, `update_project`, `delete_project`, `list_labels`, `create_label`, `update_label`, `delete_label`.
+* Deleting a task moves it to the trash, so `restore_task` can bring it back for 30 days. Deleting a project or a label is permanent; the tools are marked destructive so Claude asks first.
+* Tokens act as their owner, are rate limited per token (120 requests a minute) and can be revoked any time from Settings. The shared demo account cannot create them.
+* The endpoint is a stateless JSON-over-HTTP subset of MCP's Streamable HTTP transport (protocol versions 2025-06-18 and 2025-03-26): one `POST /mcp`, no sessions and no server-sent events, so it runs on the existing gunicorn setup. It does not support OAuth, so it works with clients that send a bearer header, not with claude.ai's web or mobile connectors.
+
 ### Product Analytics (PostHog)
 
 The frontend sends custom product-usage events to PostHog. Before analytics-cookie consent, and after consent is declined or withdrawn, it uses PostHog's cookieless mode without storing a browser identifier. After consent, PostHog uses its normal cookie and local-storage persistence. Autocapture and session replay remain disabled.
