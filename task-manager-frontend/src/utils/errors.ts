@@ -11,3 +11,10 @@ export function getRateLimitMessage(err: unknown): string | null {
   const minutes = Math.ceil(seconds / 60);
   return `Too many attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`;
 }
+
+export function getApiErrorMessage(err: unknown, fallback: string): string {
+  if (!axios.isAxiosError(err)) return fallback;
+  const errors = err.response?.data?.errors;
+  if (errors) return String(Object.values(errors)[0]);
+  return err.response?.data?.error ?? fallback;
+}

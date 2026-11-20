@@ -1,8 +1,8 @@
 import { useState } from "react";
-import axios from "axios";
 import { Pencil, Trash2 } from "lucide-react";
 import FormInput from "../../components/ui/FormInput";
 import { trackEvent } from "../../services/analytics";
+import { getApiErrorMessage } from "../../utils/errors";
 import {
   useCreateLabel,
   useDeleteLabel,
@@ -17,15 +17,6 @@ interface Draft {
 }
 
 const emptyDraft: Draft = { name: "", colour: DEFAULT_LABEL_COLOUR };
-
-function errorText(err: unknown) {
-  if (axios.isAxiosError(err)) {
-    const errors = err.response?.data?.errors;
-    if (errors) return String(Object.values(errors)[0]);
-    return err.response?.data?.error ?? "Could not save the label.";
-  }
-  return "Could not save the label.";
-}
 
 interface LabelEditorProps {
   editing: Label | null;
@@ -60,7 +51,7 @@ function LabelEditor({ editing, onDone }: LabelEditorProps) {
       setDraft(emptyDraft);
       onDone();
     } catch (err) {
-      setError(errorText(err));
+      setError(getApiErrorMessage(err, "Could not save the label."));
     }
   }
 

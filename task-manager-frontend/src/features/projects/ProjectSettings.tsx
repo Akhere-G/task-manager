@@ -1,5 +1,4 @@
 import { useState } from "react";
-import axios from "axios";
 import { Pencil, Trash2 } from "lucide-react";
 import FormInput from "../../components/ui/FormInput";
 import {
@@ -11,6 +10,7 @@ import useProjects from "./hooks/useProjects";
 import { DEFAULT_PROJECT_COLOUR, type Project } from "./types";
 import { allowedParents, projectTree } from "./utils";
 import { trackEvent } from "../../services/analytics";
+import { getApiErrorMessage } from "../../utils/errors";
 
 interface Draft {
   name: string;
@@ -23,15 +23,6 @@ const emptyDraft: Draft = {
   colour: DEFAULT_PROJECT_COLOUR,
   parentId: "",
 };
-
-function errorText(err: unknown) {
-  if (axios.isAxiosError(err)) {
-    const errors = err.response?.data?.errors;
-    if (errors) return String(Object.values(errors)[0]);
-    return err.response?.data?.error ?? "Could not save the project.";
-  }
-  return "Could not save the project.";
-}
 
 interface ProjectEditorProps {
   projects: Project[];
@@ -79,7 +70,7 @@ function ProjectEditor({ projects, editing, onDone }: ProjectEditorProps) {
       setDraft(emptyDraft);
       onDone();
     } catch (err) {
-      setError(errorText(err));
+      setError(getApiErrorMessage(err, "Could not save the project."));
     }
   }
 
