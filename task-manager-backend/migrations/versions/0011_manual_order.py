@@ -23,15 +23,15 @@ def upgrade() -> None:
     op.create_index("idx_tasks_user_order", "tasks", ["user_id", "sort_order"])
     op.execute(
         f"""
-        UPDATE tasks
-        JOIN (
+        UPDATE tasks SET sort_order = ranked.place * {GAP}
+        FROM (
             SELECT id,
                    ROW_NUMBER() OVER (
                        PARTITION BY user_id ORDER BY created_at DESC, id DESC
                    ) AS place
             FROM tasks
-        ) ranked ON ranked.id = tasks.id
-        SET tasks.sort_order = ranked.place * {GAP}
+        ) ranked
+        WHERE ranked.id = tasks.id
         """
     )
 

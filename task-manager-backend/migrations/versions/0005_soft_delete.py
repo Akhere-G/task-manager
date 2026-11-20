@@ -16,7 +16,9 @@ depends_on = None
 def upgrade() -> None:
     op.add_column(
         "tasks",
-        sa.Column("is_deleted", sa.Boolean(), server_default="0", nullable=False),
+        sa.Column(
+            "is_deleted", sa.Boolean(), server_default=sa.false(), nullable=False
+        ),
     )
     op.add_column("tasks", sa.Column("deleted_at", sa.DateTime(), nullable=True))
     op.create_index(
@@ -25,7 +27,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("DELETE FROM tasks WHERE is_deleted = 1")
+    op.execute("DELETE FROM tasks WHERE is_deleted = true")
     op.drop_index("idx_tasks_user_deleted", table_name="tasks")
     op.drop_column("tasks", "deleted_at")
     op.drop_column("tasks", "is_deleted")

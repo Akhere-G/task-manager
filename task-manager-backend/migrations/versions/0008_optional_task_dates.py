@@ -4,8 +4,8 @@ Revision ID: 0008
 Revises: 0007
 """
 
+import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import mysql
 
 revision = "0008"
 down_revision = "0007"
@@ -18,7 +18,7 @@ def upgrade() -> None:
         op.alter_column(
             "tasks",
             column,
-            existing_type=mysql.TIMESTAMP(),
+            existing_type=sa.TIMESTAMP(),
             nullable=True,
             server_default=None,
         )
@@ -27,14 +27,14 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.execute("UPDATE tasks SET start_at = created_at WHERE start_at IS NULL")
     op.execute(
-        "UPDATE tasks SET end_at = DATE_ADD(created_at, INTERVAL 30 MINUTE) "
+        "UPDATE tasks SET end_at = created_at + INTERVAL '30 minutes' "
         "WHERE end_at IS NULL"
     )
     for column in ("start_at", "end_at"):
         op.alter_column(
             "tasks",
             column,
-            existing_type=mysql.TIMESTAMP(),
+            existing_type=sa.TIMESTAMP(),
             nullable=False,
             server_default=None,
         )

@@ -64,7 +64,9 @@ def _seed_default_columns() -> None:
                 sa.text(
                     "INSERT INTO project_columns "
                     "(project_id, name, status, colour, on_drop, position) "
-                    "VALUES (:project_id, :name, :status, :colour, :on_drop, :position)"
+                    "VALUES (:project_id, :name, :status, :colour, "
+                    ":on_drop, :position) "
+                    "RETURNING id"
                 ),
                 {
                     "project_id": project_id,
@@ -75,7 +77,7 @@ def _seed_default_columns() -> None:
                     "position": position,
                 },
             )
-            column_ids.append(result.lastrowid)
+            column_ids.append(result.scalar_one())
         _assign_tasks(connection, project_id, column_ids[0], column_ids[-1])
 
 
@@ -84,7 +86,8 @@ def _assign_tasks(
 ) -> None:
     connection.execute(
         sa.text(
-            "UPDATE tasks SET column_id = IF(is_completed, :last_id, :first_id) "
+            "UPDATE tasks SET column_id = CASE WHEN is_completed "
+            "THEN :last_id ELSE :first_id END "
             "WHERE project_id = :project_id"
         ),
         {"project_id": project_id, "first_id": first_id, "last_id": last_id},
@@ -95,3 +98,4 @@ def downgrade() -> None:
     op.drop_constraint("fk_tasks_column_id", "tasks", type_="foreignkey")
     op.drop_column("tasks", "column_id")
     op.drop_table("project_columns")
+    sa.Enum(name="on_drop").drop(op.get_bind())

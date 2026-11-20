@@ -1,9 +1,10 @@
 from datetime import date, datetime
-from sqlalchemy import ForeignKey, UniqueConstraint, Text, func
-from sqlalchemy.dialects.mysql import TIMESTAMP
+
+from sqlalchemy import TIMESTAMP, ForeignKey, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
+
 from app.database import Base
-from datetime import timezone
+from app.utils.dates import utc_now
 
 
 class DailyBrief(Base):
@@ -17,7 +18,7 @@ class DailyBrief(Base):
         TIMESTAMP,
         server_default=func.current_timestamp(),
         nullable=True,
-        default=lambda: datetime.now(timezone.utc),
+        default=utc_now,
     )
 
     __table_args__ = (
