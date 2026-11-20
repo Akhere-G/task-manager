@@ -150,7 +150,7 @@ export default function SettingsPage() {
     }
   };
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <header className="card ">
         <h1 className="text-3xl font-bold text-text-main">Settings</h1>
         <p className="text-text-sub">Your preferences</p>

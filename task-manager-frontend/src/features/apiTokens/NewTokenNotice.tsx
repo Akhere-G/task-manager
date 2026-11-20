@@ -31,15 +31,14 @@ export function NewTokenNotice({ created, onDismiss }: NewTokenNoticeProps) {
         <strong>{created.name}</strong> is ready. Run this in your terminal to
         connect Claude Code. The token is shown only once.
       </p>
-      <pre className="overflow-x-auto rounded-lg bg-bg-secondary p-3 text-sm text-text-main">
+      <pre className="whitespace-pre-wrap break-all rounded-lg bg-bg-secondary p-3 text-sm text-text-main">
         <code>{command}</code>
       </pre>
       <div className="text-sm text-text-main">
         <p className="font-semibold">Claude on the web</p>
         <p className="text-text-sub">
-          In Claude, add a custom connector with this URL, choose &ldquo;No sign in&rdquo;
-          and add this request header. It only works when this site is on the
-          public internet.
+          In Claude, add a custom connector with this URL, choose &ldquo;No sign
+          in&rdquo; and add this request header.
         </p>
         <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
           <dt>URL</dt>
