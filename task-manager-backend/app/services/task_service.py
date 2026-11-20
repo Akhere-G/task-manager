@@ -291,22 +291,12 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     return task
 
 
-def _same_second(first: datetime | None, second: datetime | None) -> bool:
-    # Clients only send whole seconds, but stored starts can carry microseconds.
-    return (first and first.replace(microsecond=0)) == (
-        second and second.replace(microsecond=0)
-    )
-
-
 def apply_reschedule(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task = get_task(user_id, task_id, lock=True)
     previous_start = data["previous_start_at"]
     new_start = data["start_at"]
     new_end = data["end_at"]
     duration = new_end - new_start
-
-    if not data["is_ghost"] and not _same_second(previous_start, task.start_at):
-        raise TaskConflict(TaskSchema().dump(task))  # type: ignore
 
     if not task.is_repeating or not task.repeat_by:
         task.start_at = new_start
@@ -319,7 +309,7 @@ def apply_reschedule(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         task.repeat_days = replace_slot(
             task.repeat_by, task.repeat_days, previous_start, new_start, zone
         )
-        if data["is_ghost"]:
+        if data["is_ghost"] and task.start_at:
             task.start_at = at_time_of(task.start_at, new_start, zone)
         else:
             task.start_at = new_start
