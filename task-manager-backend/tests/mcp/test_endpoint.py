@@ -81,7 +81,7 @@ def test_a_client_can_initialize_list_and_call_tools(
     assert notified.get_data() == b""
 
     tools = rpc(client, token, "tools/list").get_json()["result"]["tools"]
-    assert len(tools) == 22
+    assert len(tools) == 25
 
     result = call_over_http(client, token, "create_task", {"title": "From Claude"})
     assert result["isError"] is False

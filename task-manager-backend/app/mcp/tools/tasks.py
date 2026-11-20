@@ -55,7 +55,7 @@ def _update_task(user_id: int, data: dict[str, Any]) -> dict[str, Any]:
 
 def _delete_task(user_id: int, data: dict[str, Any]) -> dict[str, Any]:
     delete_task(user_id, data["id"])
-    return {"id": data["id"], "message": "Moved to trash"}
+    return {"id": data["id"], "message": "Deleted"}
 
 
 def _restore_task(user_id: int, data: dict[str, Any]) -> dict[str, Any]:
@@ -74,7 +74,10 @@ TASK_TOOLS = (
     Tool(
         name="get_task",
         title="Get a task",
-        description="Get one task by id, with its labels, reminders and subtasks.",
+        description=(
+            "Get one task by id, with its labels, reminders and subtasks. Each "
+            "subtask carries its own id, which update_task and delete_task accept."
+        ),
         input=EmptySchema,
         takes_id=True,
         scope=TokenScope.READ,
@@ -117,8 +120,9 @@ TASK_TOOLS = (
         name="delete_task",
         title="Delete a task",
         description=(
-            "Move a task to the trash. It can be brought back with restore_task "
-            "for 30 days before it is purged."
+            "Move a task and its subtasks to the trash. It can be brought back with "
+            "restore_task for 30 days before it is purged. A subtask (a task with a "
+            "parentId) is deleted permanently instead."
         ),
         input=EmptySchema,
         takes_id=True,
