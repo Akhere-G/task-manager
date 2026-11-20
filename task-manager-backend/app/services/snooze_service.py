@@ -7,18 +7,9 @@ from app.models import Task
 from app.services.label_service import attach_label_ids
 from app.services.reminder_service import attach_reminders, sync_reminders
 from app.services.subtask_service import attach_subtask_counts
-from app.services.task_service import get_task, reschedule_task
+from app.services.task_service import apply_reschedule, get_task
 from app.utils.snooze import snooze_today, snoozed_span, target_day
 from app.utils.task_utils import next_task_start
-
-
-def _finish(task: Task) -> Task:
-    sync_reminders(task)
-    db.session.commit()
-    attach_label_ids([task])
-    attach_reminders([task])
-    attach_subtask_counts([task])
-    return task
 
 
 def _move_to_next_occurrence(task: Task) -> Task:
@@ -27,14 +18,15 @@ def _move_to_next_occurrence(task: Task) -> Task:
     next_start = next_task_start(task)
     task.end_at = next_start + (task.end_at - task.start_at)
     task.start_at = next_start
-    return _finish(task)
+    sync_reminders(task)
+    return task
 
 
 def _move_repeating(task: Task, day: date, data: dict[str, Any]) -> Task:
     length = task.end_at - task.start_at
     source = data["previous_start_at"] if data["is_ghost"] else task.start_at
     start, end = snoozed_span(source, source + length, day, data["zone_name"])
-    return reschedule_task(
+    return apply_reschedule(
         task.user_id,
         task.id,
         {
@@ -46,7 +38,7 @@ def _move_repeating(task: Task, day: date, data: dict[str, Any]) -> Task:
     )
 
 
-def snooze_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
+def apply_snooze(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task = get_task(user_id, task_id, lock=True)
     if data["preset"] == "next_occurrence":
         return _move_to_next_occurrence(task)
@@ -58,4 +50,14 @@ def snooze_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task.start_at, task.end_at = snoozed_span(
         task.start_at, task.end_at, day, data["zone_name"]
     )
-    return _finish(task)
+    sync_reminders(task)
+    return task
+
+
+def snooze_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
+    task = apply_snooze(user_id, task_id, data)
+    db.session.commit()
+    attach_label_ids([task])
+    attach_reminders([task])
+    attach_subtask_counts([task])
+    return task

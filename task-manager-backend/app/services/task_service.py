@@ -236,7 +236,7 @@ def _sync_completion(task: Task, was_completed: bool) -> None:
         task.completed_at = None
 
 
-def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
+def apply_task_update(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task = get_task(user_id, task_id, lock=True)
     before = snapshot(task)
 
@@ -279,7 +279,11 @@ def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         db.session.flush()
     elif task.is_completed and not before.is_completed:
         complete_open_subtasks(task)
+    return task
 
+
+def update_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
+    task = apply_task_update(user_id, task_id, data)
     db.session.commit()
     attach_label_ids([task])
     attach_reminders([task])
@@ -294,7 +298,7 @@ def _same_second(first: datetime | None, second: datetime | None) -> bool:
     )
 
 
-def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
+def apply_reschedule(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     task = get_task(user_id, task_id, lock=True)
     previous_start = data["previous_start_at"]
     new_start = data["start_at"]
@@ -323,6 +327,11 @@ def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         _apply_recurrence(task)
 
     sync_reminders(task)
+    return task
+
+
+def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
+    task = apply_reschedule(user_id, task_id, data)
     db.session.commit()
     attach_label_ids([task])
     attach_reminders([task])
@@ -330,7 +339,7 @@ def reschedule_task(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
     return task
 
 
-def delete_task(user_id: int, task_id: int) -> None:
+def apply_task_trash(user_id: int, task_id: int) -> None:
     task = get_task(user_id, task_id)
     if task.parent_id is not None:
         db.session.delete(task)
@@ -338,6 +347,10 @@ def delete_task(user_id: int, task_id: int) -> None:
         task.is_deleted = True
         task.deleted_at = utc_now()
         set_subtasks_deleted(task, True)
+
+
+def delete_task(user_id: int, task_id: int) -> None:
+    apply_task_trash(user_id, task_id)
     db.session.commit()
 
 
