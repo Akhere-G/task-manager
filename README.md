@@ -74,6 +74,8 @@ The backend serves an [MCP](https://modelcontextprotocol.io) endpoint at `/mcp` 
 
 3. Ask Claude to list, create, update or delete tasks, projects, labels and columns, or how your backlog is looking.
 
+To use it from Claude on the web, the site must be reachable from the public internet over HTTPS on port 443, because Claude connects from Anthropic's servers, not from your browser (so `localhost` cannot work). In Claude, open Customize → Connectors → Add → Add custom connector, enter `https://<your-host>/mcp`, choose "No sign in" and add the request header `Authorization` with the value `Bearer <token>` (the new-token notice shows all three). Create the token on the same site you connect to; tokens are per deployment. Request headers may not be offered on every Claude plan.
+
 * Tools (36):
   * Tasks: `list_tasks`, `get_task`, `create_task`, `update_task` (also completes and edits subtasks), `delete_task`, `restore_task`, `list_trash`.
   * Subtasks: `add_subtasks`, `replace_subtasks`, `reorder_subtasks`.
@@ -82,7 +84,7 @@ The backend serves an [MCP](https://modelcontextprotocol.io) endpoint at `/mcp` 
   * Stats (read only): `get_productivity_trend`, `get_time_spent`, `get_hourly_productivity`, `get_turnaround_time`, `get_estimation_accuracy`, `get_distribution_trend`, `get_project_volume`, `get_backlog_health`, `get_overdue_distribution`, `get_deadline_proximity`, `get_week_overview`.
 * Deleting a task moves it to the trash, so `restore_task` can bring it back for 30 days; a subtask is deleted permanently. Deleting a project, label or column and replacing subtasks are permanent, and the tools are marked destructive so Claude asks first. Deleting a column keeps its tasks and moves them to the column you choose, or to Unassigned.
 * Tokens act as their owner, are rate limited per token (120 requests a minute) and can be revoked any time from Settings. The shared demo account cannot create them.
-* The endpoint is a stateless JSON-over-HTTP subset of MCP's Streamable HTTP transport (protocol versions 2025-06-18 and 2025-03-26): one `POST /mcp`, no sessions and no server-sent events, so it runs on the existing gunicorn setup. It does not support OAuth, so it works with clients that send a bearer header, not with claude.ai's web or mobile connectors.
+* The endpoint is a stateless JSON-over-HTTP subset of MCP's Streamable HTTP transport (protocol versions 2025-06-18 and 2025-03-26): one `POST /mcp`, no sessions and no server-sent events, so it runs on the existing gunicorn setup. It does not support OAuth, so it works with clients that can send a bearer header (Claude Code, and claude.ai custom connectors with a request header), not with connectors that require an OAuth sign-in.
 
 ### Product Analytics (PostHog)
 
