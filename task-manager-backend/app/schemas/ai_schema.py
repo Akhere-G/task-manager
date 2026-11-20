@@ -58,7 +58,9 @@ class DecomposeRequestSchema(CamelSchema):
             not_blank("Title is required."),
             validate.Length(
                 max=MAX_DECOMPOSE_TITLE_LENGTH,
-                error=f"Title must be {MAX_DECOMPOSE_TITLE_LENGTH} characters or fewer.",
+                error=(
+                    f"Title must be {MAX_DECOMPOSE_TITLE_LENGTH} characters or fewer."
+                ),
             ),
         ],
         error_messages={"required": "Title is required."},
@@ -67,7 +69,10 @@ class DecomposeRequestSchema(CamelSchema):
         allow_none=True,
         validate=validate.Length(
             max=MAX_DECOMPOSE_DESCRIPTION_LENGTH,
-            error=f"Description must be {MAX_DECOMPOSE_DESCRIPTION_LENGTH} characters or fewer.",
+            error=(
+                f"Description must be {MAX_DECOMPOSE_DESCRIPTION_LENGTH} "
+                "characters or fewer."
+            ),
         ),
     )
     start_at = fields.String(allow_none=True)
@@ -117,7 +122,7 @@ def _clean_recurrence(data: dict[str, Any]) -> dict[str, Any]:
 
 
 class AiTaskSchema(CamelSchema):
-    """A task described by a model. Wrong or missing parts are repaired, not rejected."""
+    """A task described by a model, repairing wrong or missing parts."""
 
     title = fields.String(required=True)
     description = fields.String(allow_none=True)

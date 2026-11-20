@@ -139,7 +139,8 @@ def _brief_prompt(
     return f"""
     Persona: Encouraging, positive and grounded productivity coach.
     Date: {day.strftime("%A, %d %B")}
-    Recent Productivity: {completed_this_week} completed this week. Avg {average:.1f}/day.
+    Recent Productivity: {completed_this_week} completed this week. Avg
+    {average:.1f}/day.
     Current Volume:
     {volume}
 
@@ -197,17 +198,27 @@ def _parse_prompt(user_input: str, now: datetime, paths: dict[int, str]) -> str:
     - description: (string or null), put any extra information here
     - project: (string) {_project_choices(paths)}. Use null if none clearly fits.
     - priority: integer 1 (urgent) to 4 (none), default 4. "p1" to "p4" set it.
-    - startAt: Datetime (MUST be present), use YYYY-MM-DD HH:MM. Should be set to any date time mention. If no time mentioned, use {now:%Y-%m-%d} 00:00.
-    - endAt: Datetime use YYYY-MM-DD HH:MM (MUST be present). Should be after startAt but on the same day. If no time mentioned, if a duration was mentioned, add that to the start date and set this to that. Otherwise set to an hour after start at.
-    - isRepeating: boolean. True if task is daily/every day, weekly, monthly, yearly or repeated
-    - repeatBy: ENUM ("daily", "weekly", "monthly", "yearly") or null. For repeating tasks: Identify the frequency mentioned.
-    - repeatInterval: integer of 1 or more, default 1. "every 2 weeks" is 2, "every 3 days" is 3, "every other month" is 2.
+    - startAt: Datetime (MUST be present), use YYYY-MM-DD HH:MM. Should be set to any
+    date time mention. If no time mentioned, use {now:%Y-%m-%d} 00:00.
+    - endAt: Datetime use YYYY-MM-DD HH:MM (MUST be present). Should be after startAt
+    but on the same day. If no time mentioned, if a duration was mentioned, add that to
+    the start date and set this to that. Otherwise set to an hour after start at.
+    - isRepeating: boolean. True if task is daily/every day, weekly, monthly, yearly or
+    repeated
+    - repeatBy: ENUM ("daily", "weekly", "monthly", "yearly") or null. For repeating
+    tasks: Identify the frequency mentioned.
+    - repeatInterval: integer of 1 or more, default 1. "every 2 weeks" is 2, "every 3
+    days" is 3, "every other month" is 2.
     - repeatDays: list or null. Only when specific days are mentioned.
-        weekly: weekday numbers where Monday is 0 and Sunday is 6, e.g. "Monday and Thursday" is [0, 3].
+        weekly: weekday numbers where Monday is 0 and Sunday is 6, e.g. "Monday and
+        Thursday" is [0, 3].
         monthly: days of the month from 1 to 31, e.g. "the 1st and 15th" is [1, 15].
-        yearly: "MM-DD" strings, e.g. "14 February and 25 December" is ["02-14", "12-25"].
-        Use null for daily tasks, when no specific days are mentioned, or when the task does not repeat.
-    - repeatUntil DATE or Null. use YYYY-MM-DD. For repeating tasks: Identify the end date mentioned.
+        yearly: "MM-DD" strings, e.g. "14 February and 25 December" is ["02-14",
+        "12-25"].
+        Use null for daily tasks, when no specific days are mentioned, or when the task
+        does not repeat.
+    - repeatUntil DATE or Null. use YYYY-MM-DD. For repeating tasks: Identify the end
+    date mentioned.
     """
 
 
@@ -237,8 +248,10 @@ def _decompose_prompt(
     Return only a json list of objects of this format
     - title: (string)
     - description: (string or null)
-    - startAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is {date.today():%Y-%m-%d}. If no time mentioned, default to end of day 00:00)
-    - endAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, If no due date mentioned, default to end of day 23:59)
+    - startAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, assume today is
+    {date.today():%Y-%m-%d}. If no time mentioned, default to end of day 00:00)
+    - endAt: (ISO timestamp YYYY-MM-DD HH:MM:SS, If no due date mentioned, default to
+    end of day 23:59)
     """
 
 
