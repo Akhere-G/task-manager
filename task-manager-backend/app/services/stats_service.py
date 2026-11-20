@@ -1,6 +1,7 @@
 from collections import Counter, defaultdict
 from collections.abc import Sequence
 from datetime import date, datetime, timedelta
+from functools import cached_property
 from typing import Any
 
 from sqlalchemy import (
@@ -59,20 +60,30 @@ def _is_pending(now: datetime) -> ColumnElement[bool]:
     return and_(Task.is_completed.is_(False), Task.end_at >= now)
 
 
-def _upcoming_ghosts(user_id: int, now: datetime) -> list[Task]:
-    view_end = now + timedelta(days=PROJECTION_DAYS)
-    projected = with_repeating([], now, view_end, user_id)
-    return [ghost for ghost in projected if not ghost.is_completed]
+class StatsContext:
+    def __init__(self, user_id: int) -> None:
+        self.user_id = user_id
+        self.now = utc_now()
+
+    @cached_property
+    def ghosts(self) -> list[Task]:
+        view_end = self.now + timedelta(days=PROJECTION_DAYS)
+        projected = with_repeating([], self.now, view_end, self.user_id)
+        return [ghost for ghost in projected if not ghost.is_completed]
+
+    @cached_property
+    def names(self) -> ProjectNames:
+        return root_project_names(self.user_id)
 
 
-def _productivity_trend(user_id: int, now: datetime) -> Stats:
-    first_day = now.date() - timedelta(days=TREND_DAYS - 1)
+def productivity_trend(ctx: StatsContext, days: int = TREND_DAYS) -> Stats:
+    first_day = ctx.now.date() - timedelta(days=days - 1)
     rows = _rows(
         select(
             COMPLETED_DATE, func.count(), func.coalesce(func.sum(DURATION_MINUTES), 0)
         )
         .where(
-            top_level_tasks_of(user_id),
+            top_level_tasks_of(ctx.user_id),
             Task.is_completed,
             Task.completed_at >= start_of_day(first_day),
         )
@@ -81,44 +92,42 @@ def _productivity_trend(user_id: int, now: datetime) -> Stats:
     by_day = {day: (count, int(minutes)) for day, count, minutes in rows}
 
     trend = []
-    for offset in range(TREND_DAYS):
+    for offset in range(days):
         day = first_day + timedelta(days=offset)
-        tasks, time_spent = by_day.get(day, (0, 0))
-        trend.append(
-            {"date": day.isoformat(), "tasks": tasks, "time_spent": time_spent}
-        )
+        tasks, minutes = by_day.get(day, (0, 0))
+        trend.append({"date": day.isoformat(), "tasks": tasks, "time_spent": minutes})
     return trend
 
 
-def _time_spent(user_id: int, names: ProjectNames) -> Stats:
+def time_spent(ctx: StatsContext) -> Stats:
     rows = _rows(
         select(Task.project_id, func.coalesce(func.sum(DURATION_MINUTES), 0))
-        .where(top_level_tasks_of(user_id), Task.is_completed)
+        .where(top_level_tasks_of(ctx.user_id), Task.is_completed)
         .group_by(Task.project_id)
     )
     totals: Counter[str] = Counter()
     for project_id, minutes in rows:
-        totals[names[project_id]] += int(minutes)
+        totals[ctx.names[project_id]] += int(minutes)
     ranked = sorted(totals.items(), key=lambda item: (-item[1], item[0]))
     return [{"project": name, "time_spent": total} for name, total in ranked]
 
 
-def _hourly_productivity(user_id: int) -> Stats:
+def hourly_productivity(ctx: StatsContext) -> Stats:
     hour = extract("hour", Task.completed_at)
     rows = _rows(
         select(hour, func.count())
-        .where(top_level_tasks_of(user_id), Task.is_completed)
+        .where(top_level_tasks_of(ctx.user_id), Task.is_completed)
         .group_by(hour)
     )
     counts = dict(rows)
     return [{"hour": hour, "count": counts.get(hour, 0)} for hour in range(24)]
 
 
-def _turnaround_time(user_id: int) -> Stats:
+def turnaround_time(ctx: StatsContext) -> Stats:
     days_taken = cast(Task.completed_at, Date) - cast(Task.created_at, Date)
     rows = _rows(
         select(days_taken, func.count())
-        .where(top_level_tasks_of(user_id), Task.is_completed, days_taken >= 0)
+        .where(top_level_tasks_of(ctx.user_id), Task.is_completed, days_taken >= 0)
         .group_by(days_taken)
     )
     counts = dict(rows)
@@ -128,14 +137,14 @@ def _turnaround_time(user_id: int) -> Stats:
     ]
 
 
-def _estimation_accuracy(user_id: int, now: datetime, names: ProjectNames) -> Stats:
+def estimation_accuracy(ctx: StatsContext) -> Stats:
     rows = _rows(
         select(Task.id, Task.title, Task.project_id, Task.end_at, Task.completed_at)
         .where(
-            top_level_tasks_of(user_id),
+            top_level_tasks_of(ctx.user_id),
             Task.is_completed,
             Task.end_at.is_not(None),
-            Task.completed_at > now - timedelta(days=ACCURACY_DAYS),
+            Task.completed_at > ctx.now - timedelta(days=ACCURACY_DAYS),
         )
         .order_by(Task.completed_at)
     )
@@ -143,7 +152,7 @@ def _estimation_accuracy(user_id: int, now: datetime, names: ProjectNames) -> St
         {
             "id": task_id,
             "title": title,
-            "project": names[project_id],
+            "project": ctx.names[project_id],
             "estimated_at": int(as_aware_utc(end_at).timestamp()),
             "completed_at": int(as_aware_utc(completed_at).timestamp()),
             "variance_minutes": int((end_at - completed_at).total_seconds() / 60),
@@ -152,12 +161,13 @@ def _estimation_accuracy(user_id: int, now: datetime, names: ProjectNames) -> St
     ]
 
 
-def _distribution_trend(user_id: int, now: datetime, names: ProjectNames) -> Stats:
-    first_day = now.date() - timedelta(days=6)
+def distribution_trend(ctx: StatsContext) -> Stats:
+    names = ctx.names
+    first_day = ctx.now.date() - timedelta(days=6)
     rows = _rows(
         select(COMPLETED_DATE, Task.project_id, func.count())
         .where(
-            top_level_tasks_of(user_id),
+            top_level_tasks_of(ctx.user_id),
             Task.is_completed,
             Task.completed_at >= start_of_day(first_day),
         )
@@ -193,17 +203,16 @@ def _distribution_trend(user_id: int, now: datetime, names: ProjectNames) -> Sta
     return trend
 
 
-def _project_volume(
-    user_id: int, now: datetime, ghosts: list[Task], names: ProjectNames
-) -> Stats:
+def project_volume(ctx: StatsContext) -> Stats:
+    names = ctx.names
     rows = _rows(
         select(
             Task.project_id,
             _count_if(Task.is_completed),
-            _count_if(_is_overdue(now)),
-            _count_if(_is_pending(now)),
+            _count_if(_is_overdue(ctx.now)),
+            _count_if(_is_pending(ctx.now)),
         )
-        .where(top_level_tasks_of(user_id))
+        .where(top_level_tasks_of(ctx.user_id))
         .group_by(Task.project_id)
     )
     volume = defaultdict(lambda: {"completed": 0, "overdue": 0, "pending": 0})
@@ -212,7 +221,7 @@ def _project_volume(
         entry["completed"] += int(completed)
         entry["overdue"] += int(overdue)
         entry["pending"] += int(pending)
-    for name, count in Counter(names[ghost.project_id] for ghost in ghosts).items():
+    for name, count in Counter(names[ghost.project_id] for ghost in ctx.ghosts).items():
         volume[name]["pending"] += count
 
     return [
@@ -221,7 +230,7 @@ def _project_volume(
     ]
 
 
-def _backlog_health(volume: Stats) -> Stats:
+def backlog_health(volume: Stats) -> Stats:
     return [
         {"status": "Completed", "count": sum(v["completed"] for v in volume)},
         {"status": "Overdue", "count": sum(v["overdue"] for v in volume)},
@@ -229,8 +238,8 @@ def _backlog_health(volume: Stats) -> Stats:
     ]
 
 
-def _overdue_distribution(user_id: int, now: datetime) -> Stats:
-    days_late = func.trunc(extract("epoch", now - Task.end_at) / 86400)
+def overdue_distribution(ctx: StatsContext) -> Stats:
+    days_late = func.trunc(extract("epoch", ctx.now - Task.end_at) / 86400)
     bucket = case(
         (days_late <= 3, OVERDUE_BUCKETS[0]),
         (days_late <= 7, OVERDUE_BUCKETS[1]),
@@ -240,7 +249,7 @@ def _overdue_distribution(user_id: int, now: datetime) -> Stats:
     )
     rows = _rows(
         select(bucket, func.count())
-        .where(top_level_tasks_of(user_id), _is_overdue(now))
+        .where(top_level_tasks_of(ctx.user_id), _is_overdue(ctx.now))
         .group_by(bucket)
     )
     counts = dict(rows)
@@ -251,14 +260,13 @@ def _overdue_distribution(user_id: int, now: datetime) -> Stats:
     ]
 
 
-def _deadline_proximity(
-    user_id: int, now: datetime, ghosts: list[Task], names: ProjectNames
-) -> Stats:
-    time_left = func.trunc(extract("epoch", Task.end_at - now))
+def deadline_proximity(ctx: StatsContext) -> Stats:
+    names = ctx.names
+    time_left = func.trunc(extract("epoch", Task.end_at - ctx.now))
     rows = _rows(
         select(Task.project_id, func.sum(time_left), func.count())
         .where(
-            top_level_tasks_of(user_id),
+            top_level_tasks_of(ctx.user_id),
             Task.is_completed.is_(False),
             Task.end_at.is_not(None),
         )
@@ -270,10 +278,10 @@ def _deadline_proximity(
         seconds_by_project[names[project_id]] += int(seconds)
         tasks_by_project[names[project_id]] += count
 
-    for ghost in ghosts:
+    for ghost in ctx.ghosts:
         name = names[ghost.project_id]
         seconds_by_project[name] += int(
-            (as_naive_utc(ghost.end_at) - now).total_seconds()
+            (as_naive_utc(ghost.end_at) - ctx.now).total_seconds()
         )
         tasks_by_project[name] += 1
 
@@ -284,13 +292,13 @@ def _deadline_proximity(
     return sorted(scores, key=lambda s: s["score"], reverse=True)
 
 
-def _week_overview(user_id: int, now: datetime, ghosts: list[Task]) -> Stats:
-    week_start = start_of_day(now.date())
+def week_overview(ctx: StatsContext) -> Stats:
+    week_start = start_of_day(ctx.now.date())
     week_end = week_start + timedelta(days=7)
     rows = _rows(
         select(END_DATE, func.count(), func.coalesce(func.sum(DURATION_SECONDS), 0))
         .where(
-            top_level_tasks_of(user_id),
+            top_level_tasks_of(ctx.user_id),
             Task.is_completed.is_(False),
             Task.end_at >= week_start,
             Task.end_at < week_end,
@@ -299,7 +307,7 @@ def _week_overview(user_id: int, now: datetime, ghosts: list[Task]) -> Stats:
     )
     per_day = {day: [count, int(seconds)] for day, count, seconds in rows}
 
-    for ghost in ghosts:
+    for ghost in ctx.ghosts:
         end = as_naive_utc(ghost.end_at)
         if week_start <= end < week_end:
             totals = per_day.setdefault(end.date(), [0, 0])
@@ -318,31 +326,27 @@ def _week_overview(user_id: int, now: datetime, ghosts: list[Task]) -> Stats:
 
 
 def get_brief_stats(user_id: int) -> dict[str, Stats]:
-    now = utc_now()
-    ghosts = _upcoming_ghosts(user_id, now)
-    names = root_project_names(user_id)
+    ctx = StatsContext(user_id)
     return {
-        "productivity": _productivity_trend(user_id, now),
-        "projectVolume": _project_volume(user_id, now, ghosts, names),
+        "productivity": productivity_trend(ctx),
+        "projectVolume": project_volume(ctx),
     }
 
 
 def get_all_dashboard_stats(user_id: int) -> dict[str, Stats]:
-    now = utc_now()
-    ghosts = _upcoming_ghosts(user_id, now)
-    names = root_project_names(user_id)
-    volume = _project_volume(user_id, now, ghosts, names)
+    ctx = StatsContext(user_id)
+    volume = project_volume(ctx)
 
     return {
-        "productivity": _productivity_trend(user_id, now),
-        "timeSpent": _time_spent(user_id, names),
-        "backlogHealth": _backlog_health(volume),
+        "productivity": productivity_trend(ctx),
+        "timeSpent": time_spent(ctx),
+        "backlogHealth": backlog_health(volume),
         "projectVolume": volume,
-        "overdueDistribution": _overdue_distribution(user_id, now),
-        "deadlineProximity": _deadline_proximity(user_id, now, ghosts, names),
-        "hourlyProductivity": _hourly_productivity(user_id),
-        "turnaround": _turnaround_time(user_id),
-        "estimationAccuracy": _estimation_accuracy(user_id, now, names),
-        "weekOverview": _week_overview(user_id, now, ghosts),
-        "distributionTrend": _distribution_trend(user_id, now, names),
+        "overdueDistribution": overdue_distribution(ctx),
+        "deadlineProximity": deadline_proximity(ctx),
+        "hourlyProductivity": hourly_productivity(ctx),
+        "turnaround": turnaround_time(ctx),
+        "estimationAccuracy": estimation_accuracy(ctx),
+        "weekOverview": week_overview(ctx),
+        "distributionTrend": distribution_trend(ctx),
     }

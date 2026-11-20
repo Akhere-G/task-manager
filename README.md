@@ -61,6 +61,31 @@ Reminders are sent by `python -m app.run_reminders` (run from `task-manager-back
 
 The Daily Brief, AI quick-add, task breakdown and priority suggestions send task titles, descriptions and project names to the configured AI providers (Google Gemini, with Groq as a fallback). Nothing is sent unless you use those features.
 
+### Connect Claude (MCP)
+
+The backend serves an [MCP](https://modelcontextprotocol.io) endpoint at `/mcp` so Claude Code and Claude Desktop can read and manage your tasks, subtasks, projects, labels and kanban columns, and read your productivity stats.
+
+1. In **Settings → Connect Claude**, create a token. Choose *Read only* if Claude should only look, or *Read and write*. The token is shown once; only a hash is stored.
+2. Run the command shown with the new token, for example:
+
+   ```bash
+   claude mcp add --transport http taskflow https://<your-host>/mcp --header "Authorization: Bearer <token>"
+   ```
+
+3. Ask Claude to list, create, update or delete tasks, projects, labels and columns, or how your backlog is looking.
+
+To use it from Claude on the web, the site must be reachable from the public internet over HTTPS on port 443, because Claude connects from Anthropic's servers, not from your browser (so `localhost` cannot work). In Claude, open Customize → Connectors → Add → Add custom connector, enter `https://<your-host>/mcp`, choose "No sign in" and add the request header `Authorization` with the value `Bearer <token>` (the new-token notice shows all three). Create the token on the same site you connect to; tokens are per deployment. Request headers may not be offered on every Claude plan.
+
+* Tools (36):
+  * Tasks: `list_tasks`, `get_task`, `create_task`, `update_task` (also completes and edits subtasks), `delete_task`, `restore_task`, `list_trash`.
+  * Subtasks: `add_subtasks`, `replace_subtasks`, `reorder_subtasks`.
+  * Projects and labels: `list_projects`, `get_project`, `create_project`, `update_project`, `delete_project`, `list_labels`, `create_label`, `update_label`, `delete_label`.
+  * Kanban columns: `list_columns`, `create_column`, `update_column`, `reorder_columns`, `delete_column`, `move_task_to_column`.
+  * Stats (read only): `get_productivity_trend`, `get_time_spent`, `get_hourly_productivity`, `get_turnaround_time`, `get_estimation_accuracy`, `get_distribution_trend`, `get_project_volume`, `get_backlog_health`, `get_overdue_distribution`, `get_deadline_proximity`, `get_week_overview`.
+* Deleting a task moves it to the trash, so `restore_task` can bring it back for 30 days; a subtask is deleted permanently. Deleting a project, label or column and replacing subtasks are permanent, and the tools are marked destructive so Claude asks first. Deleting a column keeps its tasks and moves them to the column you choose, or to Unassigned.
+* Tokens act as their owner, are rate limited per token (120 requests a minute) and can be revoked any time from Settings. The shared demo account cannot create them.
+* The endpoint is a stateless JSON-over-HTTP subset of MCP's Streamable HTTP transport (protocol versions 2025-06-18 and 2025-03-26): one `POST /mcp`, no sessions and no server-sent events, so it runs on the existing gunicorn setup. It does not support OAuth, so it works with clients that can send a bearer header (Claude Code, and claude.ai custom connectors with a request header), not with connectors that require an OAuth sign-in.
+
 ### Product Analytics (PostHog)
 
 The frontend sends custom product-usage events to PostHog. Before analytics-cookie consent, and after consent is declined or withdrawn, it uses PostHog's cookieless mode without storing a browser identifier. After consent, PostHog uses its normal cookie and local-storage persistence. Autocapture and session replay remain disabled.
