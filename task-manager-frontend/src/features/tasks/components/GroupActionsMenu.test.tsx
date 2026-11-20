@@ -173,8 +173,8 @@ describe("GroupActionsMenu", () => {
     await user.click(screen.getByRole("menuitem", { name: "Delete all 5" }));
     await user.click(screen.getByRole("menuitem", { name: "Confirm delete" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "Updated 2 of 5",
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Updated 2 of 5 tasks",
     );
   });
 });

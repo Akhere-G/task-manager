@@ -45,7 +45,7 @@ describe("BulkActionBar", () => {
   });
 
   it("completes the selected tasks and clears the selection", async () => {
-    api.onPost("/tasks/bulk-complete").reply(200, { updated: 2 });
+    api.onPost("/tasks/bulk-complete").reply(200, { updated: 2, matched: 2 });
     renderBar();
     const user = await selectBoth();
 
@@ -58,7 +58,7 @@ describe("BulkActionBar", () => {
   });
 
   it("asks before deleting", async () => {
-    api.onPost("/tasks/bulk-delete").reply(200, { updated: 2 });
+    api.onPost("/tasks/bulk-delete").reply(200, { updated: 2, matched: 2 });
     renderBar();
     const user = await selectBoth();
 
@@ -68,6 +68,44 @@ describe("BulkActionBar", () => {
 
     await waitFor(() => expect(api.history.post).toHaveLength(1));
     expect(JSON.parse(api.history.post[0].data)).toEqual({ ids: [1, 2] });
+  });
+
+  it("confirms when every selected task was updated", async () => {
+    api.onPost("/tasks/bulk-complete").reply(200, { updated: 2, matched: 2 });
+    renderBar();
+    const user = await selectBoth();
+
+    await user.click(screen.getByRole("button", { name: /complete/i }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Updated 2 tasks",
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("warns with the counts when only some tasks were updated", async () => {
+    api.onPost("/tasks/bulk-complete").reply(200, { updated: 1, matched: 2 });
+    renderBar();
+    const user = await selectBoth();
+
+    await user.click(screen.getByRole("button", { name: /complete/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Updated 1 of 2 tasks",
+    );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("dismisses the result message", async () => {
+    api.onPost("/tasks/bulk-complete").reply(200, { updated: 1, matched: 2 });
+    renderBar();
+    const user = await selectBoth();
+    await user.click(screen.getByRole("button", { name: /complete/i }));
+    await screen.findByRole("alert");
+
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("clears the selection with Escape", async () => {

@@ -10,6 +10,7 @@ import GroupActionItems, {
   type GroupActions,
   type PriorityChoice,
 } from "./GroupActionItems";
+import { BulkResultBanner } from "./BulkResultBanner";
 
 interface GroupActionsMenuProps {
   name: string;
@@ -22,9 +23,6 @@ interface GroupActionsMenuProps {
   columnChoices?: ColumnChoice[];
 }
 
-const partialResultNotice = ({ updated, matched }: BulkResult) =>
-  updated < matched ? `Updated ${updated} of ${matched}` : "";
-
 export default function GroupActionsMenu({
   name,
   count,
@@ -34,11 +32,9 @@ export default function GroupActionsMenu({
   columnChoices = [],
 }: GroupActionsMenuProps) {
   const bulk = useBulkTaskActions();
-  const [notice, setNotice] = useState("");
+  const [result, setResult] = useState<BulkResult | null>(null);
   const target = { filter: buildCategoryFilter(query) };
-  const report = {
-    onSuccess: (r: BulkResult) => setNotice(partialResultNotice(r)),
-  };
+  const report = { onSuccess: setResult };
 
   const actions: GroupActions = {
     complete: () => bulk.complete.mutate(target, report),
@@ -52,10 +48,8 @@ export default function GroupActionsMenu({
 
   return (
     <div className="flex items-center gap-1">
-      {notice && (
-        <span role="status" className="text-[11px] text-failure">
-          {notice}
-        </span>
+      {result && (
+        <BulkResultBanner result={result} onDismiss={() => setResult(null)} />
       )}
       <DropdownMenu
         label={`Actions for ${name}`}
