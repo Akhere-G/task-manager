@@ -4,6 +4,7 @@ import {
   Palette,
   Database,
   FolderTree,
+  Plug,
   Tags,
   ShieldCheck,
   Timer,
@@ -20,6 +21,8 @@ import useProjects from "../features/projects/hooks/useProjects";
 import { projectPath } from "../features/projects/utils";
 import ProjectSettings from "../features/projects/ProjectSettings";
 import LabelSettings from "../features/labels/LabelSettings";
+import { ApiTokenSettings } from "../features/apiTokens/ApiTokenSettings";
+import { useAuthContext } from "../context/AuthContext";
 import { useCookieConsent } from "../context/CookieConsentContext";
 
 const EXPORT_PAGE_SIZE = 200;
@@ -30,6 +33,7 @@ export default function SettingsPage() {
   const [isError, setIsError] = React.useState(false);
   const { data: projects = [] } = useProjects();
   const { openPreferences, preferences } = useCookieConsent();
+  const { user } = useAuthContext();
   const { settings: pomodoroSettings, updateSettings: updatePomodoroSettings } =
     usePomodoroSettings();
 
@@ -214,7 +218,8 @@ export default function SettingsPage() {
           <div>
             <h4 className="font-medium text-text-main">Cookie preferences</h4>
             <p className="text-sm text-text-sub">
-              Analytics cookies are currently {preferences.analytics ? "on" : "off"}.
+              Analytics cookies are currently{" "}
+              {preferences.analytics ? "on" : "off"}.
             </p>
           </div>
           <button
@@ -246,6 +251,14 @@ export default function SettingsPage() {
           )}
         </div>
       </SettingsCard>
+      {!user?.isDemo && (
+        <SettingsCard
+          icon={<Plug className="text-brand" />}
+          title="Connect Claude"
+        >
+          <ApiTokenSettings />
+        </SettingsCard>
+      )}
     </div>
   );
 }
