@@ -2,7 +2,8 @@ from collections.abc import Callable
 
 import pytest
 
-from tests.mcp.helpers import REGISTRY, fail, run
+from app.models import TokenScope
+from tests.mcp.helpers import REGISTRY, call_tool, fail, run
 
 pytestmark = pytest.mark.integration
 
@@ -95,3 +96,10 @@ def test_the_full_registry_advertises_valid_schemas() -> None:
     assert len(names) == len(set(names)) == 36
     for tool in REGISTRY:
         assert tool.definition()["inputSchema"]["type"] == "object"
+
+
+def test_a_read_token_is_refused_by_every_write_tool(user_id: int) -> None:
+    for tool in REGISTRY:
+        is_error, payload = call_tool(REGISTRY, user_id, tool.name, {}, TokenScope.READ)
+        refused = "read-only" in str(payload)
+        assert refused is (tool.scope is TokenScope.WRITE), tool.name
