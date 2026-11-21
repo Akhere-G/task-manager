@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { dueToday, expect, test } from "./fixtures";
 
 const card = (page: import("@playwright/test").Page, title: string) =>
   page.getByRole("article").filter({ hasText: title });
@@ -10,8 +10,7 @@ test("snoozing a task to tomorrow moves it from Today to Upcoming", async ({
   const day = new Date().toISOString().slice(0, 10);
   await signedIn.createTask({
     title: "Pay the invoice",
-    startAt: `${day} 23:00:00`,
-    endAt: `${day} 23:30:00`,
+    ...dueToday(),
   });
   await page.goto("/");
   const today = page.getByRole("region", { name: "Today" });

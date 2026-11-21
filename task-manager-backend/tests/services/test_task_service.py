@@ -1,11 +1,9 @@
 from datetime import datetime
 from typing import Any
 
-import pytest
 from sqlalchemy import select
 
 from app.database import db
-from app.exceptions import TaskConflict
 from app.models import Task
 from app.schemas.task_schema import (
     TaskListQuerySchema,

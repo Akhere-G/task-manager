@@ -29,6 +29,15 @@ export interface StoredTask {
   reminders: { kind: string }[];
 }
 
+/** A task that starts now and ends at the end of today, so it is "Today" at any hour. */
+export const dueToday = (): Pick<TaskInput, "startAt" | "endAt"> => {
+  const now = new Date().toISOString();
+  return {
+    startAt: `${now.slice(0, 10)} ${now.slice(11, 19)}`,
+    endAt: `${now.slice(0, 10)} 23:59:59`,
+  };
+};
+
 /** Thin client for setting up and checking data through the real API. */
 export class Api {
   private readonly request: APIRequestContext;

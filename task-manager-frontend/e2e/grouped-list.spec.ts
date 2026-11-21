@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { dueToday, expect, test } from "./fixtures";
 
 const group = (page: import("@playwright/test").Page, name: string) =>
   page.getByRole("region", { name, exact: true });
@@ -12,8 +12,7 @@ test.describe("grouped list", () => {
   test("puts each task under its group", async ({ page, signedIn }) => {
     await signedIn.createTask({
       title: "Due tonight",
-      startAt: stamp(0, "23:00:00"),
-      endAt: stamp(0, "23:30:00"),
+      ...dueToday(),
     });
     await signedIn.createTask({
       title: "Missed it",
