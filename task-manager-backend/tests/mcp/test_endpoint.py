@@ -50,7 +50,7 @@ def test_get_is_not_allowed_and_does_not_serve_the_frontend(
     response = client.get("/mcp")
 
     assert response.status_code == 405
-    assert response.headers["Allow"] == "POST"
+    assert "POST" in response.headers["Allow"]
 
 
 def test_browser_requests_are_refused(

@@ -9,6 +9,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from sqlalchemy import select, text
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.routing import PathConverter
 
 from app.config import APP_REQUIRED, DB_REQUIRED, build_database_url, require_env
 from app.database import ENGINE_OPTIONS, db
@@ -32,11 +33,19 @@ load_dotenv()
 jwt = JWTManager()
 
 
+class FrontendPathConverter(PathConverter):
+    """Any path except /mcp, so the frontend fallback never answers that endpoint."""
+
+    regex = r"(?!mcp$)[^/].*?"
+
+
 def create_app() -> Flask:
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     static_folder_path = os.path.join(base_dir, "static")
 
-    app = Flask(__name__, static_folder=static_folder_path, static_url_path="")
+    app = Flask(__name__, static_folder=None)
+    app.static_folder = static_folder_path
+    app.url_map.converters["frontend_path"] = FrontendPathConverter
 
     require_env(DB_REQUIRED + APP_REQUIRED)
 
@@ -132,7 +141,7 @@ def create_app() -> Flask:
             return "DB Poked", 200
 
         @app.route("/", defaults={"path": ""})
-        @app.route("/<path:path>")
+        @app.route("/<frontend_path:path>")
         @limiter.exempt
         def serve(path: str) -> Response:
             static_folder = app.static_folder or ""

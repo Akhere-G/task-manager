@@ -37,11 +37,9 @@ def _unsupported_version(message: object) -> bool:
     return not is_initialize and version not in SUPPORTED_VERSIONS
 
 
-@mcp_bp.route("/mcp", methods=["GET", "POST"])
+@mcp_bp.route("/mcp", methods=["POST"])
 @limiter.limit(MCP_RATE_LIMIT, key_func=_token_key)
 def endpoint() -> ResponseReturnValue:
-    if request.method == "GET":
-        return Response(status=405, headers={"Allow": "POST"})
     if "Origin" in request.headers:
         return jsonify({"error": "Browser requests are not allowed."}), 403
     try:
