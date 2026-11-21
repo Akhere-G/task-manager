@@ -43,4 +43,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("idx_api_tokens_user", table_name="api_tokens")
     op.drop_table("api_tokens")
-    sa.Enum(name="token_scope").drop(op.get_bind(), checkfirst=True)
+    sa.Enum(name="token_scope").drop(op.get_bind())
