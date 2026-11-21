@@ -13,6 +13,7 @@ from app.schemas.task_schema import (
     TrashQuerySchema,
 )
 from app.services.task_listing import get_all_tasks
+from app.services.task_query import TaskQuery
 from app.services.task_service import (
     create_task,
     delete_task,
@@ -32,7 +33,7 @@ LIST_TASKS_DESCRIPTION = (
 )
 
 
-def _list_tasks(user_id: int, query: Any) -> dict[str, Any]:
+def _list_tasks(user_id: int, query: TaskQuery) -> dict[str, Any]:
     return TaskPageSchema().dump(get_all_tasks(user_id, query))
 
 

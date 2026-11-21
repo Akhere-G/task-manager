@@ -1,7 +1,7 @@
 from typing import Any
 
 from app.mcp.registry import Tool
-from app.models import TokenScope
+from app.models import Task, TokenScope
 from app.schemas.task_schema import (
     SubtaskOrderSchema,
     SubtaskSchema,
@@ -14,7 +14,7 @@ from app.services.subtask_service import (
 )
 
 
-def _subtasks_result(subtasks: list[Any]) -> dict[str, Any]:
+def _subtasks_result(subtasks: list[Task]) -> dict[str, Any]:
     return {"subtasks": SubtaskSchema(many=True).dump(subtasks)}
 
 
