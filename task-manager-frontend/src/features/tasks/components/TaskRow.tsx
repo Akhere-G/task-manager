@@ -21,7 +21,6 @@ import {
   formatDateRange,
   formatMinutes,
   isTaskOverdue,
-  playSound,
   taskMinutes,
 } from "../utils";
 import PriorityBadge from "./PriorityBadge";
@@ -68,7 +67,6 @@ export function TaskRow({
 
   const complete = () => {
     setIsCompleted(taskId, !isCompleted, task);
-    if (!isCompleted) playSound("/success.mp3");
   };
 
   return (

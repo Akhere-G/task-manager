@@ -14,7 +14,6 @@ import {
   formatDateRange,
   formatMinutes,
   isTaskOverdue,
-  playSound,
   taskMinutes,
 } from "../../tasks/utils";
 
@@ -40,7 +39,6 @@ export function BoardTaskCard({
       !task.isCompleted,
       task,
     );
-    if (!task.isCompleted) playSound("/success.mp3");
   };
 
   return (

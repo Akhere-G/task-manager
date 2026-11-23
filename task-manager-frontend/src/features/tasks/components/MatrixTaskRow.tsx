@@ -11,7 +11,6 @@ import {
   formatDateRange,
   formatMinutes,
   isTaskOverdue,
-  playSound,
   taskMinutes,
 } from "../utils";
 
@@ -39,7 +38,6 @@ export function MatrixTaskRow({
       !task.isCompleted,
       task,
     );
-    if (!task.isCompleted) playSound("/success.mp3");
   };
 
   return (

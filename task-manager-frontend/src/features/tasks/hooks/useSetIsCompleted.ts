@@ -1,6 +1,7 @@
 import type { Task } from "../types";
 import useUpdateTask from "./useUpdateTask";
 import { trackEvent } from "../../../services/analytics";
+import { playSound } from "../utils";
 
 export default function useSetIsCompleted() {
   const { mutateAsync: updateTask, isPending } = useUpdateTask();
@@ -25,6 +26,7 @@ export default function useSetIsCompleted() {
         to_status: isCompleted ? "completed" : "pending",
       });
       if (isCompleted) {
+        playSound("/success.mp3").catch(() => {});
         trackEvent("task_completed", {
           has_project: task ? task.projectId !== null : undefined,
           is_repeating: task ? Boolean(task.repeatBy) : undefined,

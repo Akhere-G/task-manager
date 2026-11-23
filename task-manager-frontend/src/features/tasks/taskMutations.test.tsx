@@ -1,7 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 import apiClient from "../../services/api";
 import { makeGhost, makeTask, renderWithProviders } from "../../test/render";
 import { taskService } from "./api";
@@ -10,9 +17,11 @@ import type { Task } from "./types";
 import { mockApi } from "../../test/api";
 
 const mock = mockApi();
+let play: MockInstance<HTMLMediaElement["play"]>;
 let tasksOnServer: Task[];
 
 beforeEach(() => {
+  play = vi.spyOn(HTMLMediaElement.prototype, "play");
   tasksOnServer = [];
   mock.onGet("/tasks").reply(() => [
     200,
@@ -82,6 +91,7 @@ describe("completing a task", () => {
     expect(body.completedAt).toMatch(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/);
     expect(gets("/tasks")).toBe(2);
     expect(gets("/stats/dashboard")).toBe(2);
+    expect(play).toHaveBeenCalledTimes(1);
   });
 
   it("completes the series, not the ghost id", async () => {
@@ -131,6 +141,7 @@ describe("completing a task", () => {
     expect(
       screen.getByRole("button", { name: "Mark task as completed" }),
     ).toBeEnabled();
+    expect(play).not.toHaveBeenCalled();
   });
 
   it("can be tried again after a failure", async () => {

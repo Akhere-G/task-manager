@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
-import { formatDateRange, formatDateRelative, playSound } from "../utils";
+import { formatDateRange, formatDateRelative } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import useSnoozeTask from "../hooks/useSnoozeTask";
 import SnoozeMenu from "./SnoozeMenu";
@@ -107,10 +107,6 @@ function TaskCard({
           <button
             onClick={() => {
               setIsCompleted(isGhost ? seriesId : id, !isCompleted, task);
-
-              if (!isCompleted) {
-                playSound("/success.mp3");
-              }
             }}
             disabled={isCompleting}
             title={isCompleted ? "Mark as pending" : "Mark as complete"}
