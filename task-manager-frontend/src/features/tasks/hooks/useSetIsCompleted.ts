@@ -12,16 +12,9 @@ export default function useSetIsCompleted() {
     inFlight.current.add(id);
 
     const completedAt = isCompleted ? new Date().toUTCString() : null;
-    const expectedStartAt =
-      isCompleted && task?.isRepeating && !task.isGhost
-        ? (task.startAt ?? undefined)
-        : undefined;
 
     try {
-      await updateTask({
-        id,
-        newTaskData: { isCompleted, completedAt, expectedStartAt },
-      });
+      await updateTask({ id, newTaskData: { isCompleted, completedAt } });
 
       const wasOverdue = task?.endAt
         ? new Date(task.endAt) < new Date()

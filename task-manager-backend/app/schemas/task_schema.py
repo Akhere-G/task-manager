@@ -292,8 +292,6 @@ class TaskUpdateSchema(TaskSchema):
         dump_only = ("created_at",)
         include_fk = True
 
-    expected_start_at = UtcDateTime(load_only=True)
-
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(partial=True, **kwargs)
 

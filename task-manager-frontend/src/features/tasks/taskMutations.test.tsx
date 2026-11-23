@@ -84,22 +84,7 @@ describe("completing a task", () => {
     expect(gets("/stats/dashboard")).toBe(2);
   });
 
-  it("tells the server which occurrence it saw when completing a repeating task", async () => {
-    const task = makeTask({ isRepeating: true, repeatBy: "daily" });
-    mock.onPatch("/tasks/1").reply(200, task);
-    renderCard(task);
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Mark task as completed" }),
-    );
-
-    await waitFor(() => expect(patches()).toHaveLength(1));
-    expect(JSON.parse(patches()[0].data).expectedStartAt).toBe(
-      "2026-03-02 09:00:00",
-    );
-  });
-
-  it("completes the series, not the ghost id, and sends no stale-occurrence check", async () => {
+  it("completes the series, not the ghost id", async () => {
     const ghost = makeGhost(1, "20260303");
     mock.onPatch("/tasks/1").reply(200, {});
     renderCard(ghost);
@@ -110,7 +95,6 @@ describe("completing a task", () => {
 
     await waitFor(() => expect(patches()).toHaveLength(1));
     expect(patches()[0].url).toBe("/tasks/1");
-    expect(JSON.parse(patches()[0].data)).not.toHaveProperty("expectedStartAt");
   });
 
   it("ignores a second click while the first request is still running", async () => {

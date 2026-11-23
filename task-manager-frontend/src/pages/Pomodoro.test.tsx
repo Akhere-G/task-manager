@@ -261,9 +261,7 @@ describe("Pomodoro page", () => {
     );
 
     await waitFor(() => expect(mock.history.patch).toHaveLength(1));
-    expect(JSON.parse(mock.history.patch[0].data).expectedStartAt).toBe(
-      "2026-03-02 09:00:00",
-    );
+    expect(mock.history.patch[0].url).toBe("/tasks/1");
   });
 
   it("says so when the task does not exist", async () => {
