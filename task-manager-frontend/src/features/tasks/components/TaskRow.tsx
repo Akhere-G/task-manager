@@ -32,6 +32,7 @@ import SubtaskCount from "./SubtaskCount";
 interface TaskRowProps {
   task: Task;
   setIsCompleted: (id: number, isComplete: boolean, task?: Task) => void;
+  isCompleting?: boolean;
   onDelete: (task: Task) => void;
   onEdit: (task: Task) => void;
   onOpen: (task: Task) => void;
@@ -52,6 +53,7 @@ const actionsClass = [
 export function TaskRow({
   task,
   setIsCompleted,
+  isCompleting = false,
   onDelete,
   onEdit,
   onOpen,
@@ -77,11 +79,12 @@ export function TaskRow({
       <button
         type="button"
         onClick={complete}
+        disabled={isCompleting}
         title={isCompleted ? "Mark as pending" : "Mark as complete"}
         aria-label={
           isCompleted ? "Mark task as pending" : "Mark task as completed"
         }
-        className={`mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md border-2 transition-colors ${isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
+        className={`mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md border-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div
@@ -190,13 +193,14 @@ export function TaskRow({
 
 export default function TaskRowConnected({ task }: { task: Task }) {
   const { openPopup, closePopup } = useTaskContext();
-  const setIsCompleted = useSetIsCompleted();
+  const { setIsCompleted, isPending } = useSetIsCompleted();
   const { mutate: snooze } = useSnoozeTask({ onSnooze: closePopup });
 
   return (
     <TaskRow
       task={task}
       setIsCompleted={setIsCompleted}
+      isCompleting={isPending}
       onDelete={(target) => openPopup(target, PopupModes.Delete)}
       onEdit={(target) => openPopup(target, PopupModes.Edit)}
       onOpen={(target) => openPopup(target, PopupModes.View)}

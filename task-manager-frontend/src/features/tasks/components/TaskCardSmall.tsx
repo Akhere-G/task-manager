@@ -13,11 +13,13 @@ interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
   setDraggedEvent?: (task: Task | null) => void;
   setIsCompleted: (id: number, isCompleted: boolean, task?: Task) => void;
+  isCompleting?: boolean;
 }
 export function TaskCardSmall({
   setSelectedTask,
   setDraggedEvent,
   setIsCompleted,
+  isCompleting = false,
   ...task
 }: TaskCardSmallProps) {
   const isOverdue =
@@ -33,6 +35,8 @@ export function TaskCardSmall({
     >
       <button
         aria-label={`Complete task ${task.title}`}
+        disabled={isCompleting}
+        className="disabled:cursor-not-allowed disabled:opacity-50"
         onClick={(e) => {
           setIsCompleted(
             task.isGhost ? task.seriesId : task.id,
@@ -96,12 +100,13 @@ interface TaskCardSmallConnectedProps extends Task {
 export default function TaskCardSmallConnected(
   props: TaskCardSmallConnectedProps,
 ) {
-  const setIsCompleted = useSetIsCompleted();
+  const { setIsCompleted, isPending } = useSetIsCompleted();
 
   const { openPopup } = useTaskContext();
   return (
     <TaskCardSmall
       setIsCompleted={setIsCompleted}
+      isCompleting={isPending}
       setSelectedTask={(task) => openPopup(task, PopupModes.View)}
       {...props}
     />

@@ -19,6 +19,7 @@ interface MatrixTaskRowProps {
   task: Task;
   onDragTask: (task: Task | null) => void;
   setIsCompleted: (id: number, isCompleted: boolean, task?: Task) => void;
+  isCompleting?: boolean;
   onOpen: (task: Task) => void;
 }
 
@@ -26,6 +27,7 @@ export function MatrixTaskRow({
   task,
   onDragTask,
   setIsCompleted,
+  isCompleting = false,
   onOpen,
 }: MatrixTaskRowProps) {
   const isOverdue = isTaskOverdue(task);
@@ -56,11 +58,12 @@ export function MatrixTaskRow({
       <button
         type="button"
         onClick={complete}
+        disabled={isCompleting}
         aria-label={
           task.isCompleted ? "Mark task as pending" : "Mark task as completed"
         }
         title={task.isCompleted ? "Mark as pending" : "Mark as complete"}
-        className={`h-4.5 w-4.5 shrink-0 cursor-pointer rounded-md border-2 ${task.isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
+        className={`h-4.5 w-4.5 shrink-0 cursor-pointer rounded-md border-2 disabled:cursor-not-allowed disabled:opacity-50 ${task.isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <button
@@ -98,11 +101,12 @@ export default function MatrixTaskRowConnected(
   props: Pick<MatrixTaskRowProps, "task" | "onDragTask">,
 ) {
   const { openPopup } = useTaskContext();
-  const setIsCompleted = useSetIsCompleted();
+  const { setIsCompleted, isPending } = useSetIsCompleted();
   return (
     <MatrixTaskRow
       {...props}
       setIsCompleted={setIsCompleted}
+      isCompleting={isPending}
       onOpen={(task) => openPopup(task, PopupModes.View)}
     />
   );

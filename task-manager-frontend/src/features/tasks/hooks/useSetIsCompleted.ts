@@ -1,16 +1,11 @@
-import { useRef } from "react";
 import type { Task } from "../types";
 import useUpdateTask from "./useUpdateTask";
 import { trackEvent } from "../../../services/analytics";
 
 export default function useSetIsCompleted() {
-  const { mutateAsync: updateTask } = useUpdateTask();
-  const inFlight = useRef(new Set<number>());
+  const { mutateAsync: updateTask, isPending } = useUpdateTask();
 
   async function setIsCompleted(id: number, isCompleted: boolean, task?: Task) {
-    if (inFlight.current.has(id)) return;
-    inFlight.current.add(id);
-
     const completedAt = isCompleted ? new Date().toUTCString() : null;
 
     try {
@@ -39,10 +34,8 @@ export default function useSetIsCompleted() {
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      inFlight.current.delete(id);
     }
   }
 
-  return setIsCompleted;
+  return { setIsCompleted, isPending };
 }
