@@ -217,18 +217,6 @@ def _check_subtask_fields(data: dict[str, Any]) -> None:
     data.pop("column_id", None)
 
 
-def _check_not_already_completed(task: Task, data: dict[str, Any]) -> None:
-    expected_start = data.get("expected_start_at")
-    completing = data.get("is_completed") and not task.is_completed
-    if (
-        expected_start
-        and completing
-        and task.is_repeating
-        and expected_start != task.start_at
-    ):
-        raise TaskConflict(TaskSchema().dump(task))  # type: ignore
-
-
 def _sync_completion(task: Task, was_completed: bool) -> None:
     if task.is_completed and not was_completed:
         task.completed_at = utc_now()
@@ -246,7 +234,6 @@ def apply_task_update(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         ensure_labels_belong_to(user_id, data["label_ids"])
         set_task_labels([task.id], data["label_ids"])
     _check_times(task, data)
-    _check_not_already_completed(task, data)
     new_reminders = data.get("reminders")
     if task.parent_id is not None:
         _check_subtask_fields(data)

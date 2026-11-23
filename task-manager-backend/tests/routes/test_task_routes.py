@@ -47,19 +47,6 @@ def test_completing_a_repeating_task_records_it_and_moves_to_the_next_day(
     assert history["startAt"].startswith("2026-03-02T09:00")
 
 
-def test_completing_the_same_occurrence_twice_only_counts_once(
-    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
-) -> None:
-    task_id = create_daily_task(session, task_payload)
-    occurrence = "2026-03-02 09:00:00"
-
-    assert complete(session, task_id, expectedStartAt=occurrence).status_code == 200
-    again = complete(session, task_id, expectedStartAt=occurrence)
-
-    assert again.status_code == 409
-    assert len(all_tasks(session)) == 2
-
-
 def test_end_time_is_checked_against_the_stored_start_time(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
