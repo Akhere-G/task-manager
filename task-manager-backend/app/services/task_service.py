@@ -9,13 +9,11 @@ from app.exceptions import (
     IncompleteTaskDates,
     InvalidTaskTimes,
     SubtaskCannotRepeat,
-    TaskConflict,
     TaskNotFound,
     TooManyLabels,
     UndatedRepeatingTask,
 )
 from app.models import Task
-from app.schemas.task_schema import TaskSchema
 from app.services.column_service import ensure_column_in_project
 from app.services.label_service import (
     attach_label_ids,
@@ -58,7 +56,7 @@ from app.utils.task_utils import (
     snapshot,
 )
 
-NON_COLUMN_FIELDS = {"expected_start_at", "label_ids", "reminders"}
+NON_COLUMN_FIELDS = {"label_ids", "reminders"}
 TRASH_RETENTION = timedelta(days=TRASH_RETENTION_DAYS)
 RECURRENCE_FIELDS = {
     "repeat_by",

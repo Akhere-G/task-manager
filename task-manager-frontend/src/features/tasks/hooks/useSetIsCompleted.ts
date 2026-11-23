@@ -1,27 +1,16 @@
-import { useRef } from "react";
 import type { Task } from "../types";
 import useUpdateTask from "./useUpdateTask";
 import { trackEvent } from "../../../services/analytics";
+import { playSound } from "../utils";
 
 export default function useSetIsCompleted() {
-  const { mutateAsync: updateTask } = useUpdateTask();
-  const inFlight = useRef(new Set<number>());
+  const { mutateAsync: updateTask, isPending } = useUpdateTask();
 
   async function setIsCompleted(id: number, isCompleted: boolean, task?: Task) {
-    if (inFlight.current.has(id)) return;
-    inFlight.current.add(id);
-
     const completedAt = isCompleted ? new Date().toUTCString() : null;
-    const expectedStartAt =
-      isCompleted && task?.isRepeating && !task.isGhost
-        ? (task.startAt ?? undefined)
-        : undefined;
 
     try {
-      await updateTask({
-        id,
-        newTaskData: { isCompleted, completedAt, expectedStartAt },
-      });
+      await updateTask({ id, newTaskData: { isCompleted, completedAt } });
 
       const wasOverdue = task?.endAt
         ? new Date(task.endAt) < new Date()
@@ -37,6 +26,7 @@ export default function useSetIsCompleted() {
         to_status: isCompleted ? "completed" : "pending",
       });
       if (isCompleted) {
+        playSound("/success.mp3").catch(() => {});
         trackEvent("task_completed", {
           has_project: task ? task.projectId !== null : undefined,
           is_repeating: task ? Boolean(task.repeatBy) : undefined,
@@ -46,10 +36,8 @@ export default function useSetIsCompleted() {
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      inFlight.current.delete(id);
     }
   }
 
-  return setIsCompleted;
+  return { setIsCompleted, isPending };
 }

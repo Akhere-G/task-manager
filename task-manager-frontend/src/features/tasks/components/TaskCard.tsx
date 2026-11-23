@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
-import { formatDateRange, formatDateRelative, playSound } from "../utils";
+import { formatDateRange, formatDateRelative } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import useSnoozeTask from "../hooks/useSnoozeTask";
 import SnoozeMenu from "./SnoozeMenu";
@@ -27,6 +27,7 @@ import PriorityFlag from "./PriorityFlag";
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
   setIsCompleted: (id: number, isComplete: boolean, task?: Task) => void;
+  isCompleting?: boolean;
   onDelete: (task: Task) => void;
   onEdit: (task: Task) => void;
   onOpen: (task: Task) => void;
@@ -44,6 +45,7 @@ interface TaskCardProps extends Task {
 function TaskCard({
   titleIcon,
   setIsCompleted,
+  isCompleting = false,
   onDelete,
   onEdit,
   onOpen,
@@ -105,16 +107,13 @@ function TaskCard({
           <button
             onClick={() => {
               setIsCompleted(isGhost ? seriesId : id, !isCompleted, task);
-
-              if (!isCompleted) {
-                playSound("/success.mp3");
-              }
             }}
+            disabled={isCompleting}
             title={isCompleted ? "Mark as pending" : "Mark as complete"}
             aria-label={
               isCompleted ? "Mark task as pending" : "Mark task as completed"
             }
-            className="p-1.5 bg-surface rounded-full transition-colors group cursor-pointer"
+            className="p-1.5 bg-surface rounded-full transition-colors group cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
           >
             <CheckCircle
               aria-hidden="true"
@@ -282,12 +281,13 @@ interface TaskCardConnectedProps extends Task {
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps) {
   const { openPopup, closePopup } = useTaskContext();
-  const setIsCompleted = useSetIsCompleted();
+  const { setIsCompleted, isPending } = useSetIsCompleted();
   const { mutate: snooze } = useSnoozeTask({ onSnooze: closePopup });
 
   return (
     <TaskCard
       setIsCompleted={setIsCompleted}
+      isCompleting={isPending}
       onDelete={(task) => openPopup(task, PopupModes.Delete)}
       onEdit={(task) => openPopup(task, PopupModes.Edit)}
       onOpen={(task) => openPopup(task, PopupModes.View)}

@@ -32,7 +32,7 @@ export default function Pomodoro() {
     isError,
     error,
   } = useGetTask(Number(taskId ?? -1));
-  const setIsCompleted = useSetIsCompleted();
+  const { setIsCompleted } = useSetIsCompleted();
 
   const status = isAxiosError(error) ? error.status : 0;
 

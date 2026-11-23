@@ -16,7 +16,7 @@ export default function MobileTaskSection({
   onSelectTask,
   setDraggedEvent,
 }: MobileTaskSectionProps) {
-  const setIsCompleted = useSetIsCompleted();
+  const { setIsCompleted } = useSetIsCompleted();
 
   return (
     <div className="md:hidden space-y-4">

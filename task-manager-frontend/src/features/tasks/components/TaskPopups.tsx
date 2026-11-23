@@ -126,7 +126,7 @@ export default function TaskPopupsConnected() {
   useOpenTaskFromUrl();
   const handleEdit = useEditTask({ onSuccess: closePopup });
 
-  const setIsCompleted = useSetIsCompleted();
+  const { setIsCompleted } = useSetIsCompleted();
 
   return (
     <TaskPopups

@@ -21,7 +21,6 @@ import {
   formatDateRange,
   formatMinutes,
   isTaskOverdue,
-  playSound,
   taskMinutes,
 } from "../utils";
 import PriorityBadge from "./PriorityBadge";
@@ -32,6 +31,7 @@ import SubtaskCount from "./SubtaskCount";
 interface TaskRowProps {
   task: Task;
   setIsCompleted: (id: number, isComplete: boolean, task?: Task) => void;
+  isCompleting?: boolean;
   onDelete: (task: Task) => void;
   onEdit: (task: Task) => void;
   onOpen: (task: Task) => void;
@@ -41,21 +41,18 @@ interface TaskRowProps {
 const actionClass =
   "cursor-pointer rounded-md p-1.5 transition-colors hover:bg-surface-muted";
 
-// Always laid out so revealing it never resizes the row: on hover or keyboard
-// focus it fades in over the row's right edge. Touch screens cannot hover, so
-// there it stays in the flow and visible.
 const actionsClass = [
   "pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5",
   "rounded-lg border bg-surface px-1 opacity-0 shadow-sm transition-opacity",
   "group-hover:pointer-events-auto group-hover:opacity-100",
   "group-focus-within:pointer-events-auto group-focus-within:opacity-100",
-  "[@media(pointer:coarse)]:pointer-events-auto [@media(pointer:coarse)]:static",
-  "[@media(pointer:coarse)]:translate-y-0 [@media(pointer:coarse)]:opacity-100",
+  "[@media(hover:none)]:hidden",
 ].join(" ");
 
 export function TaskRow({
   task,
   setIsCompleted,
+  isCompleting = false,
   onDelete,
   onEdit,
   onOpen,
@@ -70,7 +67,6 @@ export function TaskRow({
 
   const complete = () => {
     setIsCompleted(taskId, !isCompleted, task);
-    if (!isCompleted) playSound("/success.mp3");
   };
 
   return (
@@ -81,11 +77,12 @@ export function TaskRow({
       <button
         type="button"
         onClick={complete}
+        disabled={isCompleting}
         title={isCompleted ? "Mark as pending" : "Mark as complete"}
         aria-label={
           isCompleted ? "Mark task as pending" : "Mark task as completed"
         }
-        className={`mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md border-2 transition-colors ${isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
+        className={`mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md border-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div
@@ -194,13 +191,14 @@ export function TaskRow({
 
 export default function TaskRowConnected({ task }: { task: Task }) {
   const { openPopup, closePopup } = useTaskContext();
-  const setIsCompleted = useSetIsCompleted();
+  const { setIsCompleted, isPending } = useSetIsCompleted();
   const { mutate: snooze } = useSnoozeTask({ onSnooze: closePopup });
 
   return (
     <TaskRow
       task={task}
       setIsCompleted={setIsCompleted}
+      isCompleting={isPending}
       onDelete={(target) => openPopup(target, PopupModes.Delete)}
       onEdit={(target) => openPopup(target, PopupModes.Edit)}
       onOpen={(target) => openPopup(target, PopupModes.View)}

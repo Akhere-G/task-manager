@@ -108,14 +108,6 @@ class LabelNameTaken(AppError):
     message = "You already have a label with that name."
 
 
-class TaskConflict(AppError):
-    status_code = 409
-    message = "This task was already updated."
-
-    def __init__(self, task: dict[str, Any]) -> None:
-        super().__init__(task=task)
-
-
 class SubtaskParentInvalid(AppError):
     field = "parentId"
     message = "Subtasks can only go under one of your own top-level tasks."

@@ -14,19 +14,20 @@ import {
   formatDateRange,
   formatMinutes,
   isTaskOverdue,
-  playSound,
   taskMinutes,
 } from "../../tasks/utils";
 
 interface BoardTaskCardProps {
   task: Task;
   setIsCompleted: (id: number, isCompleted: boolean, task?: Task) => void;
+  isCompleting?: boolean;
   onOpen: (task: Task) => void;
 }
 
 export function BoardTaskCard({
   task,
   setIsCompleted,
+  isCompleting = false,
   onOpen,
 }: BoardTaskCardProps) {
   const isOverdue = isTaskOverdue(task);
@@ -38,7 +39,6 @@ export function BoardTaskCard({
       !task.isCompleted,
       task,
     );
-    if (!task.isCompleted) playSound("/success.mp3");
   };
 
   return (
@@ -50,9 +50,10 @@ export function BoardTaskCard({
         <button
           type="button"
           onClick={complete}
+          disabled={isCompleting}
           aria-label={`Complete task ${task.title}`}
           title={task.isCompleted ? "Mark as pending" : "Mark as complete"}
-          className={`mt-0.5 h-4.5 w-4.5 shrink-0 cursor-pointer rounded-md border-2 ${task.isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
+          className={`mt-0.5 h-4.5 w-4.5 shrink-0 cursor-pointer rounded-md border-2 disabled:cursor-not-allowed disabled:opacity-50 ${task.isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
         />
         <button
           type="button"
@@ -93,11 +94,12 @@ export function BoardTaskCard({
 
 export default function BoardTaskCardConnected({ task }: { task: Task }) {
   const { openPopup } = useTaskContext();
-  const setIsCompleted = useSetIsCompleted();
+  const { setIsCompleted, isPending } = useSetIsCompleted();
   return (
     <BoardTaskCard
       task={task}
       setIsCompleted={setIsCompleted}
+      isCompleting={isPending}
       onOpen={(target) => openPopup(target, PopupModes.View)}
     />
   );

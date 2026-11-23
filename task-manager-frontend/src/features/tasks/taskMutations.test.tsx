@@ -1,7 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 import apiClient from "../../services/api";
 import { makeGhost, makeTask, renderWithProviders } from "../../test/render";
 import { taskService } from "./api";
@@ -10,9 +17,11 @@ import type { Task } from "./types";
 import { mockApi } from "../../test/api";
 
 const mock = mockApi();
+let play: MockInstance<HTMLMediaElement["play"]>;
 let tasksOnServer: Task[];
 
 beforeEach(() => {
+  play = vi.spyOn(HTMLMediaElement.prototype, "play");
   tasksOnServer = [];
   mock.onGet("/tasks").reply(() => [
     200,
@@ -82,24 +91,10 @@ describe("completing a task", () => {
     expect(body.completedAt).toMatch(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/);
     expect(gets("/tasks")).toBe(2);
     expect(gets("/stats/dashboard")).toBe(2);
+    expect(play).toHaveBeenCalledTimes(1);
   });
 
-  it("tells the server which occurrence it saw when completing a repeating task", async () => {
-    const task = makeTask({ isRepeating: true, repeatBy: "daily" });
-    mock.onPatch("/tasks/1").reply(200, task);
-    renderCard(task);
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Mark task as completed" }),
-    );
-
-    await waitFor(() => expect(patches()).toHaveLength(1));
-    expect(JSON.parse(patches()[0].data).expectedStartAt).toBe(
-      "2026-03-02 09:00:00",
-    );
-  });
-
-  it("completes the series, not the ghost id, and sends no stale-occurrence check", async () => {
+  it("completes the series, not the ghost id", async () => {
     const ghost = makeGhost(1, "20260303");
     mock.onPatch("/tasks/1").reply(200, {});
     renderCard(ghost);
@@ -110,7 +105,6 @@ describe("completing a task", () => {
 
     await waitFor(() => expect(patches()).toHaveLength(1));
     expect(patches()[0].url).toBe("/tasks/1");
-    expect(JSON.parse(patches()[0].data)).not.toHaveProperty("expectedStartAt");
   });
 
   it("ignores a second click while the first request is still running", async () => {
@@ -147,6 +141,7 @@ describe("completing a task", () => {
     expect(
       screen.getByRole("button", { name: "Mark task as completed" }),
     ).toBeEnabled();
+    expect(play).not.toHaveBeenCalled();
   });
 
   it("can be tried again after a failure", async () => {
