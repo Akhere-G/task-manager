@@ -41,16 +41,12 @@ interface TaskRowProps {
 const actionClass =
   "cursor-pointer rounded-md p-1.5 transition-colors hover:bg-surface-muted";
 
-// Always laid out so revealing it never resizes the row: on hover or keyboard
-// focus it fades in over the row's right edge. Touch screens cannot hover, so
-// there it stays in the flow and visible.
 const actionsClass = [
   "pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5",
   "rounded-lg border bg-surface px-1 opacity-0 shadow-sm transition-opacity",
   "group-hover:pointer-events-auto group-hover:opacity-100",
   "group-focus-within:pointer-events-auto group-focus-within:opacity-100",
-  "[@media(pointer:coarse)]:pointer-events-auto [@media(pointer:coarse)]:static",
-  "[@media(pointer:coarse)]:translate-y-0 [@media(pointer:coarse)]:opacity-100",
+  "[@media(hover:none)]:hidden",
 ].join(" ");
 
 export function TaskRow({
