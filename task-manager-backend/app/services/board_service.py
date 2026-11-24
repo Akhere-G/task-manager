@@ -27,6 +27,7 @@ def apply_move_to_column(
     if column is not None and task.project_id != column.project_id:
         raise InvalidColumn()
 
+    previous_column_id = task.column_id
     task.column_id = column_id
     if after_id is not None or before_id is not None:
         place_task(user_id, task, after_id, before_id)
@@ -38,6 +39,8 @@ def apply_move_to_column(
         is_completed = COMPLETION_BY_ON_DROP[on_drop]
         if task.is_completed != is_completed:
             apply_task_update(user_id, task_id, {"is_completed": is_completed})
+            if is_completed and not task.is_completed:
+                task.column_id = previous_column_id
     return task
 
 

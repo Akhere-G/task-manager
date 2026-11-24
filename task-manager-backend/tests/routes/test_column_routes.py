@@ -136,6 +136,29 @@ def test_dropping_on_done_completes_and_on_to_do_reopens(session: FlaskClient) -
     assert reopened["isCompleted"] is False and reopened["completedAt"] is None
 
 
+def test_dropping_a_repeating_task_on_done_rolls_it_back_to_its_column(
+    session: FlaskClient,
+) -> None:
+    project_id = add_project(session)
+    todo = column_named(session, project_id, "To Do")
+    done = column_named(session, project_id, "Done")
+    task = add_task(
+        session,
+        project_id,
+        "daily",
+        columnId=todo["id"],
+        startAt="2026-03-03T09:00:00Z",
+        endAt="2026-03-03T10:00:00Z",
+        repeatBy="daily",
+        isRepeating=True,
+    )
+
+    live = drop(session, task["id"], done["id"]).get_json()
+
+    assert live["isCompleted"] is False
+    assert live["columnId"] == todo["id"]
+
+
 def test_dropping_on_a_nothing_column_keeps_completion(session: FlaskClient) -> None:
     project_id = add_project(session)
     task = add_task(session, project_id, "one", isCompleted=True)
