@@ -38,7 +38,7 @@ def test_a_deleted_task_leaves_every_view_but_the_trash(
         f"/api/tasks/{task_id}/reschedule", json=reschedule_body(MONDAY, TUESDAY)
     )
     assert moved.status_code == 404
-    assert session.delete(f"/api/tasks/{task_id}").status_code == 404
+    assert session.delete(f"/api/tasks/{task_id}").status_code == 200
     assert [t["title"] for t in trash(session)["tasks"]] == ["Gone"]
 
 
@@ -86,12 +86,13 @@ def test_restoring_brings_the_task_back_unchanged(
     assert trash(session)["tasks"] == []
 
 
-def test_only_a_trashed_task_can_be_restored(
+def test_restoring_a_task_that_is_not_in_the_trash_changes_nothing(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
     task_id = add(session, task_payload())
 
-    assert session.post(f"/api/tasks/{task_id}/restore").status_code == 404
+    assert session.post(f"/api/tasks/{task_id}/restore").status_code == 200
+    assert live_titles(session) == ["Write report"]
     assert session.post("/api/tasks/999/restore").status_code == 404
 
 
