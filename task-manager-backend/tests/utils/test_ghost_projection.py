@@ -38,6 +38,20 @@ def test_ghosts_stop_after_the_repeat_until_day(user_id: int) -> None:
     assert days == [date(2026, 3, 3), date(2026, 3, 4)]
 
 
+def test_the_repeat_until_day_ends_at_midnight_in_the_task_zone(user_id: int) -> None:
+    add_daily_task(
+        user_id,
+        startAt="2026-03-03T04:00:00Z",
+        endAt="2026-03-03T05:00:00Z",
+        repeatTimezone="America/Los_Angeles",
+        repeatUntil="2026-03-04",
+    )
+
+    days = ghost_days(user_id, datetime(2026, 3, 1), datetime(2026, 3, 10))
+
+    assert days == [date(2026, 3, 4), date(2026, 3, 5)]
+
+
 def test_ghosts_belong_to_their_series_and_have_stable_ids(user_id: int) -> None:
     add_daily_task(user_id)
 
