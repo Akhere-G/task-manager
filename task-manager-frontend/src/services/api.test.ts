@@ -17,10 +17,25 @@ const refreshCalls = () =>
   mock.history.post.filter((r) => r.url === "/auth/refresh").length;
 
 describe("api client session handling", () => {
-  it("does not try to refresh when the session check returns 401", async () => {
-    mock.onGet("/auth/me").reply(401);
-    await expect(apiClient.get("/auth/me")).rejects.toBeDefined();
-    expect(refreshCalls()).toBe(0);
+  it("refreshes an expired session when the session check returns 401", async () => {
+    let refreshed = false;
+    mock.onPost("/auth/refresh").reply(() => {
+      refreshed = true;
+      return [200, {}];
+    });
+    mock
+      .onGet("/auth/me")
+      .reply(() => (refreshed ? [200, { user: { id: 1 } }] : [401]));
+
+    const response = await apiClient.get("/auth/me");
+    expect(response.data).toEqual({ user: { id: 1 } });
+    expect(refreshCalls()).toBe(1);
+  });
+
+  it("does not try to refresh when the refresh itself returns 401", async () => {
+    mock.onPost("/auth/refresh").reply(401);
+    await expect(apiClient.post("/auth/refresh")).rejects.toBeDefined();
+    expect(refreshCalls()).toBe(1);
   });
 
   it("refreshes and retries a request that returned 401", async () => {
