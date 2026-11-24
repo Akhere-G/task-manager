@@ -262,6 +262,7 @@ def apply_task_update(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         roll_series(task, before)
         reset_subtasks(task)
         db.session.flush()
+        sync_reminders(task)
     elif task.is_completed and not before.is_completed:
         complete_open_subtasks(task)
     return task
