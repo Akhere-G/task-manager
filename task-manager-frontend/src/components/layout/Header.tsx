@@ -1,5 +1,5 @@
 import { Menu, Moon, Sun, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 interface Link {
@@ -28,16 +28,6 @@ export default function Header({
 }: Props) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [accountPopupOpen, setAccountPopupOpen] = useState(false);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
