@@ -71,3 +71,11 @@ def test_moving_a_task_runs_the_columns_drop_action(
 
     unassigned = run(user_id, "move_task_to_column", id=task["id"], columnId=None)
     assert unassigned["columnId"] is None
+
+    bin_column = run(
+        user_id, "create_column", projectId=project_id, name="Bin", onDrop="delete"
+    )
+    binned = run(
+        user_id, "move_task_to_column", id=task["id"], columnId=bin_column["id"]
+    )
+    assert binned == {"id": task["id"], "deleted": True}
