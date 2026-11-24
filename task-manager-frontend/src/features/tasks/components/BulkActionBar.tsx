@@ -13,9 +13,12 @@ const buttonClass =
 export function BulkActionBar() {
   const { ids, clear } = useTaskSelection();
   const { complete, remove, snooze } = useBulkTaskActions();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingIds, setConfirmingIds] = useState<ReadonlySet<number> | null>(
+    null,
+  );
   const [result, setResult] = useState<BulkResult | null>(null);
   const count = ids.size;
+  const confirmingDelete = confirmingIds === ids;
   const isBusy = complete.isPending || remove.isPending || snooze.isPending;
 
   useEffect(() => {
@@ -69,7 +72,7 @@ export function BulkActionBar() {
               </button>
               <button
                 type="button"
-                onClick={() => setConfirmingDelete(false)}
+                onClick={() => setConfirmingIds(null)}
                 className={buttonClass}
               >
                 Cancel
@@ -88,6 +91,7 @@ export function BulkActionBar() {
               </button>
               <SnoozeMenu
                 label="Snooze selected tasks"
+                disabled={isBusy}
                 actionText="Snooze"
                 onSnooze={(preset, day) =>
                   snooze.mutate({ target, preset, day }, report)
@@ -96,7 +100,7 @@ export function BulkActionBar() {
               <button
                 type="button"
                 disabled={isBusy}
-                onClick={() => setConfirmingDelete(true)}
+                onClick={() => setConfirmingIds(ids)}
                 className={`${buttonClass} text-failure`}
               >
                 <Trash2 aria-hidden size={16} />

@@ -68,6 +68,16 @@ describe("BulkActionBar", () => {
 
     await waitFor(() => expect(api.history.post).toHaveLength(1));
     expect(JSON.parse(api.history.post[0].data)).toEqual({ ids: [1, 2] });
+
+    await waitFor(() =>
+      expect(screen.queryByRole("toolbar")).not.toBeInTheDocument(),
+    );
+    await user.click(
+      screen.getByRole("checkbox", { name: "Select task: One" }),
+    );
+    expect(
+      screen.queryByRole("button", { name: /confirm delete/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("confirms when every selected task was updated", async () => {
