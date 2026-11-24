@@ -282,6 +282,7 @@ def _save_completed_occurrence(before: Task) -> Task:
         priority=before.priority,
         start_at=before.start_at,
         end_at=before.end_at,
+        sort_order=before.sort_order,
         is_repeating=False,
         user_id=before.user_id,
         series_id=before.id,
