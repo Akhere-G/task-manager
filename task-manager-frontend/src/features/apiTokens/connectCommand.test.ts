@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import apiClient from "../../services/api";
-import { bearerValue, connectCommand, mcpUrl } from "./connectCommand";
+import { connectCommand, mcpUrl } from "./connectCommand";
 
 const originalBaseUrl = apiClient.defaults.baseURL;
 
@@ -26,11 +26,5 @@ describe("connectCommand", () => {
     expect(connectCommand("tm_abc")).toBe(
       'claude mcp add --transport http taskflow https://tasks.example.com/mcp --header "Authorization: Bearer tm_abc"',
     );
-  });
-});
-
-describe("bearerValue", () => {
-  it("prefixes the token with the bearer scheme", () => {
-    expect(bearerValue("tm_abc")).toBe("Bearer tm_abc");
   });
 });

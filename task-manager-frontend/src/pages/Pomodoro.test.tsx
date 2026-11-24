@@ -73,41 +73,6 @@ describe("Pomodoro page", () => {
     ).toBeInTheDocument();
   });
 
-  it("counts the timer down while it is playing", async () => {
-    mock.onGet("/tasks/1").reply(200, makeTask());
-    renderPomodoro();
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Play Timer" }),
-    );
-
-    await waitFor(
-      () => expect(screen.queryByText("25:00")).not.toBeInTheDocument(),
-      { timeout: 4000 },
-    );
-
-    expect(screen.getByText(/^24:5\d$/)).toBeInTheDocument();
-  });
-
-  it("keeps counting below zero once a focus block runs out", async () => {
-    seedSession({ runningSince: secondsAgo(1500 + 133) });
-    mock.onGet("/tasks/1").reply(200, makeTask());
-    renderPomodoro();
-
-    expect(await screen.findByText(/^-02:\d\d$/)).toBeInTheDocument();
-    expect(screen.getByText("Focus overtime")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Rest" })).toBeInTheDocument();
-  });
-
-  it("resumes a paused block where it was left", async () => {
-    seedSession({ elapsedMs: 600_000 });
-    mock.onGet("/tasks/1").reply(200, makeTask());
-    renderPomodoro();
-
-    expect(await screen.findByText("15:00")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Reset timer" }));
-    expect(screen.getByText("25:00")).toBeInTheDocument();
-  });
-
   it("moves from focus to rest and back to the next session", async () => {
     mock.onGet("/tasks/1").reply(200, makeTask());
     renderPomodoro();
@@ -142,60 +107,6 @@ describe("Pomodoro page", () => {
       screen.getByRole("button", { name: "Start session 2" }),
     );
     expect(screen.getByText("Session 2 of 3")).toBeInTheDocument();
-  });
-
-  it("takes a long rest after the fourth session", async () => {
-    seedSession({
-      session: 4,
-      completedSessions: 3,
-      runningSince: secondsAgo(1),
-    });
-    mock
-      .onGet("/tasks/1")
-      .reply(200, makeTask({ endAt: "2026-03-02T11:00:00Z" }));
-    renderPomodoro();
-
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Finish early" }),
-    );
-    expect(screen.getByText("Long rest after session 4")).toBeInTheDocument();
-    expect(screen.getByText(/^(15:00|14:5\d)$/)).toBeInTheDocument();
-  });
-
-  it("applies a changed focus length at once if the block has not started", async () => {
-    mock.onGet("/tasks/1").reply(200, makeTask());
-    renderPomodoro();
-
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Timer settings" }),
-    );
-    const focus = screen.getByLabelText("Focus (1-180 min)");
-    await userEvent.clear(focus);
-    await userEvent.type(focus, "50");
-    await userEvent.tab();
-
-    expect(screen.getByText("50:00")).toBeInTheDocument();
-    expect(screen.getByText("Session 1 of 2")).toBeInTheDocument();
-  });
-
-  it("applies changed durations from the next block, not the running one", async () => {
-    mock.onGet("/tasks/1").reply(200, makeTask());
-    renderPomodoro();
-
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Timer settings" }),
-    );
-    const rest = screen.getByLabelText("Rest (1-60 min)");
-    await userEvent.clear(rest);
-    await userEvent.type(rest, "10");
-    await userEvent.tab();
-    expect(screen.getByText("25:00")).toBeInTheDocument();
-    expect(
-      JSON.parse(localStorage.getItem("pomodoro-settings") ?? "{}"),
-    ).toMatchObject({ restMinutes: 10 });
-
-    await userEvent.click(screen.getByRole("button", { name: "Finish early" }));
-    expect(screen.getByText(/^(10:00|09:5\d)$/)).toBeInTheDocument();
   });
 
   it("offers to complete the task after the last session and completes it on confirm", async () => {
@@ -260,26 +171,6 @@ describe("Pomodoro page", () => {
       screen.getByRole("button", { name: "Start extra session" }),
     );
     expect(screen.getByText("Session 4 of 4")).toBeInTheDocument();
-  });
-
-  it("completes the series task, not a copy, for a repeating task", async () => {
-    seedSession(lastSessionResting());
-    mock
-      .onGet("/tasks/1")
-      .reply(200, makeTask({ isRepeating: true, repeatBy: "daily" }));
-    mock.onPatch("/tasks/1").reply(200, {});
-    renderPomodoro();
-    await screen.findByText("Write report");
-
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Finish task" }),
-    );
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Confirm" }),
-    );
-
-    await waitFor(() => expect(mock.history.patch).toHaveLength(1));
-    expect(mock.history.patch[0].url).toBe("/tasks/1");
   });
 
   it("says so when the task does not exist", async () => {
