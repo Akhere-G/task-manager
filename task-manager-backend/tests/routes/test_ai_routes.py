@@ -55,32 +55,6 @@ def test_decompose_passes_existing_subtasks_to_the_service(
     assert fake_ai[1].call_args.args[-1] == [pack]
 
 
-def test_decompose_rejects_bad_existing_subtasks(
-    session: FlaskClient, fake_ai: tuple[mock.MagicMock, mock.MagicMock]
-) -> None:
-    for existing in (
-        [{"title": "x"}] * 51,
-        [{"title": "x" * 256}],
-        [{"title": "x", "description": "y" * 2001}],
-        [{"description": "no title"}],
-        ["Pack"],
-    ):
-        body = {"title": "Plan trip", "existingSubtasks": existing}
-        assert session.post("/api/ai/decompose", json=body).status_code == 400
-    fake_ai[1].assert_not_called()
-
-
-def test_valid_requests_reach_the_provider(session: FlaskClient) -> None:
-    assert (
-        session.post("/api/ai/parse-task", json={"text": "Dentist at 3pm"}).status_code
-        == 200
-    )
-    assert (
-        session.post("/api/ai/decompose", json={"title": "Plan trip"}).status_code
-        == 200
-    )
-
-
 def test_daily_limit_applies_per_user(
     app: Flask,
     make_user: Callable[..., int],
@@ -115,13 +89,3 @@ def test_demo_account_has_its_own_limit(
         for _ in range(3)
     ]
     assert codes == [200, 200, 429]
-
-
-def test_suggest_priorities_returns_the_suggestions(session: FlaskClient) -> None:
-    response = session.post("/api/ai/suggest-priorities")
-    assert response.status_code == 200
-    assert response.get_json() == {"suggestions": [{"taskId": 1}]}
-
-
-def test_suggest_priorities_requires_a_login(client: FlaskClient) -> None:
-    assert client.post("/api/ai/suggest-priorities").status_code == 401

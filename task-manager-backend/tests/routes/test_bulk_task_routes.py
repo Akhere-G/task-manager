@@ -130,30 +130,27 @@ def fail_on_second_call(monkeypatch: pytest.MonkeyPatch, name: str) -> None:
     monkeypatch.setattr(bulk_task_service, name, flaky)
 
 
-def test_a_failure_part_way_changes_no_task_in_a_bulk_complete(
-    session: FlaskClient, task_payload: TaskPayload, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    ("endpoint", "service_function"),
+    [("bulk-complete", "apply_task_update"), ("bulk-delete", "apply_task_trash")],
+)
+def test_a_failure_part_way_changes_no_task(
+    session: FlaskClient,
+    task_payload: TaskPayload,
+    monkeypatch: pytest.MonkeyPatch,
+    endpoint: str,
+    service_function: str,
 ) -> None:
     ids = add_tasks(session, task_payload)
-    fail_on_second_call(monkeypatch, "apply_task_update")
+    fail_on_second_call(monkeypatch, service_function)
 
-    response = session.post("/api/tasks/bulk-complete", json={"ids": ids})
-
-    assert response.status_code == 500
-    done = [session.get(f"/api/tasks/{task_id}").get_json() for task_id in ids]
-    assert [task["isCompleted"] for task in done] == [False, False, False]
-
-
-def test_a_failure_part_way_deletes_no_task_in_a_bulk_delete(
-    session: FlaskClient, task_payload: TaskPayload, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    ids = add_tasks(session, task_payload)
-    fail_on_second_call(monkeypatch, "apply_task_trash")
-
-    response = session.post("/api/tasks/bulk-delete", json={"ids": ids})
+    response = session.post(f"/api/tasks/{endpoint}", json={"ids": ids})
 
     assert response.status_code == 500
-    statuses = [session.get(f"/api/tasks/{task_id}").status_code for task_id in ids]
-    assert statuses == [200, 200, 200]
+    for task_id in ids:
+        task = session.get(f"/api/tasks/{task_id}")
+        assert task.status_code == 200
+        assert task.get_json()["isCompleted"] is False
 
 
 def test_a_task_that_cannot_be_updated_does_not_stop_the_others(

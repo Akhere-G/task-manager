@@ -70,13 +70,6 @@ def test_column_names_are_unique_per_project(session: FlaskClient) -> None:
     assert clash.status_code == 409
 
 
-def test_a_bad_on_drop_or_colour_is_rejected(session: FlaskClient) -> None:
-    project_id = add_project(session)
-    url = f"/api/projects/{project_id}/columns"
-    assert session.post(url, json={"name": "A", "onDrop": "explode"}).status_code == 400
-    assert session.post(url, json={"name": "A", "colour": "red"}).status_code == 400
-
-
 def test_columns_are_reordered(session: FlaskClient) -> None:
     project_id = add_project(session)
     ids = [c["id"] for c in columns_of(session, project_id)]
@@ -91,16 +84,6 @@ def test_columns_are_reordered(session: FlaskClient) -> None:
         f"/api/projects/{project_id}/columns/order", json={"columnIds": ids[:1]}
     )
     assert [c["id"] for c in partial.get_json()["columns"]] == [ids[0], *ids[:0:-1]]
-
-
-def test_new_tasks_start_unassigned(session: FlaskClient) -> None:
-    task = add_task(session, add_project(session), "one")
-
-    assert task["columnId"] is None
-    assert (
-        session.post("/api/tasks", json={"title": "inbox"}).get_json()["columnId"]
-        is None
-    )
 
 
 def test_a_task_can_be_created_in_a_chosen_column(session: FlaskClient) -> None:

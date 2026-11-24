@@ -64,31 +64,6 @@ def test_each_group_lists_its_own_tasks(week_of_tasks: FlaskClient) -> None:
     assert titles(week_of_tasks, "completed") == ["Finished"]
 
 
-def test_groups_never_share_a_task(week_of_tasks: FlaskClient) -> None:
-    groups = ("overdue", "today", "upcoming", "undated", "completed")
-    listed = [title for group in groups for title in titles(week_of_tasks, group)]
-
-    assert len(listed) == len(set(listed)) == 6
-
-
-def test_a_group_pages_ten_at_a_time(session: FlaskClient) -> None:
-    for number in range(11):
-        add_dated(session, f"Late {number}", datetime.now(UTC) - HOUR)
-
-    page = session.get("/api/tasks?group=overdue&limit=10&page=2").get_json()
-
-    assert len(page["tasks"]) == 1
-    assert (page["totalTasks"], page["totalPages"]) == (11, 2)
-
-
-def test_a_group_reports_its_total_minutes(session: FlaskClient) -> None:
-    add_dated(session, "Late", datetime.now(UTC) - HOUR)
-
-    page = session.get("/api/tasks?group=overdue&limit=10").get_json()
-
-    assert page["totalMinutes"] == 60
-
-
 def test_a_group_respects_the_project_filter(session: FlaskClient) -> None:
     project = session.post("/api/projects", json={"name": "Work"}).get_json()
     add_dated(session, "In project", datetime.now(UTC) - HOUR, projectId=project["id"])

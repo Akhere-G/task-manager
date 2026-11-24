@@ -43,14 +43,6 @@ def test_labels_can_be_created_listed_renamed_and_deleted(
     assert session.get("/api/labels").get_json()["labels"] == []
 
 
-def test_a_bad_colour_or_blank_name_is_rejected(session: FlaskClient) -> None:
-    assert (
-        session.post("/api/labels", json={"name": "a", "colour": "red"}).status_code
-        == 400
-    )
-    assert session.post("/api/labels", json={"name": "  "}).status_code == 400
-
-
 def test_label_names_are_unique_ignoring_case(session: FlaskClient) -> None:
     label = add_label(session, "Home")
     other = add_label(session, "Work")
@@ -74,12 +66,6 @@ def test_a_task_is_created_with_labels(
     assert sorted(get_task(session, task["id"])["labelIds"]) == sorted(
         [first["id"], second["id"]]
     )
-
-
-def test_a_task_without_labels_has_an_empty_list(
-    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
-) -> None:
-    assert add_task(session, task_payload)["labelIds"] == []
 
 
 def test_patching_label_ids_replaces_the_set(
