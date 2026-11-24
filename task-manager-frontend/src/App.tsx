@@ -37,6 +37,10 @@ function App() {
   const location = useLocation();
   usePageViewTracking();
 
+  const handleLogout = () => {
+    logout().catch(console.error);
+  };
+
   const protectedRoutes = [
     { title: "Tasks", path: "/" },
     { title: "Add Task", path: "/addtask" },
@@ -72,12 +76,12 @@ function App() {
         accountLinks={accountLinks}
         links={navLinks}
         currentPath={location.pathname}
-        logout={logout}
+        logout={handleLogout}
         isAuthenticated={isAuthenticated}
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
       />
-      {isDemo && <DemoBanner onExit={logout} />}
+      {isDemo && <DemoBanner onExit={handleLogout} />}
       {isAuthenticated && !isDemo && <NotificationsPrompt />}
       <main className="grow max-w-7xl mx-auto w-full px-0 py-3 md:px-8 md:py-6">
         <ErrorBoundary onRetry={() => window.location.reload()}>
@@ -100,7 +104,7 @@ function App() {
             />
             <Route
               path="/calendar"
-              element={<Navigate to="/?layout=calendar&view=month" replace />}
+              element={<Navigate to="/?layout=calendar&cal=month" replace />}
             />
             <Route
               path="/stats"

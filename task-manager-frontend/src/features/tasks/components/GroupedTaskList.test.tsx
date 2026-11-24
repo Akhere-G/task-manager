@@ -61,6 +61,21 @@ describe("GroupedTaskList", () => {
     expect(new Set(limits)).toEqual(new Set(["10"]));
   });
 
+  it("says when a group could not be loaded", async () => {
+    mock.onGet(/\/tasks/).reply((config) => {
+      const group = new URL(config.url ?? "", "http://api").searchParams.get(
+        "group",
+      );
+      return group === "overdue" ? [500] : [200, pageOf([])];
+    });
+
+    renderWithProviders(<GroupedTaskList query={query} sortable={false} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load Overdue",
+    );
+  });
+
   it("shows only the groups that have tasks, with the full count", async () => {
     serveGroups({
       overdue: pageOf(["Late"], 30),

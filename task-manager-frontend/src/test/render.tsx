@@ -6,6 +6,7 @@ import AuthContextProvider from "../context/AuthContext";
 import TaskContextProvider from "../context/TaskContext";
 import { ThemeProvider } from "../features/users/ThemeContext";
 import type { Task } from "../features/tasks/types";
+import { ToastProvider } from "../context/ToastContext";
 import { CookieConsentProvider } from "../context/CookieConsentContext";
 
 export function makeQueryClient() {
@@ -79,9 +80,11 @@ export function Providers({
 }: ProviderOptions & { children: ReactNode }) {
   const tasks = (
     <CookieConsentProvider>
-      <TaskContextProvider>
-        <ThemeProvider>{children}</ThemeProvider>
-      </TaskContextProvider>
+      <ToastProvider>
+        <TaskContextProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </TaskContextProvider>
+      </ToastProvider>
     </CookieConsentProvider>
   );
   return (

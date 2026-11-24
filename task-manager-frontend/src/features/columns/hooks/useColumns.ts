@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 import { columnService } from "../api";
 
 export const columnsKey = (projectId: number | null) =>
@@ -7,8 +7,8 @@ export const columnsKey = (projectId: number | null) =>
 export default function useColumns(projectId: number | null) {
   return useQuery({
     queryKey: columnsKey(projectId),
-    queryFn: () => columnService.getAll(projectId as number),
-    enabled: projectId !== null,
+    queryFn:
+      projectId === null ? skipToken : () => columnService.getAll(projectId),
     staleTime: 60_000,
   });
 }

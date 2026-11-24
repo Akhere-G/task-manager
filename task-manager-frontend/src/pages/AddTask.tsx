@@ -5,14 +5,12 @@ import type { CreateTaskInput, Task } from "../features/tasks/types";
 import TaskForm from "../features/tasks/components/TaskForm";
 import { AiAddTaskForm } from "../features/ai/components";
 import { BulkAddForm } from "../features/tasks/components";
-import useInvalidateTaskKeys from "../hooks/useInvalidateTaskKeys";
 import { setHours } from "date-fns";
 import useCreateTask from "../features/tasks/hooks/useCreateTask";
 import { trackEvent } from "../services/analytics";
 
 export default function AddTask() {
   const navigate = useNavigate();
-  const invalidateTaskKeys = useInvalidateTaskKeys();
   const [aiSuggestion, setAiSuggestion] = useState<CreateTaskInput>();
   const { mutateAsync: createTask } = useCreateTask();
 
@@ -31,7 +29,6 @@ export default function AddTask() {
       repeat_interval: newTask.repeatInterval ?? 1,
       count: 1,
     });
-    invalidateTaskKeys();
     navigate(-1);
   }
 

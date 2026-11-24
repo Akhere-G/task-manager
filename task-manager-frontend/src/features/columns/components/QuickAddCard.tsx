@@ -61,7 +61,11 @@ export default function QuickAddCard({
         className="rounded-lg border border-slate-300 bg-canvas px-2 py-1 text-sm text-text-main dark:border-slate-700"
       />
       <span className="flex gap-2">
-        <button type="submit" className="btn-primary px-2 py-1 text-sm">
+        <button
+          type="submit"
+          disabled={isPending}
+          className="btn-primary px-2 py-1 text-sm"
+        >
           Add
         </button>
         <button

@@ -113,7 +113,6 @@ export function trackEvent(
       { ...props, is_demo: isDemo },
       options?.beacon ? { transport: "sendBeacon" } : undefined,
     );
-    console.log("Tracked event ");
   } catch (err) {
     console.error("Analytics capture failed", err);
   }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import type { CreateTaskInput } from "../../../features/tasks/types";
 import { aiService } from "../api";
+import { getRateLimitMessage } from "../../../utils/errors";
 import { getErrorType, trackEvent } from "../../../services/analytics";
 
 interface AiAddTaskFormProps {
@@ -11,12 +12,14 @@ interface AiAddTaskFormProps {
 export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleAiSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     if (!input.trim() || isProcessing) return;
 
     setIsProcessing(true);
+    setError("");
     trackEvent("ai_task_parse_requested");
     try {
       const parsedTask = await aiService.parseTask(input);
@@ -29,7 +32,9 @@ export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
       onParsed(parsedTask);
       setInput("");
     } catch (err) {
-      console.error(err);
+      setError(
+        getRateLimitMessage(err) ?? "Could not turn that into a task. Try again.",
+      );
       trackEvent("ai_task_parse_failed", { error_type: getErrorType(err) });
     } finally {
       setIsProcessing(false);
@@ -60,6 +65,11 @@ export default function AiAddTaskForm({ onParsed }: AiAddTaskFormProps) {
           )}
         </button>
       </div>
+      {error && (
+        <p role="alert" className="mt-2 text-failure">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

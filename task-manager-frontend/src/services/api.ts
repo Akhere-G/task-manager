@@ -12,7 +12,6 @@ const apiClient = axios.create({
 });
 
 const NO_REFRESH_PATHS = [
-  "/auth/me",
   "/auth/refresh",
   "/auth/login",
   "/auth/register",

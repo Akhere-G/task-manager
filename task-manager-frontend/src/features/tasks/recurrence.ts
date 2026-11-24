@@ -162,12 +162,12 @@ export function describeTimes(
 export function isValidRepeatDay(repeatBy: string, day: unknown): boolean {
   if (repeatBy === "weekly") {
     return (
-      Number.isInteger(day) && (day as number) >= 0 && (day as number) <= 6
+      typeof day === "number" && Number.isInteger(day) && day >= 0 && day <= 6
     );
   }
   if (repeatBy === "monthly") {
     return (
-      Number.isInteger(day) && (day as number) >= 1 && (day as number) <= 31
+      typeof day === "number" && Number.isInteger(day) && day >= 1 && day <= 31
     );
   }
   if (repeatBy === "yearly") {

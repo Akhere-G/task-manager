@@ -1,4 +1,7 @@
 import {
+  addDays,
+  addMonths,
+  addWeeks,
   endOfWeek,
   format,
   isSameMonth,
@@ -21,28 +24,14 @@ export default function CustomToolbar({
   setCurrentDate,
   setView,
 }: CustomToolbarInterface) {
-  const goToBack = () => {
-    const m = new Date(currentDate);
-    if (view === Views.MONTH) {
-      m.setMonth(m.getMonth() - 1);
-    } else if (view === Views.WEEK) {
-      m.setDate(m.getDate() - 7);
-    } else {
-      m.setDate(m.getDate() - 1);
-    }
-    setCurrentDate(m);
+  const shift = (direction: 1 | -1) => {
+    if (view === Views.MONTH) setCurrentDate(addMonths(currentDate, direction));
+    else if (view === Views.WEEK)
+      setCurrentDate(addWeeks(currentDate, direction));
+    else setCurrentDate(addDays(currentDate, direction));
   };
-  const goToNext = () => {
-    const m = new Date(currentDate);
-    if (view === Views.MONTH) {
-      m.setMonth(m.getMonth() + 1);
-    } else if (view === Views.WEEK) {
-      m.setDate(m.getDate() + 7);
-    } else {
-      m.setDate(m.getDate() + 1);
-    }
-    setCurrentDate(m);
-  };
+  const goToBack = () => shift(-1);
+  const goToNext = () => shift(1);
   let dateStr = format(currentDate, "MMMM yyyy");
 
   if (view === Views.WEEK) {

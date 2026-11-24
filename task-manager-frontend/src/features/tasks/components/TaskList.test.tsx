@@ -23,7 +23,7 @@ describe("TaskList", () => {
       <>
         <TaskList
           tasks={[makeTask({ id: 1, title: "Plan trip" }), makeTask({ id: 2 })]}
-          sortable
+          sortableQueryKey={["tasks", "list"]}
         />
         <PopupState />
       </>,
@@ -48,7 +48,10 @@ describe("TaskList", () => {
 
   it("labels the list when rows can be dragged", () => {
     renderWithProviders(
-      <TaskList tasks={[makeTask({ id: 1, title: "One" })]} sortable />,
+      <TaskList
+        tasks={[makeTask({ id: 1, title: "One" })]}
+        sortableQueryKey={["tasks", "list"]}
+      />,
     );
 
     expect(screen.getByLabelText("Drag to reorder")).toBeInTheDocument();

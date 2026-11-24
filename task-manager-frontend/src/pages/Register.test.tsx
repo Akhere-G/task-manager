@@ -48,8 +48,15 @@ describe("registration terms", () => {
     expect(registerButton).toBeEnabled();
     await userEvent.click(registerButton);
 
-    await waitFor(() => expect(mock.history.post).toHaveLength(1));
-    expect(JSON.parse(mock.history.post[0].data)).toMatchObject({
+    await waitFor(() =>
+      expect(mock.history.post.some((r) => r.url === "/auth/register")).toBe(
+        true,
+      ),
+    );
+    const registerRequest = mock.history.post.find(
+      (r) => r.url === "/auth/register",
+    );
+    expect(JSON.parse(registerRequest?.data)).toMatchObject({
       acceptedTerms: true,
       email: "user@example.com",
     });

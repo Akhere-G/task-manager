@@ -160,7 +160,7 @@ function TaskCard({
           </p>
           {isLongDesc && !fullDescription && (
             <button
-              aria-label={showMore ? "Show More" : "Show Less"}
+              aria-label={showMore ? "Show Less" : "Show More"}
               className="rounded-md hover:bg-surface-muted transition-colors group cursor-pointer self-end"
               onClick={() => setShowMore((prev) => !prev)}
             >
@@ -255,8 +255,8 @@ function TaskCard({
           )}
           {!isCompleted && showSnooze && (
             <SnoozeMenu
-              task={task as Task}
-              onSnooze={(preset, day) => snoozeTask(task as Task, preset, day)}
+              task={task}
+              onSnooze={(preset, day) => snoozeTask(task, preset, day)}
             />
           )}
         </div>

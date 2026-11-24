@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import useProjects from "./hooks/useProjects";
 import { projectTree } from "./utils";
 
@@ -22,11 +22,13 @@ export default function ProjectCombobox({
 }: ProjectComboboxProps) {
   const { data: projects = [] } = useProjects();
   const nodes = projectTree(projects);
-  const [text, setText] = useState("");
+  const [draft, setDraft] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const listId = useId();
 
+  const selected = nodes.find((n) => n.project.id === projectId);
+  const text = draft ?? selected?.path ?? "";
   const typed = text.trim();
   const findByPath = (path: string) =>
     nodes.find((n) => n.path.toLowerCase() === path.toLowerCase());
@@ -37,18 +39,8 @@ export default function ProjectCombobox({
   const canCreate = typed !== "" && !exact;
   const optionCount = matches.length + (canCreate ? 1 : 0);
 
-  // Show the chosen project's path when it is set from outside (editing).
-  useEffect(() => {
-    if (projectId === null) return;
-    const node = nodes.find((n) => n.project.id === projectId);
-    if (node && findByPath(text.trim())?.project.id !== projectId) {
-      setText(node.path);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId, projects]);
-
   function change(value: string) {
-    setText(value);
+    setDraft(value);
     setOpen(true);
     setActive(0);
     const trimmed = value.trim();
@@ -62,7 +54,7 @@ export default function ProjectCombobox({
   function choose(index: number) {
     const node = matches[index];
     if (node) {
-      setText(node.path);
+      setDraft(null);
       onChange({ projectId: node.project.id, projectName: "" });
     }
     setOpen(false);

@@ -1,6 +1,4 @@
 import { MoreHorizontal } from "lucide-react";
-import { useState } from "react";
-
 import DropdownMenu from "../../../components/ui/DropdownMenu";
 import type { BulkResult } from "../api";
 import useBulkTaskActions from "../hooks/useBulkTaskActions";
@@ -10,7 +8,6 @@ import GroupActionItems, {
   type GroupActions,
   type PriorityChoice,
 } from "./GroupActionItems";
-import { BulkResultBanner } from "./BulkResultBanner";
 
 interface GroupActionsMenuProps {
   name: string;
@@ -18,6 +15,7 @@ interface GroupActionsMenuProps {
   count: number;
   /** The group's own query, so actions reach tasks that are not loaded yet. */
   query: CategoryQuery;
+  onResult: (result: BulkResult) => void;
   canComplete?: boolean;
   priorityChoices?: PriorityChoice[];
   columnChoices?: ColumnChoice[];
@@ -27,14 +25,14 @@ export default function GroupActionsMenu({
   name,
   count,
   query,
+  onResult,
   canComplete = true,
   priorityChoices = [],
   columnChoices = [],
 }: GroupActionsMenuProps) {
   const bulk = useBulkTaskActions();
-  const [result, setResult] = useState<BulkResult | null>(null);
   const target = { filter: buildCategoryFilter(query) };
-  const report = { onSuccess: setResult };
+  const report = { onSuccess: onResult };
 
   const actions: GroupActions = {
     complete: () => bulk.complete.mutate(target, report),
@@ -48,9 +46,6 @@ export default function GroupActionsMenu({
 
   return (
     <div className="flex items-center gap-1">
-      {result && (
-        <BulkResultBanner result={result} onDismiss={() => setResult(null)} />
-      )}
       <DropdownMenu
         label={`Actions for ${name}`}
         triggerClassName="cursor-pointer rounded-md border bg-surface p-1 text-text-sub hover:bg-surface-muted"

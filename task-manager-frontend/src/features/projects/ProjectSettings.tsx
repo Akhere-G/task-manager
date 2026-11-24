@@ -41,8 +41,8 @@ function ProjectEditor({ projects, editing, onDone }: ProjectEditorProps) {
       : emptyDraft,
   );
   const [error, setError] = useState("");
-  const { mutateAsync: create } = useCreateProject();
-  const { mutateAsync: update } = useUpdateProject();
+  const { mutateAsync: create, isPending: isCreating } = useCreateProject();
+  const { mutateAsync: update, isPending: isUpdating } = useUpdateProject();
 
   const parents = allowedParents(projects, editing?.id ?? null);
 
@@ -126,7 +126,7 @@ function ProjectEditor({ projects, editing, onDone }: ProjectEditorProps) {
         <button
           type="submit"
           className="btn-primary"
-          disabled={!draft.name.trim()}
+          disabled={!draft.name.trim() || isCreating || isUpdating}
         >
           {editing ? "Save project" : "Add project"}
         </button>

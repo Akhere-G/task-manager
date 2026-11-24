@@ -31,7 +31,11 @@ export default function SubtaskChecklist({
   subtasks,
 }: SubtaskChecklistProps) {
   const [title, setTitle] = useState("");
-  const { mutateAsync: addSubtasks, isPending } = useAddSubtasks(parentId);
+  const {
+    mutate: addSubtasks,
+    isPending,
+    isError,
+  } = useAddSubtasks(parentId);
   const { mutate: reorderSubtasks } = useReorderSubtasks(parentId);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -44,12 +48,11 @@ export default function SubtaskChecklist({
   );
   const done = subtasks.filter((subtask) => subtask.isCompleted).length;
 
-  async function handleAdd(e: React.FormEvent) {
+  function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = title.trim();
     if (!trimmed) return;
-    await addSubtasks([{ title: trimmed }]);
-    setTitle("");
+    addSubtasks([{ title: trimmed }], { onSuccess: () => setTitle("") });
   }
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -102,6 +105,11 @@ export default function SubtaskChecklist({
           Add
         </button>
       </form>
+      {isError && (
+        <p role="alert" className="text-sm text-failure">
+          Could not add the subtask
+        </p>
+      )}
     </section>
   );
 }

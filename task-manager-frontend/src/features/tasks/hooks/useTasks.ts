@@ -55,28 +55,31 @@ export const useTasks = ({ enabled = true }: UseTasksProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [defaults] = useState(getDefaultFilters);
 
-  const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
+  const [draft, setDraft] = useState<string | null>(null);
+  const searchInput = draft ?? searchParams.get("q") ?? "";
   const deferredSearch = useDeferredValue(searchInput);
 
   const view = readView(searchParams.get("view"));
   const layout = readLayout(searchParams.get("layout"));
 
   useEffect(() => {
+    if (draft === null) return;
     const handler = setTimeout(() => {
-      if ((searchParams.get("q") ?? "") !== deferredSearch) {
+      if ((searchParams.get("q") ?? "") !== draft) {
         const next = new URLSearchParams(searchParams);
-        if (deferredSearch) {
-          next.set("q", deferredSearch);
+        if (draft) {
+          next.set("q", draft);
         } else {
           next.delete("q");
         }
         setSearchParams(next, { replace: true });
-        trackEvent("tasks_searched", { has_query: Boolean(deferredSearch) });
+        trackEvent("tasks_searched", { has_query: Boolean(draft) });
       }
+      setDraft(null);
     }, 400);
 
     return () => clearTimeout(handler);
-  }, [deferredSearch, searchParams, setSearchParams]);
+  }, [draft, searchParams, setSearchParams]);
 
   const searchFilters: TaskFilters = {
     search: searchInput,
@@ -126,7 +129,7 @@ export const useTasks = ({ enabled = true }: UseTasksProps = {}) => {
     }
     const next = new URLSearchParams(searchParams);
     if (name === "search") {
-      setSearchInput(value);
+      setDraft(value);
     } else {
       const apiKey = apiParamMap[name as keyof TaskFilters];
       if (apiKey && value) {
@@ -139,7 +142,7 @@ export const useTasks = ({ enabled = true }: UseTasksProps = {}) => {
   };
 
   const resetFilters = () => {
-    setSearchInput("");
+    setDraft(null);
     const params = new URLSearchParams();
     LOCATION_PARAMS.forEach((key) => {
       const value = searchParams.get(key);

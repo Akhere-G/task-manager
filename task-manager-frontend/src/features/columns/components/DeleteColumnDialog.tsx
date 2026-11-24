@@ -17,7 +17,7 @@ export default function DeleteColumnDialog({
   const [moveToId, setMoveToId] = useState<number | null>(
     otherColumns[0]?.id ?? null,
   );
-  const { mutate: deleteColumn } = useDeleteColumn(column.projectId);
+  const { mutate: deleteColumn, isPending } = useDeleteColumn(column.projectId);
 
   const confirm = () => {
     deleteColumn({ id: column.id, moveToId }, { onSuccess: close });
@@ -28,6 +28,7 @@ export default function DeleteColumnDialog({
       title={`Delete "${column.name}"`}
       close={close}
       handleConfirm={confirm}
+      confirmDisabled={isPending}
       actionText="Delete column"
     >
       <label className="flex flex-col gap-2 text-text-main">

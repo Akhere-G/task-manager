@@ -5,7 +5,7 @@ import axios from "axios";
 import type { LoginUserInput } from "../features/auth/types";
 import { useAuthContext } from "../context/AuthContext";
 import { validateLogin } from "../features/auth/schemas";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 type ErrorMesageType = { [P in keyof LoginUserInput]: string } & {
   general: string;
@@ -29,6 +29,8 @@ export default function Login() {
   const [isLoading, setIsloading] = useState(false);
 
   const { login } = useAuthContext();
+  const { state } = useLocation();
+  const notice: unknown = state?.message;
 
   const validateForm = (data: { email: string; password: string }) => {
     setErrorMessages({ ...defaultErrorMessages, ...validateLogin(data) });
@@ -67,12 +69,9 @@ export default function Login() {
       password: true,
     });
 
-    if (
-      Object.entries(errorMessages).some(
-        ([k, v]) => v !== "" && k !== "general",
-      )
-    )
-      return;
+    const fieldErrors = validateLogin(formData);
+    setErrorMessages({ ...defaultErrorMessages, ...fieldErrors });
+    if (Object.values(fieldErrors).some(Boolean)) return;
 
     try {
       setIsloading(true);
@@ -108,6 +107,14 @@ export default function Login() {
         <p className="text-text-sub">Increase your productivity today</p>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit}>
+          {typeof notice === "string" && (
+            <p
+              role="status"
+              className="mt-4 text-success bg-success/10 p-1 pl-4 rounded-md border-l-success border-l-4"
+            >
+              {notice}
+            </p>
+          )}
           {errorMessages.general && (
             <p className="mt-4 text-failure bg-failure/10 p-1 pl-4 rounded-md border-l-failure border-l-4">
               {errorMessages.general}

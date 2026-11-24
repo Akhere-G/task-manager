@@ -7,6 +7,7 @@ import type { Task } from "../../tasks/types";
 import { columnCategoryParams } from "../boardCache";
 import type { BoardQuery } from "../types";
 import GroupActionsMenu from "../../tasks/components/GroupActionsMenu";
+import useBulkResult from "../../tasks/hooks/useBulkResult";
 import type { ColumnChoice } from "../../tasks/components/GroupActionItems";
 import ColumnCards from "./ColumnCards";
 import QuickAddCard from "./QuickAddCard";
@@ -40,6 +41,7 @@ export default function UnassignedColumn({
     params: columnCategoryParams(projectId, null),
   };
   const feed = useCategoryTasks(query);
+  const { banner, onResult } = useBulkResult();
 
   return (
     <section
@@ -56,10 +58,12 @@ export default function UnassignedColumn({
           Unassigned
         </h2>
         <TotalsChip total={feed.total} totalMinutes={feed.totalMinutes} />
+        {banner}
         <GroupActionsMenu
           name="Unassigned"
           count={feed.total}
           query={query}
+          onResult={onResult}
           columnChoices={moveChoices}
         />
       </header>

@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { mockApi } from "../../../test/api";
 import { renderWithProviders } from "../../../test/render";
@@ -37,13 +37,22 @@ async function openMenu(name = "Overdue") {
   return user;
 }
 
+const onResult = vi.fn();
+
+beforeEach(() => onResult.mockClear());
+
 describe("GroupActionsMenu", () => {
   it("completes the whole group by its filter, not by loaded ids", async () => {
     mock
       .onPost("/tasks/bulk-complete")
       .reply(200, { updated: 30, matched: 30 });
     renderWithProviders(
-      <GroupActionsMenu name="Overdue" count={30} query={overdue} />,
+      <GroupActionsMenu
+        name="Overdue"
+        count={30}
+        query={overdue}
+        onResult={onResult}
+      />,
     );
 
     const user = await openMenu();
@@ -62,6 +71,7 @@ describe("GroupActionsMenu", () => {
         name="Completed"
         count={2}
         query={overdue}
+        onResult={onResult}
         canComplete={false}
       />,
     );
@@ -74,7 +84,12 @@ describe("GroupActionsMenu", () => {
   it("reschedules the group to a chosen day", async () => {
     mock.onPost("/tasks/bulk-snooze").reply(200, { updated: 3, matched: 3 });
     renderWithProviders(
-      <GroupActionsMenu name="Overdue" count={3} query={overdue} />,
+      <GroupActionsMenu
+        name="Overdue"
+        count={3}
+        query={overdue}
+        onResult={onResult}
+      />,
     );
 
     const user = await openMenu();
@@ -91,7 +106,12 @@ describe("GroupActionsMenu", () => {
   it("asks before deleting and can be cancelled", async () => {
     mock.onPost("/tasks/bulk-delete").reply(200, { updated: 3, matched: 3 });
     renderWithProviders(
-      <GroupActionsMenu name="Overdue" count={3} query={overdue} />,
+      <GroupActionsMenu
+        name="Overdue"
+        count={3}
+        query={overdue}
+        onResult={onResult}
+      />,
     );
 
     const user = await openMenu();
@@ -114,6 +134,7 @@ describe("GroupActionsMenu", () => {
         name="Do first"
         count={4}
         query={{ ...overdue, params: {}, overrides: { priority: "1" } }}
+        onResult={onResult}
         priorityChoices={[
           { priority: 2, title: "Schedule" },
           { priority: 3, title: "Delegate" },
@@ -139,6 +160,7 @@ describe("GroupActionsMenu", () => {
         name="To Do"
         count={2}
         query={{ ...overdue, params: { project: "3", column: "9" } }}
+        onResult={onResult}
         columnChoices={[
           { id: null, name: "Unassigned" },
           { id: 12, name: "Done" },
@@ -160,21 +182,25 @@ describe("GroupActionsMenu", () => {
     expect(lastBody().columnId).toBeNull();
   });
 
-  it("says when only some of the tasks could be updated", async () => {
+  it("reports the counts when only some of the tasks were updated", async () => {
     mock
       .onPost("/tasks/bulk-complete")
       .reply(200, { updated: 500, matched: 500 });
     mock.onPost("/tasks/bulk-delete").reply(200, { updated: 2, matched: 5 });
     renderWithProviders(
-      <GroupActionsMenu name="Overdue" count={5} query={overdue} />,
+      <GroupActionsMenu
+        name="Overdue"
+        count={5}
+        query={overdue}
+        onResult={onResult}
+      />,
     );
 
     const user = await openMenu();
     await user.click(screen.getByRole("menuitem", { name: "Delete all 5" }));
     await user.click(screen.getByRole("menuitem", { name: "Confirm delete" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Updated 2 of 5 tasks",
-    );
+    await waitFor(() => expect(onResult).toHaveBeenCalled());
+    expect(onResult.mock.calls[0][0]).toEqual({ updated: 2, matched: 5 });
   });
 });

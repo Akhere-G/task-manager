@@ -100,11 +100,12 @@ export default function KanbanBoard({
   if (error) return <ErrorState error="Could not get the board columns" />;
   if (isLoading) return <LoadingState loadMessage="Getting columns..." />;
 
-  const loadedBoard = () => readBoardGroups(queryClient, projectId, columns);
+  const shownBoard = () =>
+    dropped ?? readBoardGroups(queryClient, projectId, columns);
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     const ref = readDragRef(active.data.current);
-    const tasks = [...loadedBoard().values()].flat();
+    const tasks = [...shownBoard().values()].flat();
     setActiveTask(
       ref?.type === "task"
         ? (tasks.find((task) => task.id === ref.taskId) ?? null)
@@ -113,7 +114,7 @@ export default function KanbanBoard({
   };
 
   const dropOnBoard = (taskId: number, target: DropTarget) => {
-    const result = dropTask(loadedBoard(), taskId, target);
+    const result = dropTask(shownBoard(), taskId, target);
     if (!result) return;
     const column =
       columns.find((candidate) => candidate.id === result.move.columnId) ??

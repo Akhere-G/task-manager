@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import CategoryFooter from "../../../components/ui/CategoryFooter";
 import ScrollFeed from "../../../components/ui/ScrollFeed";
+import type { BulkResult } from "../api";
 import { useCategoryTasks } from "../hooks/useCategoryTasks";
 import type { TaskGroupDefinition } from "../taskGroups";
 import type { CategoryQuery } from "../taskParams";
@@ -14,12 +15,14 @@ interface TaskGroupProps {
   /** The list's filters, search and view, shared by every group. */
   query: CategoryQuery;
   sortable: boolean;
+  onResult: (result: BulkResult) => void;
 }
 
 export default function TaskGroup({
   definition,
   query,
   sortable,
+  onResult,
 }: TaskGroupProps) {
   const [isOpen, setIsOpen] = useState(true);
   const groupQuery: CategoryQuery = {
@@ -30,7 +33,17 @@ export default function TaskGroup({
   const feed = useCategoryTasks(groupQuery);
 
   // Nothing to show while loading or when empty, so a group never flashes as "0".
-  if (feed.total === 0) return null;
+  if (feed.total === 0 && !feed.isError) return null;
+
+  if (feed.total === 0) {
+    return (
+      <section aria-label={definition.title}>
+        <p role="alert" className="pt-4 text-sm text-failure">
+          Could not load {definition.title}
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section aria-label={definition.title}>
@@ -47,6 +60,7 @@ export default function TaskGroup({
             name={definition.title}
             count={feed.total}
             query={groupQuery}
+            onResult={onResult}
             canComplete={definition.id !== "completed"}
           />
         }
@@ -62,8 +76,16 @@ export default function TaskGroup({
             emptyMessage={null}
             className="max-h-[28rem]"
           >
-            <TaskList tasks={feed.tasks} sortable={sortable} />
+            <TaskList
+              tasks={feed.tasks}
+              sortableQueryKey={sortable ? feed.queryKey : undefined}
+            />
           </ScrollFeed>
+          {feed.isError && (
+            <p role="alert" className="px-2 text-sm text-failure">
+              Could not load more tasks
+            </p>
+          )}
           <CategoryFooter
             shown={feed.tasks.length}
             total={feed.total}

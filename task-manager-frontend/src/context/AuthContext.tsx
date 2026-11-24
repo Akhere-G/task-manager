@@ -102,16 +102,19 @@ export default function AuthContextProvider({
 
   const logout = async () => {
     try {
-      await removeSubscriptionFromServer();
-    } catch (err) {
-      console.error(err);
+      try {
+        await removeSubscriptionFromServer();
+      } catch (err) {
+        console.error(err);
+      }
+      await authService.logout();
+      trackEvent(user?.isDemo ? "demo_exited" : "logout");
+    } finally {
+      endAnalyticsSession();
+      setUser(null);
+      setIsAuthenticated(false);
+      queryClient.clear();
     }
-    await authService.logout();
-    trackEvent(user?.isDemo ? "demo_exited" : "logout");
-    endAnalyticsSession();
-    setUser(null);
-    setIsAuthenticated(false);
-    queryClient.clear();
   };
 
   return (

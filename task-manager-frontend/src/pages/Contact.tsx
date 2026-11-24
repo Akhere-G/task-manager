@@ -67,7 +67,6 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    setStatus("sending");
     setTouched({
       fullName: true,
       email: true,
@@ -82,6 +81,7 @@ export default function ContactPage() {
     )
       return;
 
+    setStatus("sending");
     try {
       await contactService.sendEnquiry(formData);
       setStatus("success");
