@@ -84,24 +84,25 @@ def test_a_project_cannot_become_its_own_descendant(session: FlaskClient) -> Non
     assert own.status_code == 400 and loop.status_code == 400
 
 
-def test_deleting_a_project_moves_tasks_to_inbox_and_children_up(
+def test_deleting_a_project_deletes_its_sub_projects_and_inboxes_their_tasks(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
     grandparent = add_project(session, "Top")
     middle = add_project(session, "Middle", parentId=grandparent["id"])
     child = add_project(session, "Child", parentId=middle["id"])
-    task = session.post(
-        "/api/tasks", json=task_payload(projectId=middle["id"])
-    ).get_json()
+    tasks = [
+        session.post(
+            "/api/tasks", json=task_payload(projectId=project["id"])
+        ).get_json()
+        for project in (middle, child)
+    ]
 
     session.delete(f"/api/projects/{middle['id']}")
 
-    projects = {
-        p["name"]: p for p in session.get("/api/projects").get_json()["projects"]
-    }
-    assert projects["Child"]["parentId"] == grandparent["id"]
-    assert child["id"] == projects["Child"]["id"]
-    assert session.get(f"/api/tasks/{task['id']}").get_json()["projectId"] is None
+    names = [p["name"] for p in session.get("/api/projects").get_json()["projects"]]
+    assert names == ["Top"]
+    for task in tasks:
+        assert session.get(f"/api/tasks/{task['id']}").get_json()["projectId"] is None
 
 
 def test_a_task_needs_an_existing_project(
