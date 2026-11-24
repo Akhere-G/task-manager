@@ -19,7 +19,7 @@ export function usePhaseAlerts({
 
   useEffect(() => {
     if (isDue && !wasDue.current)
-      alertPhaseDue(`${phaseLabel} done`, dueMessage);
+      void alertPhaseDue(`${phaseLabel} done`, dueMessage);
     wasDue.current = isDue;
   }, [isDue, phaseLabel, dueMessage]);
 
