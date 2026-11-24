@@ -152,7 +152,10 @@ describe("signing in", () => {
       await screen.findByRole("heading", { name: "Your tasks" }),
     ).toBeInTheDocument();
     await waitFor(() => expect(taskRequests().length).toBeGreaterThan(0));
-    expect(JSON.parse(mock.history.post[0].data)).toEqual({
+    const loginRequest = mock.history.post.find(
+      (request) => request.url === "/auth/login",
+    );
+    expect(JSON.parse(loginRequest?.data)).toEqual({
       email: "user@example.com",
       password: "Sturdy-pass9",
     });
