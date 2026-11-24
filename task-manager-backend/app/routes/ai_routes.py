@@ -19,6 +19,7 @@ ai_bp = Blueprint("ai", __name__)
 
 @ai_bp.route("/api/ai/daily-brief", methods=["GET"])
 @jwt_required()
+@limiter.limit(ai_daily_limit, key_func=user_key, scope="ai-brief")
 def get_daily_brief_route() -> ResponseReturnValue:
     user_id = authenticated_user_id()
 
