@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from app.utils.dates import (
     as_aware_utc,
@@ -6,6 +6,7 @@ from app.utils.dates import (
     end_of_day,
     get_zone,
     is_valid_zone,
+    local_day_bounds,
     local_today,
     to_iso_z,
 )
@@ -41,3 +42,10 @@ def test_only_real_zone_names_are_valid() -> None:
     assert not is_valid_zone("Nope")
     assert not is_valid_zone("")
     assert not is_valid_zone(3)
+
+
+def test_a_local_day_runs_from_local_midnight_to_the_next() -> None:
+    start, end = local_day_bounds("Pacific/Kiritimati")
+
+    assert end - start == timedelta(days=1)
+    assert start.hour == 10
