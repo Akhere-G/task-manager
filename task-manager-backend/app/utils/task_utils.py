@@ -265,12 +265,14 @@ def with_repeating(
     return [*tasks, *ghosts]
 
 
+def series_ends_before(task: Task, start: datetime) -> bool:
+    return task.repeat_until is not None and _repeat_until_end(task) < start
+
+
 def should_roll_series(task: Task, before: Task) -> bool:
     if not (task.is_repeating and task.is_completed and not before.is_completed):
         return False
-    if not task.repeat_until:
-        return True
-    return _repeat_until_end(task) >= next_task_start(task)
+    return not series_ends_before(task, next_task_start(task))
 
 
 def _save_completed_occurrence(before: Task) -> Task:
@@ -280,9 +282,9 @@ def _save_completed_occurrence(before: Task) -> Task:
         project_id=before.project_id,
         column_id=before.column_id,
         priority=before.priority,
+        sort_order=before.sort_order,
         start_at=before.start_at,
         end_at=before.end_at,
-        sort_order=before.sort_order,
         is_repeating=False,
         user_id=before.user_id,
         series_id=before.id,

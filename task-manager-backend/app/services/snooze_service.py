@@ -2,20 +2,22 @@ from datetime import date
 from typing import Any
 
 from app.database import db
-from app.exceptions import SnoozeNotRepeating
+from app.exceptions import SnoozeNotRepeating, SnoozePastSeriesEnd
 from app.models import Task
 from app.services.label_service import attach_label_ids
 from app.services.reminder_service import attach_reminders, sync_reminders
 from app.services.subtask_service import attach_subtask_counts
 from app.services.task_service import apply_reschedule, get_task
 from app.utils.snooze import snooze_today, snoozed_span, target_day
-from app.utils.task_utils import next_task_start
+from app.utils.task_utils import next_task_start, series_ends_before
 
 
 def _move_to_next_occurrence(task: Task) -> Task:
     if not (task.is_repeating and task.repeat_by) or task.is_completed:
         raise SnoozeNotRepeating()
     next_start = next_task_start(task)
+    if series_ends_before(task, next_start):
+        raise SnoozePastSeriesEnd()
     task.end_at = next_start + (task.end_at - task.start_at)
     task.start_at = next_start
     sync_reminders(task)

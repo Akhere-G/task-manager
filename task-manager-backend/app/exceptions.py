@@ -138,6 +138,11 @@ class TooManyTasks(AppError):
         super().__init__(f"Import at most {limit} tasks at a time.")
 
 
+class SnoozePastSeriesEnd(AppError):
+    field = "preset"
+    message = "The next occurrence is after the series ends."
+
+
 class SnoozeNotRepeating(AppError):
     field = "preset"
     message = "Only an open repeating task can move to its next occurrence."
