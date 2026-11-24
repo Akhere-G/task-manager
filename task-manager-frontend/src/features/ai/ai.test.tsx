@@ -243,6 +243,19 @@ describe("priority suggestions", () => {
       expect(screen.getByText("Book dentist")).toBeInTheDocument();
     });
 
+    it("removes every accepted suggestion from the list", async () => {
+      await showTwoSuggestions();
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Accept selected (2)" }),
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText("Pay rent")).not.toBeInTheDocument(),
+      );
+      expect(screen.queryByText("Book dentist")).not.toBeInTheDocument();
+    });
+
     it("can reselect a deselected suggestion", async () => {
       await showTwoSuggestions();
       const checkbox = screen.getByRole("checkbox", {
