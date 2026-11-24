@@ -108,6 +108,8 @@ def test_requests_without_login_are_rejected(client: FlaskClient) -> None:
     assert client.post("/api/tasks", json={}).status_code == 401
     assert client.post("/api/tasks/1/reschedule", json={}).status_code == 401
     assert client.get("/api/stats/dashboard").status_code == 401
+    assert client.get("/api/api-tokens").status_code == 401
+    assert client.post("/api/ai/suggest-priorities", json={}).status_code == 401
 
 
 def test_user_cannot_see_or_restore_another_users_trash(
