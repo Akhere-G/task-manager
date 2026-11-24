@@ -4,9 +4,13 @@ import { trackEvent } from "../../../services/analytics";
 import { playSound } from "../utils";
 
 export default function useSetIsCompleted() {
-  const { mutateAsync: updateTask, isPending } = useUpdateTask();
+  const { mutateAsync: updateTask, isPending, isError } = useUpdateTask();
 
-  async function setIsCompleted(id: number, isCompleted: boolean, task?: Task) {
+  async function setIsCompleted(
+    id: number,
+    isCompleted: boolean,
+    task?: Task,
+  ): Promise<boolean> {
     const completedAt = isCompleted ? new Date().toUTCString() : null;
 
     try {
@@ -34,10 +38,11 @@ export default function useSetIsCompleted() {
           was_overdue: wasOverdue,
         });
       }
-    } catch (err) {
-      console.error(err);
+      return true;
+    } catch {
+      return false;
     }
   }
 
-  return { setIsCompleted, isPending };
+  return { setIsCompleted, isPending, isError };
 }

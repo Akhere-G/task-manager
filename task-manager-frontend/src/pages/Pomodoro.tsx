@@ -32,7 +32,11 @@ export default function Pomodoro() {
     isError,
     error,
   } = useGetTask(Number(taskId ?? -1));
-  const { setIsCompleted } = useSetIsCompleted();
+  const {
+    setIsCompleted,
+    isPending: isCompleting,
+    isError: completionFailed,
+  } = useSetIsCompleted();
 
   const status = isAxiosError(error) ? error.status : 0;
 
@@ -66,9 +70,9 @@ export default function Pomodoro() {
 
   const dateStr = formatDateRange(startAt, endAt);
 
-  const completeTask = () => {
+  const completeTask = async () => {
+    if (!(await setIsCompleted(id, true, task))) return;
     clearSession(id);
-    setIsCompleted(id, true, task);
     navigate(-1);
   };
 
@@ -131,6 +135,8 @@ export default function Pomodoro() {
             )}
             onSettingsChange={updateSettings}
             onCompleteTask={completeTask}
+            isCompleting={isCompleting}
+            completionFailed={completionFailed}
           />
         </div>
       </div>

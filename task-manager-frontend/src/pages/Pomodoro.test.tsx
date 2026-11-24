@@ -221,6 +221,24 @@ describe("Pomodoro page", () => {
     expect(loadSession(1)).toBeNull();
   });
 
+  it("stays on the page and says so when completing the task fails", async () => {
+    seedSession(lastSessionResting());
+    mock.onGet("/tasks/1").reply(200, makeTask({ title: "Deep work" }));
+    mock.onPatch("/tasks/1").reply(500);
+    renderPomodoro();
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Finish task" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not complete the task",
+    );
+    expect(screen.queryByText("Task list")).not.toBeInTheDocument();
+    expect(loadSession(1)).not.toBeNull();
+  });
+
   it("leaves the task open when the user declines, and allows an extra session", async () => {
     seedSession(lastSessionResting());
     mock.onGet("/tasks/1").reply(200, makeTask({ title: "Deep work" }));

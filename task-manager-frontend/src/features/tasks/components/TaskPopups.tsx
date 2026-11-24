@@ -25,7 +25,7 @@ interface TaskPopupsProps {
     id: number,
     isCompleted: boolean,
     task?: Task,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
 }
 function TaskPopups({
   handleDelete,
