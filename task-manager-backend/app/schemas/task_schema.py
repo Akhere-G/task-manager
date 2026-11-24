@@ -256,11 +256,9 @@ class TaskSchema(CamelAutoSchema):
     @staticmethod
     def _repeat_days_error(repeat_by: str | None, days: list[Any]) -> str | None:
         if repeat_by == "daily":
-            return "Daily tasks do not use repeat days."
+            return None
         if not days and repeat_by:
             return "Choose at least one day."
-        if len(set(map(str, days))) != len(days):
-            return "Repeat days must not contain duplicates."
         if repeat_by == "weekly" and not all(_is_int(d) and 0 <= d <= 6 for d in days):
             return "Weekly repeat days must be weekdays (0 to 6)."
         if repeat_by == "monthly" and not all(

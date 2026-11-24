@@ -60,19 +60,9 @@ def test_blank_optional_strings_are_treated_as_missing() -> None:
             "Repeat interval must be between 1 and 52.",
         ),
         (
-            {"repeatBy": "daily", "repeatDays": [1]},
-            "repeatDays",
-            "Daily tasks do not use repeat days.",
-        ),
-        (
             {"repeatBy": "weekly", "repeatDays": []},
             "repeatDays",
             "Choose at least one day.",
-        ),
-        (
-            {"repeatBy": "weekly", "repeatDays": [1, 1]},
-            "repeatDays",
-            "Repeat days must not contain duplicates.",
         ),
         (
             {"repeatBy": "weekly", "repeatDays": [7]},
