@@ -28,8 +28,8 @@ function LabelEditor({ editing, onDone }: LabelEditorProps) {
     editing ? { name: editing.name, colour: editing.colour } : emptyDraft,
   );
   const [error, setError] = useState("");
-  const { mutateAsync: create } = useCreateLabel();
-  const { mutateAsync: update } = useUpdateLabel();
+  const { mutateAsync: create, isPending: isCreating } = useCreateLabel();
+  const { mutateAsync: update, isPending: isUpdating } = useUpdateLabel();
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -95,7 +95,7 @@ function LabelEditor({ editing, onDone }: LabelEditorProps) {
         <button
           type="submit"
           className="btn-primary"
-          disabled={!draft.name.trim()}
+          disabled={!draft.name.trim() || isCreating || isUpdating}
         >
           {editing ? "Save label" : "Add label"}
         </button>
