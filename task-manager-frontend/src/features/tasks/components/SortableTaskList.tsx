@@ -15,6 +15,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { QueryKey } from "@tanstack/react-query";
 import { useState } from "react";
 
 import useMoveTask from "../hooks/useMoveTask";
@@ -68,7 +69,15 @@ function SortableItem({
   );
 }
 
-export default function SortableTaskList({ tasks: loaded }: { tasks: Task[] }) {
+interface SortableTaskListProps {
+  tasks: Task[];
+  queryKey: QueryKey;
+}
+
+export default function SortableTaskList({
+  tasks: loaded,
+  queryKey,
+}: SortableTaskListProps) {
   // React Query tells its subscribers a task later than dnd-kit clears its
   // offsets, which flashes the old order. Show the dropped order until the
   // cache catches up; it is ignored as soon as `loaded` is a new list.
@@ -95,6 +104,7 @@ export default function SortableTaskList({ tasks: loaded }: { tasks: Task[] }) {
         id: Number(active.id),
         move: result.move,
         reordered: result.items,
+        queryKey,
       });
     }
   };

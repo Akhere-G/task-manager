@@ -62,7 +62,10 @@ export default function TaskGroup({
             emptyMessage={null}
             className="max-h-[28rem]"
           >
-            <TaskList tasks={feed.tasks} sortable={sortable} />
+            <TaskList
+              tasks={feed.tasks}
+              sortableQueryKey={sortable ? feed.queryKey : undefined}
+            />
           </ScrollFeed>
           <CategoryFooter
             shown={feed.tasks.length}

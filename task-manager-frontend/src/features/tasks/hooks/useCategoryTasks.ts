@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { taskService } from "../api";
@@ -19,15 +19,31 @@ const uniqueById = (tasks: Task[]) => [
   ...new Map(tasks.map((task) => [task.id, task])).values(),
 ];
 
+export const categoryTasksKey = ({
+  filters,
+  overrides = {},
+  search,
+  view,
+  params = {},
+}: CategoryQuery) => [
+  "tasks",
+  "category",
+  {
+    categoryFilters: { ...filters, ...overrides, search },
+    search,
+    view,
+    params,
+  },
+];
+
 export const useCategoryTasks = ({
   enabled = true,
   ...query
 }: UseCategoryTasksProps) => {
-  const { filters, overrides = {}, search, view, params = {} } = query;
-  const categoryFilters = { ...filters, ...overrides };
+  const queryKey = categoryTasksKey(query);
 
   const result = useInfiniteQuery({
-    queryKey: ["tasks", "category", { categoryFilters, search, view, params }],
+    queryKey,
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
       taskService.getAll(buildCategoryParams(query, pageParam)),
@@ -35,6 +51,7 @@ export const useCategoryTasks = ({
       lastPage.currentPage < lastPage.totalPages
         ? lastPage.currentPage + 1
         : undefined,
+    placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5,
     enabled,
   });
@@ -48,6 +65,7 @@ export const useCategoryTasks = ({
   const latest = pages?.at(-1);
 
   return {
+    queryKey,
     tasks,
     total: latest?.totalTasks ?? 0,
     totalMinutes: latest?.totalMinutes ?? 0,
