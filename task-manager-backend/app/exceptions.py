@@ -138,6 +138,11 @@ class UndatedRepeatingTask(AppError):
     message = "Repeating tasks need a start and an end time."
 
 
+class TooManyTasks(AppError):
+    def __init__(self, limit: int) -> None:
+        super().__init__(f"Import at most {limit} tasks at a time.")
+
+
 class InvalidMove(AppError):
     field = "afterId"
     message = "Say which task to move after or before."

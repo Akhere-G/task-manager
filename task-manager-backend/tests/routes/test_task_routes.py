@@ -118,6 +118,14 @@ def test_bulk_validation_errors_are_listed_per_task(
     assert errors[0] == {} and set(errors[1]) == {"title", "projectId"}
 
 
+def test_a_bulk_import_is_capped(
+    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
+) -> None:
+    response = session.post("/api/tasks/bulk", json=[task_payload()] * 501)
+
+    assert response.status_code == 400
+
+
 def test_a_task_can_be_created_read_edited_and_deleted(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
