@@ -13,6 +13,7 @@ import { useCategoryTasks } from "../hooks/useCategoryTasks";
 import type { CategoryQuery, TaskFilters } from "../taskParams";
 import type { Priority, Task } from "../types";
 import type { TaskView } from "../views";
+import useBulkResult from "../hooks/useBulkResult";
 import GroupActionsMenu from "./GroupActionsMenu";
 import MatrixTaskRow from "./MatrixTaskRow";
 
@@ -41,6 +42,7 @@ export default function MatrixQuadrant({
   onDropTask,
 }: MatrixQuadrantProps) {
   const navigate = useNavigate();
+  const { banner, onResult } = useBulkResult();
   const query: CategoryQuery = {
     filters,
     search,
@@ -93,10 +95,12 @@ export default function MatrixQuadrant({
           >
             <Plus aria-hidden size={14} />
           </button>
+          {banner}
           <GroupActionsMenu
             name={title}
             count={total}
             query={query}
+            onResult={onResult}
             priorityChoices={otherQuadrants}
           />
         </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import CategoryFooter from "../../../components/ui/CategoryFooter";
 import ScrollFeed from "../../../components/ui/ScrollFeed";
+import type { BulkResult } from "../api";
 import { useCategoryTasks } from "../hooks/useCategoryTasks";
 import type { TaskGroupDefinition } from "../taskGroups";
 import type { CategoryQuery } from "../taskParams";
@@ -14,12 +15,14 @@ interface TaskGroupProps {
   /** The list's filters, search and view, shared by every group. */
   query: CategoryQuery;
   sortable: boolean;
+  onResult: (result: BulkResult) => void;
 }
 
 export default function TaskGroup({
   definition,
   query,
   sortable,
+  onResult,
 }: TaskGroupProps) {
   const [isOpen, setIsOpen] = useState(true);
   const groupQuery: CategoryQuery = {
@@ -47,6 +50,7 @@ export default function TaskGroup({
             name={definition.title}
             count={feed.total}
             query={groupQuery}
+            onResult={onResult}
             canComplete={definition.id !== "completed"}
           />
         }
