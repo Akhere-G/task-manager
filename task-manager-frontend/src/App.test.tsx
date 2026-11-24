@@ -164,6 +164,19 @@ describe("signing in", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("asks for the missing fields when an untouched form is submitted", async () => {
+    mock.onGet("/auth/me").reply(401);
+
+    renderApp("/login");
+    await userEvent.click(await screen.findByRole("button", { name: "Login" }));
+
+    expect(await screen.findByText("Email is required.")).toBeInTheDocument();
+    expect(screen.getByText("Password is required.")).toBeInTheDocument();
+    expect(
+      mock.history.post.some((request) => request.url === "/auth/login"),
+    ).toBe(false);
+  });
+
   it("shows the server's message for wrong credentials and stays on the page", async () => {
     mock.onGet("/auth/me").reply(401);
     mock
