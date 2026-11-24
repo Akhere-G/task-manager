@@ -5,6 +5,7 @@ interface PopupProps {
   title: string;
   close: () => void;
   handleConfirm?: () => void;
+  confirmDisabled?: boolean;
   children: React.ReactNode;
   showCloseButton?: boolean;
   actionText?: string;
@@ -17,6 +18,7 @@ export default function Popup({
   title,
   close,
   handleConfirm,
+  confirmDisabled = false,
   children,
   showCloseButton = true,
   actionText = "Confirm",
@@ -93,6 +95,7 @@ export default function Popup({
               aria-label={actionText ?? "Confirm"}
               className={actionButtonClass}
               onClick={handleConfirm}
+              disabled={confirmDisabled}
             >
               {actionText}
             </button>
