@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 
 interface PopupProps {
@@ -26,6 +26,18 @@ export default function Popup({
   sleek = false,
 }: PopupProps) {
   const actionButtonClass = `btn-${actionButtonVariant}`;
+  const titleId = useId();
+  const dialog = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement;
+    if (!dialog.current?.contains(document.activeElement)) {
+      dialog.current?.focus();
+    }
+    return () => {
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
+    };
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -47,8 +59,13 @@ export default function Popup({
         className="fixed inset-0 z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center"
       >
         <section
+          ref={dialog}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title || "Dialog"}
+          tabIndex={-1}
           onClick={(e) => e.stopPropagation()}
-          className="w-10/11 md:max-w-4xl relative p-0 "
+          className="w-10/11 md:max-w-4xl relative p-0 focus:outline-none"
         >
           <button
             className="text-xl position absolute -top-4 -right-4 btn-secondary rounded-full w-10 h-10 z-1 shadow-sm"
@@ -68,11 +85,16 @@ export default function Popup({
       className="fixed inset-0 z-100 bg-gray-800/80 backdrop-blur-sm top-0 left-0 flex items-center justify-center"
     >
       <section
+        ref={dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="card p-0 w-9/10 md:w-4/5 md:max-w-2xl max-h-9/10 overflow-y-scroll"
+        className="card p-0 w-9/10 md:w-4/5 md:max-w-2xl max-h-9/10 overflow-y-scroll focus:outline-none"
       >
         <header className="bg-accent p-4 text-text-inverse flex justify-between items-center">
-          <h1>{title}</h1>
+          <h1 id={titleId}>{title}</h1>
           <button className="text-xl" aria-label="close" onClick={close}>
             &times;
           </button>
