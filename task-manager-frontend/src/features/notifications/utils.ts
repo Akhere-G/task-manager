@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { notificationsService } from "./api";
 import { type NotificationCreate } from "./types";
 
@@ -56,15 +55,12 @@ export async function registerAndSubscribe(): Promise<NotificationCreate> {
     applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
   });
 
-  const subJson = subscription.toJSON();
+  const { endpoint, keys } = subscription.toJSON();
+  if (!endpoint || !keys?.p256dh || !keys.auth) {
+    throw new Error("The browser returned an incomplete push subscription.");
+  }
 
-  return {
-    endpoint: subJson.endpoint!,
-    keys: {
-      p256dh: subJson.keys!.p256dh,
-      auth: subJson.keys!.auth,
-    },
-  };
+  return { endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } };
 }
 
 export async function removeSubscriptionFromServer(): Promise<void> {
