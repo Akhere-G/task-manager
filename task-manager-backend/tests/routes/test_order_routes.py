@@ -70,10 +70,22 @@ def test_moving_between_neighbours_with_no_room_renumbers(
     assert manual(session) == ["a", "c", "b"]
 
 
-def test_a_move_needs_a_neighbour(session: FlaskClient) -> None:
+def test_neighbours_in_the_wrong_order_place_the_task_after_the_first(
+    session: FlaskClient,
+) -> None:
+    c, b, a = (add(session, name) for name in "cba")
+
+    assert move(session, b, afterId=c, beforeId=a).status_code == 200
+    assert move(session, a, afterId=c, beforeId=c).status_code == 200
+
+    assert manual(session) == ["c", "a", "b"]
+
+
+def test_a_move_with_no_neighbour_changes_nothing(session: FlaskClient) -> None:
     task = add(session, "alone")
 
-    assert move(session, task).status_code == 400
+    assert move(session, task).status_code == 200
+    assert manual(session) == ["alone"]
 
 
 def test_a_move_beside_a_missing_task_is_refused(session: FlaskClient) -> None:

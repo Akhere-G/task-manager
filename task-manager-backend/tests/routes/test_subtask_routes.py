@@ -280,26 +280,18 @@ def test_order_renumbers_the_positions(
     assert subtask_titles(session, parent["id"]) == ["c", "a", "b"]
 
 
-def test_order_rejects_missing_extra_or_duplicate_ids(
+def test_order_ignores_unknown_ids_and_keeps_unlisted_subtasks_last(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
     parent = add_task(session, task_payload)
     other = add_task(session, task_payload, title="other")
     (stranger,) = add_subtasks(session, other["id"], "stranger")
-    a, b = add_subtasks(session, parent["id"], "a", "b")
+    a, b, c = add_subtasks(session, parent["id"], "a", "b", "c")
 
-    for ids in (
-        [a["id"]],
-        [a["id"], b["id"], stranger["id"]],
-        [a["id"], a["id"]],
-        [b["id"], stranger["id"]],
-        [],
-    ):
-        status, body = put_order(session, parent["id"], ids)
-        assert status == 400, ids
-        assert "ids" in body["errors"]
+    status, _ = put_order(session, parent["id"], [c["id"], stranger["id"], c["id"]])
 
-    assert subtask_titles(session, parent["id"]) == ["a", "b"]
+    assert status == 200
+    assert subtask_titles(session, parent["id"]) == ["c", "a", "b"]
     assert subtask_titles(session, other["id"]) == ["stranger"]
 
 

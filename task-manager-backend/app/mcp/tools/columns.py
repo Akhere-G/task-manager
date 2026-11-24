@@ -121,8 +121,8 @@ COLUMN_TOOLS = (
         name="reorder_columns",
         title="Reorder a project's columns",
         description=(
-            "Set the board order of a project's columns. columnIds must list every "
-            "column of the project exactly once, first to last."
+            "Set the board order of a project's columns. columnIds go first to "
+            "last; columns not listed follow in their current order."
         ),
         input=ColumnOrderInputSchema,
         scope=TokenScope.WRITE,

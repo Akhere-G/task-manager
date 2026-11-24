@@ -117,5 +117,5 @@ venv/bin/ruff format app tests
 venv/bin/pytest
 ```
 
-The test suite needs a local MySQL server (see `tests/conftest.py`). Add or update
+The test suite needs a local PostgreSQL server (see `tests/conftest.py`). Add or update
 tests alongside behaviour changes.

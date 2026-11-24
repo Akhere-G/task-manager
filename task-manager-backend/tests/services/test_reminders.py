@@ -5,6 +5,7 @@ from unittest import mock
 
 import pytest
 from flask import Flask
+from sqlalchemy import select
 
 import app.run_reminders as run_reminders
 from app.database import db
@@ -16,6 +17,7 @@ from app.models import (
     TaskReminder,
 )
 from app.services.reminder_service import set_reminders, sync_reminders
+from app.services.task_service import update_task
 from app.utils.dates import utc_now
 
 
@@ -127,6 +129,27 @@ def test_rescheduled_task_is_reminded_again(
     run_reminders.check_task_reminders()
 
     assert push.call_count == 2
+
+
+def test_completing_a_repeating_task_moves_its_reminder_to_the_next_occurrence(
+    app: Flask,
+    user_with_subscription: int,
+    add_task: Callable[..., int],
+) -> None:
+    task_id = add_task(
+        user_with_subscription,
+        is_repeating=True,
+        repeat_by="daily",
+        repeat_interval=1,
+    )
+
+    with app.app_context():
+        task = update_task(user_with_subscription, task_id, {"is_completed": True})
+        reminder = db.session.scalar(
+            select(TaskReminder).where(TaskReminder.task_id == task_id)
+        )
+        assert reminder.fire_at == task.start_at - timedelta(minutes=30)
+        assert task.start_at > utc_now() + timedelta(hours=23)
 
 
 def test_message_has_no_none_when_task_has_no_description(

@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from typing import Any
 
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select
 
 from app.constants import (
     INBOX_NAME,
@@ -156,13 +156,13 @@ def update_project(user_id: int, project_id: int, data: dict[str, Any]) -> Proje
 
 
 def delete_project(user_id: int, project_id: int) -> None:
-    project = get_project(user_id, project_id)
+    get_project(user_id, project_id)
     db.session.execute(
-        update(Project)
-        .where(Project.user_id == user_id, Project.parent_id == project_id)
-        .values(parent_id=project.parent_id)
+        delete(Project).where(
+            Project.user_id == user_id,
+            Project.id.in_(descendant_project_ids(user_id, project_id)),
+        )
     )
-    db.session.delete(project)
     db.session.commit()
 
 

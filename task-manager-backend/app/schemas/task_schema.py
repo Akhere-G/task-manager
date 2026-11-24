@@ -37,7 +37,7 @@ from app.utils.snooze import SNOOZE_PRESETS
 from app.utils.views import TASK_VIEWS
 
 from .base import CamelAutoSchema, CamelSchema
-from .fields import IsoDateTime, StrippedString, UtcDateTime
+from .fields import StrippedString, UtcDateTime
 
 MAX_PROJECT_PATH_LENGTH = MAX_PROJECT_DEPTH * (
     MAX_PROJECT_NAME_LENGTH + len(PROJECT_PATH_SEPARATOR) + 2
@@ -256,11 +256,9 @@ class TaskSchema(CamelAutoSchema):
     @staticmethod
     def _repeat_days_error(repeat_by: str | None, days: list[Any]) -> str | None:
         if repeat_by == "daily":
-            return "Daily tasks do not use repeat days."
+            return None
         if not days and repeat_by:
             return "Choose at least one day."
-        if len(set(map(str, days))) != len(days):
-            return "Repeat days must not contain duplicates."
         if repeat_by == "weekly" and not all(_is_int(d) and 0 <= d <= 6 for d in days):
             return "Weekly repeat days must be weekdays (0 to 6)."
         if repeat_by == "monthly" and not all(
@@ -350,8 +348,8 @@ class TaskListQuerySchema(Schema):
     is_completed = fields.String()
     sort_by = fields.String()
     order = fields.String()
-    start_date = IsoDateTime()
-    end_date = IsoDateTime()
+    start_date = UtcDateTime()
+    end_date = UtcDateTime()
     page = fields.Integer(load_default=1, validate=validate.Range(min=1))
     limit = fields.Integer(validate=validate.Range(min=1, max=MAX_PAGE_SIZE))
     project_repeating = fields.Boolean(load_default=False)

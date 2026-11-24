@@ -81,8 +81,8 @@ PROJECT_TOOLS = (
         name="delete_project",
         title="Delete a project",
         description=(
-            "Permanently delete a project. This cannot be undone. Its sub-projects "
-            "move up a level and its tasks move to the inbox. Confirm with the user "
+            "Permanently delete a project and all its sub-projects. This cannot be "
+            "undone. The tasks in them move to the inbox. Confirm with the user "
             "before calling."
         ),
         input=EmptySchema,

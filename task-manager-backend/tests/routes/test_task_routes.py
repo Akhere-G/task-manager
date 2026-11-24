@@ -118,6 +118,14 @@ def test_bulk_validation_errors_are_listed_per_task(
     assert errors[0] == {} and set(errors[1]) == {"title", "projectId"}
 
 
+def test_a_bulk_import_is_capped(
+    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
+) -> None:
+    response = session.post("/api/tasks/bulk", json=[task_payload()] * 501)
+
+    assert response.status_code == 400
+
+
 def test_a_task_can_be_created_read_edited_and_deleted(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
@@ -176,6 +184,25 @@ def test_projecting_a_repeating_task_adds_ghost_occurrences(
     ]
     assert {g["seriesId"] for g in ghosts} == {task_id}
     assert all(g["id"].startswith(f"ghost_{task_id}_") for g in ghosts)
+
+
+def test_clearing_the_frequency_stops_a_task_repeating(
+    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
+) -> None:
+    task_id = create_daily_task(session, task_payload)
+
+    task = session.patch(f"/api/tasks/{task_id}", json={"repeatBy": None}).get_json()
+
+    assert task["isRepeating"] is False
+    assert task["repeatBy"] is None
+
+
+def test_a_date_range_may_mix_offsets_and_plain_dates(session: FlaskClient) -> None:
+    response = session.get(
+        "/api/tasks?start_date=2026-03-01&end_date=2026-03-05T00:00:00Z"
+    )
+
+    assert response.status_code == 200
 
 
 def reschedule(

@@ -19,6 +19,7 @@ from app.services.task_service import (
     delete_task,
     get_task,
     get_trash,
+    is_in_trash,
     restore_task,
     update_task,
 )
@@ -55,12 +56,17 @@ def _update_task(user_id: int, data: dict[str, Any]) -> dict[str, Any]:
 
 
 def _delete_task(user_id: int, data: dict[str, Any]) -> dict[str, Any]:
+    already_in_trash = is_in_trash(user_id, data["id"])
     delete_task(user_id, data["id"])
-    return {"id": data["id"], "message": "Deleted"}
+    message = "Already in the trash" if already_in_trash else "Deleted"
+    return {"id": data["id"], "message": message}
 
 
 def _restore_task(user_id: int, data: dict[str, Any]) -> dict[str, Any]:
-    return TrashedTaskSchema().dump(restore_task(user_id, data["id"]))
+    was_in_trash = is_in_trash(user_id, data["id"])
+    task = restore_task(user_id, data["id"])
+    message = "Restored" if was_in_trash else "Was not in the trash"
+    return {**TrashedTaskSchema().dump(task), "message": message}
 
 
 TASK_TOOLS = (
@@ -115,7 +121,6 @@ TASK_TOOLS = (
         takes_id=True,
         scope=TokenScope.WRITE,
         run=_update_task,
-        idempotent=True,
     ),
     Tool(
         name="delete_task",
@@ -129,6 +134,7 @@ TASK_TOOLS = (
         takes_id=True,
         scope=TokenScope.WRITE,
         run=_delete_task,
+        idempotent=True,
     ),
     Tool(
         name="restore_task",

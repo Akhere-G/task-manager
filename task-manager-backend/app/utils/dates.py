@@ -1,6 +1,6 @@
 """The database stores naive UTC datetimes."""
 
-from datetime import UTC, date, datetime, time, tzinfo
+from datetime import UTC, date, datetime, time, timedelta, tzinfo
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -67,3 +67,11 @@ def is_valid_zone(zone_name: object) -> bool:
 
 def local_today(zone_name: str | None) -> date:
     return datetime.now(get_zone(zone_name)).date()
+
+
+def local_day_bounds(zone_name: str | None) -> tuple[datetime, datetime]:
+    zone = get_zone(zone_name)
+    today = datetime.now(zone).date()
+    start = datetime.combine(today, time.min, tzinfo=zone)
+    end = datetime.combine(today + timedelta(days=1), time.min, tzinfo=zone)
+    return as_naive_utc(start), as_naive_utc(end)

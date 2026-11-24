@@ -25,12 +25,18 @@ def test_a_task_goes_through_its_whole_life(user_id: int) -> None:
     assert updated["isCompleted"] is True
     assert updated["priority"] == 2
 
-    run(user_id, "delete_task", id=created["id"])
+    assert run(user_id, "delete_task", id=created["id"])["message"] == "Deleted"
+    assert run(user_id, "delete_task", id=created["id"])["message"] == (
+        "Already in the trash"
+    )
     assert run(user_id, "list_tasks")["tasks"] == []
     trashed = run(user_id, "list_trash")["tasks"]
     assert [task["id"] for task in trashed] == [created["id"]]
 
-    run(user_id, "restore_task", id=created["id"])
+    assert run(user_id, "restore_task", id=created["id"])["message"] == "Restored"
+    assert run(user_id, "restore_task", id=created["id"])["message"] == (
+        "Was not in the trash"
+    )
     assert [t["id"] for t in run(user_id, "list_tasks")["tasks"]] == [created["id"]]
 
 

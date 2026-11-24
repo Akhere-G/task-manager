@@ -19,7 +19,7 @@ from app.services.project_service import project_paths
 from app.services.stats_service import get_brief_stats
 from app.services.task_listing import get_all_tasks
 from app.services.task_query import TaskQuery
-from app.utils.dates import local_today
+from app.utils.dates import local_day_bounds, local_today
 
 logger = logging.getLogger(__name__)
 
@@ -164,14 +164,10 @@ def generate_daily_brief(
         if existing := _find_brief(user_id, day):
             return existing.brief_text, False
 
+        day_start, day_end = local_day_bounds(timezone_name)
         todays_tasks = get_all_tasks(
             user_id,
-            TaskQuery(
-                start_date=day.isoformat(),
-                end_date=day.isoformat(),
-                is_completed=False,
-                project_repeating=True,
-            ),
+            TaskQuery(start_date=day_start, end_date=day_end, is_completed=False),
         )["tasks"]
         prompt = _brief_prompt(
             day, todays_tasks, get_brief_stats(user_id), project_paths(user_id)

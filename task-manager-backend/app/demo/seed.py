@@ -19,6 +19,7 @@ from app.database import SessionLocal, engine
 from app.demo import DEMO_USER_EMAIL
 from app.models import (
     DailyBrief,
+    Label,
     Notification,
     NotificationSubscription,
     PasswordReset,
@@ -36,6 +37,7 @@ CLEARED_MODELS = (
     Notification,
     NotificationSubscription,
     DailyBrief,
+    Label,
     PasswordReset,
     Task,
     Project,

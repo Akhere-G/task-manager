@@ -81,6 +81,15 @@ def test_next_occurrence_advances_a_repeating_task(session: FlaskClient) -> None
     assert moved["isCompleted"] is False
 
 
+def test_next_occurrence_is_refused_past_the_end_of_the_series(
+    session: FlaskClient,
+) -> None:
+    today = utc_now().date().isoformat()
+    task = add(session, repeatBy="daily", repeatUntil=today, **today_at(8))
+
+    assert snooze(session, task, preset="next_occurrence").status_code == 400
+
+
 def test_next_occurrence_is_refused_for_a_plain_task(session: FlaskClient) -> None:
     task = add(session, **today_at(8))
 

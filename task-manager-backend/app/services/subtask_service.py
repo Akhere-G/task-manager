@@ -4,9 +4,10 @@ from typing import Any
 from sqlalchemy import case, delete, func, select, update
 
 from app.database import db
-from app.exceptions import InvalidSubtaskOrder, SubtaskParentInvalid, TaskNotFound
+from app.exceptions import SubtaskParentInvalid, TaskNotFound
 from app.models import Task
 from app.utils.dates import utc_now
+from app.utils.ordering import follow_order
 from app.utils.task_utils import live_tasks_of
 
 
@@ -102,16 +103,16 @@ def replace_subtasks(
 
 
 def reorder_subtasks(user_id: int, parent_id: int, ids: list[int]) -> list[Task]:
-    """Renumbers the parent's subtasks to follow `ids`, which must list each once."""
     parent = _top_level_parent(user_id, parent_id)
     live_ids = db.session.scalars(
-        select(Task.id).where(Task.parent_id == parent.id, Task.is_deleted.is_(False))
+        select(Task.id)
+        .where(Task.parent_id == parent.id, Task.is_deleted.is_(False))
+        .order_by(Task.position, Task.id)
     ).all()
-    if sorted(ids) != sorted(live_ids):
-        raise InvalidSubtaskOrder()
+    ordered = follow_order(ids, list(live_ids))
     db.session.execute(
         update(Task),
-        [{"id": task_id, "position": index} for index, task_id in enumerate(ids)],
+        [{"id": task_id, "position": index} for index, task_id in enumerate(ordered)],
     )
     db.session.commit()
     attach_subtasks(parent)

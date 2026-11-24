@@ -4,4 +4,4 @@ The backend coding rules, conventions and vocabulary live in `AGENTS.md` (import
 above) so every coding agent reads the same source. Update that file, not this one.
 
 Before finishing a change, run `venv/bin/ruff check` and `venv/bin/ruff format --check`
-on the files you touched, and `venv/bin/pytest` when a MySQL server is available.
+on the files you touched, and `venv/bin/pytest` when a PostgreSQL server is available.

@@ -6,6 +6,8 @@ from flask.typing import ResponseReturnValue
 from flask_jwt_extended import jwt_required
 from marshmallow import Schema
 
+from app.constants import MAX_IMPORT_TASKS
+from app.exceptions import TooManyTasks
 from app.schemas.task_schema import (
     BulkMoveSchema,
     BulkPrioritySchema,
@@ -100,6 +102,8 @@ def add_task_list() -> ResponseReturnValue:
     data = get_json_body(allow_list=True)
     if not data or not isinstance(data, list):
         return jsonify({"error": "Invalid data format"}), 400
+    if len(data) > MAX_IMPORT_TASKS:
+        raise TooManyTasks(MAX_IMPORT_TASKS)
 
     tasks = create_tasks(authenticated_user_id(), TaskSchema(many=True).load(data))
     return jsonify({"tasks_created": len(tasks)}), 201

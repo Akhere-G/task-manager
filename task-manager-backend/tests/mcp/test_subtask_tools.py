@@ -70,17 +70,6 @@ def test_subtasks_can_be_reordered(user_id: int, parent_id: int) -> None:
     assert titles(reordered["subtasks"]) == ["C", "B", "A"]
 
 
-def test_reordering_must_list_every_subtask_once(user_id: int, parent_id: int) -> None:
-    added = run(
-        user_id,
-        "add_subtasks",
-        id=parent_id,
-        subtasks=[{"title": "A"}, {"title": "B"}],
-    )["subtasks"]
-
-    fail(user_id, "reorder_subtasks", id=parent_id, ids=[added[0]["id"]])
-
-
 def test_replacing_subtasks_removes_the_old_ones_for_good(
     user_id: int, parent_id: int
 ) -> None:

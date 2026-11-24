@@ -82,6 +82,7 @@ def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
 
 def _apply_recurrence(task: Task) -> None:
     if not task.is_repeating or not task.repeat_by:
+        task.is_repeating = False
         task.repeat_interval = 1
         task.repeat_days = None
         task.repeat_timezone = None
@@ -262,6 +263,7 @@ def apply_task_update(user_id: int, task_id: int, data: dict[str, Any]) -> Task:
         roll_series(task, before)
         reset_subtasks(task)
         db.session.flush()
+        sync_reminders(task)
     elif task.is_completed and not before.is_completed:
         complete_open_subtasks(task)
     return task
@@ -324,7 +326,17 @@ def apply_task_trash(user_id: int, task_id: int) -> None:
         set_subtasks_deleted(task, True)
 
 
+def is_in_trash(user_id: int, task_id: int) -> bool:
+    return bool(
+        db.session.scalar(
+            select(Task.is_deleted).where(Task.user_id == user_id, Task.id == task_id)
+        )
+    )
+
+
 def delete_task(user_id: int, task_id: int) -> None:
+    if is_in_trash(user_id, task_id):
+        return
     apply_task_trash(user_id, task_id)
     db.session.commit()
 
@@ -353,14 +365,17 @@ def get_trash(user_id: int, page: int, limit: int) -> dict[str, Any]:
 
 def restore_task(user_id: int, task_id: int) -> Task:
     task = db.session.scalar(
-        select(Task).where(Task.user_id == user_id, Task.id == task_id, Task.is_deleted)
+        select(Task).where(
+            Task.user_id == user_id, Task.id == task_id, Task.parent_id.is_(None)
+        )
     )
     if task is None:
         raise TaskNotFound(task_id)
-    task.is_deleted = False
-    task.deleted_at = None
-    set_subtasks_deleted(task, False)
-    db.session.commit()
+    if task.is_deleted:
+        task.is_deleted = False
+        task.deleted_at = None
+        set_subtasks_deleted(task, False)
+        db.session.commit()
     attach_label_ids([task])
     attach_reminders([task])
     return task

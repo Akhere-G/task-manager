@@ -1,6 +1,6 @@
 import re
 from collections.abc import Iterable, Iterator
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -19,10 +19,8 @@ from app.database import db
 from app.models import Project, Task, TaskLabel
 from app.utils.dates import (
     as_aware_utc,
-    end_of_day,
+    as_naive_utc,
     get_zone,
-    parse_iso,
-    start_of_day,
     utc_now,
 )
 from app.utils.groups import group_clause
@@ -43,6 +41,7 @@ SHORT_TASK_MINUTES = 30
 DURATION_SECONDS = func.trunc(extract("epoch", Task.end_at - Task.start_at))
 DURATION_MINUTES = func.trunc(DURATION_SECONDS / 60)
 MAX_GHOSTS = 5000
+MAX_OCCURRENCE_STEPS = 20000
 
 GHOST_COPIED_FIELDS = (
     "title",
@@ -114,9 +113,7 @@ def _date_range_clause(
 ) -> Clause | None:
     if not start_date or not end_date:
         return None
-    start = parse_iso(start_date)
-    end = parse_iso(end_date)
-    return Task.end_at.between(start_of_day(start.date()), end_of_day(end.date()))  # type: ignore
+    return Task.end_at.between(as_naive_utc(start_date), as_naive_utc(end_date))
 
 
 def _duration_clause(duration: str | None) -> Clause | None:
@@ -194,6 +191,11 @@ def _ghost(task: Task, start: datetime, end: datetime) -> Task:
     return ghost
 
 
+def _repeat_until_end(task: Task) -> datetime:
+    zone = get_zone(task.repeat_timezone)
+    return as_naive_utc(datetime.combine(task.repeat_until, time.max, tzinfo=zone))
+
+
 def _occurrences(
     task: Task, view_start: datetime, view_end: datetime
 ) -> Iterator[tuple[datetime, datetime]]:
@@ -212,13 +214,15 @@ def _occurrences(
     first_start = as_aware_utc(task.start_at)
     start, end = first_start, as_aware_utc(task.end_at)
     if task.repeat_until:
-        repeat_until = as_aware_utc(end_of_day(task.repeat_until))
+        repeat_until = as_aware_utc(_repeat_until_end(task))
     else:
         repeat_until = view_end
 
+    steps = 0
     while start < view_start:
         start, end = advance(start, end)
-        if start >= repeat_until:
+        steps += 1
+        if start >= repeat_until or steps >= MAX_OCCURRENCE_STEPS:
             return
 
     if start == first_start:
@@ -237,7 +241,6 @@ def with_repeating(
     clauses: Iterable[Clause] = (),
 ) -> list[Task]:
     if view_start is None or view_end is None:
-        print("View Start or view end was none. Could not repeat tasks")
         return tasks
     view_start = as_aware_utc(view_start)
     view_end = as_aware_utc(view_end)
@@ -245,7 +248,10 @@ def with_repeating(
         select(Task).where(
             top_level_tasks_of(user_id),
             Task.is_repeating,
-            or_(Task.repeat_until.is_(None), Task.repeat_until >= view_start),
+            or_(
+                Task.repeat_until.is_(None),
+                Task.repeat_until >= (view_start - timedelta(days=1)).date(),
+            ),
             *clauses,
         )
     )
@@ -259,12 +265,14 @@ def with_repeating(
     return [*tasks, *ghosts]
 
 
+def series_ends_before(task: Task, start: datetime) -> bool:
+    return task.repeat_until is not None and _repeat_until_end(task) < start
+
+
 def should_roll_series(task: Task, before: Task) -> bool:
     if not (task.is_repeating and task.is_completed and not before.is_completed):
         return False
-    if not task.repeat_until:
-        return True
-    return end_of_day(task.repeat_until) >= next_task_start(task)
+    return not series_ends_before(task, next_task_start(task))
 
 
 def _save_completed_occurrence(before: Task) -> Task:
@@ -274,6 +282,7 @@ def _save_completed_occurrence(before: Task) -> Task:
         project_id=before.project_id,
         column_id=before.column_id,
         priority=before.priority,
+        sort_order=before.sort_order,
         start_at=before.start_at,
         end_at=before.end_at,
         is_repeating=False,

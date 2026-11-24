@@ -22,7 +22,7 @@ def test_a_project_goes_through_its_whole_life(user_id: int) -> None:
 
     run(user_id, "delete_project", id=work["id"])
     remaining = run(user_id, "list_projects")["projects"]
-    assert [(p["name"], p["parentId"]) for p in remaining] == [("Website", None)]
+    assert remaining == []
 
 
 def test_deleting_a_project_moves_its_tasks_to_the_inbox(user_id: int) -> None:

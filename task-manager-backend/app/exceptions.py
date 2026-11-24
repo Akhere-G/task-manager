@@ -113,11 +113,6 @@ class SubtaskParentInvalid(AppError):
     message = "Subtasks can only go under one of your own top-level tasks."
 
 
-class InvalidSubtaskOrder(AppError):
-    field = "ids"
-    message = "List every subtask of this task exactly once."
-
-
 class SubtaskCannotRepeat(AppError):
     field = "repeatBy"
     message = "Subtasks cannot repeat."
@@ -138,9 +133,14 @@ class UndatedRepeatingTask(AppError):
     message = "Repeating tasks need a start and an end time."
 
 
-class InvalidMove(AppError):
-    field = "afterId"
-    message = "Say which task to move after or before."
+class TooManyTasks(AppError):
+    def __init__(self, limit: int) -> None:
+        super().__init__(f"Import at most {limit} tasks at a time.")
+
+
+class SnoozePastSeriesEnd(AppError):
+    field = "preset"
+    message = "The next occurrence is after the series ends."
 
 
 class SnoozeNotRepeating(AppError):
