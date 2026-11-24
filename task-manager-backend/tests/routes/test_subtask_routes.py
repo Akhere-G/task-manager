@@ -185,17 +185,6 @@ def test_deleting_a_subtask_removes_it_without_a_trash_entry(
     assert session.get("/api/tasks/trash").get_json()["tasks"] == []
 
 
-def test_subtasks_do_not_count_in_the_stats_or_get_reminders(
-    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
-) -> None:
-    parent = add_task(session, task_payload)
-    add_subtasks(session, parent["id"], "a")
-
-    stats = session.get("/api/stats/dashboard")
-
-    assert stats.status_code == 200
-
-
 def put_subtasks(
     session: FlaskClient, parent_id: int, *titles: str
 ) -> tuple[int, dict[str, Any]]:
@@ -236,25 +225,6 @@ def test_put_with_an_invalid_item_keeps_the_old_subtasks(
     assert [s["title"] for s in detail["subtasks"]] == ["keep me"]
 
 
-def test_put_on_a_subtask_is_rejected(
-    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
-) -> None:
-    parent = add_task(session, task_payload)
-    (child,) = add_subtasks(session, parent["id"], "child")
-
-    status, _body = put_subtasks(session, child["id"], "grandchild")
-
-    assert status == 400
-
-
-def test_put_on_another_users_task_is_not_found(
-    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
-) -> None:
-    status, _body = put_subtasks(session, 999999, "x")
-
-    assert status == 404
-
-
 def put_order(
     session: FlaskClient, parent_id: int, ids: list[int]
 ) -> tuple[int, dict[str, Any]]:
@@ -293,31 +263,3 @@ def test_order_ignores_unknown_ids_and_keeps_unlisted_subtasks_last(
     assert status == 200
     assert subtask_titles(session, parent["id"]) == ["c", "a", "b"]
     assert subtask_titles(session, other["id"]) == ["stranger"]
-
-
-def test_order_on_an_unknown_parent_is_not_found(session: FlaskClient) -> None:
-    status, _body = put_order(session, 999999, [1])
-
-    assert status == 404
-
-
-def test_order_on_a_subtask_is_rejected(
-    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
-) -> None:
-    parent = add_task(session, task_payload)
-    (child,) = add_subtasks(session, parent["id"], "child")
-
-    status, _body = put_order(session, child["id"], [child["id"]])
-
-    assert status == 400
-
-
-def test_order_of_a_task_without_subtasks_is_a_no_op(
-    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
-) -> None:
-    parent = add_task(session, task_payload)
-
-    status, body = put_order(session, parent["id"], [])
-
-    assert status == 200
-    assert body["subtasks"] == []

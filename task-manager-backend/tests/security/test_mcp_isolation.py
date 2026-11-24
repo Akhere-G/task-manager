@@ -32,6 +32,8 @@ def test_a_token_only_reaches_its_owners_data(
         ("get_task", {"id": task_id}),
         ("update_task", {"id": task_id, "title": "Hijacked"}),
         ("delete_task", {"id": task_id}),
+        ("restore_task", {"id": task_id}),
+        ("get_project", {"id": project["structuredContent"]["id"]}),
         ("update_project", {"id": project["structuredContent"]["id"], "name": "x"}),
         ("delete_project", {"id": project["structuredContent"]["id"]}),
         ("update_label", {"id": label["structuredContent"]["id"], "name": "x"}),

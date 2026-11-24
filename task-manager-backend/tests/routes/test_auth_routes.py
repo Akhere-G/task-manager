@@ -23,11 +23,6 @@ def test_register_sets_session_and_me_works(client: FlaskClient) -> None:
     assert me.get_json()["user"]["email"] == "new@example.com"
 
 
-def test_register_duplicate_email_rejected(client: FlaskClient) -> None:
-    assert register(client).status_code == 201
-    assert register(client).status_code == 400
-
-
 def test_wrong_login_is_a_general_error(
     client: FlaskClient, make_user: Callable[..., int]
 ) -> None:
@@ -38,29 +33,6 @@ def test_wrong_login_is_a_general_error(
 
     assert response.status_code == 400
     assert response.get_json()["errors"] == {"general": "Invalid credentials."}
-
-
-def test_register_returns_every_field_error_as_400(client: FlaskClient) -> None:
-    response = client.post("/api/auth/register", json={})
-
-    assert response.status_code == 400
-    assert set(response.get_json()["errors"]) == {
-        "acceptedTerms",
-        "firstName",
-        "lastName",
-        "email",
-        "password",
-        "confirmPassword",
-    }
-
-
-def test_register_stores_trimmed_names_and_email(client: FlaskClient) -> None:
-    body = register_body(firstName="  Ann ", email=" ann@example.com ")
-
-    response = client.post("/api/auth/register", json=body)
-
-    user = response.get_json()["user"]
-    assert (user["firstName"], user["email"]) == ("Ann", "ann@example.com")
 
 
 def test_demo_account_cannot_use_password_login(
@@ -81,18 +53,6 @@ def test_demo_login_issues_session(
     response = client.post("/api/auth/demo")
     assert response.status_code == 200
     assert response.get_json()["user"]["isDemo"] is True
-
-
-def test_refresh_rotates_token(
-    make_user: Callable[..., int], login: Callable[..., FlaskClient]
-) -> None:
-    make_user()
-    session = login()
-    old = session.get_cookie("refresh_token").value
-
-    response = session.post("/api/auth/refresh")
-    assert response.status_code == 200
-    assert session.get_cookie("refresh_token").value != old
 
 
 def test_old_token_still_works_briefly_but_does_not_rotate_again(

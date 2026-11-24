@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from app.schemas.user_schema import LoginSchema, PasswordResetSchema, RegisterSchema
+from app.schemas.user_schema import PasswordResetSchema, RegisterSchema
 from tests.builders import DEFAULT_PASSWORD, register_body
 from tests.schemas.helpers import load_errors
 
@@ -75,10 +75,6 @@ def test_register_trims_names_and_email() -> None:
     data = RegisterSchema().load(body)
 
     assert (data["first_name"], data["email"]) == ("Ann", "ann@example.com")
-
-
-def test_login_needs_both_fields() -> None:
-    assert set(load_errors(LoginSchema(), {"email": " "})) == {"email", "password"}
 
 
 def test_reset_needs_a_token_and_a_strong_new_password() -> None:

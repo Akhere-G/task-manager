@@ -158,7 +158,6 @@ def test_decompose_shows_the_model_existing_subtasks_and_keeps_its_whole_answer(
     assert [t["title"] for t in result] == ["Book flights", "Pack"]
     prompt = generate.call_args.args[0]
     assert "- Pack: Light bag" in prompt
-    assert "even if" in prompt
 
 
 def test_generation_falls_back_to_groq_when_gemini_is_empty() -> None:

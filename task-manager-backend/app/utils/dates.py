@@ -34,10 +34,6 @@ def start_of_day(day: date) -> datetime:
     return datetime.combine(day, time.min)
 
 
-def end_of_day(day: date) -> datetime:
-    return datetime.combine(day, time.max)
-
-
 def to_iso_z(value: Any) -> Any:
     if isinstance(value, datetime):
         return as_aware_utc(value).isoformat().replace("+00:00", "Z")

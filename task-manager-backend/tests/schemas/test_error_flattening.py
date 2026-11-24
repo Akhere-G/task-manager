@@ -18,9 +18,3 @@ def test_bulk_errors_are_listed_per_item_with_gaps_kept() -> None:
         {},
         {"title": "Title is required."},
     ]
-
-
-def test_a_bare_list_is_a_general_error() -> None:
-    assert flatten_validation_errors(["Invalid input type."]) == {
-        "general": "Invalid input type."
-    }

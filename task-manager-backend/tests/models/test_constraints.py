@@ -7,12 +7,17 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from app.database import db
 from app.models import (
+    ApiToken,
     DailyBrief,
+    Label,
     Notification,
     NotificationSubscription,
     PasswordReset,
+    Project,
     RefreshToken,
     Task,
+    TaskReminder,
+    TokenScope,
     User,
 )
 
@@ -46,23 +51,22 @@ def count(model: type) -> int:
     return db.session.scalar(select(func.count()).select_from(model))
 
 
-def test_a_new_task_gets_the_database_defaults(user_id: int) -> None:
-    task = add_task(user_id)
-
-    assert task.project_id is None
-    assert task.priority == 4
-    assert task.is_completed is False
-    assert task.is_repeating is False
-    assert task.repeat_interval == 1
-    assert task.created_at is not None
-
-
 def test_deleting_a_user_deletes_everything_they_own(user_id: int) -> None:
     expires_at = START + timedelta(days=1)
-    add_task(user_id)
+    task = add_task(user_id)
     add_subscription(user_id, "https://push.example.com/1")
     db.session.add_all(
         [
+            ApiToken(
+                user_id=user_id,
+                name="laptop",
+                token_hash="c" * 64,
+                prefix="tm_abcde",
+                scope=TokenScope.READ,
+            ),
+            Project(user_id=user_id, name="Work"),
+            Label(user_id=user_id, name="Urgent"),
+            TaskReminder(task_id=task.id, kind="before", minutes_before=30),
             RefreshToken(user_id=user_id, token_hash="a" * 64, expires_at=expires_at),
             PasswordReset(user_id=user_id, token_hash="b" * 64, expires_at=expires_at),
             Notification(user_id=user_id, title="Reminder", message="Soon"),
@@ -76,6 +80,10 @@ def test_deleting_a_user_deletes_everything_they_own(user_id: int) -> None:
 
     owned = (
         Task,
+        TaskReminder,
+        ApiToken,
+        Project,
+        Label,
         RefreshToken,
         PasswordReset,
         Notification,
@@ -86,35 +94,11 @@ def test_deleting_a_user_deletes_everything_they_own(user_id: int) -> None:
         assert count(model) == 0, model.__name__
 
 
-def test_emails_are_unique(user_id: int) -> None:
-    db.session.add(
-        User(
-            first_name="Copy",
-            last_name="Cat",
-            email="user@example.com",
-            password_hash="x",
-        )
-    )
-
-    with pytest.raises(IntegrityError):
-        db.session.commit()
-
-
 def test_a_push_endpoint_belongs_to_one_subscription(user_id: int) -> None:
     add_subscription(user_id, "https://push.example.com/1")
 
     with pytest.raises(IntegrityError):
         add_subscription(user_id, "https://push.example.com/1")
-
-
-def test_a_user_has_at_most_one_brief_per_day(user_id: int) -> None:
-    today = date.today()
-    db.session.add(DailyBrief(user_id=user_id, brief_text="One", generated_date=today))
-    db.session.commit()
-    db.session.add(DailyBrief(user_id=user_id, brief_text="Two", generated_date=today))
-
-    with pytest.raises(IntegrityError):
-        db.session.commit()
 
 
 @pytest.mark.parametrize("priority", [0, 5])

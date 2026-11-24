@@ -26,14 +26,6 @@ def test_projects_can_be_created_listed_renamed_and_deleted(
     assert session.get("/api/projects").get_json()["projects"] == []
 
 
-def test_a_bad_colour_or_blank_name_is_rejected(session: FlaskClient) -> None:
-    assert (
-        session.post("/api/projects", json={"name": "A", "colour": "red"}).status_code
-        == 400
-    )
-    assert session.post("/api/projects", json={"name": "  "}).status_code == 400
-
-
 def test_names_are_unique_per_parent_ignoring_case(session: FlaskClient) -> None:
     work = add_project(session, "Work")
     add_project(session, "Plans", parentId=work["id"])

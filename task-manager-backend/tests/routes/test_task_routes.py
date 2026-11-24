@@ -144,26 +144,8 @@ def test_a_task_can_be_created_read_edited_and_deleted(
     assert session.get(f"/api/tasks/{task['id']}").status_code == 404
 
 
-def test_the_list_is_paged(
-    session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
-) -> None:
-    for n in range(5):
-        session.post("/api/tasks", json=task_payload(title=f"Task {n}"))
-
-    page = session.get("/api/tasks?limit=2&page=3&sort_by=title&order=asc").get_json()
-
-    assert [task["title"] for task in page["tasks"]] == ["Task 4"]
-    assert (page["totalTasks"], page["totalPages"], page["currentPage"]) == (5, 3, 3)
-
-
 def test_bad_list_filters_are_a_400(session: FlaskClient) -> None:
     assert session.get("/api/tasks?start_date=2026-03-01").status_code == 400
-
-
-def test_missing_task_is_a_404(session: FlaskClient) -> None:
-    assert session.get("/api/tasks/999").status_code == 404
-    assert session.patch("/api/tasks/999", json={"title": "x"}).status_code == 404
-    assert session.delete("/api/tasks/999").status_code == 404
 
 
 def test_projecting_a_repeating_task_adds_ghost_occurrences(

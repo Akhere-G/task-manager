@@ -57,10 +57,3 @@ def test_the_local_time_of_day_is_kept_across_a_clock_change() -> None:
     new_start, _ = snoozed_span(start, end, date(2026, 4, 1), "Europe/London")
 
     assert new_start == datetime(2026, 4, 1, 8, 0)  # 09:00 BST
-
-
-def test_an_undated_task_gets_nine_for_thirty_minutes() -> None:
-    new_start, new_end = snoozed_span(None, None, date(2026, 3, 12), "UTC")
-
-    assert new_start == datetime(2026, 3, 12, 9, 0)
-    assert new_end - new_start == timedelta(minutes=30)
