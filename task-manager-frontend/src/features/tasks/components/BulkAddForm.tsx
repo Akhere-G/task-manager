@@ -33,11 +33,11 @@ export default function BulkAddForm() {
     setIsUploading(true);
     setErrorMessage("");
 
-    Papa.parse(file, {
+    Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
       complete: async (result) => {
-        const newTasks = parseTaskRows(result.data as Record<string, string>[]);
+        const newTasks = parseTaskRows(result.data);
 
         const allErrors = validateTaskList(newTasks);
         const hasErrors = allErrors.some((err) => Object.keys(err).length > 0);

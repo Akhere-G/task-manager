@@ -255,8 +255,8 @@ function TaskCard({
           )}
           {!isCompleted && showSnooze && (
             <SnoozeMenu
-              task={task as Task}
-              onSnooze={(preset, day) => snoozeTask(task as Task, preset, day)}
+              task={task}
+              onSnooze={(preset, day) => snoozeTask(task, preset, day)}
             />
           )}
         </div>

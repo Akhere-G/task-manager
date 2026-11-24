@@ -52,6 +52,8 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+const CALENDAR_VIEWS: View[] = [Views.MONTH, Views.WEEK, Views.DAY];
+
 const DnDCalendar = withDragAndDrop(Calendar);
 
 interface MovedTask {
@@ -78,13 +80,14 @@ export default function TaskCalendar({
   const { data: projects = [] } = useProjects();
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const calParam = searchParams.get("cal");
   const [draggedEvent, setDraggedEvent] = useState<Task | null>(null);
 
   const navigate = useNavigate();
   const breakpoint = useBreakpoint();
   const isMobile = ["xs", "sm"].includes(breakpoint);
 
-  const view = (searchParams.get("cal") as View) || Views.MONTH;
+  const view = CALENDAR_VIEWS.find((v) => v === calParam) ?? Views.MONTH;
   const setView = (view: View) => {
     const next = new URLSearchParams(searchParams);
     next.set("cal", view);
@@ -220,7 +223,7 @@ export default function TaskCalendar({
           selectable
           popup={!isMobile}
           view={view}
-          views={[Views.MONTH, Views.WEEK, Views.DAY]}
+          views={CALENDAR_VIEWS}
           onEventDrop={onEventDrop}
           onDropFromOutside={onDropFromOutside}
           onEventResize={onEventResize}
