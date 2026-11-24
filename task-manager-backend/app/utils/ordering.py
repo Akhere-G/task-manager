@@ -1,5 +1,7 @@
 """Manual order: integer positions with gaps, so a move rewrites a single row."""
 
+from collections.abc import Iterable
+
 from app.constants import SORT_ORDER_GAP
 
 
@@ -22,3 +24,10 @@ def position_between(above: int | None, below: int | None) -> int | None:
 def spread(count: int) -> list[int]:
     """Evenly spaced positions for `count` tasks, in list order."""
     return [(index + 1) * SORT_ORDER_GAP for index in range(count)]
+
+
+def follow_order(wanted: Iterable[int], current: list[int]) -> list[int]:
+    known = set(current)
+    listed = [item for item in dict.fromkeys(wanted) if item in known]
+    listed_set = set(listed)
+    return listed + [item for item in current if item not in listed_set]

@@ -81,10 +81,11 @@ def test_neighbours_in_the_wrong_order_place_the_task_after_the_first(
     assert manual(session) == ["c", "a", "b"]
 
 
-def test_a_move_needs_a_neighbour(session: FlaskClient) -> None:
+def test_a_move_with_no_neighbour_changes_nothing(session: FlaskClient) -> None:
     task = add(session, "alone")
 
-    assert move(session, task).status_code == 400
+    assert move(session, task).status_code == 200
+    assert manual(session) == ["alone"]
 
 
 def test_a_move_beside_a_missing_task_is_refused(session: FlaskClient) -> None:

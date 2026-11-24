@@ -66,12 +66,6 @@ def test_columns_can_be_reordered(user_id: int, project_id: int) -> None:
     assert list(columns_of(user_id, project_id)) == ["Done", "To Do", "In Progress"]
 
 
-def test_reordering_must_list_every_column_once(user_id: int, project_id: int) -> None:
-    ids = [column["id"] for column in columns_of(user_id, project_id).values()]
-
-    fail(user_id, "reorder_columns", projectId=project_id, columnIds=ids[:2])
-
-
 def test_deleting_a_column_keeps_its_tasks(user_id: int, project_id: int) -> None:
     columns = columns_of(user_id, project_id)
     task = run(

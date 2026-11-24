@@ -64,8 +64,8 @@ SUBTASK_TOOLS = (
         name="reorder_subtasks",
         title="Reorder subtasks",
         description=(
-            "Set the order of a task's subtasks; id is the parent task. ids must "
-            "list every subtask of the task exactly once, first to last."
+            "Set the order of a task's subtasks; id is the parent task. ids go "
+            "first to last; subtasks not listed follow in their current order."
         ),
         input=SubtaskOrderSchema,
         takes_id=True,

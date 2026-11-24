@@ -2,7 +2,7 @@ from sqlalchemy import func, select, update
 
 from app.constants import SORT_ORDER_GAP
 from app.database import db
-from app.exceptions import InvalidMove, TaskNotFound
+from app.exceptions import TaskNotFound
 from app.models import Task
 from app.utils.ordering import position_between, spread
 from app.utils.task_utils import live_tasks_of, top_level_tasks_of
@@ -50,7 +50,7 @@ def move_task(
 ) -> None:
     """Puts the task after `after_id` and before `before_id`; None is open-ended."""
     if after_id is None and before_id is None:
-        raise InvalidMove()
+        return
     task = _lock_task(user_id, task_id)
     place_task(user_id, task, after_id, before_id)
     db.session.commit()

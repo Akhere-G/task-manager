@@ -11,6 +11,7 @@ from app.exceptions import (
     ProjectNotFound,
 )
 from app.models import OnDrop, Project, ProjectColumn, Task
+from app.utils.ordering import follow_order
 
 
 def _ensure_project_belongs_to(user_id: int, project_id: int) -> None:
@@ -117,13 +118,12 @@ def reorder_columns(
     user_id: int, project_id: int, column_ids: list[int]
 ) -> list[ProjectColumn]:
     columns = list_columns(user_id, project_id)
-    if sorted(column_ids) != sorted(column.id for column in columns):
-        raise InvalidColumn("Send every column of the project exactly once.")
     by_id = {column.id: column for column in columns}
-    for position, column_id in enumerate(column_ids):
+    ordered = follow_order(column_ids, [column.id for column in columns])
+    for position, column_id in enumerate(ordered):
         by_id[column_id].position = position
     db.session.commit()
-    return [by_id[column_id] for column_id in column_ids]
+    return [by_id[column_id] for column_id in ordered]
 
 
 def delete_column(user_id: int, column_id: int, move_to_id: int | None) -> None:

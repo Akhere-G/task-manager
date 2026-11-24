@@ -88,9 +88,9 @@ def test_columns_are_reordered(session: FlaskClient) -> None:
     assert [c["id"] for c in response.get_json()["columns"]] == ids[::-1]
     assert [c["id"] for c in columns_of(session, project_id)] == ids[::-1]
     partial = session.put(
-        f"/api/projects/{project_id}/columns/order", json={"columnIds": ids[:2]}
+        f"/api/projects/{project_id}/columns/order", json={"columnIds": ids[:1]}
     )
-    assert partial.status_code == 400
+    assert [c["id"] for c in partial.get_json()["columns"]] == [ids[0], *ids[:0:-1]]
 
 
 def test_new_tasks_start_unassigned(session: FlaskClient) -> None:
