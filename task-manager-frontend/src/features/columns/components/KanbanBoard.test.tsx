@@ -188,49 +188,69 @@ describe("KanbanBoard", () => {
     expect(regions[0]).toBe("Unassigned");
   });
 
-  it("adds a task to Unassigned without a column", async () => {
-    mock.onPost("/tasks").reply(201, {});
-    board();
-
-    const unassigned = await region("Unassigned");
-    await userEvent.click(
-      within(unassigned).getByRole("button", { name: "Add task" }),
-    );
-    await userEvent.type(
-      within(unassigned).getByLabelText("New task in Unassigned"),
-      "Idea{Enter}",
-    );
-
-    await waitFor(() => expect(mock.history.post).toHaveLength(1));
-    expect(JSON.parse(mock.history.post[0].data)).toMatchObject({
+  it.each([
+    {
+      column: "Unassigned",
       title: "Idea",
-      columnId: null,
-    });
-  });
+      expected: { projectId: 7, columnId: null },
+    },
+    {
+      column: "To Do",
+      title: "Write docs",
+      expected: { projectId: 7, columnId: 1 },
+    },
+  ])(
+    "adds a task straight into $column",
+    async ({ column, title, expected }) => {
+      mock.onPost("/tasks").reply(201, {});
+      board();
 
-  it("can send a deleted column's tasks to Unassigned", async () => {
-    mock.onDelete("/columns/1").reply(200, {});
-    board();
+      const scope = await region(column);
+      await userEvent.click(
+        within(scope).getByRole("button", { name: "Add task" }),
+      );
+      await userEvent.type(
+        within(scope).getByLabelText(`New task in ${column}`),
+        `${title}{Enter}`,
+      );
 
-    const todo = await region("To Do");
-    await userEvent.click(
-      within(todo).getByRole("button", { name: "Settings for To Do" }),
-    );
-    await userEvent.click(
-      within(todo).getByRole("button", { name: "Delete column" }),
-    );
-    await userEvent.selectOptions(
-      screen.getByLabelText("Move its tasks to"),
-      "",
-    );
-    const [, confirm] = screen.getAllByRole("button", {
-      name: "Delete column",
-    });
-    await userEvent.click(confirm);
+      await waitFor(() => expect(mock.history.post).toHaveLength(1));
+      expect(JSON.parse(mock.history.post[0].data)).toMatchObject({
+        title,
+        ...expected,
+      });
+    },
+  );
 
-    await waitFor(() => expect(mock.history.delete).toHaveLength(1));
-    expect(JSON.parse(mock.history.delete[0].data)).toEqual({ moveToId: null });
-  });
+  it.each([
+    { destination: "", moveToId: null },
+    { destination: "3", moveToId: 3 },
+  ])(
+    "deleting a column moves its tasks to $moveToId",
+    async ({ destination, moveToId }) => {
+      mock.onDelete("/columns/1").reply(200, {});
+      board();
+
+      const todo = await region("To Do");
+      await userEvent.click(
+        within(todo).getByRole("button", { name: "Settings for To Do" }),
+      );
+      await userEvent.click(
+        within(todo).getByRole("button", { name: "Delete column" }),
+      );
+      await userEvent.selectOptions(
+        screen.getByLabelText("Move its tasks to"),
+        destination,
+      );
+      const [, confirm] = screen.getAllByRole("button", {
+        name: "Delete column",
+      });
+      await userEvent.click(confirm);
+
+      await waitFor(() => expect(mock.history.delete).toHaveLength(1));
+      expect(JSON.parse(mock.history.delete[0].data)).toEqual({ moveToId });
+    },
+  );
 
   it("changes what a column does on drop from its settings", async () => {
     mock.onPatch("/columns/2").reply(200, columns[1]);
@@ -251,51 +271,6 @@ describe("KanbanBoard", () => {
     expect(JSON.parse(mock.history.patch[0].data)).toEqual({
       onDrop: "delete",
     });
-  });
-
-  it("adds a task straight into a column", async () => {
-    mock.onPost("/tasks").reply(201, {});
-    board();
-
-    const todo = await region("To Do");
-    await userEvent.click(
-      within(todo).getByRole("button", { name: "Add task" }),
-    );
-    await userEvent.type(
-      within(todo).getByLabelText("New task in To Do"),
-      "Write docs{Enter}",
-    );
-
-    await waitFor(() => expect(mock.history.post).toHaveLength(1));
-    expect(JSON.parse(mock.history.post[0].data)).toMatchObject({
-      title: "Write docs",
-      projectId: 7,
-      columnId: 1,
-    });
-  });
-
-  it("asks where to move the tasks before deleting a column", async () => {
-    mock.onDelete("/columns/1").reply(200, {});
-    board();
-
-    const todo = await region("To Do");
-    await userEvent.click(
-      within(todo).getByRole("button", { name: "Settings for To Do" }),
-    );
-    await userEvent.click(
-      within(todo).getByRole("button", { name: "Delete column" }),
-    );
-    await userEvent.selectOptions(
-      screen.getByLabelText("Move its tasks to"),
-      "3",
-    );
-    const [, confirm] = screen.getAllByRole("button", {
-      name: "Delete column",
-    });
-    await userEvent.click(confirm);
-
-    await waitFor(() => expect(mock.history.delete).toHaveLength(1));
-    expect(JSON.parse(mock.history.delete[0].data)).toEqual({ moveToId: 3 });
   });
 
   it("adds a column", async () => {

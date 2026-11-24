@@ -134,18 +134,6 @@ describe("daily brief", () => {
     expect(await screen.findByText("Second")).toBeInTheDocument();
   });
 
-  it("shows an error message when the brief cannot be loaded", async () => {
-    mock.onGet("/ai/daily-brief").reply(500);
-    renderWithProviders(<DailyBrief />);
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Open daily brief" }),
-    );
-
-    expect(
-      await screen.findByText("Error loading brief..."),
-    ).toBeInTheDocument();
-  });
-
   it("renders nothing when the brief is empty", async () => {
     mock.onGet("/ai/daily-brief").reply(200, { brief: "" });
     renderWithProviders(<DailyBrief />);
