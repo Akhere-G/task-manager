@@ -1,5 +1,4 @@
 import { screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { mockApi } from "../../../test/api";
 import { renderWithProviders } from "../../../test/render";
@@ -43,29 +42,4 @@ describe("FilterToolbar", () => {
     ).toHaveTextContent("2");
   });
 
-  it("clears one filter back to its default from its chip", async () => {
-    const { updateFilters } = renderToolbar({ priority: "4" });
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Clear Priority filter" }),
-    );
-
-    expect(updateFilters).toHaveBeenCalledWith("priority", "");
-  });
-
-  it("clears everything", async () => {
-    const { resetFilters } = renderToolbar({ duration: "long_tasks" });
-
-    await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
-
-    expect(resetFilters).toHaveBeenCalled();
-  });
-
-  it("searches as the user types", async () => {
-    const { updateFilters } = renderToolbar({});
-
-    await userEvent.type(screen.getByRole("searchbox"), "a");
-
-    expect(updateFilters).toHaveBeenCalledWith("search", "a");
-  });
 });

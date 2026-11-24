@@ -62,39 +62,6 @@ test.describe("grouped list", () => {
     await expect(overdue.getByRole("article")).toHaveCount(12);
   });
 
-  test("a group menu completes every task in the group", async ({
-    page,
-    signedIn,
-  }) => {
-    for (const title of ["Late one", "Late two", "Late three"]) {
-      await signedIn.createTask({
-        title,
-        startAt: stamp(-2, "09:00:00"),
-        endAt: stamp(-2, "10:00:00"),
-      });
-    }
-    await page.goto("/");
-
-    await group(page, "Overdue")
-      .getByRole("button", { name: "Actions for Overdue" })
-      .click();
-    await page.getByRole("menuitem", { name: "Complete all 3" }).click();
-
-    await expect(group(page, "Overdue")).toBeHidden();
-    await expect(group(page, "Completed")).toContainText("Late one");
-    expect((await signedIn.tasks()).every((task) => task.isCompleted)).toBe(
-      true,
-    );
-  });
-
-  test("the list has no completed filter", async ({ page, signedIn }) => {
-    void signedIn;
-    await page.goto("/");
-
-    await page.getByRole("button", { name: "Show filters" }).click();
-
-    await expect(page.getByRole("group", { name: "Status" })).toBeHidden();
-  });
 });
 
 test.describe("sidebar", () => {

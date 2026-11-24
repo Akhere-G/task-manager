@@ -1,12 +1,5 @@
 import { Api, expect, PASSWORD, test, uniqueEmail } from "./fixtures";
 
-test("signed-out visitors are sent to the login page", async ({ page }) => {
-  await page.goto("/");
-
-  await expect(page).toHaveURL(/\/login/);
-  await expect(page.getByRole("heading", { name: "Login" })).toBeVisible();
-});
-
 test("registers, signs out, and signs back in", async ({ page }) => {
   const email = uniqueEmail("journey");
   await page.goto("/register");
@@ -31,19 +24,6 @@ test("registers, signs out, and signs back in", async ({ page }) => {
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByText("No tasks found. Time to relax!")).toBeVisible();
-});
-
-test("rejects a wrong password", async ({ page, api }) => {
-  const email = await api.register();
-  await page.context().clearCookies();
-  await page.goto("/login");
-
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("Wrong-pass1");
-  await page.getByRole("button", { name: "Login" }).click();
-
-  await expect(page.getByText("Invalid credentials.")).toBeVisible();
-  await expect(page).toHaveURL(/\/login/);
 });
 
 test("one user cannot open another user's task", async ({

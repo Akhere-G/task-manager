@@ -80,30 +80,20 @@ describe("BulkActionBar", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("confirms when every selected task was updated", async () => {
-    api.onPost("/tasks/bulk-complete").reply(200, { updated: 2, matched: 2 });
+  it.each([
+    { updated: 2, role: "status", message: "Updated 2 tasks" },
+    { updated: 1, role: "alert", message: "Updated 1 of 2 tasks" },
+  ])("reports $message as a $role", async ({ updated, role, message }) => {
+    api.onPost("/tasks/bulk-complete").reply(200, { updated, matched: 2 });
     renderBar();
     const user = await selectBoth();
 
     await user.click(screen.getByRole("button", { name: /complete/i }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "Updated 2 tasks",
-    );
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  });
-
-  it("warns with the counts when only some tasks were updated", async () => {
-    api.onPost("/tasks/bulk-complete").reply(200, { updated: 1, matched: 2 });
-    renderBar();
-    const user = await selectBoth();
-
-    await user.click(screen.getByRole("button", { name: /complete/i }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Updated 1 of 2 tasks",
-    );
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(await screen.findByRole(role)).toHaveTextContent(message);
+    expect(
+      screen.queryByRole(role === "alert" ? "status" : "alert"),
+    ).not.toBeInTheDocument();
   });
 
   it("dismisses the result message", async () => {

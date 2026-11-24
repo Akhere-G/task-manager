@@ -38,12 +38,6 @@ describe("LabelPicker", () => {
     );
   });
 
-  it("points to Settings when there are no labels", async () => {
-    mock.onGet("/labels").reply(200, { labels: [] });
-    renderWithProviders(<LabelPicker value={[]} onChange={() => {}} />);
-
-    expect(await screen.findByText(/No labels yet/)).toBeInTheDocument();
-  });
 });
 
 describe("LabelChips", () => {

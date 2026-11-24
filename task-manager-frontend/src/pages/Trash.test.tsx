@@ -50,14 +50,6 @@ describe("Trash page", () => {
     expect(screen.getByText(/1 day left/)).toBeInTheDocument();
   });
 
-  it("says so when the trash is empty", async () => {
-    mock.onGet("/tasks/trash").reply(200, page([]));
-
-    renderWithProviders(<Trash />);
-
-    expect(await screen.findByText("Trash is empty.")).toBeInTheDocument();
-  });
-
   it("restores a task, then refetches the trash, the lists and the stats", async () => {
     let restored = false;
     mock

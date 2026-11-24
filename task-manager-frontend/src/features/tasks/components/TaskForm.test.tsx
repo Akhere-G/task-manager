@@ -119,20 +119,6 @@ describe("TaskForm", () => {
     ).toEqual([30, 60]);
   });
 
-  it("starts with the labels of the task being edited", async () => {
-    renderWithProviders(
-      <TaskForm
-        submitAction={submit}
-        confirmButtonText="Save"
-        initialData={makeTask({ labelIds: [2] })}
-      />,
-    );
-
-    expect(
-      await screen.findByRole("button", { name: "later" }),
-    ).toHaveAttribute("aria-pressed", "true");
-  });
-
   it("submits what the user entered", async () => {
     renderWithProviders(<TaskForm submitAction={submit} />);
 
@@ -169,19 +155,6 @@ describe("TaskForm", () => {
 
     await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
     expect(submit.mock.calls[1][0].priority).toBe(1);
-  });
-
-  it("starts from the task's own priority when editing", () => {
-    renderWithProviders(
-      <TaskForm
-        submitAction={submit}
-        initialData={makeTask({ priority: 2 })}
-      />,
-    );
-
-    expect(
-      screen.getByRole("button", { name: "Priority P2, High" }),
-    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("explains a missing title once the field has been left", async () => {
@@ -305,6 +278,8 @@ describe("TaskForm", () => {
       title: "Existing",
       description: "Notes",
       projectId: 3,
+      labelIds: [2],
+      priority: 2,
     });
     renderWithProviders(
       <TaskForm
@@ -317,6 +292,12 @@ describe("TaskForm", () => {
     expect(screen.getByLabelText("Title")).toHaveValue("Existing");
     await waitFor(async () => expect(await projectBox()).toHaveValue("Home"));
     expect(screen.getByLabelText("Description")).toHaveValue("Notes");
+    expect(
+      await screen.findByRole("button", { name: "later" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", { name: "Priority P2, High" }),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 

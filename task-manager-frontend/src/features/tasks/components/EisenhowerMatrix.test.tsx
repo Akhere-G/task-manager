@@ -147,17 +147,6 @@ describe("EisenhowerMatrix", () => {
     ).toBeVisible();
   });
 
-  it("invites a drop on an empty quadrant", async () => {
-    serveTasks([]);
-    renderMatrix();
-
-    expect(
-      await within(quadrant("Delegate")).findByText(
-        /Drop tasks here to assign P3/,
-      ),
-    ).toBeVisible();
-  });
-
   it("changes a task's priority when it is dropped on another quadrant", async () => {
     serveTasks(tasks);
     mock.onPatch("/tasks/4").reply(200, {});

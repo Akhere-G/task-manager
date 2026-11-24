@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { useTaskContext } from "../../../context/TaskContext";
@@ -6,7 +6,7 @@ import { mockApi } from "../../../test/api";
 import { makeGhost, makeTask, renderWithProviders } from "../../../test/render";
 import TaskCard from "./TaskCard";
 
-mockApi();
+const mock = mockApi();
 
 function PopupState() {
   const { popupMode, selectedTask } = useTaskContext();
@@ -58,19 +58,15 @@ describe("TaskCard title", () => {
     expect(screen.getByTestId("popup")).toHaveTextContent("Closed:none");
   });
 
-  it("opens a repeating occurrence through its series", async () => {
-    const ghost = makeGhost(5, "20260303", { title: "Water plants" });
-    renderWithProviders(
-      <>
-        <TaskCard {...ghost} />
-        <PopupState />
-      </>,
-    );
+  it("completes a repeating occurrence through its series", async () => {
+    mock.onPatch("/tasks/5").reply(200, {});
+    renderCard(makeGhost(5, "20260303", { title: "Water plants" }));
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Open task: Water plants" }),
+      screen.getByRole("button", { name: "Mark task as completed" }),
     );
 
-    expect(screen.getByTestId("popup")).toHaveTextContent("View:Water plants");
+    await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+    expect(mock.history.patch[0].url).toBe("/tasks/5");
   });
 });

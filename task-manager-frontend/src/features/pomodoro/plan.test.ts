@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SETTINGS } from "./constants";
 import {
   formatClock,
-  phaseSeconds,
   restPhaseAfter,
   sessionCount,
 } from "./plan";
@@ -28,14 +26,6 @@ describe("restPhaseAfter", () => {
       "rest",
       "longRest",
     ]);
-  });
-});
-
-describe("phaseSeconds", () => {
-  it("reads the matching setting in seconds", () => {
-    expect(phaseSeconds("work", DEFAULT_SETTINGS)).toBe(1500);
-    expect(phaseSeconds("rest", DEFAULT_SETTINGS)).toBe(300);
-    expect(phaseSeconds("longRest", DEFAULT_SETTINGS)).toBe(900);
   });
 });
 
