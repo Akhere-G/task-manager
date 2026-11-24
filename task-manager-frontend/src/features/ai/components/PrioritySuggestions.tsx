@@ -7,9 +7,10 @@ import { useSuggestPriorities } from "../hooks";
 
 export default function PrioritySuggestions() {
   const suggest = useSuggestPriorities();
-  const { mutate: updateTask } = useUpdateTask();
+  const { mutateAsync: updateTask } = useUpdateTask();
   const [resolvedTaskIds, setResolvedTaskIds] = useState<number[]>([]);
   const [deselectedTaskIds, setDeselectedTaskIds] = useState<number[]>([]);
+  const [hasFailed, setHasFailed] = useState(false);
 
   const resolve = (taskId: number) =>
     setResolvedTaskIds((ids) => [...ids, taskId]);
@@ -22,14 +23,18 @@ export default function PrioritySuggestions() {
     );
 
   const accept = ({ taskId, suggestedPriority }: PrioritySuggestion) =>
-    updateTask(
-      { id: taskId, newTaskData: { priority: suggestedPriority } },
-      { onSuccess: () => resolve(taskId) },
+    updateTask({
+      id: taskId,
+      newTaskData: { priority: suggestedPriority },
+    }).then(
+      () => resolve(taskId),
+      () => setHasFailed(true),
     );
 
   const requestSuggestions = () => {
     setResolvedTaskIds([]);
     setDeselectedTaskIds([]);
+    setHasFailed(false);
     suggest.mutate();
     trackEvent("ai_priorities_suggested");
   };
@@ -66,6 +71,11 @@ export default function PrioritySuggestions() {
       {suggest.isError && (
         <p role="alert" className="text-failure">
           Could not get suggestions
+        </p>
+      )}
+      {hasFailed && (
+        <p role="alert" className="text-failure">
+          Could not update some tasks
         </p>
       )}
       {pending?.length === 0 && (
