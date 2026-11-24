@@ -1,16 +1,20 @@
+import pytest
+
 from app.utils.task_utils import MAX_SEARCH_TERMS, parse_search
 
 
-def test_long_terms_use_full_text_prefix_matching() -> None:
-    assert parse_search("quarterly budget") == ("fulltext", "quarterly:* & budget:*")
-
-
-def test_any_short_term_falls_back_to_like() -> None:
-    assert parse_search("go gym") == ("like", "go gym")
-
-
-def test_whitespace_is_collapsed_and_symbols_are_not_terms() -> None:
-    assert parse_search("  plan   (holiday) ") == ("fulltext", "plan:* & holiday:*")
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("quarterly budget", ("fulltext", "quarterly:* & budget:*")),
+        ("go gym", ("like", "go gym")),
+        ("  plan   (holiday) ", ("fulltext", "plan:* & holiday:*")),
+    ],
+)
+def test_search_text_picks_full_text_or_like_matching(
+    text: str, expected: tuple[str, str]
+) -> None:
+    assert parse_search(text) == expected
 
 
 def test_blank_or_symbol_only_input_is_no_search() -> None:

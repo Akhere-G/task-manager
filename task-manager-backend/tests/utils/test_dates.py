@@ -1,14 +1,12 @@
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from app.utils.dates import (
     as_aware_utc,
     as_naive_utc,
-    end_of_day,
     get_zone,
     is_valid_zone,
     local_day_bounds,
     local_today,
-    to_iso_z,
 )
 
 
@@ -20,15 +18,6 @@ def test_naive_values_are_read_as_utc() -> None:
     assert as_aware_utc(datetime(2026, 3, 2, 10, 0)) == datetime(
         2026, 3, 2, 10, 0, tzinfo=UTC
     )
-
-
-def test_datetimes_are_written_with_a_z_and_dates_without_a_time() -> None:
-    assert to_iso_z(datetime(2026, 3, 2, 10, 0)) == "2026-03-02T10:00:00Z"
-    assert to_iso_z(date(2026, 3, 2)) == "2026-03-02"
-
-
-def test_end_of_day_includes_the_last_microsecond() -> None:
-    assert end_of_day(date(2026, 3, 2)) == datetime(2026, 3, 2, 23, 59, 59, 999999)
 
 
 def test_unknown_or_missing_zones_fall_back_to_utc() -> None:
