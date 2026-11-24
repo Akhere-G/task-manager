@@ -114,5 +114,6 @@ describe("rescheduling on the calendar", () => {
 
     await waitFor(() => expect(mock.history.post).toHaveLength(1));
     await waitFor(() => expect(shownStart(1)).toBe("2026-03-02T09:00:00.000Z"));
+    expect(screen.getByRole("alert")).toHaveTextContent("Could not move");
   });
 });

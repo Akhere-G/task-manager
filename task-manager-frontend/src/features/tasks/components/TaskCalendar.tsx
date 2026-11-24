@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   Calendar,
   dateFnsLocalizer,
@@ -54,6 +54,11 @@ const localizer = dateFnsLocalizer({
 
 const DnDCalendar = withDragAndDrop(Calendar);
 
+interface MovedTask {
+  id: number;
+  times: { startAt: string; endAt: string };
+}
+
 interface TaskCalendarProps {
   tasks: Task[];
   currentDate: Date;
@@ -65,8 +70,9 @@ export default function TaskCalendar({
   currentDate,
   setCurrentDate,
 }: TaskCalendarProps) {
-  const [allTasks, setAllTasks] = useState(tasks);
-  const { mutateAsync: rescheduleTask } = useRescheduleTask();
+  const [moved, setMoved] = useState<MovedTask | null>(null);
+  const { mutate: rescheduleTask, isError: rescheduleFailed } =
+    useRescheduleTask();
   const { openPopup } = useTaskContext();
   const { darkMode } = useTheme();
   const { data: projects = [] } = useProjects();
@@ -93,9 +99,15 @@ export default function TaskCalendar({
     setSearchParams(next);
   };
 
-  useEffect(() => {
-    setAllTasks(tasks);
-  }, [tasks]);
+  const allTasks = useMemo(
+    () =>
+      moved
+        ? tasks.map((task) =>
+            task.id === moved.id ? { ...task, ...moved.times } : task,
+          )
+        : tasks,
+    [tasks, moved],
+  );
 
   const events = useMemo(
     () => mapTasksToCalendarEvents(allTasks, isMobile, view),
@@ -106,16 +118,13 @@ export default function TaskCalendar({
     (t) => !!t.startAt && isSameDay(new Date(t.startAt), currentDate),
   );
 
-  const handleTaskDateChange = async (task: Task, start: Date, end: Date) => {
-    const prev = allTasks;
+  const handleTaskDateChange = (task: Task, start: Date, end: Date) => {
     const startAt = format(start, "yyyy-MM-dd HH:mm:ss");
     const endAt = format(end, "yyyy-MM-dd HH:mm:ss");
 
-    setAllTasks((prev) =>
-      prev.map((t) => (t.id === task.id ? { ...t, startAt, endAt } : t)),
-    );
-    try {
-      await rescheduleTask({
+    setMoved({ id: task.id, times: { startAt, endAt } });
+    rescheduleTask(
+      {
         id: getCalendarTaskId(task),
         rescheduleData: {
           previousStartAt: task.startAt ?? startAt,
@@ -123,15 +132,15 @@ export default function TaskCalendar({
           endAt,
           isGhost: task.isGhost ?? false,
         },
-      });
-      trackEvent("calendar_task_rescheduled");
-    } catch (err) {
-      setAllTasks(prev);
-      console.error("Failed to update task date", err);
-    }
+      },
+      {
+        onSuccess: () => trackEvent("calendar_task_rescheduled"),
+        onSettled: () => setMoved(null),
+      },
+    );
   };
 
-  const onEventDrop = async ({
+  const onEventDrop = ({
     event,
     start,
     end,
@@ -158,13 +167,8 @@ export default function TaskCalendar({
       endAt.getTime() - startAt.getTime(),
     );
 
-    try {
-      handleTaskDateChange(draggedEvent, newStartAt, newEndAt);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDraggedEvent(null);
-    }
+    handleTaskDateChange(draggedEvent, newStartAt, newEndAt);
+    setDraggedEvent(null);
   }
 
   function onEventResize(e: EventInteractionArgs<Event>) {
@@ -176,6 +180,11 @@ export default function TaskCalendar({
 
   return (
     <div className="space-y-6">
+      {rescheduleFailed && (
+        <p role="alert" className="text-failure">
+          Could not move the task
+        </p>
+      )}
       <div className="card px-0 md:px-2 h-112.5 md:h-175">
         <DnDCalendar
           localizer={localizer}
@@ -194,8 +203,7 @@ export default function TaskCalendar({
                 });
             }
           }}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          handleDragStart={(event: any) => {
+          handleDragStart={(event: Event) => {
             setDraggedEvent(event.resource);
           }}
           formats={{

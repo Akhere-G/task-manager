@@ -20,9 +20,10 @@ export default function useRescheduleTask() {
       id: number;
       rescheduleData: RescheduleTaskInput;
     }) => taskService.reschedule(id, formatReschedule(rescheduleData)),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-    },
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+        queryClient.invalidateQueries({ queryKey: ["stats"] }),
+      ]),
   });
 }
