@@ -152,37 +152,32 @@ def test_completing_a_repeating_task_moves_its_reminder_to_the_next_occurrence(
         assert task.start_at > utc_now() + timedelta(hours=23)
 
 
-def test_message_has_no_none_when_task_has_no_description(
+@pytest.mark.parametrize(
+    ("project_name", "description", "message"),
+    [(None, None, "Inbox"), ("Work", "Weekly sync", "Work -- Weekly sync")],
+)
+def test_the_message_names_the_project_and_never_says_none(
     app: Flask,
     user_with_subscription: int,
     add_task: Callable[..., int],
     push: mock.MagicMock,
+    project_name: str | None,
+    description: str | None,
+    message: str,
 ) -> None:
-    add_task(user_with_subscription, description=None)
+    fields: dict[str, Any] = {"description": description}
+    if project_name:
+        with app.app_context():
+            project = Project(user_id=user_with_subscription, name=project_name)
+            db.session.add(project)
+            db.session.commit()
+            fields["project_id"] = project.id
+    add_task(user_with_subscription, **fields)
 
     run_reminders.check_task_reminders()
 
     with app.app_context():
-        assert db.session.query(Notification).one().message == "Inbox"
-
-
-def test_message_names_the_tasks_project(
-    app: Flask,
-    user_with_subscription: int,
-    add_task: Callable[..., int],
-    push: mock.MagicMock,
-) -> None:
-    with app.app_context():
-        project = Project(user_id=user_with_subscription, name="Work")
-        db.session.add(project)
-        db.session.commit()
-        project_id = project.id
-    add_task(user_with_subscription, description="Weekly sync", project_id=project_id)
-
-    run_reminders.check_task_reminders()
-
-    with app.app_context():
-        assert db.session.query(Notification).one().message == "Work -- Weekly sync"
+        assert db.session.query(Notification).one().message == message
 
 
 def test_undated_tasks_are_not_reminded(
