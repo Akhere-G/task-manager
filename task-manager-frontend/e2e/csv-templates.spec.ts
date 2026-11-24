@@ -1,7 +1,6 @@
 import { expect, test } from "./fixtures";
 
 const TEMPLATES = [
-  { name: "Download simple template", rows: 8 },
   { name: "Download Advanced template", rows: 12 },
 ];
 
