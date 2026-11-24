@@ -95,4 +95,6 @@ def place_task(
         _renumber(user_id)
         db.session.refresh(task)
         position = _target_position(user_id, task, after_id, before_id)
+    if position is None:
+        position = _target_position(user_id, task, after_id, None)
     task.sort_order = position  # type: ignore
