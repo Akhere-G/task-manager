@@ -19,10 +19,9 @@ from app.database import db
 from app.models import Project, Task, TaskLabel
 from app.utils.dates import (
     as_aware_utc,
+    as_naive_utc,
     end_of_day,
     get_zone,
-    parse_iso,
-    start_of_day,
     utc_now,
 )
 from app.utils.groups import group_clause
@@ -114,9 +113,7 @@ def _date_range_clause(
 ) -> Clause | None:
     if not start_date or not end_date:
         return None
-    start = parse_iso(start_date)
-    end = parse_iso(end_date)
-    return Task.end_at.between(start_of_day(start.date()), end_of_day(end.date()))  # type: ignore
+    return Task.end_at.between(as_naive_utc(start_date), as_naive_utc(end_date))
 
 
 def _duration_clause(duration: str | None) -> Clause | None:
@@ -237,7 +234,6 @@ def with_repeating(
     clauses: Iterable[Clause] = (),
 ) -> list[Task]:
     if view_start is None or view_end is None:
-        print("View Start or view end was none. Could not repeat tasks")
         return tasks
     view_start = as_aware_utc(view_start)
     view_end = as_aware_utc(view_end)

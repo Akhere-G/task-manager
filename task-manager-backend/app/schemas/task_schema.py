@@ -37,7 +37,7 @@ from app.utils.snooze import SNOOZE_PRESETS
 from app.utils.views import TASK_VIEWS
 
 from .base import CamelAutoSchema, CamelSchema
-from .fields import IsoDateTime, StrippedString, UtcDateTime
+from .fields import StrippedString, UtcDateTime
 
 MAX_PROJECT_PATH_LENGTH = MAX_PROJECT_DEPTH * (
     MAX_PROJECT_NAME_LENGTH + len(PROJECT_PATH_SEPARATOR) + 2
@@ -350,8 +350,8 @@ class TaskListQuerySchema(Schema):
     is_completed = fields.String()
     sort_by = fields.String()
     order = fields.String()
-    start_date = IsoDateTime()
-    end_date = IsoDateTime()
+    start_date = UtcDateTime()
+    end_date = UtcDateTime()
     page = fields.Integer(load_default=1, validate=validate.Range(min=1))
     limit = fields.Integer(validate=validate.Range(min=1, max=MAX_PAGE_SIZE))
     project_repeating = fields.Boolean(load_default=False)
