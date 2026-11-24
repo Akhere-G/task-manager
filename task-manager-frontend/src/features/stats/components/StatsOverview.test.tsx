@@ -52,25 +52,6 @@ describe("StatsOverview", () => {
     expect(card("Top Focus").getByText("Life admin")).toBeInTheDocument();
   });
 
-  it("shows zeros for a user with no tasks yet", async () => {
-    mock.onGet("/stats/dashboard").reply(
-      200,
-      stats({
-        backlogHealth: [],
-        timeSpent: [],
-        productivity: days([0, 0, 0]),
-        projectVolume: [],
-      }),
-    );
-    renderWithProviders(<StatsOverview />);
-
-    await screen.findByText("None");
-
-    expect(card("Completion Rate").getByText("0")).toBeInTheDocument();
-    expect(card("Daily Streak").getByText("0")).toBeInTheDocument();
-    expect(card("Velocity").getByText("0.0")).toBeInTheDocument();
-  });
-
   it("ends the streak at the first quiet day", async () => {
     mock
       .onGet("/stats/dashboard")

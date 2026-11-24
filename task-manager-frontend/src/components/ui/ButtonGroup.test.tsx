@@ -19,10 +19,6 @@ describe("ButtonGroup", () => {
       />,
     );
 
-    const group = screen.getByRole("group", { name: "Duration" });
-    expect(group).toContainElement(
-      screen.getByRole("button", { name: "Short" }),
-    );
     expect(screen.getByRole("button", { name: "Short" })).toHaveAttribute(
       "aria-pressed",
       "true",

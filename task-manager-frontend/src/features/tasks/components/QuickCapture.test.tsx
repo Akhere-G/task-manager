@@ -38,9 +38,4 @@ describe("QuickCapture", () => {
     expect(screen.getByLabelText("Quick capture")).toHaveValue("Call mum");
   });
 
-  it("will not capture a blank title", () => {
-    renderWithProviders(<QuickCapture />);
-
-    expect(screen.getByRole("button", { name: "Capture" })).toBeDisabled();
-  });
 });

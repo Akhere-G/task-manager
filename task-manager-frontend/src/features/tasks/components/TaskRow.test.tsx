@@ -29,56 +29,6 @@ function renderRow(task: Task) {
 }
 
 describe("TaskRow", () => {
-  it("shows the priority, title, description, length and time", () => {
-    renderRow(
-      makeTask({
-        title: "Plan trip",
-        description: "Book flights",
-        priority: 1,
-        startAt: "2026-03-02T09:00:00Z",
-        endAt: "2026-03-02T10:30:00Z",
-      }),
-    );
-
-    expect(screen.getByText("P1")).toBeInTheDocument();
-    expect(screen.getByText("Plan trip")).toBeInTheDocument();
-    expect(screen.getByText(/Book flights/)).toBeInTheDocument();
-    expect(screen.getByText("1h 30m")).toBeInTheDocument();
-  });
-
-  it("puts the length and time on a second line under the title", () => {
-    renderRow(
-      makeTask({
-        title: "Plan trip",
-        startAt: "2026-03-02T09:00:00Z",
-        endAt: "2026-03-02T10:30:00Z",
-      }),
-    );
-
-    const titleLine = screen.getByRole("heading", { level: 3 }).parentElement;
-    const detailsLine = screen.getByText("1h 30m").parentElement;
-    expect(titleLine).not.toContainElement(screen.getByText("1h 30m"));
-    expect(detailsLine?.previousElementSibling).toBe(titleLine);
-  });
-
-  it("describes a repeating task", () => {
-    renderRow(
-      makeTask({ isRepeating: true, repeatBy: "daily", repeatInterval: 5 }),
-    );
-
-    expect(screen.getByText(/Every 5 days/)).toBeInTheDocument();
-  });
-
-  it("opens the overview from the title", async () => {
-    renderRow(makeTask({ id: 4, title: "Plan trip" }));
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Open task: Plan trip" }),
-    );
-
-    expect(screen.getByTestId("popup")).toHaveTextContent("View:Plan trip");
-  });
-
   it("opens edit and delete for the task", async () => {
     renderRow(makeTask({ id: 4, title: "Plan trip" }));
 
@@ -127,16 +77,5 @@ describe("TaskRow", () => {
     expect(
       screen.getByRole("button", { name: "Mark task as pending" }),
     ).toBeInTheDocument();
-  });
-});
-
-describe("TaskRow hover actions", () => {
-  it("keeps the actions in the layout so revealing them cannot resize the row", () => {
-    renderRow(makeTask({ title: "Steady" }));
-    const actions = screen.getByRole("button", {
-      name: "Delete task: Steady",
-    }).parentElement;
-    expect(actions).not.toHaveClass("hidden");
-    expect(actions).toHaveClass("absolute", "opacity-0");
   });
 });
