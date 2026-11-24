@@ -1,5 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 
+const LOGIN_PATH = "/login";
+
 const readFrom = (state: unknown) =>
   typeof state === "object" &&
   state !== null &&
@@ -10,7 +12,7 @@ const readFrom = (state: unknown) =>
 
 export default function ProtectedRoute({
   children,
-  redirectTo = "/login",
+  redirectTo = LOGIN_PATH,
   redirect = true,
 }: {
   children: React.ReactNode;
@@ -20,14 +22,11 @@ export default function ProtectedRoute({
   const location = useLocation();
 
   if (redirect) {
-    const from = location.pathname + location.search + location.hash;
-    return (
-      <Navigate
-        to={readFrom(location.state) ?? redirectTo}
-        replace
-        state={{ from }}
-      />
-    );
+    if (redirectTo === LOGIN_PATH) {
+      const from = location.pathname + location.search + location.hash;
+      return <Navigate to={redirectTo} replace state={{ from }} />;
+    }
+    return <Navigate to={readFrom(location.state) ?? redirectTo} replace />;
   }
   return children;
 }
