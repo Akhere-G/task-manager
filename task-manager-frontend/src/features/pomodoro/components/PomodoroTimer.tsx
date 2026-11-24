@@ -20,7 +20,6 @@ interface PomodoroTimerProps {
   onSettingsChange: (changes: Partial<PomodoroSettings>) => void;
   onCompleteTask: () => void;
   isCompleting: boolean;
-  completionFailed: boolean;
 }
 
 export function PomodoroTimer({
@@ -31,7 +30,6 @@ export function PomodoroTimer({
   onSettingsChange,
   onCompleteTask,
   isCompleting,
-  completionFailed,
 }: PomodoroTimerProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -178,11 +176,6 @@ export function PomodoroTimer({
               Progress: {state.completedSessions} / {totalSessions} sessions
             </p>
             <p className="mt-4">Mark the entire task as complete now?</p>
-            {completionFailed && (
-              <p role="alert" className="text-failure">
-                Could not complete the task. Try again.
-              </p>
-            )}
           </div>
         </Popup>
       )}

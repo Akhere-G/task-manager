@@ -2,9 +2,11 @@ import type { Task } from "../types";
 import useUpdateTask from "./useUpdateTask";
 import { trackEvent } from "../../../services/analytics";
 import { playSound } from "../utils";
+import { useToast } from "../../../context/ToastContext";
 
 export default function useSetIsCompleted() {
-  const { mutateAsync: updateTask, isPending, isError } = useUpdateTask();
+  const { mutateAsync: updateTask, isPending } = useUpdateTask();
+  const { showError } = useToast();
 
   async function setIsCompleted(
     id: number,
@@ -40,9 +42,14 @@ export default function useSetIsCompleted() {
       }
       return true;
     } catch {
+      showError(
+        isCompleted
+          ? "Could not complete the task"
+          : "Could not reopen the task",
+      );
       return false;
     }
   }
 
-  return { setIsCompleted, isPending, isError };
+  return { setIsCompleted, isPending };
 }

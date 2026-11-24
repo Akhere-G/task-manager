@@ -8,6 +8,7 @@ import AuthProvider from "./context/AuthContext.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./features/users/ThemeContext.tsx";
 import { initAnalytics } from "./services/analytics.ts";
+import { ToastProvider } from "./context/ToastContext.tsx";
 import { CookieConsentProvider } from "./context/CookieConsentContext.tsx";
 
 const root = document.getElementById("root") || document.body;
@@ -22,11 +23,13 @@ createRoot(root).render(
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <CookieConsentProvider>
-            <TaskContextProvider>
-              <ThemeProvider>
-                <App />
-              </ThemeProvider>
-            </TaskContextProvider>
+            <ToastProvider>
+              <TaskContextProvider>
+                <ThemeProvider>
+                  <App />
+                </ThemeProvider>
+              </TaskContextProvider>
+            </ToastProvider>
           </CookieConsentProvider>
         </AuthProvider>
       </QueryClientProvider>
