@@ -82,6 +82,7 @@ def get_task(user_id: int, task_id: int, lock: bool = False) -> Task:
 
 def _apply_recurrence(task: Task) -> None:
     if not task.is_repeating or not task.repeat_by:
+        task.is_repeating = False
         task.repeat_interval = 1
         task.repeat_days = None
         task.repeat_timezone = None
