@@ -7,6 +7,7 @@ interface DropdownMenuProps {
   trigger: ReactNode;
   /** Opens upwards when the trigger sits near the bottom of the screen. */
   placement?: "above" | "below";
+  disabled?: boolean;
   children: (close: () => void) => ReactNode;
 }
 
@@ -17,6 +18,7 @@ export default function DropdownMenu({
   triggerClassName,
   trigger,
   placement = "below",
+  disabled = false,
   children,
 }: DropdownMenuProps) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
@@ -66,6 +68,7 @@ export default function DropdownMenu({
         aria-label={label}
         title={label}
         onClick={toggle}
+        disabled={disabled}
         className={triggerClassName}
       >
         {trigger}

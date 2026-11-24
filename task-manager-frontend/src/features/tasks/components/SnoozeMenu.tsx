@@ -8,6 +8,7 @@ interface SnoozeMenuProps {
   task?: Task;
   label?: string;
   actionText?: string;
+  disabled?: boolean;
   onSnooze: (preset: SnoozePreset, day?: string) => void;
 }
 
@@ -16,12 +17,14 @@ export default function SnoozeMenu({
   label,
   onSnooze,
   actionText = "",
+  disabled,
 }: SnoozeMenuProps) {
   return (
     <DropdownMenu
       label={label ?? `Snooze task: ${task?.title}`}
       placement="above"
-      triggerClassName="p-1.5 rounded-md hover:bg-slate-500/10 transition-colors cursor-pointer"
+      disabled={disabled}
+      triggerClassName="p-1.5 rounded-md hover:bg-slate-500/10 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
       trigger={
         <span className="flex gap-2 items-center text-sm">
           <AlarmClockPlus aria-hidden className="w-5 h-5 text-slate-500/70" />
