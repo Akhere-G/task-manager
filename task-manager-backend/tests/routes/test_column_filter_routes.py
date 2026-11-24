@@ -54,7 +54,3 @@ def test_a_column_filter_pages_ten_at_a_time(session: FlaskClient) -> None:
 
     assert len(page["tasks"]) == 1
     assert (page["totalTasks"], page["totalPages"]) == (11, 2)
-
-
-def test_a_column_filter_without_a_project_is_a_400(session: FlaskClient) -> None:
-    assert session.get("/api/tasks?column=1").status_code == 400

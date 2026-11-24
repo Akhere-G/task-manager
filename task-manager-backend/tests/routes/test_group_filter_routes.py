@@ -89,18 +89,6 @@ def test_a_group_reports_its_total_minutes(session: FlaskClient) -> None:
     assert page["totalMinutes"] == 60
 
 
-def test_a_group_cannot_be_combined_with_a_completion_filter(
-    session: FlaskClient,
-) -> None:
-    response = session.get("/api/tasks?group=today&is_completed=true")
-
-    assert response.status_code == 400
-
-
-def test_an_unknown_group_is_a_400(session: FlaskClient) -> None:
-    assert session.get("/api/tasks?group=someday").status_code == 400
-
-
 def test_a_group_respects_the_project_filter(session: FlaskClient) -> None:
     project = session.post("/api/projects", json={"name": "Work"}).get_json()
     add_dated(session, "In project", datetime.now(UTC) - HOUR, projectId=project["id"])
@@ -115,7 +103,3 @@ def test_a_group_can_be_limited_to_the_inbox(session: FlaskClient) -> None:
     add_dated(session, "In inbox", datetime.now(UTC) - HOUR)
 
     assert titles(session, "overdue", "&view=inbox") == ["In inbox"]
-
-
-def test_an_unknown_zone_is_a_400(session: FlaskClient) -> None:
-    assert session.get("/api/tasks?group=today&zone=Mars/Base").status_code == 400

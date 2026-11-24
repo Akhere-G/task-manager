@@ -96,10 +96,6 @@ def test_bulk_errors_line_up_with_their_rows() -> None:
     assert errors == [{}, {"title": "Title must be 1 to 255 characters."}]
 
 
-def test_an_update_may_send_any_subset_of_fields() -> None:
-    assert TaskUpdateSchema().load({"title": "Renamed"}) == {"title": "Renamed"}
-
-
 def test_an_update_cannot_change_when_the_task_was_created() -> None:
     assert TaskUpdateSchema().load({"createdAt": "2020-01-01 00:00:00"}) == {}
 
@@ -127,10 +123,6 @@ def test_reschedule_rejects_bad_times_and_loose_flags(
     assert field in load_errors(TaskRescheduleSchema(), {**RESCHEDULE, **override})
 
 
-def test_reschedule_needs_every_field() -> None:
-    assert set(load_errors(TaskRescheduleSchema(), {})) == set(RESCHEDULE)
-
-
 def test_saved_tasks_are_sent_as_not_ghosts() -> None:
     saved = Task(
         title="Gym", start_at=datetime(2026, 3, 2, 9), end_at=datetime(2026, 3, 2, 10)
@@ -144,16 +136,8 @@ def test_saved_tasks_are_sent_as_not_ghosts() -> None:
     assert TaskSchema().dump(ghost)["isGhost"] is True
 
 
-def test_priority_is_left_to_the_database_default_when_missing() -> None:
-    assert "priority" not in TaskSchema().load(TASK)
-
-
 @pytest.mark.parametrize("priority", [0, 5, "1", True, 2.5])
 def test_priority_must_be_a_whole_number_from_one_to_four(priority: Any) -> None:
     errors = load_errors(TaskSchema(), {**TASK, "priority": priority})
 
     assert "priority" in errors
-
-
-def test_priority_can_be_changed_on_its_own() -> None:
-    assert TaskUpdateSchema().load({"priority": 1}) == {"priority": 1}

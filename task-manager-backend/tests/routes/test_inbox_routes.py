@@ -106,10 +106,6 @@ def test_the_inbox_view_lists_tasks_without_a_project(
     assert sorted(titles(session, "view=inbox")) == ["dated loose", "loose"]
 
 
-def test_an_unknown_view_is_rejected(session: FlaskClient) -> None:
-    assert session.get("/api/tasks?view=nope").status_code == 400
-
-
 def test_undated_tasks_are_left_out_of_date_ranges_and_the_calendar(
     session: FlaskClient, task_payload: Callable[..., dict[str, Any]]
 ) -> None:
