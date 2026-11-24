@@ -10,6 +10,7 @@ import { downloadTemplate } from "../csvTemplates";
 import useProjects from "../../projects/hooks/useProjects";
 import { resolveProjectIds } from "../../projects/importProjects";
 import { useQueryClient } from "@tanstack/react-query";
+import { getApiErrorMessage } from "../../../utils/errors";
 
 export default function BulkAddForm() {
   const [errorMessage, setErrorMessage] = useState("");
@@ -70,7 +71,7 @@ export default function BulkAddForm() {
         } catch (err: unknown) {
           if (axios.isAxiosError(err)) {
             setErrorMessage(
-              err.response?.data?.message || "Server rejected the bulk upload.",
+              getApiErrorMessage(err, "Server rejected the bulk upload."),
             );
           } else {
             setErrorMessage("An unexpected error occurred.");
