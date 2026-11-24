@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   DEFAULT_PRIORITY,
   type CreateTaskInput,
@@ -56,6 +56,53 @@ const getDefaultTimes = () => {
   return { startAt, endAt };
 };
 
+const defaultFormState = (): FormState => ({
+  title: "",
+  projectId: null,
+  labelIds: [],
+  reminders: [beforeReminder(30)],
+  priority: DEFAULT_PRIORITY,
+  description: "",
+  ...getDefaultTimes(),
+  isRepeating: false,
+  repeatBy: null,
+  repeatUntil: null,
+  repeatInterval: 1,
+  repeatDays: null,
+  repeatTimezone: null,
+});
+
+function initialFormState(initialData?: Partial<Task>): FormState {
+  const base = defaultFormState();
+  if (!initialData) return base;
+  try {
+    const startAt = initialData.startAt
+      ? formatForInput(initialData.startAt)
+      : base.startAt;
+
+    let endAt = base.endAt;
+    if (initialData.endAt) {
+      endAt = formatForInput(initialData.endAt);
+    } else if (initialData.startAt) {
+      endAt = formatForInput(addHours(startAt, 1));
+    }
+
+    const merged = { ...base, ...initialData, startAt, endAt };
+    if (merged.repeatBy) {
+      // Series created before intervals/days existed carry neither.
+      merged.repeatInterval = merged.repeatInterval || 1;
+      merged.repeatTimezone = merged.repeatTimezone ?? getBrowserTimeZone();
+      if (merged.repeatBy !== "daily" && !merged.repeatDays?.length) {
+        merged.repeatDays = defaultDays(startAt, merged.repeatBy);
+      }
+    }
+    return merged;
+  } catch (err) {
+    console.error(err);
+    return base;
+  }
+}
+
 const DEFAULT_REPEAT_BY = "weekly";
 
 function recurrenceFor(
@@ -93,26 +140,14 @@ export default function TaskForm({
   confirmButtonText = "Add Task",
   initialData,
 }: TaskFormProps) {
-  const [hasDate, setHasDate] = useState(true);
+  const [hasDate, setHasDate] = useState(initialData?.startAt !== null);
   // Stays open while the last reminder is removed so the picker doesn't vanish.
   const [remindersOpen, setRemindersOpen] = useState(
     initialData ? (initialData.reminders?.length ?? 0) > 0 : true,
   );
-  const [formState, setFormState] = useState<FormState>({
-    title: "",
-    projectId: null,
-    labelIds: [],
-    reminders: [beforeReminder(30)],
-    priority: DEFAULT_PRIORITY,
-    description: "",
-    ...getDefaultTimes(),
-    isRepeating: false,
-    repeatBy: null,
-    repeatUntil: null,
-    repeatInterval: 1,
-    repeatDays: null,
-    repeatTimezone: null,
-  });
+  const [formState, setFormState] = useState(() =>
+    initialFormState(initialData),
+  );
 
   const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
     title: "",
@@ -164,46 +199,6 @@ export default function TaskForm({
   };
 
   const [isLoading, setIsloading] = useState(false);
-
-  useEffect(() => {
-    if (initialData?.startAt === null) setHasDate(false);
-    if (initialData)
-      setFormState((prev) => {
-        try {
-          let startAt;
-
-          if (initialData.startAt) {
-            startAt = formatForInput(initialData.startAt);
-          } else {
-            startAt = prev.startAt;
-          }
-
-          let endAt;
-          if (initialData.endAt) {
-            endAt = formatForInput(initialData.endAt);
-          } else if (initialData.startAt) {
-            endAt = formatForInput(addHours(startAt, 1));
-          } else {
-            endAt = prev.endAt;
-          }
-
-          const merged = { ...prev, ...initialData, startAt, endAt };
-          if (merged.repeatBy) {
-            // Series created before intervals/days existed carry neither.
-            merged.repeatInterval = merged.repeatInterval || 1;
-            merged.repeatTimezone =
-              merged.repeatTimezone ?? getBrowserTimeZone();
-            if (merged.repeatBy !== "daily" && !merged.repeatDays?.length) {
-              merged.repeatDays = defaultDays(startAt, merged.repeatBy);
-            }
-          }
-          return merged;
-        } catch (err) {
-          console.error(err);
-          return prev;
-        }
-      });
-  }, [initialData]);
 
   const validateForm = (data: FormState, withDate = hasDate) => {
     setErrorMessages({
