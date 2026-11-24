@@ -1,4 +1,12 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+
+const readFrom = (state: unknown) =>
+  typeof state === "object" &&
+  state !== null &&
+  "from" in state &&
+  typeof state.from === "string"
+    ? state.from
+    : null;
 
 export default function ProtectedRoute({
   children,
@@ -9,8 +17,17 @@ export default function ProtectedRoute({
   redirectTo?: string;
   redirect?: boolean;
 }) {
+  const location = useLocation();
+
   if (redirect) {
-    return <Navigate to={redirectTo} />;
+    const from = location.pathname + location.search + location.hash;
+    return (
+      <Navigate
+        to={readFrom(location.state) ?? redirectTo}
+        replace
+        state={{ from }}
+      />
+    );
   }
   return children;
 }
