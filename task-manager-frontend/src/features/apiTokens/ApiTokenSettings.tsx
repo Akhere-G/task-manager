@@ -26,7 +26,7 @@ function isTokenScope(value: string): value is TokenScope {
 
 export function ApiTokenSettings() {
   const { data: tokens = [] } = useApiTokens();
-  const { mutateAsync: create } = useCreateApiToken();
+  const { mutateAsync: create, isPending } = useCreateApiToken();
   const { mutate: remove } = useDeleteApiToken();
   const [name, setName] = useState("");
   const [scope, setScope] = useState<TokenScope>("write");
@@ -117,7 +117,11 @@ export function ApiTokenSettings() {
           />
         </div>
         <div className="flex justify-end">
-          <button type="submit" className="btn-primary" disabled={!name.trim()}>
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={!name.trim() || isPending}
+          >
             Create token
           </button>
         </div>
