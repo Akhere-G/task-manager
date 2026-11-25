@@ -8,12 +8,20 @@ A task manager with calendar, board and repeating tasks, AI suggestions you can 
 
 <table>
   <tr>
-    <td><img src="task-manager-frontend/public/screenshots/taskflow-calendar.png" alt="Calendar view with repeating tasks"><br><sub>Calendar view</sub></td>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-board.png" alt="Kanban board with To Do, In Progress and Done columns"><br><sub>Kanban board</sub></td>
     <td><img src="task-manager-frontend/public/screenshots/taskflow-matrix.png" alt="Eisenhower matrix view"><br><sub>Eisenhower matrix</sub></td>
   </tr>
   <tr>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-week.png" alt="Week calendar view on a busy week"><br><sub>Calendar: week</sub></td>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-day.png" alt="Day calendar view on a busy day"><br><sub>Calendar: day</sub></td>
+  </tr>
+  <tr>
     <td><img src="task-manager-frontend/public/screenshots/taskflow-brief.png" alt="AI daily brief"><br><sub>AI daily brief</sub></td>
-    <td><img src="task-manager-frontend/public/screenshots/taskflow-stats.png" alt="Statistics dashboard"><br><sub>Statistics</sub></td>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-stats-1.png" alt="Statistics: completion rate, activity heatmap, productivity and deadlines charts"><br><sub>Statistics: overview</sub></td>
+  </tr>
+  <tr>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-stats-2.png" alt="Statistics: project breakdown, weekly flow, turnaround and estimation accuracy"><br><sub>Statistics: trends</sub></td>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-add-task.png" alt="Add task form with schedule, reminders and repeat options"><br><sub>Add task</sub></td>
   </tr>
 </table>
 

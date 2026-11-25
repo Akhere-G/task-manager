@@ -14,7 +14,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 from werkzeug.security import generate_password_hash
 
-from app.constants import DEFAULT_PRIORITY
+from app.constants import DEFAULT_COLUMNS, DEFAULT_PRIORITY
 from app.database import SessionLocal, engine
 from app.demo import DEMO_USER_EMAIL
 from app.models import (
@@ -22,8 +22,10 @@ from app.models import (
     Label,
     Notification,
     NotificationSubscription,
+    OnDrop,
     PasswordReset,
     Project,
+    ProjectColumn,
     RefreshToken,
     Task,
     User,
@@ -173,6 +175,47 @@ def build_series(
         yield task, history, item["category"]
 
 
+BOARD_CATEGORY = "work"
+PROJECT_COLOURS = {
+    "work": "#6366f1",
+    "learning": "#0ea5e9",
+    "finance": "#10b981",
+    "life-admin": "#f59e0b",
+    "social": "#ec4899",
+    "health": "#ef4444",
+    "hobbies": "#8b5cf6",
+    "chores": "#14b8a6",
+    "home": "#f97316",
+    "general": "#64748b",
+    "self-care": "#d946ef",
+}
+
+
+def create_columns(session: Session, project_id: int) -> dict[str, int]:
+    """Adds the starter board columns and returns their ids by status."""
+    columns = {}
+    for position, (name, status, colour, on_drop) in enumerate(DEFAULT_COLUMNS):
+        column = ProjectColumn(
+            project_id=project_id,
+            name=name,
+            status=status,
+            colour=colour,
+            on_drop=OnDrop(on_drop),
+            position=position,
+        )
+        session.add(column)
+        session.flush()
+        columns[status] = column.id
+    return columns
+
+
+def board_status(task: Task, open_index: int) -> str:
+    """Spreads open tasks across To Do and In Progress; finished ones are Done."""
+    if task.is_completed:
+        return "done"
+    return "in_progress" if open_index % 3 == 0 else "pending"
+
+
 def create_projects(
     session: Session, user_id: int, categories: set[str]
 ) -> dict[str, int]:
@@ -182,6 +225,11 @@ def create_projects(
             user_id=user_id,
             name=category.replace("-", " ").capitalize(),
             position=position,
+            **(
+                {"colour": PROJECT_COLOURS[category]}
+                if category in PROJECT_COLOURS
+                else {}
+            ),
         )
         session.add(project)
         session.flush()
@@ -224,17 +272,24 @@ def reset_demo_account(now: datetime | None = None) -> int:
         )
 
         projects = create_projects(session, user.id, {item[2] for item in series})
+        board = create_columns(session, projects[BOARD_CATEGORY])
 
         count = 0
+        open_on_board = 0
         for task, history, category in series:
             task.user_id = user.id
             task.project_id = projects[category]
+            if category == BOARD_CATEGORY:
+                task.column_id = board[board_status(task, open_on_board)]
+                open_on_board += not task.is_completed
             session.add(task)
             session.flush()
             task.series_id = task.id
             for past in history:
                 past.user_id, past.series_id = user.id, task.id
                 past.project_id = projects[category]
+                if category == BOARD_CATEGORY:
+                    past.column_id = board["done"]
             session.add_all(history)
             count += 1 + len(history)
 
