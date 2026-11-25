@@ -17,11 +17,11 @@ A task manager with calendar, board and repeating tasks, AI suggestions you can 
   </tr>
   <tr>
     <td><img src="task-manager-frontend/public/screenshots/taskflow-brief.png" alt="AI daily brief"><br><sub>AI daily brief</sub></td>
-    <td><img src="task-manager-frontend/public/screenshots/taskflow-add-task.png" alt="Add task form with schedule, reminders and repeat options"><br><sub>Add task</sub></td>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-stats-1.png" alt="Statistics: completion rate, activity heatmap, productivity and deadlines charts"><br><sub>Statistics: overview</sub></td>
   </tr>
   <tr>
-    <td><img src="task-manager-frontend/public/screenshots/taskflow-stats-1.png" alt="Statistics: completion rate, activity heatmap, productivity and deadlines charts"><br><sub>Statistics: overview</sub></td>
     <td><img src="task-manager-frontend/public/screenshots/taskflow-stats-2.png" alt="Statistics: project breakdown, weekly flow, turnaround and estimation accuracy"><br><sub>Statistics: trends</sub></td>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-add-task.png" alt="Add task form with schedule, reminders and repeat options"><br><sub>Add task</sub></td>
   </tr>
 </table>
 

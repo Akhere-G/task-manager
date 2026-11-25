@@ -48,11 +48,6 @@ const SCREENSHOTS = [
     caption: "The AI daily brief, written from your own tasks.",
   },
   {
-    src: "/screenshots/taskflow-add-task.png",
-    alt: "The add task form with title, project, priority, schedule, reminders and repeat settings.",
-    caption: "Adding a task, with schedule, reminders and repeats.",
-  },
-  {
     src: "/screenshots/taskflow-stats-1.png",
     alt: "A statistics dashboard with completion rate, streak, an activity heatmap and deadline charts.",
     caption: "Statistics: completion rate, streak, a year of activity and upcoming deadlines.",
@@ -61,6 +56,11 @@ const SCREENSHOTS = [
     src: "/screenshots/taskflow-stats-2.png",
     alt: "Statistics charts for project breakdown, weekly flow, turnaround time and estimation accuracy.",
     caption: "Statistics: where time goes and how accurate estimates are.",
+  },
+  {
+    src: "/screenshots/taskflow-add-task.png",
+    alt: "The add task form with title, project, priority, schedule, reminders and repeat settings.",
+    caption: "Adding a task, with schedule, reminders and repeats.",
   },
 ];
 
