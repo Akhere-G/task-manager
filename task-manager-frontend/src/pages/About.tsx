@@ -16,6 +16,34 @@ import {
   Zap,
 } from "lucide-react";
 
+const SCREENSHOTS = [
+  {
+    src: "/screenshots/taskflow-list.png",
+    alt: "The task list grouped into overdue, today and upcoming, with a project sidebar.",
+    caption: "List view: overdue, today and upcoming, grouped by project.",
+  },
+  {
+    src: "/screenshots/taskflow-calendar.png",
+    alt: "A month calendar with tasks and repeating tasks on each day.",
+    caption: "Calendar view, including repeating tasks calculated ahead of time.",
+  },
+  {
+    src: "/screenshots/taskflow-matrix.png",
+    alt: "Tasks sorted into the four Eisenhower matrix quadrants.",
+    caption: "Eisenhower matrix: drag a task between quadrants to change its priority.",
+  },
+  {
+    src: "/screenshots/taskflow-brief.png",
+    alt: "A daily brief summarising today's priorities and overdue work.",
+    caption: "The AI daily brief, written from your own tasks.",
+  },
+  {
+    src: "/screenshots/taskflow-stats.png",
+    alt: "A statistics dashboard with completion rate, streak and an activity heatmap.",
+    caption: "Statistics: completion rate, streak and a year of activity.",
+  },
+];
+
 export default function AboutPage() {
   const FEATURES = [
     {
@@ -123,20 +151,52 @@ export default function AboutPage() {
         ))}
       </div>
 
+      <h2 className="text-3xl font-bold text-text-main mb-10 text-left border-b border-border-light pb-4 px-2 md:px-0">
+        See It In Action
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
+        {SCREENSHOTS.map((shot) => (
+          <figure key={shot.src} className="m-0">
+            <img
+              src={shot.src}
+              alt={shot.alt}
+              loading="lazy"
+              width={1440}
+              height={900}
+              className="w-full h-auto rounded-xl border border-border-light shadow-sm"
+            />
+            <figcaption className="mt-2 text-sm text-text-sub">
+              {shot.caption}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+
       <section className="card p-8 bg-bg-secondary rounded-2xl shadow-sm">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
           <div className="max-w-2xl">
             <div className="flex items-center gap-2 mb-3">
               <Cpu className="text-brand" size={24} />
               <h2 className="text-2xl font-bold text-text-main">
-                Built to Be Fast and Reliable
+                How It&apos;s Built
               </h2>
             </div>
             <p className="text-text-sub leading-relaxed text-lg">
-              A Python and Flask backend keeps your data safe and powers the AI
-              features, while a React and TypeScript interface responds
-              instantly. Tailwind CSS and TanStack Query keep every screen
-              smooth and up to date.
+              TaskFlow is a React and TypeScript app on a Python and Flask API
+              with a PostgreSQL database. Repeating tasks are calculated when
+              you need them rather than stored many times over, AI suggestions
+              wait for you to accept them, and AI assistants such as Claude can
+              manage your tasks through a secure connection you can revoke at
+              any time.{" "}
+              <a
+                href="https://github.com/Akhere-G/task-manager"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand underline"
+              >
+                See the code on GitHub
+              </a>
+              .
             </p>
           </div>
 
@@ -144,10 +204,10 @@ export default function AboutPage() {
             {[
               "Python",
               "Flask",
-              "SQLAlchemy",
+              "PostgreSQL",
               "React",
               "TypeScript",
-              "Recharts",
+              "TanStack Query",
               "Tailwind CSS",
             ].map((tech) => (
               <span
