@@ -23,9 +23,9 @@ const SCREENSHOTS = [
     caption: "List view: overdue, today and upcoming, grouped by project.",
   },
   {
-    src: "/screenshots/taskflow-calendar.png",
-    alt: "A month calendar with tasks and repeating tasks on each day.",
-    caption: "Calendar view, including repeating tasks calculated ahead of time.",
+    src: "/screenshots/taskflow-board.png",
+    alt: "A kanban board with To Do, In Progress and Done columns, each card tagged with its project.",
+    caption: "Board view: each project gets its own columns.",
   },
   {
     src: "/screenshots/taskflow-matrix.png",
@@ -33,14 +33,34 @@ const SCREENSHOTS = [
     caption: "Eisenhower matrix: drag a task between quadrants to change its priority.",
   },
   {
+    src: "/screenshots/taskflow-week.png",
+    alt: "A week calendar with tasks coloured by project across seven days.",
+    caption: "Week view on a busy week, coloured by project.",
+  },
+  {
+    src: "/screenshots/taskflow-day.png",
+    alt: "A day calendar with six tasks of different project colours.",
+    caption: "Day view on a busy day.",
+  },
+  {
     src: "/screenshots/taskflow-brief.png",
     alt: "A daily brief summarising today's priorities and overdue work.",
     caption: "The AI daily brief, written from your own tasks.",
   },
   {
-    src: "/screenshots/taskflow-stats.png",
-    alt: "A statistics dashboard with completion rate, streak and an activity heatmap.",
-    caption: "Statistics: completion rate, streak and a year of activity.",
+    src: "/screenshots/taskflow-add-task.png",
+    alt: "The add task form with title, project, priority, schedule, reminders and repeat settings.",
+    caption: "Adding a task, with schedule, reminders and repeats.",
+  },
+  {
+    src: "/screenshots/taskflow-stats-1.png",
+    alt: "A statistics dashboard with completion rate, streak, an activity heatmap and deadline charts.",
+    caption: "Statistics: completion rate, streak, a year of activity and upcoming deadlines.",
+  },
+  {
+    src: "/screenshots/taskflow-stats-2.png",
+    alt: "Statistics charts for project breakdown, weekly flow, turnaround time and estimation accuracy.",
+    caption: "Statistics: where time goes and how accurate estimates are.",
   },
 ];
 
