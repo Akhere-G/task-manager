@@ -1,12 +1,36 @@
-# TaskFlow Engine
+# TaskFlow
 
-A high-performance task engine designed to turn raw productivity data into actionable insights. Visualise your workflow, track your progress, manage your energy, and master your time.
+A task manager with calendar, board and repeating tasks, AI suggestions you can accept or ignore, and an assistant interface that lets tools like Claude manage your tasks with scoped, revocable access.
 
-**🔗 [Live Deployment](https://taskflow-752853711822.europe-west2.run.app/addtask)** · **🎯 [Try the demo](https://taskflow-752853711822.europe-west2.run.app/demo)** (no sign-up needed)
+**[Live site](https://taskflow-752853711822.europe-west2.run.app/addtask)** · **[Try the demo](https://taskflow-752853711822.europe-west2.run.app/demo)** (no sign-up needed) · [CI workflow](.github/workflows/ci.yml)
 
----
+![The TaskFlow task list, grouped into overdue, today and upcoming](task-manager-frontend/public/screenshots/taskflow-list.png)
 
-## Core Features
+<table>
+  <tr>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-calendar.png" alt="Calendar view with repeating tasks"><br><sub>Calendar view</sub></td>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-matrix.png" alt="Eisenhower matrix view"><br><sub>Eisenhower matrix</sub></td>
+  </tr>
+  <tr>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-brief.png" alt="AI daily brief"><br><sub>AI daily brief</sub></td>
+    <td><img src="task-manager-frontend/public/screenshots/taskflow-stats.png" alt="Statistics dashboard"><br><sub>Statistics</sub></td>
+  </tr>
+</table>
+
+Screenshots are from the demo account's sample data.
+
+## What it does
+
+* **Calendar, list and Eisenhower matrix views:** drag a task onto a new day to reschedule it, or onto a quadrant to change its priority.
+* **Kanban board:** each project has columns, and each column can complete, reopen or trash a card dropped into it.
+* **Repeating tasks:** daily, weekly, monthly or yearly repeats, with chosen days, that show on the calendar ahead of time.
+* **Reminders:** several push reminders per task.
+* **AI that suggests, never decides:** priority suggestions, task breakdown and quick-add all wait for you to accept them.
+* **Stats:** progress over time, backlog health, upcoming deadlines and where your time goes.
+* **Connect Claude:** an MCP server exposes 36 tools to AI assistants (see [Connect Claude](#connect-claude-mcp)).
+
+<details>
+<summary>Full feature list</summary>
 
 * **Smart Views:** Inbox, Today, Upcoming, Overdue, This week and This month sit in a sidebar (a closable panel on mobile), each with a live count. Switch any view between a list, a calendar and an Eisenhower matrix (priorities 1 to 4 as four quadrants; drag a task to another quadrant to change its priority); everything, including search and sort, lives in the URL so views can be bookmarked.
 * **Kanban Board:** Pick a project and switch to Board to see its tasks as cards in columns. Every project starts with To Do, In Progress and Done; add, rename, recolour, reorder or delete your own. Each column decides what dropping a card does: do nothing, mark it complete, mark it incomplete, or move it to the trash. Tasks without a column sit in an Unassigned column, and each column shows a count chip.
@@ -28,30 +52,67 @@ A high-performance task engine designed to turn raw productivity data into actio
 * **Planning & Deadlines:** Visualise the week ahead to review upcoming deadlines. Dedicated charts highlight how close your due dates are and flag overdue items.
 * **Workload Insights:** See where your time goes with breakdowns of time spent per project over a rolling seven-day window.
 
----
+</details>
 
-## Technical Architecture
+## Architecture
 
-The platform is engineered on a modern full-stack architecture designed for high performance, type safety, and snappy interface responses.
+```mermaid
+flowchart LR
+  subgraph Browser
+    UI["React + TypeScript<br/>TanStack Query"]
+  end
+  subgraph Backend["Flask API (Cloud Run)"]
+    R["Routes"] --> SV["Services"] --> M["SQLAlchemy models"]
+    MCP["POST /mcp<br/>36 tools"] --> SV
+  end
+  UI -- "REST + cookie JWT" --> R
+  M --> PG[("PostgreSQL")]
+  SV --> RD[("Redis<br/>rate limits")]
+  SV --> AI["Gemini / Groq"]
+  CRON["Reminder job<br/>(external scheduler)"] --> PG
+  CRON --> PUSH["Web push"]
+  CLAUDE["Claude / MCP clients"] -- "Bearer token" --> MCP
+```
 
-### Backend Layer
+* **Frontend:** React and TypeScript with Tailwind CSS. TanStack Query handles fetching and caching. Moving tasks and cards update the screen instantly, and other changes refetch. Axios refreshes the sign-in token in the background, and concurrent requests share one refresh. Recharts draws the statistics.
+* **Backend:** Flask with the application factory pattern. About 59 routes call services, which call models. SQLAlchemy 2.0 and Alembic manage 13 tables on PostgreSQL. Marshmallow validates requests.
+* **Auth:** JWT in HTTP-only cookies with rotating refresh tokens that are stored hashed.
+* **AI:** Gemini with Groq as a fallback, behind timeouts and a daily per-user quota.
+* **Delivery:** Docker Compose locally, GitHub Actions, and Google Cloud Run in production.
 
-The backend handles the core computational heavy lifting, database state management, and AI-driven background logic.
+## Key decisions
 
-* **Language:** Python
-* **Framework:** Flask (Application Factory Pattern)
-* **ORM:** SQLAlchemy 2.0 (Modern explicit execution models)
-* **Authentication:** JWT (Secure HTTP-only cookie-based rotation sessions)
+| Decision | Why | Cost | Code |
+| :--- | :--- | :--- | :--- |
+| Repeating tasks are calculated, not stored | One master record, so the database stays small and a schedule change is one edit. Future occurrences are projected when the calendar needs them. | Calendar logic is harder than generating rows in advance. | [`recurrence.py`](task-manager-backend/app/utils/recurrence.py), [`task_listing.py`](task-manager-backend/app/services/task_listing.py) |
+| Order stored as integers with gaps of 1,024 | A drag updates one row instead of renumbering the list. | When two neighbours run out of room the list is renumbered once, under a lock. | [`order_service.py`](task-manager-backend/app/services/order_service.py), [`ordering.py`](task-manager-backend/app/utils/ordering.py) |
+| The board reuses the list's rules | A card dropped in Done is completed by the same code as ticking it off, so there is no second path to keep in step. | The board can only do what the task services allow. | [`board_service.py`](task-manager-backend/app/services/board_service.py) |
+| Each reminder stores its own fire time | The background job only asks which reminders are due. | The time is recalculated whenever a task's date changes, reminders over an hour late are dropped, and the job needs an external scheduler. | [`run_reminders.py`](task-manager-backend/app/run_reminders.py) |
+| MCP server for AI assistants | Assistants can use the same actions as the app instead of the app copying features into a chat window. | A second public surface: tokens are scoped read or write, stored hashed, rate limited to 120 requests a minute per token, and covered by cross-user isolation tests. | [`protocol.py`](task-manager-backend/app/mcp/protocol.py), [`registry.py`](task-manager-backend/app/mcp/registry.py) |
+| Rotating refresh tokens with a grace window | A burst of requests with an expired login would otherwise each rotate the token and sign the user out. The frontend shares one in-flight refresh and the server accepts the old token for 10 seconds. | Slightly more complex token handling on both sides. | [`auth_service.py`](task-manager-backend/app/services/auth_service.py), [`api.ts`](task-manager-frontend/src/services/api.ts) |
 
-### Frontend Layer
+## Testing and quality
 
-The user interface operates as a highly responsive, single-page application (SPA) focused on asynchronous data processing.
+* **Backend:** about 545 pytest tests across 71 files, run against PostgreSQL 18. Five files use property-based testing with Hypothesis, including [`test_recurrence_properties.py`](task-manager-backend/tests/utils/test_recurrence_properties.py) for the recurrence rules.
+* **Frontend:** about 366 Vitest tests and 21 Playwright browser tests that run against a real backend.
+* **CI:** [GitHub Actions](.github/workflows/ci.yml) runs three jobs. Frontend: lint, type check, Vitest and build. Backend: pytest against PostgreSQL. End to end: Playwright against a real backend.
+* **Migrations:** 14 Alembic migrations with round-trip tests.
+* **Isolation:** tests check that one user cannot read another's data through the API or the MCP server.
+* **Rate limits:** about 15 route limits on Redis plus a daily AI quota per user, and security headers including a report-only content security policy.
 
-* **Core Framework:** React with TypeScript (Type-safe component design)
-* **Styling:** Tailwind CSS (Utility-first responsive layout design)
-* **Network Client:** Axios (Configured for credentials-backed API routing)
-* **State Management:** TanStack Query (Server-state caching and seamless optimistic updates)
-* **Data Visualisation:** Recharts (Dynamic rendering of workload insights and performance history)
+```bash
+cd task-manager-backend && python -m pytest
+cd task-manager-frontend && npm test && npm run test:e2e
+```
+
+## Known limitations
+
+* Cross-site request protection relies on SameSite cookies rather than CSRF tokens.
+* The Pomodoro timer keeps its state in the browser only and does not record focus time.
+* Reminders need an external scheduler such as cron or Cloud Scheduler.
+* Only moves, reorders and board actions update the screen optimistically. Other changes refetch.
+
+## Details
 
 ### Reminder runner
 
@@ -94,19 +155,6 @@ The frontend sends custom product-usage events to PostHog. Before analytics-cook
 * Signed-in users are identified by user id only. The shared demo account is never identified, and its events carry `is_demo: true`.
 * Task titles, descriptions, search text, emails and names are never sent.
 * Cookie preferences are stored in the browser under `taskflow_cookie_preferences`. Users can change them from Settings or the footer's Cookie settings link.
-
----
-
-## Technology Matrix
-
-| Component | Technology | Primary Purpose |
-| :--- | :--- | :--- |
-| **Backend** | Python / Flask | RESTful API service orchestration |
-| **Database ORM** | SQLAlchemy 2.0 | High-performance relational state mapping |
-| **UI Layer** | React / TypeScript | Type-safe declarative interface building |
-| **Styles** | Tailwind CSS | Consistent, hardware-accelerated design tokens |
-| **Data Fetching** | Axios / TanStack Query | Asynchronous API communication and caching |
-| **Analytics** | Recharts | Interactive charting and productivity telemetry |
 
 ---
 
