@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { Task } from "../features/tasks/types";
+import { taskTargetId } from "../features/tasks/utils";
 
 export interface TaskFilters {
   search: string;
@@ -50,7 +51,7 @@ export default function TaskContextProvider({
     setSelectedTask(task);
     setPopupMode(mode);
     if (mode === PopupModes.View) {
-      setTaskParam(task.isGhost ? task.seriesId : task.id);
+      setTaskParam(taskTargetId(task));
     }
   };
 

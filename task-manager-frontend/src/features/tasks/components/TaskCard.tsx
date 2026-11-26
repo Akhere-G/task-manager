@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
-import { formatDateRange, formatDateRelative } from "../utils";
+import { formatDateRange, formatDateRelative, taskTargetId } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import useSnoozeTask from "../hooks/useSnoozeTask";
 import SnoozeMenu from "./SnoozeMenu";
@@ -61,7 +61,6 @@ function TaskCard({
   ...task
 }: TaskCardProps) {
   const {
-    id,
     seriesId,
     isGhost,
     title,
@@ -106,7 +105,7 @@ function TaskCard({
         {showSetIsComplete && (
           <button
             onClick={() => {
-              setIsCompleted(isGhost ? seriesId : id, !isCompleted, task);
+              setIsCompleted(taskTargetId(task), !isCompleted, task);
             }}
             disabled={isCompleting}
             title={isCompleted ? "Mark as pending" : "Mark as complete"}
@@ -228,7 +227,7 @@ function TaskCard({
           )}
           {!isCompleted && showPomodoro && (
             <button
-              onClick={() => navigate(`/pomodoro/${isGhost ? seriesId : id}`)}
+              onClick={() => navigate(`/pomodoro/${taskTargetId(task)}`)}
               title="Start Task"
               aria-label={`Start task: ${title}`}
               className="p-1.5 rounded-md hover:bg-success/10 transition-colors group cursor-pointer"
@@ -242,7 +241,7 @@ function TaskCard({
 
           {!isCompleted && showDecompose && (
             <button
-              onClick={() => navigate(`/breakdown/${isGhost ? seriesId : id}`)}
+              onClick={() => navigate(`/breakdown/${taskTargetId(task)}`)}
               title="Break down Task"
               aria-label={`Break down task: ${title}`}
               className="p-1.5 rounded-md hover:bg-brand/10 transition-colors group cursor-pointer"

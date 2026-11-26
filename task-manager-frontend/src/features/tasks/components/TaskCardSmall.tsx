@@ -1,7 +1,7 @@
 import { CheckCircle2, Circle, Repeat } from "lucide-react";
 import type { Task } from "../types";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
-import { formatDateRange } from "../utils";
+import { formatDateRange, taskTargetId } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import { describeRecurrence } from "../recurrence";
 import PriorityFlag from "./PriorityFlag";
@@ -38,11 +38,7 @@ export function TaskCardSmall({
         disabled={isCompleting}
         className="disabled:cursor-not-allowed disabled:opacity-50"
         onClick={(e) => {
-          setIsCompleted(
-            task.isGhost ? task.seriesId : task.id,
-            !task.isCompleted,
-            task,
-          );
+          setIsCompleted(taskTargetId(task), !task.isCompleted, task);
           e.stopPropagation();
         }}
       >

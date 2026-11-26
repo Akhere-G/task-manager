@@ -22,6 +22,7 @@ import {
   formatMinutes,
   isTaskOverdue,
   taskMinutes,
+  taskTargetId,
 } from "../utils";
 import PriorityBadge from "./PriorityBadge";
 import { SelectBox } from "./SelectBox";
@@ -59,8 +60,8 @@ export function TaskRow({
   snoozeTask,
 }: TaskRowProps) {
   const navigate = useNavigate();
-  const { id, seriesId, isGhost, title, isCompleted, description } = task;
-  const taskId = isGhost ? seriesId : id;
+  const { seriesId, isGhost, title, isCompleted, description } = task;
+  const taskId = taskTargetId(task);
   const isOverdue = isTaskOverdue(task);
   const minutes = taskMinutes(task);
   const recurrence = task.isRepeating ? describeRecurrence(task) : "";

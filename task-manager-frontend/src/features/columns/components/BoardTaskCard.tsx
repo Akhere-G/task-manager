@@ -15,6 +15,7 @@ import {
   formatMinutes,
   isTaskOverdue,
   taskMinutes,
+  taskTargetId,
 } from "../../tasks/utils";
 
 interface BoardTaskCardProps {
@@ -34,11 +35,7 @@ export function BoardTaskCard({
   const minutes = taskMinutes(task);
 
   const complete = () => {
-    setIsCompleted(
-      task.isGhost ? task.seriesId : task.id,
-      !task.isCompleted,
-      task,
-    );
+    setIsCompleted(taskTargetId(task), !task.isCompleted, task);
   };
 
   return (

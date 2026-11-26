@@ -12,6 +12,7 @@ import {
   formatMinutes,
   isTaskOverdue,
   taskMinutes,
+  taskTargetId,
 } from "../utils";
 
 interface MatrixTaskRowProps {
@@ -33,11 +34,7 @@ export function MatrixTaskRow({
   const minutes = taskMinutes(task);
 
   const complete = () => {
-    setIsCompleted(
-      task.isGhost ? task.seriesId : task.id,
-      !task.isCompleted,
-      task,
-    );
+    setIsCompleted(taskTargetId(task), !task.isCompleted, task);
   };
 
   return (

@@ -7,6 +7,7 @@ import type { TaskFilters } from "../taskParams";
 import type { Priority, Task } from "../types";
 import type { TaskView } from "../views";
 import MatrixQuadrant from "./MatrixQuadrant";
+import { taskTargetId } from "../utils";
 
 interface EisenhowerMatrixProps {
   filters: TaskFilters;
@@ -25,7 +26,7 @@ export default function EisenhowerMatrix({
   const moveDraggedTaskTo = (priority: Priority) => {
     if (draggedTask && draggedTask.priority !== priority) {
       updateTask({
-        id: draggedTask.isGhost ? draggedTask.seriesId : draggedTask.id,
+        id: taskTargetId(draggedTask),
         newTaskData: { priority },
       });
     }

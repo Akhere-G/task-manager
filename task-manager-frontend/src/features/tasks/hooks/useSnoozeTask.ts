@@ -4,6 +4,7 @@ import { getBrowserTimeZone } from "../recurrence";
 import type { SnoozePreset, Task } from "../types";
 import { toFormattedUTCDate } from "../../../utils/formators";
 import { trackEvent } from "../../../services/analytics";
+import { taskTargetId } from "../utils";
 
 export interface SnoozeRequest {
   task: Task;
@@ -16,7 +17,7 @@ export default function useSnoozeTask(props?: { onSnooze?: () => void }) {
 
   return useMutation({
     mutationFn: ({ task, preset, day }: SnoozeRequest) =>
-      taskService.snooze(task.isGhost ? task.seriesId : task.id, {
+      taskService.snooze(taskTargetId(task), {
         preset,
         day,
         zoneName: getBrowserTimeZone() ?? "UTC",
