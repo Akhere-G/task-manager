@@ -297,3 +297,42 @@ export const patchSubtask = (
     },
   };
 };
+
+const withOrder = (pages: GetTaskResult[], reordered: Task[]) => {
+  let offset = 0;
+  return pages.map((page) => {
+    const tasks = reordered.slice(offset, offset + page.tasks.length);
+    offset += page.tasks.length;
+    return { ...page, tasks };
+  });
+};
+
+export const reorderList = (
+  queryClient: QueryClient,
+  queryKey: QueryKey,
+  movedId: number,
+  reordered: Task[],
+): CachePatch => {
+  const data = queryClient.getQueryData(queryKey);
+  const pages = readPages(data);
+  const before = tasksOf(pages ?? []);
+  const moved = before.find((task) => task.id === movedId);
+  if (!pages || !moved) return { queryKeys: [], undo: () => {} };
+  queryClient.setQueryData(
+    queryKey,
+    writePages(data, withOrder(pages, reordered)),
+  );
+
+  const originalIds = before.map((task) => task.id);
+  return {
+    queryKeys: [queryKey],
+    undo: () => {
+      queryClient.setQueryData(queryKey, (latest: unknown) => {
+        const latestPages = readPages(latest);
+        if (!latestPages) return latest;
+        const rest = without(latestPages, new Set([movedId]));
+        return writePages(latest, restored(rest, moved, originalIds));
+      });
+    },
+  };
+};

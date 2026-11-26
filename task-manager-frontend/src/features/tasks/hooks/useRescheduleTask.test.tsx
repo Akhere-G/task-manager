@@ -1,12 +1,13 @@
-import { waitFor } from "@testing-library/react";
+import { act, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
   makeQueryClient,
   makeTask,
   renderHookWithProviders,
 } from "../../../test/render";
+import useGetTask from "./useGetTask";
 import useRescheduleTask from "./useRescheduleTask";
-import { mockApi } from "../../../test/api";
+import { heldReply, mockApi } from "../../../test/api";
 
 const mock = mockApi();
 
@@ -22,13 +23,14 @@ const MOVE = {
   endAt: "2026-03-10T11:00:00+01:00",
   isGhost: true,
 };
+const REQUEST = { id: 3, occurrenceId: 3, rescheduleData: MOVE };
 
 describe("useRescheduleTask", () => {
   it("posts every time as a UTC string to the series' reschedule endpoint", async () => {
     mock.onPost("/tasks/3/reschedule").reply(200, makeTask({ id: 3 }));
     const { result } = renderReschedule();
 
-    await result.current.mutateAsync({ id: 3, rescheduleData: MOVE });
+    await result.current.mutateAsync(REQUEST);
 
     expect(JSON.parse(mock.history.post[0].data)).toEqual({
       previousStartAt: "2026-03-09 09:00:00",
@@ -38,15 +40,38 @@ describe("useRescheduleTask", () => {
     });
   });
 
+  it("shows the new times at once and restores them when it fails", async () => {
+    const held = heldReply(409);
+    mock.onPost("/tasks/3/reschedule").reply(held.reply);
+    const task = makeTask({ id: 3 });
+    mock.onGet("/tasks/3").reply(200, task);
+    const { result } = renderHookWithProviders(() => ({
+      task: useGetTask(3),
+      move: useRescheduleTask(),
+    }));
+    await waitFor(() => expect(result.current.task.data).toBeDefined());
+
+    act(() => result.current.move.mutate(REQUEST));
+
+    await waitFor(() =>
+      expect(result.current.task.data?.startAt).toBe(
+        "2026-03-10T09:00:00.000Z",
+      ),
+    );
+    held.release();
+
+    await waitFor(() =>
+      expect(result.current.task.data?.startAt).toBe(task.startAt),
+    );
+  });
+
   it("refetches tasks after a move, even when it fails", async () => {
     mock
       .onPost("/tasks/3/reschedule")
       .reply(409, { error: "Already updated." });
     const { result, queryClient } = renderReschedule();
 
-    await expect(
-      result.current.mutateAsync({ id: 3, rescheduleData: MOVE }),
-    ).rejects.toBeDefined();
+    await expect(result.current.mutateAsync(REQUEST)).rejects.toBeDefined();
 
     await waitFor(() =>
       expect(
