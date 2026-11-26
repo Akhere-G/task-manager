@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { addDays } from "date-fns";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
@@ -56,7 +57,7 @@ function CachedScreens() {
   return (
     <ul aria-label="server tasks">
       {tasks.data?.tasks.map((t) => (
-        <li key={t.id}>
+        <li key={t.id} data-start={t.startAt}>
           {t.title} {t.isCompleted ? "(done)" : "(open)"}
         </li>
       ))}
@@ -281,6 +282,26 @@ describe("snoozing a task", () => {
       zoneName: expect.any(String),
     });
     await waitFor(() => expect(gets("/tasks")).toBe(2));
+  });
+
+  it("moves it to the new day at once and back if the server refuses", async () => {
+    const held = heldReply(400, { error: "Task has no next occurrence" });
+    mock.onPost("/tasks/1/snooze").reply(held.reply);
+    const task = makeTask();
+    renderCard(task);
+    const row = await screen.findByRole("listitem");
+
+    await openMenu();
+    await userEvent.click(screen.getByRole("menuitem", { name: "Tomorrow" }));
+
+    const tomorrow = addDays(new Date(), 1).toDateString();
+    expect(new Date(row.dataset.start ?? "").toDateString()).toBe(tomorrow);
+    held.release();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Task has no next occurrence",
+    );
+    expect(row).toHaveAttribute("data-start", task.startAt);
   });
 
   it("offers the next occurrence only for a repeating task", async () => {

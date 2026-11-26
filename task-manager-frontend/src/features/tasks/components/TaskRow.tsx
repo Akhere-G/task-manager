@@ -198,7 +198,7 @@ export default function TaskRowConnected({ task }: { task: Task }) {
   const { openPopup, closePopup } = useTaskContext();
   const { setIsCompleted } = useSetIsCompleted();
   const isSaving = useSavingTaskIds().has(taskTargetId(task));
-  const { mutate: snooze } = useSnoozeTask({ onSnooze: closePopup });
+  const snooze = useSnoozeTask();
 
   return (
     <TaskRow
@@ -208,9 +208,10 @@ export default function TaskRowConnected({ task }: { task: Task }) {
       onDelete={(target) => openPopup(target, PopupModes.Delete)}
       onEdit={(target) => openPopup(target, PopupModes.Edit)}
       onOpen={(target) => openPopup(target, PopupModes.View)}
-      snoozeTask={(target, preset, day) =>
-        snooze({ task: target, preset, day })
-      }
+      snoozeTask={(target, preset, day) => {
+        snooze({ task: target, preset, day });
+        closePopup();
+      }}
     />
   );
 }

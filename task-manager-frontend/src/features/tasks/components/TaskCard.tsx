@@ -286,7 +286,7 @@ export default function TaskCardConnected(props: TaskCardConnectedProps) {
   const { openPopup, closePopup } = useTaskContext();
   const { setIsCompleted } = useSetIsCompleted();
   const isSaving = useSavingTaskIds().has(taskTargetId(props));
-  const { mutate: snooze } = useSnoozeTask({ onSnooze: closePopup });
+  const snooze = useSnoozeTask();
 
   return (
     <TaskCard
@@ -295,7 +295,10 @@ export default function TaskCardConnected(props: TaskCardConnectedProps) {
       onDelete={(task) => openPopup(task, PopupModes.Delete)}
       onEdit={(task) => openPopup(task, PopupModes.Edit)}
       onOpen={(task) => openPopup(task, PopupModes.View)}
-      snoozeTask={(task, preset, day) => snooze({ task, preset, day })}
+      snoozeTask={(task, preset, day) => {
+        snooze({ task, preset, day });
+        closePopup();
+      }}
       {...props}
     />
   );
