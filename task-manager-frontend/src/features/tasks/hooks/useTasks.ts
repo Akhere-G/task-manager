@@ -178,7 +178,7 @@ export const useTasks = ({ enabled = true }: UseTasksProps = {}) => {
     setSearchParams(next);
   };
 
-  const isStale = result.isFetching || searchInput !== deferredSearch;
+  const isStale = result.isPlaceholderData || searchInput !== deferredSearch;
 
   const isSearching =
     !!searchInput.trim() ||
