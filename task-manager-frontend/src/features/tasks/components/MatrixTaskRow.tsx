@@ -5,6 +5,7 @@ import ProjectLabel from "../../projects/ProjectLabel";
 import { priorityRingClasses } from "../constants";
 import { SelectBox } from "./SelectBox";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
+import useSavingTaskIds from "../optimistic/useSavingTaskIds";
 import { describeRecurrence } from "../recurrence";
 import type { Task } from "../types";
 import {
@@ -19,7 +20,7 @@ interface MatrixTaskRowProps {
   task: Task;
   onDragTask: (task: Task | null) => void;
   setIsCompleted: (id: number, isCompleted: boolean, task?: Task) => void;
-  isCompleting?: boolean;
+  isSaving?: boolean;
   onOpen: (task: Task) => void;
 }
 
@@ -27,7 +28,7 @@ export function MatrixTaskRow({
   task,
   onDragTask,
   setIsCompleted,
-  isCompleting = false,
+  isSaving = false,
   onOpen,
 }: MatrixTaskRowProps) {
   const isOverdue = isTaskOverdue(task);
@@ -39,7 +40,7 @@ export function MatrixTaskRow({
 
   return (
     <article
-      draggable
+      draggable={!isSaving}
       onDragStart={() => onDragTask(task)}
       onDragEnd={() => onDragTask(null)}
       className={`group flex cursor-grab items-center gap-2 border-b border-surface-muted px-2 py-2 hover:bg-surface-muted/60 focus-within:bg-surface-muted/60 ${task.isCompleted ? "opacity-60" : ""}`}
@@ -53,7 +54,7 @@ export function MatrixTaskRow({
       <button
         type="button"
         onClick={complete}
-        disabled={isCompleting}
+        disabled={isSaving}
         aria-label={
           task.isCompleted ? "Mark task as pending" : "Mark task as completed"
         }
@@ -96,12 +97,13 @@ export default function MatrixTaskRowConnected(
   props: Pick<MatrixTaskRowProps, "task" | "onDragTask">,
 ) {
   const { openPopup } = useTaskContext();
-  const { setIsCompleted, isPending } = useSetIsCompleted();
+  const { setIsCompleted } = useSetIsCompleted();
+  const isSaving = useSavingTaskIds().has(taskTargetId(props.task));
   return (
     <MatrixTaskRow
       {...props}
       setIsCompleted={setIsCompleted}
-      isCompleting={isPending}
+      isSaving={isSaving}
       onOpen={(task) => openPopup(task, PopupModes.View)}
     />
   );

@@ -80,6 +80,22 @@ describe("predicting an update", () => {
     expect(done.subtasks?.[0].isCompleted).toBe(false);
   });
 
+  it("ignores the saved fields that the edit form sends back", () => {
+    const task = makeTask({ subtaskCount: 1, subtaskCompletedCount: 1 });
+
+    const next = predictUpdate({
+      title: "New",
+      subtaskCompletedCount: 0,
+      isGhost: true,
+    })(task);
+
+    expect(next).toMatchObject({
+      title: "New",
+      subtaskCompletedCount: 1,
+      isGhost: false,
+    });
+  });
+
   it("takes the task out of its column when the project changes", () => {
     const task = makeTask({ projectId: 1, columnId: 3 });
 

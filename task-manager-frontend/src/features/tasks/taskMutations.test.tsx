@@ -13,6 +13,7 @@ import apiClient from "../../services/api";
 import { makeGhost, makeTask, renderWithProviders } from "../../test/render";
 import { taskService } from "./api";
 import TaskCard from "./components/TaskCard";
+import { getDefaultFilters } from "./taskParams";
 import type { Task } from "./types";
 import { mockApi } from "../../test/api";
 
@@ -28,6 +29,7 @@ beforeEach(() => {
     {
       tasks: tasksOnServer,
       totalTasks: tasksOnServer.length,
+      totalMinutes: 0,
       totalPages: 1,
       currentPage: 1,
     },
@@ -35,10 +37,15 @@ beforeEach(() => {
   mock.onGet("/stats/dashboard").reply(200, {});
 });
 
+const LIST_KEY = [
+  "tasks",
+  { ...getDefaultFilters(), isCompleted: "", layout: "list" },
+];
+
 /** Stands in for the task list and stats screens that sit behind the same cache. */
 function CachedScreens() {
   const tasks = useQuery({
-    queryKey: ["tasks", { page: 1 }],
+    queryKey: LIST_KEY,
     queryFn: () => taskService.getAll(),
   });
   useQuery({
@@ -54,6 +61,16 @@ function CachedScreens() {
       ))}
     </ul>
   );
+}
+
+function heldReply(status: number, body: object = {}) {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  const reply = async (): Promise<[number, object]> => {
+    await gate;
+    return [status, body];
+  };
+  return { reply, release };
 }
 
 const gets = (url: string) =>
@@ -107,28 +124,32 @@ describe("completing a task", () => {
     expect(patches()[0].url).toBe("/tasks/1");
   });
 
-  it("ignores a second click while the first request is still running", async () => {
-    let release!: () => void;
-    const gate = new Promise<void>((resolve) => (release = resolve));
-    mock.onPatch("/tasks/1").reply(async () => {
-      await gate;
-      return [200, {}];
-    });
+  it("shows it done at once and locks the card until the server answers", async () => {
+    const held = heldReply(200);
+    mock.onPatch("/tasks/1").reply(held.reply);
     renderCard(makeTask());
+    expect(await screen.findByText("Write report (open)")).toBeInTheDocument();
     const button = screen.getByRole("button", {
       name: "Mark task as completed",
     });
 
     await userEvent.click(button);
-    await userEvent.click(button);
-    release();
 
-    await waitFor(() => expect(gets("/tasks")).toBe(2));
+    expect(await screen.findByText("Write report (done)")).toBeInTheDocument();
+    expect(play).toHaveBeenCalledTimes(1);
+    for (const name of [/Mark task/, /Edit task/, /Delete task/, /Snooze/]) {
+      expect(screen.getByRole("button", { name })).toBeDisabled();
+    }
+    expect(screen.getByRole("button", { name: /Open task/ })).toBeEnabled();
+    await userEvent.click(button);
+    held.release();
+
+    await waitFor(() => expect(button).toBeEnabled());
     expect(patches()).toHaveLength(1);
   });
 
-  it("leaves the task open and keeps the page usable when the request fails", async () => {
-    mock.onPatch("/tasks/1").reply(500, { error: "boom" });
+  it("puts the task back and says why when the request fails", async () => {
+    mock.onPatch("/tasks/1").reply(500, { error: "Database is busy" });
     renderCard(makeTask());
     expect(await screen.findByText("Write report (open)")).toBeInTheDocument();
 
@@ -136,12 +157,71 @@ describe("completing a task", () => {
       screen.getByRole("button", { name: "Mark task as completed" }),
     );
 
-    await waitFor(() => expect(gets("/tasks")).toBe(2));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Database is busy",
+    );
     expect(screen.getByText("Write report (open)")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Mark task as completed" }),
-    ).toBeEnabled();
-    expect(play).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Mark task as completed" }),
+      ).toBeEnabled(),
+    );
+  });
+
+  it("keeps the change when a refetch that started earlier answers late", async () => {
+    const save = heldReply(200);
+    mock.onPatch("/tasks/1").reply(save.reply);
+    const task = makeTask();
+    const { queryClient } = renderCard(task);
+    await screen.findByText("Write report (open)");
+    const stale = heldReply(200, {
+      tasks: [task],
+      totalTasks: 1,
+      totalMinutes: 0,
+    });
+    mock.onGet("/tasks").replyOnce(stale.reply);
+    void queryClient.refetchQueries({ queryKey: ["tasks"] });
+
+    const button = screen.getByRole("button", {
+      name: "Mark task as completed",
+    });
+    await userEvent.click(button);
+    stale.release();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(screen.getByText("Write report (done)")).toBeInTheDocument();
+    save.release();
+    await waitFor(() => expect(button).toBeEnabled());
+  });
+
+  it("refetches once when two saves overlap", async () => {
+    const first = heldReply(200);
+    const second = heldReply(200);
+    mock.onPatch("/tasks/1").reply(first.reply);
+    mock.onPatch("/tasks/2").reply(second.reply);
+    tasksOnServer = [makeTask(), makeTask({ id: 2, title: "Pay rent" })];
+    renderWithProviders(
+      <>
+        <CachedScreens />
+        {tasksOnServer.map((task) => (
+          <TaskCard key={task.id} {...task} />
+        ))}
+      </>,
+    );
+    await screen.findByText("Pay rent (open)");
+    const [one, two] = screen.getAllByRole("button", {
+      name: "Mark task as completed",
+    });
+
+    await userEvent.click(one);
+    await userEvent.click(two);
+    first.release();
+    await waitFor(() => expect(one).toBeEnabled());
+    expect(gets("/tasks")).toBe(1);
+    expect(screen.getByText("Pay rent (done)")).toBeInTheDocument();
+    second.release();
+
+    await waitFor(() => expect(gets("/tasks")).toBe(2));
   });
 
   it("can be tried again after a failure", async () => {

@@ -20,6 +20,33 @@ const UNDATED_START = {
 } as const;
 const UNDATED_MINUTES = 30;
 
+const EDITABLE_FIELDS = [
+  "title",
+  "description",
+  "projectId",
+  "columnId",
+  "labelIds",
+  "reminders",
+  "priority",
+  "isCompleted",
+  "completedAt",
+  "startAt",
+  "endAt",
+  "isRepeating",
+  "repeatBy",
+  "repeatUntil",
+  "repeatInterval",
+  "repeatDays",
+  "repeatTimezone",
+] as const;
+
+const editableFields = (update: TaskUpdate) =>
+  EDITABLE_FIELDS.reduce<Partial<Task>>(
+    (picked, field) =>
+      field in update ? { ...picked, [field]: update[field] } : picked,
+    {},
+  );
+
 const toIso = (value: string) => new Date(value).toISOString();
 
 const withIsoDates = ({ startAt, endAt, completedAt }: TaskUpdate) => ({
@@ -40,7 +67,11 @@ const withSubtasksDone = (task: Task): Task => ({
 export const predictUpdate =
   (update: TaskUpdate) =>
   (task: Task): Task => {
-    const next: Task = { ...task, ...update, ...withIsoDates(update) };
+    const next: Task = {
+      ...task,
+      ...editableFields(update),
+      ...withIsoDates(update),
+    };
     if (update.projectName) next.projectId = task.projectId;
     if (next.projectId !== task.projectId) next.columnId = null;
     const completesParent =

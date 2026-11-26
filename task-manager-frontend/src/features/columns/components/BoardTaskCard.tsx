@@ -7,6 +7,7 @@ import PriorityBadge from "../../tasks/components/PriorityBadge";
 import { SelectBox } from "../../tasks/components/SelectBox";
 import SubtaskCount from "../../tasks/components/SubtaskCount";
 import { priorityRingClasses } from "../../tasks/constants";
+import useSavingTaskIds from "../../tasks/optimistic/useSavingTaskIds";
 import useSetIsCompleted from "../../tasks/hooks/useSetIsCompleted";
 import { describeRecurrence } from "../../tasks/recurrence";
 import type { Task } from "../../tasks/types";
@@ -21,14 +22,14 @@ import {
 interface BoardTaskCardProps {
   task: Task;
   setIsCompleted: (id: number, isCompleted: boolean, task?: Task) => void;
-  isCompleting?: boolean;
+  isSaving?: boolean;
   onOpen: (task: Task) => void;
 }
 
 export function BoardTaskCard({
   task,
   setIsCompleted,
-  isCompleting = false,
+  isSaving = false,
   onOpen,
 }: BoardTaskCardProps) {
   const isOverdue = isTaskOverdue(task);
@@ -47,7 +48,7 @@ export function BoardTaskCard({
         <button
           type="button"
           onClick={complete}
-          disabled={isCompleting}
+          disabled={isSaving}
           aria-label={`Complete task ${task.title}`}
           title={task.isCompleted ? "Mark as pending" : "Mark as complete"}
           className={`mt-0.5 h-4.5 w-4.5 shrink-0 cursor-pointer rounded-md border-2 disabled:cursor-not-allowed disabled:opacity-50 ${task.isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
@@ -91,12 +92,13 @@ export function BoardTaskCard({
 
 export default function BoardTaskCardConnected({ task }: { task: Task }) {
   const { openPopup } = useTaskContext();
-  const { setIsCompleted, isPending } = useSetIsCompleted();
+  const { setIsCompleted } = useSetIsCompleted();
+  const isSaving = useSavingTaskIds().has(taskTargetId(task));
   return (
     <BoardTaskCard
       task={task}
       setIsCompleted={setIsCompleted}
-      isCompleting={isPending}
+      isSaving={isSaving}
       onOpen={(target) => openPopup(target, PopupModes.View)}
     />
   );

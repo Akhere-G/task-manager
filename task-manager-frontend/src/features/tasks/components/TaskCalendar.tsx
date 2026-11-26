@@ -30,6 +30,7 @@ import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useRescheduleTask from "../hooks/useRescheduleTask";
+import useSavingTaskIds from "../optimistic/useSavingTaskIds";
 import { useTheme } from "../../users/ThemeContext";
 import { trackEvent } from "../../../services/analytics";
 
@@ -76,6 +77,9 @@ export default function TaskCalendar({
   const { mutate: rescheduleTask, isError: rescheduleFailed } =
     useRescheduleTask();
   const { openPopup } = useTaskContext();
+  const savingIds = useSavingTaskIds();
+  const isMovable = (event: Event) =>
+    !savingIds.has(taskTargetId(event.resource as Task));
   const { darkMode } = useTheme();
   const { data: projects = [] } = useProjects();
 
@@ -220,6 +224,8 @@ export default function TaskCalendar({
           popup={!isMobile}
           view={view}
           views={CALENDAR_VIEWS}
+          draggableAccessor={isMovable}
+          resizableAccessor={isMovable}
           onEventDrop={onEventDrop}
           onDropFromOutside={onDropFromOutside}
           onEventResize={onEventResize}

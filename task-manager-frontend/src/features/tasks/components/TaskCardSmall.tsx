@@ -3,6 +3,7 @@ import type { Task } from "../types";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { formatDateRange, taskTargetId } from "../utils";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
+import useSavingTaskIds from "../optimistic/useSavingTaskIds";
 import { describeRecurrence } from "../recurrence";
 import PriorityFlag from "./PriorityFlag";
 import ProjectLabel from "../../projects/ProjectLabel";
@@ -13,13 +14,13 @@ interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
   setDraggedEvent?: (task: Task | null) => void;
   setIsCompleted: (id: number, isCompleted: boolean, task?: Task) => void;
-  isCompleting?: boolean;
+  isSaving?: boolean;
 }
 export function TaskCardSmall({
   setSelectedTask,
   setDraggedEvent,
   setIsCompleted,
-  isCompleting = false,
+  isSaving = false,
   ...task
 }: TaskCardSmallProps) {
   const isOverdue =
@@ -29,13 +30,13 @@ export function TaskCardSmall({
       key={task.id}
       className="card flex items-center gap-2 overflow-hidden"
       onClick={() => setSelectedTask(task)}
-      draggable={Boolean(setDraggedEvent)}
+      draggable={Boolean(setDraggedEvent) && !isSaving}
       onDragStart={() => setDraggedEvent?.(task)}
       onDragEnd={() => setDraggedEvent?.(null)}
     >
       <button
         aria-label={`Complete task ${task.title}`}
-        disabled={isCompleting}
+        disabled={isSaving}
         className="disabled:cursor-not-allowed disabled:opacity-50"
         onClick={(e) => {
           setIsCompleted(taskTargetId(task), !task.isCompleted, task);
@@ -93,13 +94,14 @@ interface TaskCardSmallConnectedProps extends Task {
 export default function TaskCardSmallConnected(
   props: TaskCardSmallConnectedProps,
 ) {
-  const { setIsCompleted, isPending } = useSetIsCompleted();
+  const { setIsCompleted } = useSetIsCompleted();
+  const isSaving = useSavingTaskIds().has(taskTargetId(props));
 
   const { openPopup } = useTaskContext();
   return (
     <TaskCardSmall
       setIsCompleted={setIsCompleted}
-      isCompleting={isPending}
+      isSaving={isSaving}
       setSelectedTask={(task) => openPopup(task, PopupModes.View)}
       {...props}
     />

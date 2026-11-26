@@ -30,6 +30,11 @@ const seedSession = (state: Partial<SessionState>) =>
 
 const secondsAgo = (seconds: number) => Date.now() - seconds * 1000;
 
+const replyLater = (status: number) =>
+  new Promise<[number, object]>((resolve) =>
+    setTimeout(() => resolve([status, {}]), 50),
+  );
+
 const lastSessionResting = (): Partial<SessionState> => ({
   phase: "rest",
   session: 3,
@@ -112,7 +117,7 @@ describe("Pomodoro page", () => {
   it("offers to complete the task after the last session and completes it on confirm", async () => {
     seedSession(lastSessionResting());
     mock.onGet("/tasks/1").reply(200, makeTask({ title: "Deep work" }));
-    mock.onPatch("/tasks/1").reply(200, {});
+    mock.onPatch("/tasks/1").reply(() => replyLater(200));
     renderPomodoro();
 
     await userEvent.click(
@@ -129,13 +134,13 @@ describe("Pomodoro page", () => {
     expect(body.isCompleted).toBe(true);
     expect(body.completedAt).toMatch(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/);
     expect(await screen.findByText("Task list")).toBeInTheDocument();
-    expect(loadSession(1)).toBeNull();
+    await waitFor(() => expect(loadSession(1)).toBeNull());
   });
 
-  it("stays on the page and says so when completing the task fails", async () => {
+  it("leaves at once, then says so and keeps the session when saving fails", async () => {
     seedSession(lastSessionResting());
     mock.onGet("/tasks/1").reply(200, makeTask({ title: "Deep work" }));
-    mock.onPatch("/tasks/1").reply(500);
+    mock.onPatch("/tasks/1").reply(() => replyLater(500));
     renderPomodoro();
 
     await userEvent.click(
@@ -146,7 +151,7 @@ describe("Pomodoro page", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not complete the task",
     );
-    expect(screen.queryByText("Task list")).not.toBeInTheDocument();
+    expect(screen.getByText("Task list")).toBeInTheDocument();
     expect(loadSession(1)).not.toBeNull();
   });
 
