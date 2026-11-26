@@ -5,7 +5,7 @@ import {
   calendarRange,
   daysUntilPurge,
   formatDateRange,
-  getCalendarTaskId,
+  taskTargetId,
   mapTasksToCalendarEvents,
   parsePriority,
 } from "./utils";
@@ -22,12 +22,12 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("getCalendarTaskId", () => {
+describe("taskTargetId", () => {
   it("edits the series for a ghost and the task itself otherwise", () => {
-    expect(
-      getCalendarTaskId(makeTask({ id: 7, seriesId: 3, isGhost: true })),
-    ).toBe(3);
-    expect(getCalendarTaskId(makeTask({ id: 7, seriesId: 3 }))).toBe(7);
+    expect(taskTargetId(makeTask({ id: 7, seriesId: 3, isGhost: true }))).toBe(
+      3,
+    );
+    expect(taskTargetId(makeTask({ id: 7, seriesId: 3 }))).toBe(7);
   });
 });
 
