@@ -1,20 +1,20 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { taskService } from "../api";
-import { useTaskContext } from "../../../context/TaskContext";
 import { trackEvent } from "../../../services/analytics";
+import { patchTask } from "../optimistic/taskCache";
+import useTaskWrite from "../optimistic/useTaskWrite";
+import type { Task } from "../types";
 
 export default function useDeleteTask() {
-  const queryClient = useQueryClient();
-  const { selectedTask } = useTaskContext();
-  return useMutation({
-    mutationFn: (id: number) => taskService.delete(id),
-    onSuccess: () => {
+  return useTaskWrite({
+    mutationFn: async (task: Task) => {
+      await taskService.delete(task.id);
       trackEvent("task_deleted", {
-        has_project: selectedTask ? selectedTask.projectId !== null : undefined,
-        is_repeating: selectedTask ? Boolean(selectedTask.repeatBy) : undefined,
+        has_project: task.projectId !== null,
+        is_repeating: Boolean(task.repeatBy),
       });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
+    apply: (queryClient, { id }) =>
+      patchTask(queryClient, { taskId: id, change: () => null }),
+    errorMessage: () => "Could not delete the task",
   });
 }

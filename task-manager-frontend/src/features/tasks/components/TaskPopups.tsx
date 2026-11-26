@@ -15,7 +15,7 @@ import type { CreateTaskInput, Task } from "../types";
 import TaskForm from "./TaskForm";
 
 interface TaskPopupsProps {
-  handleDelete: (id: number) => void;
+  handleDelete: (task: Task) => void;
   handleEdit: (task: CreateTaskInput) => Promise<void>;
   selectedTask: Task | null;
   popupMode: PopupMode;
@@ -47,7 +47,7 @@ function TaskPopups({
           title="Delete Task"
           close={closePopup}
           handleConfirm={() => {
-            handleDelete(selectedTask.id);
+            handleDelete(selectedTask);
             closePopup();
           }}
           actionText="Delete Task"

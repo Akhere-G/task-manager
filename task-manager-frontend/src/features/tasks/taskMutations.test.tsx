@@ -13,6 +13,7 @@ import apiClient from "../../services/api";
 import { makeGhost, makeTask, renderWithProviders } from "../../test/render";
 import { taskService } from "./api";
 import TaskCard from "./components/TaskCard";
+import TaskPopups from "./components/TaskPopups";
 import { getDefaultFilters } from "./taskParams";
 import type { Task } from "./types";
 import { heldReply, mockApi } from "../../test/api";
@@ -226,6 +227,36 @@ describe("completing a task", () => {
     await userEvent.click(button);
 
     await waitFor(() => expect(patches()).toHaveLength(2));
+  });
+});
+
+describe("deleting a task", () => {
+  it("removes it at once and brings it back if that fails", async () => {
+    const held = heldReply(500, { error: "Database is busy" });
+    mock.onDelete("/tasks/1").reply(held.reply);
+    const task = makeTask();
+    tasksOnServer = [task];
+    renderWithProviders(
+      <>
+        <CachedScreens />
+        <TaskCard {...task} />
+        <TaskPopups />
+      </>,
+    );
+    await screen.findByText("Write report (open)");
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Delete task: Write report" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Delete Task" }));
+
+    expect(screen.queryByText("Write report (open)")).not.toBeInTheDocument();
+    held.release();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Database is busy",
+    );
+    expect(screen.getByText("Write report (open)")).toBeInTheDocument();
   });
 });
 
