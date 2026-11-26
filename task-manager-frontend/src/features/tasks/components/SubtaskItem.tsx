@@ -3,14 +3,16 @@ import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import useDeleteSubtask from "../hooks/useDeleteSubtask";
+import usePendingWrite from "../hooks/usePendingWrite";
 import useUpdateTask from "../hooks/useUpdateTask";
 import type { Subtask } from "../types";
+import SavingSpinner from "./SavingSpinner";
 
 export function SubtaskItem({ subtask }: { subtask: Subtask }) {
   const [isOpen, setIsOpen] = useState(false);
   const descriptionId = useId();
   const { mutate: updateTask } = useUpdateTask();
-  const { mutate: removeSubtask } = useDeleteSubtask();
+  const removeSubtask = useDeleteSubtask();
   const {
     attributes,
     listeners,
@@ -21,6 +23,8 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
     isDragging,
   } = useSortable({ id: subtask.id, animateLayoutChanges: () => false });
   const ToggleIcon = isOpen ? ChevronUp : ChevronDown;
+  const { shown, isSaving, isRemoved } = usePendingWrite(subtask.id, subtask);
+  if (isRemoved) return null;
 
   return (
     <li
@@ -42,7 +46,9 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
         <label className="flex items-center gap-2 grow text-text-main">
           <input
             type="checkbox"
-            checked={subtask.isCompleted}
+            checked={shown.isCompleted}
+            disabled={isSaving}
+            className="disabled:cursor-not-allowed disabled:opacity-50"
             onChange={(e) =>
               updateTask({
                 id: subtask.id,
@@ -50,10 +56,11 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
               })
             }
           />
-          <span className={subtask.isCompleted ? "line-through" : ""}>
+          <span className={shown.isCompleted ? "line-through" : ""}>
             {subtask.title}
           </span>
         </label>
+        {isSaving && <SavingSpinner className="text-text-sub" />}
         {subtask.description && (
           <button
             type="button"
@@ -69,7 +76,8 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
         <button
           type="button"
           aria-label={`Delete subtask ${subtask.title}`}
-          className="p-1 text-text-sub hover:text-failure cursor-pointer"
+          disabled={isSaving}
+          className="p-1 text-text-sub hover:text-failure cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
           onClick={() => removeSubtask(subtask.id)}
         >
           <Trash2 className="w-4 h-4" />

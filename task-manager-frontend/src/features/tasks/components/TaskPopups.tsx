@@ -121,7 +121,7 @@ function useOpenTaskFromUrl() {
 }
 
 export default function TaskPopupsConnected() {
-  const { mutate: handleDelete } = useDeleteTask();
+  const handleDelete = useDeleteTask();
   const { popupMode, closePopup, selectedTask, openPopup } = useTaskContext();
   useOpenTaskFromUrl();
   const handleEdit = useEditTask({ onSuccess: closePopup });

@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { mockApi } from "../../../test/api";
+import { heldReply, mockApi } from "../../../test/api";
 import { renderWithProviders } from "../../../test/render";
 import type { Subtask } from "../types";
 import SubtaskChecklist from "./SubtaskChecklist";
@@ -74,8 +74,8 @@ describe("SubtaskChecklist", () => {
     );
   });
 
-  it("deletes a subtask", async () => {
-    mock.onDelete("/tasks/3").reply(200, {});
+  it("deletes a subtask, hiding it before the server answers", async () => {
+    mock.onDelete("/tasks/3").reply(heldReply().reply);
     renderWithProviders(
       <SubtaskChecklist parentId={1} subtasks={[subtask(3, "Review")]} />,
     );
@@ -84,6 +84,9 @@ describe("SubtaskChecklist", () => {
       screen.getByRole("button", { name: "Delete subtask Review" }),
     );
 
+    expect(
+      screen.queryByRole("checkbox", { name: "Review" }),
+    ).not.toBeInTheDocument();
     await waitFor(() => expect(mock.history.delete).toHaveLength(1));
   });
 

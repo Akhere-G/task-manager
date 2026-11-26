@@ -13,6 +13,7 @@ import apiClient from "../../services/api";
 import { makeGhost, makeTask, renderWithProviders } from "../../test/render";
 import { taskService } from "./api";
 import TaskCard from "./components/TaskCard";
+import TaskPopups from "./components/TaskPopups";
 import type { Task } from "./types";
 import { heldReply, mockApi } from "../../test/api";
 
@@ -271,5 +272,33 @@ describe("card actions", () => {
     const body = JSON.parse(patches()[0].data);
     expect(body.isCompleted).toBe(false);
     expect(body.completedAt).toBeNull();
+  });
+});
+
+describe("deleting a task", () => {
+  it("hides it at once and brings it back with the reason if that fails", async () => {
+    const held = heldReply(500, { error: "Database is busy" });
+    mock.onDelete("/tasks/1").reply(held.reply);
+    renderWithProviders(
+      <>
+        <TaskCard {...makeTask()} />
+        <TaskPopups />
+      </>,
+    );
+    const open = () =>
+      screen.queryByRole("button", { name: "Open task: Write report" });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Delete task: Write report" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Delete Task" }));
+
+    expect(open()).not.toBeInTheDocument();
+    held.release();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Database is busy",
+    );
+    expect(open()).toBeInTheDocument();
   });
 });

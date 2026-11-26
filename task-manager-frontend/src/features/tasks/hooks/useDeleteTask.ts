@@ -1,20 +1,37 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { taskService } from "../api";
 import { useTaskContext } from "../../../context/TaskContext";
+import { useToast } from "../../../context/ToastContext";
 import { trackEvent } from "../../../services/analytics";
+import { getApiErrorMessage } from "../../../utils/errors";
+import { taskWrite, type TaskWrite } from "./usePendingWrite";
 
 export default function useDeleteTask() {
   const queryClient = useQueryClient();
   const { selectedTask } = useTaskContext();
-  return useMutation({
-    mutationFn: (id: number) => taskService.delete(id),
+  const { showError } = useToast();
+  const refresh = () =>
+    Promise.all(
+      ["tasks", "stats"].map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] }),
+      ),
+    );
+
+  const { mutate } = useMutation({
+    ...taskWrite,
+    mutationFn: ({ id }: TaskWrite) => taskService.delete(id),
     onSuccess: () => {
       trackEvent("task_deleted", {
         has_project: selectedTask ? selectedTask.projectId !== null : undefined,
         is_repeating: selectedTask ? Boolean(selectedTask.repeatBy) : undefined,
       });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      return refresh();
+    },
+    onError: (error) => {
+      showError(getApiErrorMessage(error, "Could not delete the task"));
+      void refresh();
     },
   });
+
+  return (id: number) => mutate({ id, preview: null });
 }
