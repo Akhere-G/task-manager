@@ -38,8 +38,8 @@ export default function Pomodoro() {
 
   const alreadyCompleted = Boolean(task?.isCompleted);
   useEffect(() => {
-    if (alreadyCompleted) navigate(-1);
-  }, [alreadyCompleted, navigate]);
+    if (alreadyCompleted && !isCompleting) navigate(-1);
+  }, [alreadyCompleted, isCompleting, navigate]);
 
   if (isLoading) return <LoadingState />;
   if (isError && status !== 404)

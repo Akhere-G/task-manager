@@ -20,3 +20,14 @@ export function mockApi({ quiet = true }: { quiet?: boolean } = {}) {
   });
   return mock;
 }
+
+export function heldReply(status = 200, body: object = {}) {
+  let release = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  return {
+    release: () => release(),
+    reply: () => gate.then((): [number, object] => [status, body]),
+  };
+}

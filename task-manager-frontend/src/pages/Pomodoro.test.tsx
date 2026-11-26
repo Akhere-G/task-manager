@@ -132,6 +132,39 @@ describe("Pomodoro page", () => {
     expect(loadSession(1)).toBeNull();
   });
 
+  it("goes back one page, not two, once the completion is saved", async () => {
+    seedSession(lastSessionResting());
+    const task = makeTask({ title: "Deep work" });
+    mock
+      .onGet("/tasks/1")
+      .replyOnce(200, task)
+      .onGet("/tasks/1")
+      .reply(200, { ...task, isCompleted: true });
+    mock.onPatch("/tasks/1").reply(200, {});
+    mock
+      .onGet("/projects")
+      .reply(
+        () => new Promise((resolve) => setTimeout(resolve, 50, [200, []])),
+      );
+    renderWithProviders(
+      <Routes>
+        <Route path="/" element={<p>Dashboard</p>} />
+        <Route path="/tasks" element={<p>Task list</p>} />
+        <Route path="/pomodoro/:taskId" element={<Pomodoro />} />
+      </Routes>,
+      { history: ["/", "/tasks", "/pomodoro/1"] },
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Finish task" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+    expect(await screen.findByText("Task list")).toBeInTheDocument();
+    await waitFor(() => expect(loadSession(1)).toBeNull());
+    expect(screen.getByText("Task list")).toBeInTheDocument();
+  });
+
   it("stays on the page and says so when completing the task fails", async () => {
     seedSession(lastSessionResting());
     mock.onGet("/tasks/1").reply(200, makeTask({ title: "Deep work" }));

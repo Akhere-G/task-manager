@@ -14,7 +14,7 @@ import { makeGhost, makeTask, renderWithProviders } from "../../test/render";
 import { taskService } from "./api";
 import TaskCard from "./components/TaskCard";
 import type { Task } from "./types";
-import { mockApi } from "../../test/api";
+import { heldReply, mockApi } from "../../test/api";
 
 const mock = mockApi();
 let play: MockInstance<HTMLMediaElement["play"]>;
@@ -94,6 +94,29 @@ describe("completing a task", () => {
     expect(play).toHaveBeenCalledTimes(1);
   });
 
+  it("ticks it at once and locks the card until the server answers", async () => {
+    const held = heldReply();
+    mock.onPatch("/tasks/1").reply(held.reply);
+    renderCard(makeTask());
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Mark task as completed" }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Mark task as pending" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Delete task: Write report" }),
+    ).toBeDisabled();
+    expect(screen.getByLabelText("Saving")).toBeInTheDocument();
+
+    held.release();
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Saving")).not.toBeInTheDocument(),
+    );
+  });
+
   it("completes the series, not the ghost id", async () => {
     const ghost = makeGhost(1, "20260303");
     mock.onPatch("/tasks/1").reply(200, {});
@@ -127,21 +150,25 @@ describe("completing a task", () => {
     expect(patches()).toHaveLength(1);
   });
 
-  it("leaves the task open and keeps the page usable when the request fails", async () => {
-    mock.onPatch("/tasks/1").reply(500, { error: "boom" });
+  it("takes the tick back and says why when the request fails", async () => {
+    const held = heldReply(500, { error: "Database is busy" });
+    mock.onPatch("/tasks/1").reply(held.reply);
     renderCard(makeTask());
-    expect(await screen.findByText("Write report (open)")).toBeInTheDocument();
 
     await userEvent.click(
       screen.getByRole("button", { name: "Mark task as completed" }),
     );
+    expect(
+      screen.getByRole("button", { name: "Mark task as pending" }),
+    ).toBeInTheDocument();
+    held.release();
 
-    await waitFor(() => expect(gets("/tasks")).toBe(2));
-    expect(screen.getByText("Write report (open)")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not complete the task",
+    );
     expect(
       screen.getByRole("button", { name: "Mark task as completed" }),
     ).toBeEnabled();
-    expect(play).not.toHaveBeenCalled();
   });
 
   it("can be tried again after a failure", async () => {

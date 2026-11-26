@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { taskService } from "../api";
 import type { Task } from "../types";
 import { toFormattedUTCDate } from "../../../utils/formators";
+import { taskWrite, type TaskWrite } from "./usePendingWrite";
 
 type TaskUpdate = Partial<Task> & { skipOccurrence?: boolean };
 
@@ -19,22 +20,28 @@ const formatTask = (newTaskData: TaskUpdate): TaskUpdate => {
 export default function useUpdateTask() {
   const queryClient = useQueryClient();
 
+  const refresh = () =>
+    Promise.all(
+      ["tasks", "stats", "projects", "labels"].map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] }),
+      ),
+    );
+
   return useMutation({
+    ...taskWrite,
     mutationFn: ({
       id,
       newTaskData,
-    }: {
-      id: number;
-      newTaskData: TaskUpdate;
-    }) => {
+    }: TaskWrite & { newTaskData: TaskUpdate }) => {
       const formattedData = formatTask(newTaskData);
       return taskService.update(id, formattedData);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      queryClient.invalidateQueries({ queryKey: ["labels"] });
+    onSuccess: (_, { preview }) => {
+      const refreshed = refresh();
+      return preview ? refreshed : undefined;
+    },
+    onError: () => {
+      void refresh();
     },
   });
 }
