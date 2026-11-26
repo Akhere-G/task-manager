@@ -15,7 +15,7 @@ import { taskService } from "./api";
 import TaskCard from "./components/TaskCard";
 import { getDefaultFilters } from "./taskParams";
 import type { Task } from "./types";
-import { mockApi } from "../../test/api";
+import { heldReply, mockApi } from "../../test/api";
 
 const mock = mockApi();
 let play: MockInstance<HTMLMediaElement["play"]>;
@@ -61,16 +61,6 @@ function CachedScreens() {
       ))}
     </ul>
   );
-}
-
-function heldReply(status: number, body: object = {}) {
-  let release!: () => void;
-  const gate = new Promise<void>((resolve) => (release = resolve));
-  const reply = async (): Promise<[number, object]> => {
-    await gate;
-    return [status, body];
-  };
-  return { reply, release };
 }
 
 const gets = (url: string) =>

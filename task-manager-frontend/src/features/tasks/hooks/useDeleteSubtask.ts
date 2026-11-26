@@ -1,10 +1,13 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { taskService } from "../api";
+import { patchSubtask } from "../optimistic/taskCache";
+import useTaskWrite from "../optimistic/useTaskWrite";
+import type { Subtask } from "../types";
 
 export default function useDeleteSubtask() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => taskService.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+  return useTaskWrite({
+    mutationFn: ({ id }: Subtask) => taskService.delete(id),
+    apply: (queryClient, { id, parentId }) =>
+      patchSubtask(queryClient, parentId, id, () => null),
+    errorMessage: () => "Could not delete the subtask",
   });
 }

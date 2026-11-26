@@ -2,6 +2,16 @@ import MockAdapter from "axios-mock-adapter";
 import { afterAll, afterEach, beforeEach, vi } from "vitest";
 import apiClient from "../services/api";
 
+export function heldReply(status: number, body: object = {}) {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  const reply = async (): Promise<[number, object]> => {
+    await gate;
+    return [status, body];
+  };
+  return { reply, release };
+}
+
 /**
  * Replaces the network for the calling test file: every request goes to the returned
  * adapter, which is cleared between tests. Expected failures are logged with

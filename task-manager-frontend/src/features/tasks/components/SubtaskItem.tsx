@@ -3,14 +3,16 @@ import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
 import useDeleteSubtask from "../hooks/useDeleteSubtask";
-import useUpdateTask from "../hooks/useUpdateTask";
+import useUpdateSubtask from "../hooks/useUpdateSubtask";
+import useSavingTaskIds from "../optimistic/useSavingTaskIds";
 import type { Subtask } from "../types";
 
 export function SubtaskItem({ subtask }: { subtask: Subtask }) {
   const [isOpen, setIsOpen] = useState(false);
   const descriptionId = useId();
-  const { mutate: updateTask } = useUpdateTask();
+  const { mutate: updateSubtask } = useUpdateSubtask();
   const { mutate: removeSubtask } = useDeleteSubtask();
+  const isSaving = useSavingTaskIds().has(subtask.id);
   const {
     attributes,
     listeners,
@@ -19,7 +21,11 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: subtask.id, animateLayoutChanges: () => false });
+  } = useSortable({
+    id: subtask.id,
+    animateLayoutChanges: () => false,
+    disabled: { draggable: isSaving },
+  });
   const ToggleIcon = isOpen ? ChevronUp : ChevronDown;
 
   return (
@@ -43,10 +49,13 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
           <input
             type="checkbox"
             checked={subtask.isCompleted}
+            disabled={isSaving}
+            className="disabled:cursor-not-allowed disabled:opacity-50"
             onChange={(e) =>
-              updateTask({
+              updateSubtask({
                 id: subtask.id,
-                newTaskData: { isCompleted: e.target.checked },
+                parentId: subtask.parentId,
+                isCompleted: e.target.checked,
               })
             }
           />
@@ -69,8 +78,9 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
         <button
           type="button"
           aria-label={`Delete subtask ${subtask.title}`}
-          className="p-1 text-text-sub hover:text-failure cursor-pointer"
-          onClick={() => removeSubtask(subtask.id)}
+          className="p-1 text-text-sub hover:text-failure cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isSaving}
+          onClick={() => removeSubtask(subtask)}
         >
           <Trash2 className="w-4 h-4" />
         </button>

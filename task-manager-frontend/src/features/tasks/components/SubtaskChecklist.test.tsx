@@ -1,8 +1,9 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { mockApi } from "../../../test/api";
-import { renderWithProviders } from "../../../test/render";
+import { heldReply, mockApi } from "../../../test/api";
+import { makeTask, renderWithProviders } from "../../../test/render";
+import useGetTask from "../hooks/useGetTask";
 import type { Subtask } from "../types";
 import SubtaskChecklist from "./SubtaskChecklist";
 
@@ -24,6 +25,18 @@ function subtask(
     isCompleted,
     completedAt: null,
   };
+}
+
+function CachedChecklist() {
+  const subtasks = useGetTask(1).data?.subtasks ?? [];
+  return <SubtaskChecklist parentId={1} subtasks={subtasks} />;
+}
+
+function renderCached(...subtasks: Subtask[]) {
+  mock
+    .onGet("/tasks/1")
+    .reply(200, makeTask({ subtasks, subtaskCount: subtasks.length }));
+  return renderWithProviders(<CachedChecklist />);
 }
 
 describe("SubtaskChecklist", () => {
@@ -74,17 +87,47 @@ describe("SubtaskChecklist", () => {
     );
   });
 
-  it("deletes a subtask", async () => {
-    mock.onDelete("/tasks/3").reply(200, {});
-    renderWithProviders(
-      <SubtaskChecklist parentId={1} subtasks={[subtask(3, "Review")]} />,
+  it("ticks a subtask at once, locks it, and unticks it if saving fails", async () => {
+    const held = heldReply(500);
+    mock.onPatch("/tasks/3").reply(held.reply);
+    renderCached(subtask(3, "Review"));
+    const checkbox = await screen.findByRole("checkbox", { name: "Review" });
+
+    await userEvent.click(checkbox);
+
+    expect(checkbox).toBeChecked();
+    expect(screen.getByText("1/1")).toBeInTheDocument();
+    expect(checkbox).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Delete subtask Review" }),
+    ).toBeDisabled();
+    held.release();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not save the subtask",
     );
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it("removes a deleted subtask at once and brings it back if that fails", async () => {
+    const held = heldReply(500);
+    mock.onDelete("/tasks/3").reply(held.reply);
+    renderCached(subtask(3, "Review"));
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Delete subtask Review" }),
+      await screen.findByRole("button", { name: "Delete subtask Review" }),
     );
 
-    await waitFor(() => expect(mock.history.delete).toHaveLength(1));
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    held.release();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not delete the subtask",
+    );
+    expect(
+      screen.getByRole("checkbox", { name: "Review" }),
+    ).toBeInTheDocument();
+    expect(mock.history.delete).toHaveLength(1);
   });
 
   it("reveals a subtask's description in an accordion", async () => {
