@@ -74,7 +74,7 @@ export const daysUntilPurge = (purgeAt: string, now = new Date()) =>
     Math.ceil((parseISO(purgeAt).getTime() - now.getTime()) / MS_PER_DAY),
   );
 
-export const getCalendarTaskId = (task: Task): number =>
+export const taskTargetId = (task: Task): number =>
   task.isGhost ? task.seriesId : task.id;
 
 export const calendarFormats = (isMobile: boolean) => ({

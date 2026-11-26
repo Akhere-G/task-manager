@@ -22,14 +22,20 @@ export default function PrioritySuggestions() {
         : [...ids, taskId],
     );
 
-  const accept = ({ taskId, suggestedPriority }: PrioritySuggestion) =>
+  const unresolve = (taskId: number) =>
+    setResolvedTaskIds((ids) => ids.filter((id) => id !== taskId));
+
+  const accept = ({ taskId, suggestedPriority }: PrioritySuggestion) => {
+    resolve(taskId);
     updateTask({
       id: taskId,
       newTaskData: { priority: suggestedPriority },
-    }).then(
-      () => resolve(taskId),
-      () => setHasFailed(true),
-    );
+      errorMessage: null,
+    }).catch(() => {
+      unresolve(taskId);
+      setHasFailed(true);
+    });
+  };
 
   const requestSuggestions = () => {
     setResolvedTaskIds([]);

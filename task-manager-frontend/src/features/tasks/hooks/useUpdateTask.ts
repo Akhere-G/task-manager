@@ -1,9 +1,15 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { taskService } from "../api";
-import type { Task } from "../types";
+import type { TaskUpdate } from "../types";
 import { toFormattedUTCDate } from "../../../utils/formators";
+import { predictUpdate } from "../optimistic/predictions";
+import { patchTask } from "../optimistic/taskCache";
+import useTaskWrite from "../optimistic/useTaskWrite";
 
-type TaskUpdate = Partial<Task> & { skipOccurrence?: boolean };
+interface UpdateRequest {
+  id: number;
+  newTaskData: TaskUpdate;
+  errorMessage?: string | null;
+}
 
 const formatTask = (newTaskData: TaskUpdate): TaskUpdate => {
   const formattedData = { ...newTaskData };
@@ -17,24 +23,15 @@ const formatTask = (newTaskData: TaskUpdate): TaskUpdate => {
 };
 
 export default function useUpdateTask() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      id,
-      newTaskData,
-    }: {
-      id: number;
-      newTaskData: TaskUpdate;
-    }) => {
-      const formattedData = formatTask(newTaskData);
-      return taskService.update(id, formattedData);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      queryClient.invalidateQueries({ queryKey: ["labels"] });
-    },
+  return useTaskWrite({
+    mutationFn: ({ id, newTaskData }: UpdateRequest) =>
+      taskService.update(id, formatTask(newTaskData)),
+    apply: (queryClient, { id, newTaskData }) =>
+      patchTask(queryClient, {
+        taskId: id,
+        change: predictUpdate(newTaskData),
+      }),
+    errorMessage: ({ errorMessage = "Could not save the task" }) =>
+      errorMessage,
   });
 }

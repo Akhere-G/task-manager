@@ -1,25 +1,33 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { notifyManager } from "@tanstack/react-query";
 
+import { predictUpdate } from "../../tasks/optimistic/predictions";
+import { patchTask } from "../../tasks/optimistic/taskCache";
+import useTaskWrite from "../../tasks/optimistic/useTaskWrite";
 import { columnService } from "../api";
-import type { BoardMoveInput } from "../types";
+import { applyOnDrop } from "../board";
+import type { BoardMoveInput, ProjectColumn } from "../types";
 
 interface BoardMoveRequest {
   id: number;
   move: BoardMoveInput;
+  column: Pick<ProjectColumn, "id" | "onDrop"> | null;
 }
 
-export default function useMoveTaskToColumn() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+export default function useMoveTaskToColumn(onShown?: () => void) {
+  return useTaskWrite({
     mutationFn: ({ id, move }: BoardMoveRequest) =>
       columnService.moveTask(id, move),
-    // Returned so the mutation stays pending until the columns have loaded the
-    // new order; the board shows its dropped order until then.
-    onSettled: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
-        queryClient.invalidateQueries({ queryKey: ["stats"] }),
-      ]),
+    apply: (queryClient, { id, move, column }) => {
+      const patch = patchTask(queryClient, {
+        taskId: id,
+        change: (task) => {
+          const moved = applyOnDrop(task, column);
+          return moved && predictUpdate(moved)(task);
+        },
+        placement: move,
+      });
+      if (onShown) notifyManager.schedule(onShown);
+      return patch;
+    },
   });
 }

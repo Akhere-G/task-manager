@@ -9,6 +9,7 @@ export interface ProjectChoice {
 
 interface ProjectComboboxProps {
   projectId: number | null;
+  projectName?: string;
   onChange: (choice: ProjectChoice) => void;
   error?: string;
 }
@@ -17,6 +18,7 @@ const PATH_SEPARATOR = "/";
 
 export default function ProjectCombobox({
   projectId,
+  projectName,
   onChange,
   error,
 }: ProjectComboboxProps) {
@@ -28,7 +30,7 @@ export default function ProjectCombobox({
   const listId = useId();
 
   const selected = nodes.find((n) => n.project.id === projectId);
-  const text = draft ?? selected?.path ?? "";
+  const text = draft ?? selected?.path ?? projectName ?? "";
   const typed = text.trim();
   const findByPath = (path: string) =>
     nodes.find((n) => n.path.toLowerCase() === path.toLowerCase());

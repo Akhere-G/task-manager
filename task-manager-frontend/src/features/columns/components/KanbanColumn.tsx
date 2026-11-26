@@ -20,7 +20,6 @@ export const columnDragId = (id: number) => `column-${id}`;
 
 interface KanbanColumnProps extends BoardQuery {
   column: ProjectColumn;
-  /** The board as just dropped, shown until the server's answer is loaded. */
   droppedTasks?: Task[];
   /** Where this column's tasks can be moved in bulk. */
   moveChoices: ColumnChoice[];

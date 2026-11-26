@@ -79,13 +79,11 @@ export default function KanbanBoard({
 }: KanbanBoardProps) {
   const queryClient = useQueryClient();
   const { data: columns = [], isLoading, error } = useColumns(projectId);
-  const { mutate: moveTask } = useMoveTaskToColumn();
   const { mutate: reorderColumns } = useReorderColumns(projectId);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [deleting, setDeleting] = useState<ProjectColumn | null>(null);
-  // Each column loads its own tasks. After a drop the board shows the dropped
-  // order until the move has been saved and the columns have loaded it.
   const [dropped, setDropped] = useState<TasksByColumn | null>(null);
+  const { mutate: moveTask } = useMoveTaskToColumn(() => setDropped(null));
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -133,10 +131,7 @@ export default function KanbanBoard({
       ]),
     );
     setDropped(next);
-    moveTask(
-      { id: taskId, move: result.move },
-      { onSettled: () => setDropped(null) },
-    );
+    moveTask({ id: taskId, move: result.move, column });
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {

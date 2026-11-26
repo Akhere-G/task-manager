@@ -7,7 +7,7 @@ import {
 } from "../../../features/tasks/types";
 import { Bell, CalendarDays, Repeat } from "lucide-react";
 import { FormInput, SettingsSection } from "../../../components/ui";
-import axios from "axios";
+import { formErrorsFrom, type FormErrors } from "../formErrors";
 import { validateTask } from "../schemas";
 import { trackEvent } from "../../../services/analytics";
 import { addHours, addMilliseconds, format, isValid } from "date-fns";
@@ -24,6 +24,37 @@ import { REPEAT_LIMITS, defaultDays, getBrowserTimeZone } from "../recurrence";
 type ErrorMesageType = { [P in keyof CreateTaskInput]: string } & {
   general: string;
 };
+
+const NO_ERRORS: ErrorMesageType = {
+  title: "",
+  projectId: "",
+  projectName: "",
+  labelIds: "",
+  labelNames: "",
+  priority: "",
+  description: "",
+  startAt: "",
+  endAt: "",
+  general: "",
+  isRepeating: "",
+  repeatBy: "",
+  repeatUntil: "",
+  repeatInterval: "",
+  repeatDays: "",
+  repeatTimezone: "",
+  columnId: "",
+  reminders: "",
+};
+
+const touchedFields = (isTouched: boolean) => ({
+  title: isTouched,
+  projectId: isTouched,
+  description: isTouched,
+  startAt: isTouched,
+  endAt: isTouched,
+  repeatBy: isTouched,
+  repeatUntil: isTouched,
+});
 
 type FormState = Omit<CreateTaskInput, "startAt" | "endAt"> & {
   startAt: string;
@@ -133,12 +164,14 @@ interface TaskFormProps {
   submitAction: (task: CreateTaskInput) => Promise<void>;
   close?: () => void;
   initialData?: Partial<Task>;
+  initialErrors?: FormErrors;
 }
 export default function TaskForm({
   submitAction,
   close,
   confirmButtonText = "Add Task",
   initialData,
+  initialErrors,
 }: TaskFormProps) {
   const [hasDate, setHasDate] = useState(initialData?.startAt !== null);
   // Stays open while the last reminder is removed so the picker doesn't vanish.
@@ -149,60 +182,20 @@ export default function TaskForm({
     initialFormState(initialData),
   );
 
-  const [errorMessages, setErrorMessages] = useState<ErrorMesageType>({
-    title: "",
-    projectId: "",
-    projectName: "",
-    labelIds: "",
-    labelNames: "",
-    priority: "",
-    description: "",
-    startAt: "",
-    endAt: "",
-    general: "",
-    isRepeating: "",
-    repeatBy: "",
-    repeatUntil: "",
-    repeatInterval: "",
-    repeatDays: "",
-    repeatTimezone: "",
-  });
+  const [errorMessages, setErrorMessages] = useState<ErrorMesageType>(() => ({
+    ...NO_ERRORS,
+    ...initialErrors,
+  }));
 
-  const [touched, setTouched] = useState({
-    title: false,
-    projectId: false,
-    description: false,
-    startAt: false,
-    endAt: false,
-    repeatBy: false,
-    repeatUntil: false,
-  });
-
-  const defaultErrorMessages = {
-    title: "",
-    projectId: "",
-    projectName: "",
-    labelIds: "",
-    labelNames: "",
-    priority: "",
-    description: "",
-    startAt: "",
-    endAt: "",
-    estimatedTime: "",
-    general: "",
-    isRepeating: "",
-    repeatBy: "",
-    repeatUntil: "",
-    repeatInterval: "",
-    repeatDays: "",
-    repeatTimezone: "",
-  };
+  const [touched, setTouched] = useState(() =>
+    touchedFields(Boolean(initialErrors)),
+  );
 
   const [isLoading, setIsloading] = useState(false);
 
   const validateForm = (data: FormState, withDate = hasDate) => {
     setErrorMessages({
-      ...defaultErrorMessages,
+      ...NO_ERRORS,
       ...validateTask(toInput(data, withDate)),
     });
   };
@@ -300,18 +293,10 @@ export default function TaskForm({
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    setTouched({
-      title: true,
-      projectId: true,
-      description: true,
-      startAt: true,
-      endAt: true,
-      repeatBy: true,
-      repeatUntil: true,
-    });
+    setTouched(touchedFields(true));
 
     const errors = {
-      ...defaultErrorMessages,
+      ...NO_ERRORS,
       ...validateTask(toInput(formState, hasDate)),
     };
     setErrorMessages(errors);
@@ -340,15 +325,7 @@ export default function TaskForm({
       await submitAction(formattedData);
     } catch (err) {
       console.error(err);
-      if (!axios.isAxiosError(err)) {
-        return;
-      }
-      if (err.status === 400) {
-        const errors: Partial<ErrorMesageType> = err.response?.data?.errors;
-        setErrorMessages({ ...defaultErrorMessages, ...errors });
-      } else {
-        setErrorMessages({ ...errors, general: "Could not send data" });
-      }
+      setErrorMessages({ ...NO_ERRORS, ...formErrorsFrom(err) });
     } finally {
       setIsloading(false);
     }
@@ -395,6 +372,7 @@ export default function TaskForm({
       <div className="grid gap-4 md:grid-cols-2">
         <ProjectCombobox
           projectId={formState.projectId}
+          projectName={formState.projectName}
           onChange={({ projectId, projectName }) =>
             updateFormState({ projectId, projectName })
           }

@@ -11,6 +11,7 @@ import {
 } from "../features/tasks/utils";
 import { describeRecurrence } from "../features/tasks/recurrence";
 import useSetIsCompleted from "../features/tasks/hooks/useSetIsCompleted";
+import useSavingTaskIds from "../features/tasks/optimistic/useSavingTaskIds";
 import ProjectLabel from "../features/projects/ProjectLabel";
 import { PomodoroTimer } from "../features/pomodoro/components/PomodoroTimer";
 import { sessionCount } from "../features/pomodoro/plan";
@@ -32,7 +33,8 @@ export default function Pomodoro() {
     isError,
     error,
   } = useGetTask(Number(taskId ?? -1));
-  const { setIsCompleted, isPending: isCompleting } = useSetIsCompleted();
+  const { setIsCompleted } = useSetIsCompleted();
+  const isCompleting = useSavingTaskIds().has(Number(taskId));
 
   const status = isAxiosError(error) ? error.status : 0;
 
@@ -67,9 +69,7 @@ export default function Pomodoro() {
   const dateStr = formatDateRange(startAt, endAt);
 
   const completeTask = async () => {
-    if (!(await setIsCompleted(id, true, task))) return;
-    clearSession(id);
-    navigate(-1);
+    if (await setIsCompleted(id, true, task)) clearSession(id);
   };
 
   return (

@@ -1,6 +1,14 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { taskService, type RescheduleTaskInput } from "../api";
 import { toFormattedUTCDate } from "../../../utils/formators";
+import { predictUpdate } from "../optimistic/predictions";
+import { patchTask } from "../optimistic/taskCache";
+import useTaskWrite from "../optimistic/useTaskWrite";
+
+interface RescheduleRequest {
+  id: number;
+  occurrenceId: number;
+  rescheduleData: RescheduleTaskInput;
+}
 
 const formatReschedule = (data: RescheduleTaskInput): RescheduleTaskInput => ({
   ...data,
@@ -10,20 +18,15 @@ const formatReschedule = (data: RescheduleTaskInput): RescheduleTaskInput => ({
 });
 
 export default function useRescheduleTask() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      id,
-      rescheduleData,
-    }: {
-      id: number;
-      rescheduleData: RescheduleTaskInput;
-    }) => taskService.reschedule(id, formatReschedule(rescheduleData)),
-    onSettled: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
-        queryClient.invalidateQueries({ queryKey: ["stats"] }),
-      ]),
+  return useTaskWrite({
+    mutationFn: ({ id, rescheduleData }: RescheduleRequest) =>
+      taskService.reschedule(id, formatReschedule(rescheduleData)),
+    apply: (queryClient, { occurrenceId, rescheduleData }) => {
+      const { startAt, endAt } = rescheduleData;
+      return patchTask(queryClient, {
+        taskId: occurrenceId,
+        change: predictUpdate({ startAt, endAt }),
+      });
+    },
   });
 }

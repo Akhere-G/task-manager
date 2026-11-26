@@ -19,6 +19,7 @@ import type { QueryKey } from "@tanstack/react-query";
 import { useState } from "react";
 
 import useMoveTask from "../hooks/useMoveTask";
+import useSavingTaskIds from "../optimistic/useSavingTaskIds";
 import { reorder } from "../order";
 import type { Task } from "../types";
 import TaskRow from "./TaskRow";
@@ -37,6 +38,7 @@ function SortableItem({
   task: Task;
   children: React.ReactNode;
 }) {
+  const isSaving = useSavingTaskIds().has(task.id);
   const {
     attributes,
     listeners,
@@ -47,7 +49,7 @@ function SortableItem({
     isDragging,
   } = useSortable({
     id: task.id,
-    disabled: task.isGhost,
+    disabled: { draggable: task.isGhost || isSaving, droppable: task.isGhost },
     animateLayoutChanges: () => false,
   });
 

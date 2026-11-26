@@ -30,11 +30,12 @@ import CustomToolbar from "./CustomToolbar";
 import { useBreakpoint } from "../../../hooks/useBreakpoint";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useRescheduleTask from "../hooks/useRescheduleTask";
+import useSavingTaskIds from "../optimistic/useSavingTaskIds";
 import { useTheme } from "../../users/ThemeContext";
 import { trackEvent } from "../../../services/analytics";
 
 import {
-  getCalendarTaskId,
+  taskTargetId,
   getDayClassName,
   getEventClassName,
   getEventStyle,
@@ -76,6 +77,9 @@ export default function TaskCalendar({
   const { mutate: rescheduleTask, isError: rescheduleFailed } =
     useRescheduleTask();
   const { openPopup } = useTaskContext();
+  const savingIds = useSavingTaskIds();
+  const isMovable = (event: Event) =>
+    !savingIds.has(taskTargetId(event.resource as Task));
   const { darkMode } = useTheme();
   const { data: projects = [] } = useProjects();
 
@@ -128,7 +132,8 @@ export default function TaskCalendar({
     setMoved({ id: task.id, times: { startAt, endAt } });
     rescheduleTask(
       {
-        id: getCalendarTaskId(task),
+        id: taskTargetId(task),
+        occurrenceId: task.id,
         rescheduleData: {
           previousStartAt: task.startAt ?? startAt,
           startAt,
@@ -143,11 +148,7 @@ export default function TaskCalendar({
     );
   };
 
-  const onEventDrop = ({
-    event,
-    start,
-    end,
-  }: EventInteractionArgs<Event>) => {
+  const onEventDrop = ({ event, start, end }: EventInteractionArgs<Event>) => {
     const newStart = new Date(start as Date);
     const newEnd = new Date(end as Date);
     const task = event.resource as Task;
@@ -224,6 +225,8 @@ export default function TaskCalendar({
           popup={!isMobile}
           view={view}
           views={CALENDAR_VIEWS}
+          draggableAccessor={isMovable}
+          resizableAccessor={isMovable}
           onEventDrop={onEventDrop}
           onDropFromOutside={onDropFromOutside}
           onEventResize={onEventResize}

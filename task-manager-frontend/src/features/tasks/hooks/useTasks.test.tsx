@@ -157,6 +157,37 @@ describe("inbox and projects", () => {
   });
 });
 
+describe("dimming old results", () => {
+  it("is stale while the previous filter's results show, not while they refresh", async () => {
+    let release!: () => void;
+    let gate = Promise.resolve();
+    const holdNextReply = () => {
+      gate = new Promise<void>((resolve) => (release = resolve));
+    };
+    mock.onGet(/\/tasks/).reply(async () => {
+      await gate;
+      return [200, emptyPage];
+    });
+    const { result } = renderHookWithProviders(() => useTasks());
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    holdNextReply();
+    act(() => {
+      void result.current.refetch();
+    });
+    await waitFor(() => expect(result.current.isFetching).toBe(true));
+    expect(result.current.isStale).toBe(false);
+    release();
+    await waitFor(() => expect(result.current.isFetching).toBe(false));
+
+    holdNextReply();
+    act(() => result.current.updateFilters("priority", "1"));
+    await waitFor(() => expect(result.current.isStale).toBe(true));
+    release();
+    await waitFor(() => expect(result.current.isStale).toBe(false));
+  });
+});
+
 describe("board layout", () => {
   it("asks for every task of the project in manual order, done or not", async () => {
     mock.onGet(/\/tasks/).reply(200, emptyPage);

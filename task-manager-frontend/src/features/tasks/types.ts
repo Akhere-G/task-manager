@@ -97,3 +97,9 @@ export interface SnoozeInput {
   isGhost?: boolean;
   previousStartAt?: string;
 }
+
+export type TaskUpdate = Partial<Task> & {
+  skipOccurrence?: boolean;
+  labelNames?: string[];
+  projectName?: string;
+};

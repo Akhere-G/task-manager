@@ -1,11 +1,13 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import useSavingTaskIds from "../../tasks/optimistic/useSavingTaskIds";
 import type { Task } from "../../tasks/types";
 import BoardTaskCard from "./BoardTaskCard";
 
 export const taskDragId = (id: number) => `task-${id}`;
 
 export default function KanbanCard({ task }: { task: Task }) {
+  const isSaving = useSavingTaskIds().has(task.id);
   const {
     attributes,
     listeners,
@@ -17,6 +19,7 @@ export default function KanbanCard({ task }: { task: Task }) {
   } = useSortable({
     id: taskDragId(task.id),
     data: { type: "task", taskId: task.id },
+    disabled: { draggable: isSaving },
     animateLayoutChanges: () => false,
   });
 

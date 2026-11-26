@@ -2,6 +2,7 @@ import useGetTask from "../hooks/useGetTask";
 import type { Task } from "../types";
 import SubtaskChecklist from "./SubtaskChecklist";
 import TaskCard from "./TaskCard";
+import { taskTargetId } from "../utils";
 
 type TaskDetailsProps = Omit<
   React.ComponentProps<typeof TaskCard>,
@@ -11,7 +12,7 @@ type TaskDetailsProps = Omit<
 };
 
 export default function TaskDetails({ task, ...actions }: TaskDetailsProps) {
-  const seriesTask = useGetTask(task.isGhost ? task.seriesId : task.id).data;
+  const seriesTask = useGetTask(taskTargetId(task)).data;
   const shown = task.isGhost ? task : (seriesTask ?? task);
 
   return (

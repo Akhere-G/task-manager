@@ -13,6 +13,7 @@ import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import LabelChips from "../../labels/LabelChips";
 import ProjectLabel from "../../projects/ProjectLabel";
 import { priorityRingClasses } from "../constants";
+import useSavingTaskIds from "../optimistic/useSavingTaskIds";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import useSnoozeTask from "../hooks/useSnoozeTask";
 import { describeRecurrence } from "../recurrence";
@@ -22,6 +23,7 @@ import {
   formatMinutes,
   isTaskOverdue,
   taskMinutes,
+  taskTargetId,
 } from "../utils";
 import PriorityBadge from "./PriorityBadge";
 import { SelectBox } from "./SelectBox";
@@ -31,7 +33,7 @@ import SubtaskCount from "./SubtaskCount";
 interface TaskRowProps {
   task: Task;
   setIsCompleted: (id: number, isComplete: boolean, task?: Task) => void;
-  isCompleting?: boolean;
+  isSaving?: boolean;
   onDelete: (task: Task) => void;
   onEdit: (task: Task) => void;
   onOpen: (task: Task) => void;
@@ -39,7 +41,7 @@ interface TaskRowProps {
 }
 
 const actionClass =
-  "cursor-pointer rounded-md p-1.5 transition-colors hover:bg-surface-muted";
+  "cursor-pointer rounded-md p-1.5 transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50";
 
 const actionsClass = [
   "pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5",
@@ -52,15 +54,15 @@ const actionsClass = [
 export function TaskRow({
   task,
   setIsCompleted,
-  isCompleting = false,
+  isSaving = false,
   onDelete,
   onEdit,
   onOpen,
   snoozeTask,
 }: TaskRowProps) {
   const navigate = useNavigate();
-  const { id, seriesId, isGhost, title, isCompleted, description } = task;
-  const taskId = isGhost ? seriesId : id;
+  const { seriesId, isGhost, title, isCompleted, description } = task;
+  const taskId = taskTargetId(task);
   const isOverdue = isTaskOverdue(task);
   const minutes = taskMinutes(task);
   const recurrence = task.isRepeating ? describeRecurrence(task) : "";
@@ -77,7 +79,7 @@ export function TaskRow({
       <button
         type="button"
         onClick={complete}
-        disabled={isCompleting}
+        disabled={isSaving}
         title={isCompleted ? "Mark as pending" : "Mark as complete"}
         aria-label={
           isCompleted ? "Mark task as pending" : "Mark task as completed"
@@ -152,6 +154,7 @@ export function TaskRow({
         {!isCompleted && (
           <SnoozeMenu
             task={task}
+            disabled={isSaving}
             onSnooze={(preset, day) => snoozeTask(task, preset, day)}
           />
         )}
@@ -169,6 +172,7 @@ export function TaskRow({
         <button
           type="button"
           onClick={() => onEdit(isGhost ? { ...task, id: seriesId } : task)}
+          disabled={isSaving}
           title="Edit Task"
           aria-label={`Edit task: ${title}`}
           className={`${actionClass} text-text-sub`}
@@ -178,6 +182,7 @@ export function TaskRow({
         <button
           type="button"
           onClick={() => onDelete(isGhost ? { ...task, id: seriesId } : task)}
+          disabled={isSaving}
           title="Delete Task"
           aria-label={`Delete task: ${title}`}
           className={`${actionClass} text-failure`}
@@ -191,20 +196,22 @@ export function TaskRow({
 
 export default function TaskRowConnected({ task }: { task: Task }) {
   const { openPopup, closePopup } = useTaskContext();
-  const { setIsCompleted, isPending } = useSetIsCompleted();
-  const { mutate: snooze } = useSnoozeTask({ onSnooze: closePopup });
+  const { setIsCompleted } = useSetIsCompleted();
+  const isSaving = useSavingTaskIds().has(taskTargetId(task));
+  const snooze = useSnoozeTask();
 
   return (
     <TaskRow
       task={task}
       setIsCompleted={setIsCompleted}
-      isCompleting={isPending}
+      isSaving={isSaving}
       onDelete={(target) => openPopup(target, PopupModes.Delete)}
       onEdit={(target) => openPopup(target, PopupModes.Edit)}
       onOpen={(target) => openPopup(target, PopupModes.View)}
-      snoozeTask={(target, preset, day) =>
-        snooze({ task: target, preset, day })
-      }
+      snoozeTask={(target, preset, day) => {
+        snooze({ task: target, preset, day });
+        closePopup();
+      }}
     />
   );
 }
