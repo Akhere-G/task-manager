@@ -99,6 +99,9 @@ describe("SubtaskChecklist", () => {
     expect(screen.getByText("1/1")).toBeInTheDocument();
     expect(checkbox).toBeDisabled();
     expect(
+      screen.getByRole("button", { name: "Reorder subtask Review" }),
+    ).toBeDisabled();
+    expect(
       screen.getByRole("button", { name: "Delete subtask Review" }),
     ).toBeDisabled();
     held.release();

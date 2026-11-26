@@ -41,7 +41,8 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
           {...attributes}
           {...listeners}
           aria-label={`Reorder subtask ${subtask.title}`}
-          className="p-1 text-text-sub cursor-grab touch-none"
+          disabled={isSaving}
+          className="p-1 text-text-sub cursor-grab touch-none disabled:cursor-not-allowed disabled:opacity-50"
         >
           <GripVertical aria-hidden="true" className="w-4 h-4" />
         </button>

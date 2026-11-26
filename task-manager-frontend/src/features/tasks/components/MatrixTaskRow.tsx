@@ -43,7 +43,7 @@ export function MatrixTaskRow({
       draggable={!isSaving}
       onDragStart={() => onDragTask(task)}
       onDragEnd={() => onDragTask(null)}
-      className={`group flex cursor-grab items-center gap-2 border-b border-surface-muted px-2 py-2 hover:bg-surface-muted/60 focus-within:bg-surface-muted/60 ${task.isCompleted ? "opacity-60" : ""}`}
+      className={`group flex items-center gap-2 border-b border-surface-muted px-2 py-2 hover:bg-surface-muted/60 focus-within:bg-surface-muted/60 ${isSaving ? "" : "cursor-grab"} ${task.isCompleted ? "opacity-60" : ""}`}
     >
       <GripVertical
         aria-hidden
