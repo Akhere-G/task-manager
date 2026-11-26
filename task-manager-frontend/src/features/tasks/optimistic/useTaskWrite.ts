@@ -13,6 +13,14 @@ export const TASK_WRITE_KEY = ["tasks", "write"] as const;
 
 const STALE_AFTER_WRITE = ["tasks", "stats", "projects", "labels"];
 
+const unansweredWrites = new WeakMap<QueryClient, number>();
+
+function countUnanswered(queryClient: QueryClient, change: 1 | -1) {
+  const count = (unansweredWrites.get(queryClient) ?? 0) + change;
+  unansweredWrites.set(queryClient, count);
+  return count;
+}
+
 interface TaskWrite<Variables, Result> {
   mutationFn: (variables: Variables) => Promise<Result>;
   apply: (queryClient: QueryClient, variables: Variables) => CachePatch;
@@ -32,6 +40,7 @@ export default function useTaskWrite<Variables extends { id: number }, Result>({
     networkMode: "always",
     mutationFn,
     onMutate: (variables: Variables) => {
+      countUnanswered(queryClient, 1);
       const patch = notifyManager.batch(() => apply(queryClient, variables));
       patch.queryKeys.forEach((queryKey) => {
         void queryClient.cancelQueries({ queryKey, exact: true });
@@ -44,7 +53,7 @@ export default function useTaskWrite<Variables extends { id: number }, Result>({
       if (fallback) showError(getApiErrorMessage(error, fallback));
     },
     onSettled: () => {
-      if (queryClient.isMutating({ mutationKey: TASK_WRITE_KEY }) > 1) return;
+      if (countUnanswered(queryClient, -1) > 0) return;
       return Promise.all(
         STALE_AFTER_WRITE.map((key) =>
           queryClient.invalidateQueries({ queryKey: [key] }),

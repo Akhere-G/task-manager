@@ -216,6 +216,41 @@ describe("completing a task", () => {
     await waitFor(() => expect(gets("/tasks")).toBe(2));
   });
 
+  it("refetches again for a save that finishes while the last refetch is loading", async () => {
+    const slowStats = heldReply(200);
+    mock.onPatch("/tasks/1").reply(200, {});
+    mock.onPatch("/tasks/2").reply(200, {});
+    tasksOnServer = [makeTask(), makeTask({ id: 2, title: "Pay rent" })];
+    renderWithProviders(
+      <>
+        <CachedScreens />
+        {tasksOnServer.map((task) => (
+          <TaskCard key={task.id} {...task} />
+        ))}
+      </>,
+    );
+    await screen.findByText("Pay rent (open)");
+    await waitFor(() => expect(gets("/stats/dashboard")).toBe(1));
+    mock.resetHandlers();
+    mock.onPatch(/tasks/).reply(200, {});
+    mock.onGet("/stats/dashboard").reply(slowStats.reply);
+    mock.onGet("/tasks").reply(200, {
+      tasks: tasksOnServer,
+      totalTasks: 2,
+      totalMinutes: 0,
+    });
+    const [one, two] = screen.getAllByRole("button", {
+      name: "Mark task as completed",
+    });
+
+    await userEvent.click(one);
+    await waitFor(() => expect(gets("/tasks")).toBe(2));
+    await userEvent.click(two);
+
+    await waitFor(() => expect(gets("/tasks")).toBe(3));
+    slowStats.release();
+  });
+
   it("can be tried again after a failure", async () => {
     mock.onPatch("/tasks/1").replyOnce(500).onPatch("/tasks/1").reply(200, {});
     renderCard(makeTask());
