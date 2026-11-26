@@ -1,4 +1,5 @@
 import {
+  notifyManager,
   useMutation,
   useQueryClient,
   type QueryClient,
@@ -31,14 +32,14 @@ export default function useTaskWrite<Variables extends { id: number }, Result>({
     networkMode: "always",
     mutationFn,
     onMutate: (variables: Variables) => {
-      const patch = apply(queryClient, variables);
+      const patch = notifyManager.batch(() => apply(queryClient, variables));
       patch.queryKeys.forEach((queryKey) => {
         void queryClient.cancelQueries({ queryKey, exact: true });
       });
       return patch;
     },
     onError: (error, variables, patch) => {
-      patch?.undo();
+      notifyManager.batch(() => patch?.undo());
       const fallback = errorMessage?.(variables);
       if (fallback) showError(getApiErrorMessage(error, fallback));
     },
