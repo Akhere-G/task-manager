@@ -1,12 +1,12 @@
 import { useTaskContext } from "../../../context/TaskContext";
-import type { CreateTaskInput, Task } from "../types";
+import type { CreateTaskInput, TaskUpdate } from "../types";
+import { formErrorsFrom } from "../formErrors";
 import useUpdateTask from "./useUpdateTask";
 import { trackEvent } from "../../../services/analytics";
 
-export default function useEditTask(props?: { onSuccess?: () => void }) {
-  const { onSuccess } = props ?? {};
+export default function useEditTask() {
   const { mutateAsync: updateTask } = useUpdateTask();
-  const { selectedTask } = useTaskContext();
+  const { selectedTask, closePopup, reopenEdit } = useTaskContext();
   async function handleEdit(newTask: CreateTaskInput) {
     if (!selectedTask) return;
     const rawData = {
@@ -18,13 +18,14 @@ export default function useEditTask(props?: { onSuccess?: () => void }) {
       endAt: newTask.endAt,
     };
 
-    const patchData: Partial<Task> = Object.fromEntries(
+    const patchData: TaskUpdate = Object.fromEntries(
       // The form has no column field; the loaded one would clash with a project change.
       Object.entries(rawData).filter(
         ([key, value]) => value !== "" && key !== "columnId",
       ),
     );
 
+    closePopup();
     try {
       await updateTask({ id: selectedTask.id, newTaskData: patchData });
       trackEvent("task_updated", {
@@ -33,10 +34,9 @@ export default function useEditTask(props?: { onSuccess?: () => void }) {
         repeat_by: newTask.repeatBy ?? null,
         repeat_interval: newTask.repeatInterval ?? 1,
       });
-      onSuccess?.();
     } catch (err) {
       console.error("Update failed:", err);
-      throw err;
+      reopenEdit({ ...selectedTask, ...patchData }, formErrorsFrom(err));
     }
   }
 

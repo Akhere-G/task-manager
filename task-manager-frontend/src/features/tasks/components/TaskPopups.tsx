@@ -12,6 +12,7 @@ import useGetTask from "../hooks/useGetTask";
 import useEditTask from "../hooks/useEditTask";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import type { CreateTaskInput, Task } from "../types";
+import type { FormErrors } from "../formErrors";
 import TaskForm from "./TaskForm";
 
 interface TaskPopupsProps {
@@ -19,6 +20,7 @@ interface TaskPopupsProps {
   handleEdit: (task: CreateTaskInput) => Promise<void>;
   selectedTask: Task | null;
   popupMode: PopupMode;
+  editErrors?: FormErrors;
   closePopup: () => void;
   openPopup: (task: Task, mode: PopupMode) => void;
   setIsCompleted: (
@@ -32,6 +34,7 @@ function TaskPopups({
   handleEdit,
   selectedTask,
   popupMode,
+  editErrors,
   closePopup,
   openPopup,
   setIsCompleted,
@@ -65,6 +68,7 @@ function TaskPopups({
           <TaskForm
             confirmButtonText="Edit Task"
             initialData={selectedTask}
+            initialErrors={editErrors}
             submitAction={handleEdit}
             close={closePopup}
           />
@@ -122,9 +126,10 @@ function useOpenTaskFromUrl() {
 
 export default function TaskPopupsConnected() {
   const { mutate: handleDelete } = useDeleteTask();
-  const { popupMode, closePopup, selectedTask, openPopup } = useTaskContext();
+  const { popupMode, closePopup, selectedTask, openPopup, editErrors } =
+    useTaskContext();
   useOpenTaskFromUrl();
-  const handleEdit = useEditTask({ onSuccess: closePopup });
+  const handleEdit = useEditTask();
 
   const { setIsCompleted } = useSetIsCompleted();
 
@@ -133,6 +138,7 @@ export default function TaskPopupsConnected() {
       handleDelete={handleDelete}
       handleEdit={handleEdit}
       popupMode={popupMode}
+      editErrors={editErrors}
       closePopup={closePopup}
       selectedTask={selectedTask}
       openPopup={openPopup}
