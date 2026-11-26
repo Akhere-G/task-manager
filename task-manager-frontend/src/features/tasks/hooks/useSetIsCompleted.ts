@@ -5,7 +5,7 @@ import { playSound } from "../utils";
 import { useToast } from "../../../context/ToastContext";
 
 export default function useSetIsCompleted() {
-  const { mutateAsync: updateTask, isPending } = useUpdateTask();
+  const { mutateAsync: updateTask, isPending, isIdle } = useUpdateTask();
   const { showError } = useToast();
 
   async function setIsCompleted(
@@ -56,5 +56,5 @@ export default function useSetIsCompleted() {
     }
   }
 
-  return { setIsCompleted, isPending };
+  return { setIsCompleted, isPending, isIdle };
 }

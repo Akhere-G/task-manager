@@ -32,14 +32,18 @@ export default function Pomodoro() {
     isError,
     error,
   } = useGetTask(Number(taskId ?? -1));
-  const { setIsCompleted, isPending: isCompleting } = useSetIsCompleted();
+  const {
+    setIsCompleted,
+    isPending: isCompleting,
+    isIdle: hasNotCompleted,
+  } = useSetIsCompleted();
 
   const status = isAxiosError(error) ? error.status : 0;
 
-  const alreadyCompleted = Boolean(task?.isCompleted);
+  const alreadyCompleted = Boolean(task?.isCompleted) && hasNotCompleted;
   useEffect(() => {
-    if (alreadyCompleted && !isCompleting) navigate(-1);
-  }, [alreadyCompleted, isCompleting, navigate]);
+    if (alreadyCompleted) navigate(-1);
+  }, [alreadyCompleted, navigate]);
 
   if (isLoading) return <LoadingState />;
   if (isError && status !== 404)
