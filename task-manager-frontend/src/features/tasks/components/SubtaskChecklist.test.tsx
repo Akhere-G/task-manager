@@ -44,13 +44,15 @@ describe("SubtaskChecklist", () => {
     expect(screen.getByRole("checkbox", { name: "Review" })).not.toBeChecked();
   });
 
-  it("completes a subtask through the task endpoint", async () => {
-    mock.onPatch("/tasks/3").reply(200, {});
+  it("ticks a subtask at once and saves it through the task endpoint", async () => {
+    mock.onPatch("/tasks/3").reply(heldReply().reply);
     renderWithProviders(
       <SubtaskChecklist parentId={1} subtasks={[subtask(3, "Review")]} />,
     );
 
     await userEvent.click(screen.getByRole("checkbox", { name: "Review" }));
+
+    expect(screen.getByRole("checkbox", { name: "Review" })).toBeChecked();
 
     await waitFor(() => expect(mock.history.patch).toHaveLength(1));
     expect(JSON.parse(mock.history.patch[0].data)).toMatchObject({

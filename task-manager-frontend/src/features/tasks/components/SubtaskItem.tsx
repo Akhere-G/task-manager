@@ -2,6 +2,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
+import { useToast } from "../../../context/ToastContext";
+import { getApiErrorMessage } from "../../../utils/errors";
 import useDeleteSubtask from "../hooks/useDeleteSubtask";
 import usePendingWrite from "../hooks/usePendingWrite";
 import useUpdateTask from "../hooks/useUpdateTask";
@@ -12,6 +14,7 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
   const [isOpen, setIsOpen] = useState(false);
   const descriptionId = useId();
   const { mutate: updateTask } = useUpdateTask();
+  const { showError } = useToast();
   const removeSubtask = useDeleteSubtask();
   const {
     attributes,
@@ -49,12 +52,18 @@ export function SubtaskItem({ subtask }: { subtask: Subtask }) {
             checked={shown.isCompleted}
             disabled={isSaving}
             className="disabled:cursor-not-allowed disabled:opacity-50"
-            onChange={(e) =>
-              updateTask({
-                id: subtask.id,
-                newTaskData: { isCompleted: e.target.checked },
-              })
-            }
+            onChange={(e) => {
+              const change = { isCompleted: e.target.checked };
+              updateTask(
+                { id: subtask.id, newTaskData: change, preview: change },
+                {
+                  onError: (error) =>
+                    showError(
+                      getApiErrorMessage(error, "Could not update the subtask"),
+                    ),
+                },
+              );
+            }}
           />
           <span className={shown.isCompleted ? "line-through" : ""}>
             {subtask.title}

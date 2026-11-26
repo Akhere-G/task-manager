@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { mockApi } from "../../../test/api";
+import { heldReply, mockApi } from "../../../test/api";
 import { makeGhost, makeTask, renderWithProviders } from "../../../test/render";
 import type { TaskFilters } from "../taskParams";
 import type { Task } from "../types";
@@ -149,11 +149,12 @@ describe("EisenhowerMatrix", () => {
 
   it("changes a task's priority when it is dropped on another quadrant", async () => {
     serveTasks(tasks);
-    mock.onPatch("/tasks/4").reply(200, {});
+    mock.onPatch("/tasks/4").reply(heldReply().reply);
     renderMatrix();
 
     await dragTaskTo("Browse news", "Do first");
 
+    expect(await screen.findByLabelText("Saving")).toBeInTheDocument();
     await waitFor(() => expect(mock.history.patch).toHaveLength(1));
     expect(JSON.parse(mock.history.patch[0].data)).toEqual({ priority: 1 });
   });

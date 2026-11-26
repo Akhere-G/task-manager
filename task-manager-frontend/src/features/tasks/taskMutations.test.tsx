@@ -195,13 +195,16 @@ describe("snoozing a task", () => {
       screen.getByRole("button", { name: "Snooze task: Write report" }),
     );
 
-  it("posts the chosen preset with the viewer's zone", async () => {
-    mock.onPost("/tasks/1/snooze").reply(200, {});
+  it("posts the chosen preset with the viewer's zone, locking the card", async () => {
+    const held = heldReply();
+    mock.onPost("/tasks/1/snooze").reply(held.reply);
     renderCard(makeTask());
 
     await openMenu();
     await userEvent.click(screen.getByRole("menuitem", { name: "Tomorrow" }));
 
+    expect(screen.getByLabelText("Saving")).toBeInTheDocument();
+    held.release();
     await waitFor(() => expect(posts()).toHaveLength(1));
     expect(JSON.parse(posts()[0].data)).toMatchObject({
       preset: "tomorrow",
