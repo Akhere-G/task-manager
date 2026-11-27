@@ -34,7 +34,7 @@ import { useTheme } from "../../users/ThemeContext";
 import { trackEvent } from "../../../services/analytics";
 
 import {
-  getCalendarTaskId,
+  taskTargetId,
   getDayClassName,
   getEventClassName,
   getEventStyle,
@@ -128,7 +128,7 @@ export default function TaskCalendar({
     setMoved({ id: task.id, times: { startAt, endAt } });
     rescheduleTask(
       {
-        id: getCalendarTaskId(task),
+        id: taskTargetId(task),
         rescheduleData: {
           previousStartAt: task.startAt ?? startAt,
           startAt,
@@ -143,11 +143,7 @@ export default function TaskCalendar({
     );
   };
 
-  const onEventDrop = ({
-    event,
-    start,
-    end,
-  }: EventInteractionArgs<Event>) => {
+  const onEventDrop = ({ event, start, end }: EventInteractionArgs<Event>) => {
     const newStart = new Date(start as Date);
     const newEnd = new Date(end as Date);
     const task = event.resource as Task;

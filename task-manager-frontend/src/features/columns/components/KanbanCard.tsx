@@ -26,7 +26,7 @@ export default function KanbanCard({ task }: { task: Task }) {
         setNodeRef(node);
         setActivatorNodeRef(node);
       }}
-      className={`touch-manipulation ${isDragging ? "opacity-40" : ""}`}
+      className={`touch-manipulation empty:hidden ${isDragging ? "opacity-40" : ""}`}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       {...attributes}
       {...listeners}

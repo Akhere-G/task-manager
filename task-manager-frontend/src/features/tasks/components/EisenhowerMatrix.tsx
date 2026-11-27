@@ -1,10 +1,13 @@
 import { useState } from "react";
 
+import { useToast } from "../../../context/ToastContext";
+import { getApiErrorMessage } from "../../../utils/errors";
 import PrioritySuggestions from "../../ai/components/PrioritySuggestions";
 import { matrixQuadrants } from "../constants";
 import useUpdateTask from "../hooks/useUpdateTask";
 import type { TaskFilters } from "../taskParams";
 import type { Priority, Task } from "../types";
+import { taskTargetId } from "../utils";
 import type { TaskView } from "../views";
 import MatrixQuadrant from "./MatrixQuadrant";
 
@@ -21,13 +24,24 @@ export default function EisenhowerMatrix({
 }: EisenhowerMatrixProps) {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const { mutate: updateTask } = useUpdateTask();
+  const { showError } = useToast();
 
   const moveDraggedTaskTo = (priority: Priority) => {
     if (draggedTask && draggedTask.priority !== priority) {
-      updateTask({
-        id: draggedTask.isGhost ? draggedTask.seriesId : draggedTask.id,
-        newTaskData: { priority },
-      });
+      updateTask(
+        {
+          id: taskTargetId(draggedTask),
+          newTaskData: { priority },
+          preview: { priority },
+          movedTask: draggedTask,
+        },
+        {
+          onError: (error) =>
+            showError(
+              getApiErrorMessage(error, "Could not change the priority"),
+            ),
+        },
+      );
     }
     setDraggedTask(null);
   };

@@ -6,7 +6,9 @@ import ProjectLabel from "../../projects/ProjectLabel";
 import PriorityBadge from "../../tasks/components/PriorityBadge";
 import { SelectBox } from "../../tasks/components/SelectBox";
 import SubtaskCount from "../../tasks/components/SubtaskCount";
+import SavingSpinner from "../../tasks/components/SavingSpinner";
 import { priorityRingClasses } from "../../tasks/constants";
+import usePendingWrite from "../../tasks/hooks/usePendingWrite";
 import useSetIsCompleted from "../../tasks/hooks/useSetIsCompleted";
 import { describeRecurrence } from "../../tasks/recurrence";
 import type { Task } from "../../tasks/types";
@@ -15,30 +17,27 @@ import {
   formatMinutes,
   isTaskOverdue,
   taskMinutes,
+  taskTargetId,
 } from "../../tasks/utils";
 
 interface BoardTaskCardProps {
   task: Task;
   setIsCompleted: (id: number, isCompleted: boolean, task?: Task) => void;
-  isCompleting?: boolean;
+  isSaving?: boolean;
   onOpen: (task: Task) => void;
 }
 
 export function BoardTaskCard({
   task,
   setIsCompleted,
-  isCompleting = false,
+  isSaving = false,
   onOpen,
 }: BoardTaskCardProps) {
   const isOverdue = isTaskOverdue(task);
   const minutes = taskMinutes(task);
 
   const complete = () => {
-    setIsCompleted(
-      task.isGhost ? task.seriesId : task.id,
-      !task.isCompleted,
-      task,
-    );
+    setIsCompleted(taskTargetId(task), !task.isCompleted, task);
   };
 
   return (
@@ -50,7 +49,7 @@ export function BoardTaskCard({
         <button
           type="button"
           onClick={complete}
-          disabled={isCompleting}
+          disabled={isSaving}
           aria-label={`Complete task ${task.title}`}
           title={task.isCompleted ? "Mark as pending" : "Mark as complete"}
           className={`mt-0.5 h-4.5 w-4.5 shrink-0 cursor-pointer rounded-md border-2 disabled:cursor-not-allowed disabled:opacity-50 ${task.isCompleted ? "border-success bg-success" : priorityRingClasses[task.priority]}`}
@@ -63,6 +62,7 @@ export function BoardTaskCard({
         >
           {task.title}
         </button>
+        {isSaving && <SavingSpinner className="text-text-sub" />}
         <PriorityBadge priority={task.priority} />
       </div>
 
@@ -94,13 +94,19 @@ export function BoardTaskCard({
 
 export default function BoardTaskCardConnected({ task }: { task: Task }) {
   const { openPopup } = useTaskContext();
-  const { setIsCompleted, isPending } = useSetIsCompleted();
+  const { setIsCompleted } = useSetIsCompleted();
+  const { shown, isSaving, isRemoved } = usePendingWrite(
+    taskTargetId(task),
+    task,
+  );
+  if (isRemoved) return null;
+
   return (
     <BoardTaskCard
-      task={task}
+      task={shown}
       setIsCompleted={setIsCompleted}
-      isCompleting={isPending}
-      onOpen={(target) => openPopup(target, PopupModes.View)}
+      isSaving={isSaving}
+      onOpen={() => openPopup(task, PopupModes.View)}
     />
   );
 }

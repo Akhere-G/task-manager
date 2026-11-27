@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { mockApi } from "../../../test/api";
+import { heldReply, mockApi } from "../../../test/api";
 import { makeGhost, makeTask, renderWithProviders } from "../../../test/render";
 import type { TaskFilters } from "../taskParams";
 import type { Task } from "../types";
@@ -147,15 +147,45 @@ describe("EisenhowerMatrix", () => {
     ).toBeVisible();
   });
 
-  it("changes a task's priority when it is dropped on another quadrant", async () => {
+  it("moves a dropped task to its new quadrant before the server answers", async () => {
     serveTasks(tasks);
-    mock.onPatch("/tasks/4").reply(200, {});
+    mock.onPatch("/tasks/4").reply(heldReply().reply);
     renderMatrix();
 
     await dragTaskTo("Browse news", "Do first");
 
+    const target = quadrant("Do first");
+    expect(await within(target).findByText("Browse news")).toBeVisible();
+    expect(within(target).getByLabelText("Saving")).toBeInTheDocument();
+    expect(within(target).getByText("2 tasks · 2h")).toBeVisible();
+    expect(
+      within(quadrant("Eliminate")).queryByText("Browse news"),
+    ).not.toBeInTheDocument();
     await waitFor(() => expect(mock.history.patch).toHaveLength(1));
     expect(JSON.parse(mock.history.patch[0].data)).toEqual({ priority: 1 });
+  });
+
+  it("puts a dropped task back and says why when the move fails", async () => {
+    serveTasks(tasks);
+    const held = heldReply(500, { error: "Database is busy" });
+    mock.onPatch("/tasks/4").reply(held.reply);
+    renderMatrix();
+
+    await dragTaskTo("Browse news", "Do first");
+    expect(
+      await within(quadrant("Do first")).findByText("Browse news"),
+    ).toBeVisible();
+    held.release();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Database is busy",
+    );
+    expect(
+      await within(quadrant("Eliminate")).findByText("Browse news"),
+    ).toBeVisible();
+    expect(
+      within(quadrant("Do first")).queryByText("Browse news"),
+    ).not.toBeInTheDocument();
   });
 
   it("does nothing when a task is dropped on its own quadrant", async () => {

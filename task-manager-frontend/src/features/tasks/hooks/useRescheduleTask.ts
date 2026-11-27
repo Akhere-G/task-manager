@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { taskService, type RescheduleTaskInput } from "../api";
 import { toFormattedUTCDate } from "../../../utils/formators";
+import { refreshTasksAndStats } from "./refreshTasksAndStats";
 
 const formatReschedule = (data: RescheduleTaskInput): RescheduleTaskInput => ({
   ...data,
@@ -20,10 +21,6 @@ export default function useRescheduleTask() {
       id: number;
       rescheduleData: RescheduleTaskInput;
     }) => taskService.reschedule(id, formatReschedule(rescheduleData)),
-    onSettled: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
-        queryClient.invalidateQueries({ queryKey: ["stats"] }),
-      ]),
+    onSettled: () => refreshTasksAndStats(queryClient),
   });
 }

@@ -5,7 +5,7 @@ import { playSound } from "../utils";
 import { useToast } from "../../../context/ToastContext";
 
 export default function useSetIsCompleted() {
-  const { mutateAsync: updateTask, isPending } = useUpdateTask();
+  const { mutateAsync: updateTask, isPending, isIdle } = useUpdateTask();
   const { showError } = useToast();
 
   async function setIsCompleted(
@@ -15,8 +15,14 @@ export default function useSetIsCompleted() {
   ): Promise<boolean> {
     const completedAt = isCompleted ? new Date().toUTCString() : null;
 
+    if (isCompleted) playSound("/success.mp3").catch(() => {});
+
     try {
-      await updateTask({ id, newTaskData: { isCompleted, completedAt } });
+      await updateTask({
+        id,
+        newTaskData: { isCompleted, completedAt },
+        preview: { isCompleted },
+      });
 
       const wasOverdue = task?.endAt
         ? new Date(task.endAt) < new Date()
@@ -32,7 +38,6 @@ export default function useSetIsCompleted() {
         to_status: isCompleted ? "completed" : "pending",
       });
       if (isCompleted) {
-        playSound("/success.mp3").catch(() => {});
         trackEvent("task_completed", {
           has_project: task ? task.projectId !== null : undefined,
           is_repeating: task ? Boolean(task.repeatBy) : undefined,
@@ -51,5 +56,5 @@ export default function useSetIsCompleted() {
     }
   }
 
-  return { setIsCompleted, isPending };
+  return { setIsCompleted, isPending, isIdle };
 }

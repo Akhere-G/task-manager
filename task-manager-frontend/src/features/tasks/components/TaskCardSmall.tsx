@@ -1,25 +1,27 @@
 import { CheckCircle2, Circle, Repeat } from "lucide-react";
 import type { Task } from "../types";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
-import { formatDateRange } from "../utils";
+import { formatDateRange, taskTargetId } from "../utils";
+import usePendingWrite from "../hooks/usePendingWrite";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import { describeRecurrence } from "../recurrence";
 import PriorityFlag from "./PriorityFlag";
 import ProjectLabel from "../../projects/ProjectLabel";
 import LabelChips from "../../labels/LabelChips";
 import SubtaskCount from "./SubtaskCount";
+import SavingSpinner from "./SavingSpinner";
 
 interface TaskCardSmallProps extends Task {
   setSelectedTask: (task: Task) => void;
   setDraggedEvent?: (task: Task | null) => void;
   setIsCompleted: (id: number, isCompleted: boolean, task?: Task) => void;
-  isCompleting?: boolean;
+  isSaving?: boolean;
 }
 export function TaskCardSmall({
   setSelectedTask,
   setDraggedEvent,
   setIsCompleted,
-  isCompleting = false,
+  isSaving = false,
   ...task
 }: TaskCardSmallProps) {
   const isOverdue =
@@ -29,20 +31,16 @@ export function TaskCardSmall({
       key={task.id}
       className="card flex items-center gap-2 overflow-hidden"
       onClick={() => setSelectedTask(task)}
-      draggable={Boolean(setDraggedEvent)}
+      draggable={Boolean(setDraggedEvent) && !isSaving}
       onDragStart={() => setDraggedEvent?.(task)}
       onDragEnd={() => setDraggedEvent?.(null)}
     >
       <button
         aria-label={`Complete task ${task.title}`}
-        disabled={isCompleting}
+        disabled={isSaving}
         className="disabled:cursor-not-allowed disabled:opacity-50"
         onClick={(e) => {
-          setIsCompleted(
-            task.isGhost ? task.seriesId : task.id,
-            !task.isCompleted,
-            task,
-          );
+          setIsCompleted(taskTargetId(task), !task.isCompleted, task);
           e.stopPropagation();
         }}
       >
@@ -86,6 +84,7 @@ export function TaskCardSmall({
           {formatDateRange(task.startAt, task.endAt)}
         </span>
       </p>
+      {isSaving && <SavingSpinner className="text-text-sub" />}
     </div>
   );
 }
@@ -97,15 +96,20 @@ interface TaskCardSmallConnectedProps extends Task {
 export default function TaskCardSmallConnected(
   props: TaskCardSmallConnectedProps,
 ) {
-  const { setIsCompleted, isPending } = useSetIsCompleted();
-
+  const { setIsCompleted } = useSetIsCompleted();
   const { openPopup } = useTaskContext();
+  const { shown, isSaving, isRemoved } = usePendingWrite(
+    taskTargetId(props),
+    props,
+  );
+  if (isRemoved) return null;
+
   return (
     <TaskCardSmall
       setIsCompleted={setIsCompleted}
-      isCompleting={isPending}
-      setSelectedTask={(task) => openPopup(task, PopupModes.View)}
-      {...props}
+      isSaving={isSaving}
+      setSelectedTask={() => openPopup(props, PopupModes.View)}
+      {...shown}
     />
   );
 }

@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { taskService, type GetTaskResult, type MoveInput } from "../api";
 import type { Task } from "../types";
+import { refreshTasksAndStats } from "./refreshTasksAndStats";
 
 interface MoveRequest {
   id: number;
@@ -48,7 +49,7 @@ export default function useMoveTask() {
       queryClient.setQueryData(queryKey, context?.before);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      void refreshTasksAndStats(queryClient);
     },
   });
 }

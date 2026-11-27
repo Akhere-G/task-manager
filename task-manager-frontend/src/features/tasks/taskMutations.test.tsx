@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   beforeEach,
@@ -10,11 +10,21 @@ import {
   type MockInstance,
 } from "vitest";
 import apiClient from "../../services/api";
-import { makeGhost, makeTask, renderWithProviders } from "../../test/render";
+import {
+  makeGhost,
+  makeTask,
+  renderHookWithProviders,
+  renderWithProviders,
+} from "../../test/render";
 import { taskService } from "./api";
 import TaskCard from "./components/TaskCard";
+import TaskPopups from "./components/TaskPopups";
+import useDeleteSubtask from "./hooks/useDeleteSubtask";
+import useMoveTask from "./hooks/useMoveTask";
+import useReorderSubtasks from "./hooks/useReorderSubtasks";
+import useReplaceSubtasks from "./hooks/useReplaceSubtasks";
 import type { Task } from "./types";
-import { mockApi } from "../../test/api";
+import { heldReply, mockApi } from "../../test/api";
 
 const mock = mockApi();
 let play: MockInstance<HTMLMediaElement["play"]>;
@@ -94,6 +104,29 @@ describe("completing a task", () => {
     expect(play).toHaveBeenCalledTimes(1);
   });
 
+  it("ticks it at once and locks the card until the server answers", async () => {
+    const held = heldReply();
+    mock.onPatch("/tasks/1").reply(held.reply);
+    renderCard(makeTask());
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Mark task as completed" }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Mark task as pending" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Delete task: Write report" }),
+    ).toBeDisabled();
+    expect(screen.getByLabelText("Saving")).toBeInTheDocument();
+
+    held.release();
+    await waitFor(() =>
+      expect(screen.queryByLabelText("Saving")).not.toBeInTheDocument(),
+    );
+  });
+
   it("completes the series, not the ghost id", async () => {
     const ghost = makeGhost(1, "20260303");
     mock.onPatch("/tasks/1").reply(200, {});
@@ -127,21 +160,25 @@ describe("completing a task", () => {
     expect(patches()).toHaveLength(1);
   });
 
-  it("leaves the task open and keeps the page usable when the request fails", async () => {
-    mock.onPatch("/tasks/1").reply(500, { error: "boom" });
+  it("takes the tick back and says why when the request fails", async () => {
+    const held = heldReply(500, { error: "Database is busy" });
+    mock.onPatch("/tasks/1").reply(held.reply);
     renderCard(makeTask());
-    expect(await screen.findByText("Write report (open)")).toBeInTheDocument();
 
     await userEvent.click(
       screen.getByRole("button", { name: "Mark task as completed" }),
     );
+    expect(
+      screen.getByRole("button", { name: "Mark task as pending" }),
+    ).toBeInTheDocument();
+    held.release();
 
-    await waitFor(() => expect(gets("/tasks")).toBe(2));
-    expect(screen.getByText("Write report (open)")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not complete the task",
+    );
     expect(
       screen.getByRole("button", { name: "Mark task as completed" }),
     ).toBeEnabled();
-    expect(play).not.toHaveBeenCalled();
   });
 
   it("can be tried again after a failure", async () => {
@@ -167,13 +204,16 @@ describe("snoozing a task", () => {
       screen.getByRole("button", { name: "Snooze task: Write report" }),
     );
 
-  it("posts the chosen preset with the viewer's zone", async () => {
-    mock.onPost("/tasks/1/snooze").reply(200, {});
+  it("posts the chosen preset with the viewer's zone, locking the card", async () => {
+    const held = heldReply();
+    mock.onPost("/tasks/1/snooze").reply(held.reply);
     renderCard(makeTask());
 
     await openMenu();
     await userEvent.click(screen.getByRole("menuitem", { name: "Tomorrow" }));
 
+    expect(screen.getByLabelText("Saving")).toBeInTheDocument();
+    held.release();
     await waitFor(() => expect(posts()).toHaveLength(1));
     expect(JSON.parse(posts()[0].data)).toMatchObject({
       preset: "tomorrow",
@@ -244,5 +284,83 @@ describe("card actions", () => {
     const body = JSON.parse(patches()[0].data);
     expect(body.isCompleted).toBe(false);
     expect(body.completedAt).toBeNull();
+  });
+});
+
+describe("deleting a task", () => {
+  it("hides it at once and brings it back with the reason if that fails", async () => {
+    const held = heldReply(500, { error: "Database is busy" });
+    mock.onDelete("/tasks/1").reply(held.reply);
+    renderWithProviders(
+      <>
+        <TaskCard {...makeTask()} />
+        <TaskPopups />
+      </>,
+    );
+    const open = () =>
+      screen.queryByRole("button", { name: "Open task: Write report" });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Delete task: Write report" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Delete Task" }));
+
+    expect(open()).not.toBeInTheDocument();
+    held.release();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Database is busy",
+    );
+    expect(open()).toBeInTheDocument();
+  });
+});
+
+describe("stats after a task write", () => {
+  const move = {
+    id: 1,
+    move: { afterId: null, beforeId: null },
+    reordered: [],
+    queryKey: ["tasks", "category"],
+  };
+
+  it.each([
+    {
+      write: "deleting a subtask",
+      useRun: () => {
+        const remove = useDeleteSubtask();
+        return () => remove(2);
+      },
+    },
+    {
+      write: "reordering tasks",
+      useRun: () => {
+        const { mutate } = useMoveTask();
+        return () => mutate(move);
+      },
+    },
+    {
+      write: "reordering subtasks",
+      useRun: () => {
+        const { mutate } = useReorderSubtasks(1);
+        return () => mutate([]);
+      },
+    },
+    {
+      write: "replacing subtasks",
+      useRun: () => {
+        const { mutate } = useReplaceSubtasks(1);
+        return () => mutate([]);
+      },
+    },
+  ])("are cleared by $write", async ({ useRun }) => {
+    mock.onAny().reply(200, {});
+    const { result, queryClient } = renderHookWithProviders(useRun);
+    queryClient.setQueryData(["stats"], {});
+
+    act(() => result.current());
+
+    await waitFor(() =>
+      expect(queryClient.getQueryState(["stats"])?.isInvalidated).toBe(true),
+    );
   });
 });

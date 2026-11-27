@@ -17,17 +17,19 @@ import {
 } from "lucide-react";
 import { PopupModes, useTaskContext } from "../../../context/TaskContext";
 import { useNavigate } from "react-router-dom";
-import { formatDateRange, formatDateRelative } from "../utils";
+import { formatDateRange, formatDateRelative, taskTargetId } from "../utils";
+import usePendingWrite from "../hooks/usePendingWrite";
 import useSetIsCompleted from "../hooks/useSetIsCompleted";
 import useSnoozeTask from "../hooks/useSnoozeTask";
 import SnoozeMenu from "./SnoozeMenu";
 import { describeRecurrence } from "../recurrence";
 import PriorityFlag from "./PriorityFlag";
+import SavingSpinner from "./SavingSpinner";
 
 interface TaskCardProps extends Task {
   titleIcon?: React.ReactNode;
   setIsCompleted: (id: number, isComplete: boolean, task?: Task) => void;
-  isCompleting?: boolean;
+  isSaving?: boolean;
   onDelete: (task: Task) => void;
   onEdit: (task: Task) => void;
   onOpen: (task: Task) => void;
@@ -45,7 +47,7 @@ interface TaskCardProps extends Task {
 function TaskCard({
   titleIcon,
   setIsCompleted,
-  isCompleting = false,
+  isSaving = false,
   onDelete,
   onEdit,
   onOpen,
@@ -61,7 +63,6 @@ function TaskCard({
   ...task
 }: TaskCardProps) {
   const {
-    id,
     seriesId,
     isGhost,
     title,
@@ -106,9 +107,9 @@ function TaskCard({
         {showSetIsComplete && (
           <button
             onClick={() => {
-              setIsCompleted(isGhost ? seriesId : id, !isCompleted, task);
+              setIsCompleted(taskTargetId(task), !isCompleted, task);
             }}
-            disabled={isCompleting}
+            disabled={isSaving}
             title={isCompleted ? "Mark as pending" : "Mark as complete"}
             aria-label={
               isCompleted ? "Mark task as pending" : "Mark task as completed"
@@ -139,6 +140,7 @@ function TaskCard({
             <span className="truncate">{title}</span>
           )}
         </h3>
+        {isSaving && <SavingSpinner className="ml-auto" />}
       </header>
 
       <div className="p-3  grow space-y-2  flex flex-col">
@@ -202,9 +204,10 @@ function TaskCard({
               onClick={() =>
                 onDelete(isGhost ? { ...task, id: seriesId } : task)
               }
+              disabled={isSaving}
               title="Delete Task"
               aria-label={`Delete task: ${title}`}
-              className="p-1.5 rounded-md hover:bg-failure/10 transition-colors group cursor-pointer"
+              className="p-1.5 rounded-md hover:bg-failure/10 transition-colors group cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Trash2
                 aria-hidden="true"
@@ -216,9 +219,10 @@ function TaskCard({
           {showEdit && (
             <button
               onClick={() => onEdit(isGhost ? { ...task, id: seriesId } : task)}
+              disabled={isSaving}
               title="Edit Task"
               aria-label={`Edit task: ${title}`}
-              className="p-1.5 rounded-md hover:bg-info/10 transition-colors group cursor-pointer"
+              className="p-1.5 rounded-md hover:bg-info/10 transition-colors group cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Pencil
                 aria-hidden="true"
@@ -228,7 +232,7 @@ function TaskCard({
           )}
           {!isCompleted && showPomodoro && (
             <button
-              onClick={() => navigate(`/pomodoro/${isGhost ? seriesId : id}`)}
+              onClick={() => navigate(`/pomodoro/${taskTargetId(task)}`)}
               title="Start Task"
               aria-label={`Start task: ${title}`}
               className="p-1.5 rounded-md hover:bg-success/10 transition-colors group cursor-pointer"
@@ -242,7 +246,7 @@ function TaskCard({
 
           {!isCompleted && showDecompose && (
             <button
-              onClick={() => navigate(`/breakdown/${isGhost ? seriesId : id}`)}
+              onClick={() => navigate(`/breakdown/${taskTargetId(task)}`)}
               title="Break down Task"
               aria-label={`Break down task: ${title}`}
               className="p-1.5 rounded-md hover:bg-brand/10 transition-colors group cursor-pointer"
@@ -256,6 +260,7 @@ function TaskCard({
           {!isCompleted && showSnooze && (
             <SnoozeMenu
               task={task}
+              disabled={isSaving}
               onSnooze={(preset, day) => snoozeTask(task, preset, day)}
             />
           )}
@@ -281,18 +286,23 @@ interface TaskCardConnectedProps extends Task {
 }
 export default function TaskCardConnected(props: TaskCardConnectedProps) {
   const { openPopup, closePopup } = useTaskContext();
-  const { setIsCompleted, isPending } = useSetIsCompleted();
+  const { setIsCompleted } = useSetIsCompleted();
   const { mutate: snooze } = useSnoozeTask({ onSnooze: closePopup });
+  const { shown, isSaving, isRemoved } = usePendingWrite(
+    taskTargetId(props),
+    props,
+  );
+  if (isRemoved) return null;
 
   return (
     <TaskCard
       setIsCompleted={setIsCompleted}
-      isCompleting={isPending}
+      isSaving={isSaving}
       onDelete={(task) => openPopup(task, PopupModes.Delete)}
       onEdit={(task) => openPopup(task, PopupModes.Edit)}
-      onOpen={(task) => openPopup(task, PopupModes.View)}
+      onOpen={() => openPopup(props, PopupModes.View)}
       snoozeTask={(task, preset, day) => snooze({ task, preset, day })}
-      {...props}
+      {...shown}
     />
   );
 }

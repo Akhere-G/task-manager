@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { taskService } from "../api";
 import type { Subtask, Task } from "../types";
+import { refreshTasksAndStats } from "./refreshTasksAndStats";
 
 export default function useReorderSubtasks(parentId: number) {
   const queryClient = useQueryClient();
@@ -26,6 +27,6 @@ export default function useReorderSubtasks(parentId: number) {
     onError: (_error, _reordered, context) => {
       queryClient.setQueryData(queryKey, context?.before);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+    onSettled: () => refreshTasksAndStats(queryClient),
   });
 }
