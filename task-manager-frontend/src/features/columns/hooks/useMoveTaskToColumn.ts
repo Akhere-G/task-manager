@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { columnService } from "../api";
 import type { BoardMoveInput } from "../types";
+import { refreshTasksAndStats } from "../../tasks/hooks/refreshTasksAndStats";
 
 interface BoardMoveRequest {
   id: number;
@@ -16,10 +17,6 @@ export default function useMoveTaskToColumn() {
       columnService.moveTask(id, move),
     // Returned so the mutation stays pending until the columns have loaded the
     // new order; the board shows its dropped order until then.
-    onSettled: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
-        queryClient.invalidateQueries({ queryKey: ["stats"] }),
-      ]),
+    onSettled: () => refreshTasksAndStats(queryClient),
   });
 }

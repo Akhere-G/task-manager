@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   beforeEach,
@@ -10,10 +10,19 @@ import {
   type MockInstance,
 } from "vitest";
 import apiClient from "../../services/api";
-import { makeGhost, makeTask, renderWithProviders } from "../../test/render";
+import {
+  makeGhost,
+  makeTask,
+  renderHookWithProviders,
+  renderWithProviders,
+} from "../../test/render";
 import { taskService } from "./api";
 import TaskCard from "./components/TaskCard";
 import TaskPopups from "./components/TaskPopups";
+import useDeleteSubtask from "./hooks/useDeleteSubtask";
+import useMoveTask from "./hooks/useMoveTask";
+import useReorderSubtasks from "./hooks/useReorderSubtasks";
+import useReplaceSubtasks from "./hooks/useReplaceSubtasks";
 import type { Task } from "./types";
 import { heldReply, mockApi } from "../../test/api";
 
@@ -303,5 +312,55 @@ describe("deleting a task", () => {
       "Database is busy",
     );
     expect(open()).toBeInTheDocument();
+  });
+});
+
+describe("stats after a task write", () => {
+  const move = {
+    id: 1,
+    move: { afterId: null, beforeId: null },
+    reordered: [],
+    queryKey: ["tasks", "category"],
+  };
+
+  it.each([
+    {
+      write: "deleting a subtask",
+      useRun: () => {
+        const remove = useDeleteSubtask();
+        return () => remove(2);
+      },
+    },
+    {
+      write: "reordering tasks",
+      useRun: () => {
+        const { mutate } = useMoveTask();
+        return () => mutate(move);
+      },
+    },
+    {
+      write: "reordering subtasks",
+      useRun: () => {
+        const { mutate } = useReorderSubtasks(1);
+        return () => mutate([]);
+      },
+    },
+    {
+      write: "replacing subtasks",
+      useRun: () => {
+        const { mutate } = useReplaceSubtasks(1);
+        return () => mutate([]);
+      },
+    },
+  ])("are cleared by $write", async ({ useRun }) => {
+    mock.onAny().reply(200, {});
+    const { result, queryClient } = renderHookWithProviders(useRun);
+    queryClient.setQueryData(["stats"], {});
+
+    act(() => result.current());
+
+    await waitFor(() =>
+      expect(queryClient.getQueryState(["stats"])?.isInvalidated).toBe(true),
+    );
   });
 });

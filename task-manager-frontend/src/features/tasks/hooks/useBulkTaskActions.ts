@@ -4,6 +4,7 @@ import { taskService, type BulkResult, type BulkTarget } from "../api";
 import { getBrowserTimeZone } from "../recurrence";
 import { useTaskSelection } from "../selection/useTaskSelection";
 import type { Priority, SnoozePreset } from "../types";
+import { refreshTasksAndStats } from "./refreshTasksAndStats";
 
 interface SnoozeRequest {
   target: BulkTarget;
@@ -30,11 +31,7 @@ function useBulkMutation<Request>(
   return useMutation({
     mutationFn: run,
     onSuccess: clear,
-    onSettled: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["tasks"] }),
-        queryClient.invalidateQueries({ queryKey: ["stats"] }),
-      ]),
+    onSettled: () => refreshTasksAndStats(queryClient),
   });
 }
 

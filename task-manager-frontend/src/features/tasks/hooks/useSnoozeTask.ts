@@ -8,6 +8,7 @@ import { toFormattedUTCDate } from "../../../utils/formators";
 import { trackEvent } from "../../../services/analytics";
 import { taskTargetId } from "../utils";
 import { taskWrite, type TaskWrite } from "./usePendingWrite";
+import { refreshTasksAndStats } from "./refreshTasksAndStats";
 
 export interface SnoozeRequest {
   task: Task;
@@ -18,12 +19,7 @@ export interface SnoozeRequest {
 export default function useSnoozeTask(props?: { onSnooze?: () => void }) {
   const queryClient = useQueryClient();
   const { showError } = useToast();
-  const refresh = () =>
-    Promise.all(
-      ["tasks", "stats"].map((key) =>
-        queryClient.invalidateQueries({ queryKey: [key] }),
-      ),
-    );
+  const refresh = () => refreshTasksAndStats(queryClient);
 
   const { mutate } = useMutation({
     ...taskWrite,

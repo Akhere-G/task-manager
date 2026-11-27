@@ -3,11 +3,12 @@ import { taskService } from "../api";
 import { useToast } from "../../../context/ToastContext";
 import { getApiErrorMessage } from "../../../utils/errors";
 import { taskWrite, type TaskWrite } from "./usePendingWrite";
+import { refreshTasksAndStats } from "./refreshTasksAndStats";
 
 export default function useDeleteSubtask() {
   const queryClient = useQueryClient();
   const { showError } = useToast();
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  const refresh = () => refreshTasksAndStats(queryClient);
 
   const { mutate } = useMutation({
     ...taskWrite,

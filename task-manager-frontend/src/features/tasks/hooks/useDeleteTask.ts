@@ -5,17 +5,13 @@ import { useToast } from "../../../context/ToastContext";
 import { trackEvent } from "../../../services/analytics";
 import { getApiErrorMessage } from "../../../utils/errors";
 import { taskWrite, type TaskWrite } from "./usePendingWrite";
+import { refreshTasksAndStats } from "./refreshTasksAndStats";
 
 export default function useDeleteTask() {
   const queryClient = useQueryClient();
   const { selectedTask } = useTaskContext();
   const { showError } = useToast();
-  const refresh = () =>
-    Promise.all(
-      ["tasks", "stats"].map((key) =>
-        queryClient.invalidateQueries({ queryKey: [key] }),
-      ),
-    );
+  const refresh = () => refreshTasksAndStats(queryClient);
 
   const { mutate } = useMutation({
     ...taskWrite,
