@@ -7,6 +7,7 @@ export type TaskPreview = Partial<Pick<Task, "isCompleted" | "priority">>;
 export interface TaskWrite {
   id: number;
   preview?: TaskPreview | null;
+  movedTask?: Task;
 }
 
 export const taskWrite = {
@@ -17,16 +18,17 @@ export const taskWrite = {
 const isTaskWrite = (variables: unknown): variables is TaskWrite =>
   typeof variables === "object" && variables !== null && "id" in variables;
 
+export const usePendingWrites = () =>
+  useMutationState({
+    filters: { mutationKey: taskWrite.mutationKey, status: "pending" },
+    select: (mutation) => mutation.state.variables,
+  }).filter(isTaskWrite);
+
 export default function usePendingWrite<Shown extends object>(
   id: number,
   task: Shown,
 ) {
-  const writes = useMutationState({
-    filters: { mutationKey: taskWrite.mutationKey, status: "pending" },
-    select: (mutation) => mutation.state.variables,
-  })
-    .filter(isTaskWrite)
-    .filter((write) => write.id === id);
+  const writes = usePendingWrites().filter((write) => write.id === id);
 
   return {
     shown: writes.reduce<Shown>(

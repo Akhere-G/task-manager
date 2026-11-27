@@ -33,6 +33,7 @@ export default function EisenhowerMatrix({
           id: taskTargetId(draggedTask),
           newTaskData: { priority },
           preview: { priority },
+          movedTask: draggedTask,
         },
         {
           onError: (error) =>

@@ -14,6 +14,7 @@ import type { CategoryQuery, TaskFilters } from "../taskParams";
 import type { Priority, Task } from "../types";
 import type { TaskView } from "../views";
 import useBulkResult from "../hooks/useBulkResult";
+import useQuadrantTasks from "../hooks/useQuadrantTasks";
 import GroupActionsMenu from "./GroupActionsMenu";
 import MatrixTaskRow from "./MatrixTaskRow";
 
@@ -49,18 +50,19 @@ export default function MatrixQuadrant({
     view,
     overrides: { priority: String(priority) },
   };
+  const isShown = allowsPriority(filters.priority, priority);
   const {
-    tasks,
-    total,
-    totalMinutes,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useCategoryTasks({
-    ...query,
-    enabled: allowsPriority(filters.priority, priority),
-  });
+    ...loaded
+  } = useCategoryTasks({ ...query, enabled: isShown });
+  const { tasks, total, totalMinutes } = useQuadrantTasks(
+    priority,
+    loaded,
+    isShown,
+  );
   const otherQuadrants = matrixQuadrants.filter(
     (quadrant) => quadrant.priority !== priority,
   );
